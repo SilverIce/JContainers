@@ -1,0 +1,16 @@
+﻿1>------ Skipped Build: Project: skse_loader, Configuration: Release Win32 ------
+1>Project not selected to build for this solution configuration 
+2>------ Skipped Build: Project: steam_loader, Configuration: Release Win32 ------
+2>Project not selected to build for this solution configuration 
+3>------ Skipped Build: Project: data_structures, Configuration: test Win32 ------
+3>Project not selected to build for this solution configuration 
+4>------ Skipped Build: Project: plugin_example, Configuration: Release Win32 ------
+4>Project not selected to build for this solution configuration 
+5>------ Build started: Project: cpp_json (Microsoft Visual C++ Compiler Nov 2012 CTP), Configuration: test Win32 ------
+5>  'Microsoft Visual C++ Compiler Nov 2012 CTP' is for testing purposes only.
+5>  main.cpp
+5>  cJSON.obj : MSIL .netmodule or module compiled with /GL found; restarting link with /LTCG; add /LTCG to the link command line to improve linker performance
+5>  Generating code
+5>  Finished generating code
+5>  cpp_json.vcxproj -> I:\Games\Elder Scrolls Skyrim\src\skse\test\cpp_json.exe
+========== Build: 1 succeeded, 0 failed, 3 up-to-date, 4 skipped ==========

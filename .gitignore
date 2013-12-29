@@ -1,0 +1,10 @@
+UpgradeLog*
+*.tlog
+*.sdf
+*.lib
+*.obj
+*.ilk
+*.pdb
+*.idb
+*.dll
+*.exe

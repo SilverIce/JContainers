@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="skse">
+      <UniqueIdentifier>{d7ac680b-d707-42ea-8d54-0928ed2871a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="skse\api">
+      <UniqueIdentifier>{58ebfcc5-7a86-416e-a72e-777804ffb656}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="skse\scaleform">
+      <UniqueIdentifier>{ca92bcd6-0c29-4997-9b84-1a28f49cd65c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\skse\GameAPI.cpp">
+      <Filter>skse\api</Filter>
+    </ClCompile>
+    <ClCompile Include="..\skse\ScaleformAPI.cpp">
+      <Filter>skse\scaleform</Filter>
+    </ClCompile>
+    <ClCompile Include="..\skse\ScaleformCallbacks.cpp">
+      <Filter>skse\scaleform</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="..\skse\SafeWrite.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\skse\GameAPI.h">
+      <Filter>skse\api</Filter>
+    </ClInclude>
+    <ClInclude Include="..\skse\ScaleformAPI.h">
+      <Filter>skse\scaleform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\skse\ScaleformCallbacks.h">
+      <Filter>skse\scaleform</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="exports.def" />
+  </ItemGroup>
+</Project>

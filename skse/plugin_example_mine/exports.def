@@ -1,0 +1,4 @@
+LIBRARY	"data_structures"
+EXPORTS
+SKSEPlugin_Query
+SKSEPlugin_Load

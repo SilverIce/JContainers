@@ -1,0 +1,71 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "skse_loader", "skse_loader\skse_loader.vcproj", "{7BE79948-9F31-4C2B-B9B5-78AB745B9CFB}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "common_vc9", "..\common\common_vc9.vcproj", "{20C6411C-596F-4B85-BE4E-8BC91F59D8A6}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "loader_common", "loader_common\loader_common.vcproj", "{B657620B-DED4-48F8-ACD4-F2BA9ECBC696}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "skse", "skse\skse.vcproj", "{AA0365EC-47EA-45AA-BB1F-EBBCCCC466F2}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "steam_loader", "steam_loader\steam_loader.vcproj", "{AE1AA342-F084-4F67-997D-2222369FBBE1}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "plugin_example", "plugin_example\plugin_example.vcproj", "{547171CB-F934-40B9-B788-3C520FE66363}"
+EndProject
+Global
+	GlobalSection(SourceCodeControl) = preSolution
+		SccNumberOfProjects = 7
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = ..\\common\\common_vc9.vcproj
+		SccLocalPath1 = ..\\common
+		SccProjectUniqueName2 = loader_common\\loader_common.vcproj
+		SccLocalPath2 = .
+		SccProjectFilePathRelativizedFromConnection2 = loader_common\\
+		SccProjectUniqueName3 = skse\\skse.vcproj
+		SccLocalPath3 = .
+		SccProjectFilePathRelativizedFromConnection3 = skse\\
+		SccProjectUniqueName4 = skse_loader\\skse_loader.vcproj
+		SccLocalPath4 = .
+		SccProjectFilePathRelativizedFromConnection4 = skse_loader\\
+		SccProjectUniqueName5 = steam_loader\\steam_loader.vcproj
+		SccLocalPath5 = .
+		SccProjectFilePathRelativizedFromConnection5 = steam_loader\\
+		SccProjectUniqueName6 = plugin_example\\plugin_example.vcproj
+		SccLocalPath6 = .
+		SccProjectFilePathRelativizedFromConnection6 = plugin_example\\
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7BE79948-9F31-4C2B-B9B5-78AB745B9CFB}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7BE79948-9F31-4C2B-B9B5-78AB745B9CFB}.Debug|Win32.Build.0 = Debug|Win32
+		{7BE79948-9F31-4C2B-B9B5-78AB745B9CFB}.Release|Win32.ActiveCfg = Release|Win32
+		{7BE79948-9F31-4C2B-B9B5-78AB745B9CFB}.Release|Win32.Build.0 = Release|Win32
+		{20C6411C-596F-4B85-BE4E-8BC91F59D8A6}.Debug|Win32.ActiveCfg = Debug|Win32
+		{20C6411C-596F-4B85-BE4E-8BC91F59D8A6}.Debug|Win32.Build.0 = Debug|Win32
+		{20C6411C-596F-4B85-BE4E-8BC91F59D8A6}.Release|Win32.ActiveCfg = Release|Win32
+		{20C6411C-596F-4B85-BE4E-8BC91F59D8A6}.Release|Win32.Build.0 = Release|Win32
+		{B657620B-DED4-48F8-ACD4-F2BA9ECBC696}.Debug|Win32.ActiveCfg = Debug|Win32
+		{B657620B-DED4-48F8-ACD4-F2BA9ECBC696}.Debug|Win32.Build.0 = Debug|Win32
+		{B657620B-DED4-48F8-ACD4-F2BA9ECBC696}.Release|Win32.ActiveCfg = Release|Win32
+		{B657620B-DED4-48F8-ACD4-F2BA9ECBC696}.Release|Win32.Build.0 = Release|Win32
+		{AA0365EC-47EA-45AA-BB1F-EBBCCCC466F2}.Debug|Win32.ActiveCfg = Debug|Win32
+		{AA0365EC-47EA-45AA-BB1F-EBBCCCC466F2}.Debug|Win32.Build.0 = Debug|Win32
+		{AA0365EC-47EA-45AA-BB1F-EBBCCCC466F2}.Release|Win32.ActiveCfg = Release|Win32
+		{AA0365EC-47EA-45AA-BB1F-EBBCCCC466F2}.Release|Win32.Build.0 = Release|Win32
+		{AE1AA342-F084-4F67-997D-2222369FBBE1}.Debug|Win32.ActiveCfg = Debug|Win32
+		{AE1AA342-F084-4F67-997D-2222369FBBE1}.Debug|Win32.Build.0 = Debug|Win32
+		{AE1AA342-F084-4F67-997D-2222369FBBE1}.Release|Win32.ActiveCfg = Release|Win32
+		{AE1AA342-F084-4F67-997D-2222369FBBE1}.Release|Win32.Build.0 = Release|Win32
+		{547171CB-F934-40B9-B788-3C520FE66363}.Debug|Win32.ActiveCfg = Debug|Win32
+		{547171CB-F934-40B9-B788-3C520FE66363}.Debug|Win32.Build.0 = Debug|Win32
+		{547171CB-F934-40B9-B788-3C520FE66363}.Release|Win32.ActiveCfg = Release|Win32
+		{547171CB-F934-40B9-B788-3C520FE66363}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
