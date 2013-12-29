@@ -75,7 +75,7 @@ namespace collections {
 
     TEST_DISABLED(autorelease_queue, qqq)
     {
-        mutex mt;
+        bshared_mutex mt;
         autorelease_queue queue(mt);
         queue.start();
         queue.push(10);
@@ -88,7 +88,7 @@ namespace collections {
 
     TEST(autorelease_queue, serialization)
     {
-        mutex mt;
+        bshared_mutex mt;
         autorelease_queue queue(mt);
       //  queue.start();
         queue.push(10);
@@ -98,7 +98,7 @@ namespace collections {
         ::boost::archive::text_oarchive arch(str);
         arch << queue;
 
-        mutex mt2;
+        bshared_mutex mt2;
         autorelease_queue queue2(mt2);
         // reading
         std::string string = str.str();
@@ -110,6 +110,56 @@ namespace collections {
         EXPECT_TRUE(queue.count() == queue2.count());
         ;
     }
+
+#define STR(...)    #__VA_ARGS__
+
+    TEST(json_parsing, readJSONData)
+    {
+        const char *jsonString = STR(
+        {
+            "glossary": {
+                "title": "example glossary",
+                    "GlossDiv": {
+                        "title": "S",
+                            "GlossList": {
+                                "GlossEntry": {
+                                    "ID": "SGML",
+                                        "SortAs": "SGML",
+                                        "GlossTerm": "Standard Generalized Markup Language",
+                                        "Acronym": "SGML",
+                                        "Abbrev": "ISO 8879:1986",
+                                        "GlossDef": {
+                                            "para": "A meta-markup language, used to create markup languages such as DocBook.",
+                                                "GlossSeeAlso": ["GML", "XML"]
+                                    },
+                                        "GlossSee": "markup"
+                                }
+                        }
+                }
+            }
+        }
+
+            );
+
+        cJSON *cjson = cJSON_Parse(jsonString);
+
+        collection_base *obj = json_parsing::readCJSON(cjson);
+        cJSON * cjson2 = json_parsing::createCJSON(*obj);
+
+        char *data1 = cJSON_Print(cjson);
+        char *data2 = cJSON_Print(cjson2);
+
+        //EXPECT_TRUE(strcmp(data2, data1) == 0);
+
+        free(data1);
+        free(data2);
+        
+        cJSON_Delete(cjson2);
+        cJSON_Delete(cjson);
+        
+
+    }
+
 
    
 /*

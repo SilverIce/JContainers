@@ -149,8 +149,9 @@ bool SKSEPlugin_Load(const SKSEInterface * skse)
 	g_serialization->SetSaveCallback(g_pluginHandle, Serialization_Save);
 	g_serialization->SetLoadCallback(g_pluginHandle, Serialization_Load);
 
-
+    g_papyrus->Register(collections::tes_object::registerFuncs);
     g_papyrus->Register(collections::tes_array::registerFuncs);
+    g_papyrus->Register(collections::tes_map::registerFuncs);
 
 	return true;
 }
@@ -163,6 +164,7 @@ int main(int argc, char** argv) {
 
     collections::tes_array::registerFuncs(NULL);
     collections::tes_map::registerFuncs(NULL);
+     collections::tes_object::registerFuncs(NULL);
 
     testing::runTests(meta<testing::TestInfo>::getListConst());
 

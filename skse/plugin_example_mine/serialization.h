@@ -19,7 +19,7 @@ namespace collections {
     // static unsigned long create(StaticFunctionTag *) {
 
     class shared_state {
-        mutex _mutex;
+        bshared_mutex _mutex;
 
         shared_state()
             : registry(_mutex)
@@ -44,10 +44,10 @@ namespace collections {
             boost::iostreams::stream_buffer<Device> buffer(data.data(), data.size());
             boost::archive::binary_iarchive archive(buffer);
 
-            lock g(_mutex);
+            write_lock g(_mutex);
 
-            collection_registry::instance()._clear();
-            autorelease_queue::instance()._clear();
+            registry._clear();
+            aqueue._clear();
 
             archive >> registry;
             archive >> aqueue;
@@ -60,7 +60,7 @@ namespace collections {
 
             // std::ofstream fstr("abjkbjklXCBjk");
 
-            lock g(_mutex);
+            write_lock g(_mutex);
 
             boost::archive::binary_oarchive arch(stream);
             arch << registry;

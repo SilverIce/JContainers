@@ -106,17 +106,16 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader />
       <WarningLevel>Level3</WarningLevel>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <ForcedIncludeFiles>common/IPrefix.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
     </ClCompile>
     <Link>
       <ModuleDefinitionFile>exports.def</ModuleDefinitionFile>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <TargetMachine>MachineX86</TargetMachine>
       <AdditionalLibraryDirectories>I:\dev\boost\boost_1_53_0\libs</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(TargetPath)" "..\..\..\Data\SKSE\Plugins\$(TargetFileName)"</Command>
@@ -164,6 +163,7 @@
     <ClCompile Include="..\skse\GameAPI.cpp" />
     <ClCompile Include="..\skse\ScaleformAPI.cpp" />
     <ClCompile Include="..\skse\ScaleformCallbacks.cpp" />
+    <ClCompile Include="cJSON.cpp" />
     <ClCompile Include="gtest.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
@@ -172,15 +172,20 @@
     <ClInclude Include="..\skse\ScaleformAPI.h" />
     <ClInclude Include="..\skse\ScaleformCallbacks.h" />
     <ClInclude Include="autorelease_queue.h" />
+    <ClInclude Include="cJSON.h" />
     <ClInclude Include="collections.h" />
     <ClInclude Include="collections.tests.hpp" />
     <ClInclude Include="gtest.h" />
+    <ClInclude Include="id_generator.h" />
     <ClInclude Include="serialization.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="collections.from_json.h" />
     <None Include="collections.tesregistration.hpp" />
     <None Include="exports.def" />
+    <Text Include="tests\test1">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='test|Win32'">true</DeploymentContent>
+    </Text>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -23,6 +23,7 @@
     </ClCompile>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="gtest.cpp" />
+    <ClCompile Include="cJSON.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\skse\GameAPI.h">
@@ -39,10 +40,15 @@
     <ClInclude Include="collections.tests.hpp" />
     <ClInclude Include="autorelease_queue.h" />
     <ClInclude Include="serialization.h" />
+    <ClInclude Include="cJSON.h" />
+    <ClInclude Include="id_generator.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="exports.def" />
     <None Include="collections.tesregistration.hpp" />
     <None Include="collections.from_json.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="tests\test1" />
   </ItemGroup>
 </Project>

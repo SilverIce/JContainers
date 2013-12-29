@@ -13,7 +13,7 @@ namespace collections {
     class autorelease_queue {
 
         std::thread _thread;
-        std::mutex& _mutex;
+        bshared_mutex& _mutex;
 
         typedef lock_guard<decltype(_mutex)> lock;
         typedef unsigned int time_point;
@@ -40,16 +40,17 @@ namespace collections {
             sleep_duration = 2, // seconds
         };
 
-        autorelease_queue(mutex &mt) 
+        autorelease_queue(bshared_mutex &mt) 
             : _thread()
             , _timeNow(0)
             , _run(false)
             , _mutex(mt)
         {
+            start();
         }
 
         void push(HandleT handle) {
-            lock g(_mutex);
+            write_lock g(_mutex);
             _queue.push_back(std::make_pair(handle, _timeNow));
         }
 
@@ -62,13 +63,13 @@ namespace collections {
         }
 
         size_t count() {
-            lock hg(_mutex);
+            read_lock hg(_mutex);
             return _queue.size();
         }
 
         void stop() {
             {
-                lock g(_mutex);
+                write_lock g(_mutex);
                 _run = false;
             }
 
@@ -113,7 +114,7 @@ namespace collections {
 
             while (true) {
                 {
-                    lock g(self._mutex);
+                    write_lock g(self._mutex);
 
                     if (!self._run) {
                         break;
@@ -148,4 +149,10 @@ namespace collections {
             printf("autorelease_queue finish\n");
         }
     };
+
+
+    collection_base * collection_base::autorelease() {
+        autorelease_queue::instance().push(id);
+        return this;
+    }
 }

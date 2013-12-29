@@ -9,6 +9,8 @@
 namespace collections {
 
     namespace tes_object {
+        static const char * TesName() { return "JValue";}
+
         static HandleT retain(StaticFunctionTag*, HandleT handle) {
             _DMESSAGE(__FUNCTION__);
             auto obj = collection_registry::getObject(handle);
@@ -29,15 +31,13 @@ namespace collections {
         template<class T>
         static HandleT create(StaticFunctionTag *) {
             _DMESSAGE(__FUNCTION__);
-            return T::create();
+            return T::create()->id;
         }
 
         template<class T>
         static HandleT object(StaticFunctionTag *tt) {
              _DMESSAGE(__FUNCTION__);
-            auto hdl = create<T>(tt);
-            autorelease_queue::instance().push(hdl);
-            return hdl;
+            return T::object()->id;
         }
 
         static void release(StaticFunctionTag*, HandleT handle) {
@@ -47,57 +47,122 @@ namespace collections {
                 obj->release();
             }
         }
-    }
 
-    void printMethod(const char *cname, const char *cargs) {
-        //string args(cargs);
-
-        const char * type2tes[][2] = {
-            "HandleT", "int",
-            "Index", "int",
-            "BSFixedString", "string",
-            "Float32", "float",
-            "SInt32", "int",
-        };
-        std::map<string,string> type2tesMap ;
-        for (int i = 0; i < sizeof(type2tes) / (2 * sizeof(char*));++i) {
-            type2tesMap[type2tes[i][0]] = type2tes[i][1];
+        static bool isArray(StaticFunctionTag*, HandleT handle) {
+            _DMESSAGE(__FUNCTION__);
+            collection_base *obj = collection_registry::getObject(handle);
+            return obj && obj->_type == CollectionTypeArray;
         }
 
-
-        string name;
-
-        vector<string> strings; // #2: Search for tokens
-        boost::split( strings, string(cargs), boost::is_any_of(", ") );
-
-        if (strings[0] != "void") {
-            name += type2tesMap[strings[0]] + ' ';
+        static bool isMap(StaticFunctionTag*, HandleT handle) {
+            _DMESSAGE(__FUNCTION__);
+            collection_base *obj = collection_registry::getObject(handle);
+            return obj && obj->_type == CollectionTypeMap;
         }
 
-        name += "Function ";
-        name += cname;
-        name += "(";
+        static HandleT readFromFile(StaticFunctionTag*, BSFixedString path) {
+            if (path.data == nullptr)
+                return 0;
 
-        int argNum = 0;
+            auto obj = json_parsing::readJSONFile(path.data);
+            return  obj ? obj->id : 0;
+        }
 
-        for (int i = 1; i < strings.size(); ++i, ++argNum) {
-            if (strings[i].empty()) {
-                continue;
-            }
+        static void writeToFile(StaticFunctionTag*, HandleT handle, BSFixedString path) {
+            if (path.data == nullptr)  return;
+
+            auto obj = collection_registry::getObject(handle);
+            if (!obj)  return;
             
+            char * data = json_parsing::createJSONData(*obj);
+            if (!data) return;
 
-            name += type2tesMap[strings[i]];
-            name += " arg";
-            name += (char)((argNum - 1) + '0');
-            if ((i+1) < strings.size())
-                name += ", ";
+            FILE *file = fopen(path.data, "w");
+            if (!file) {
+                free(data);
+                return;
+            }
+            fwrite(data, 1, strlen(data), file);
+            fclose(file);
+            free(data);
         }
 
-        name += ") global native\n";
+        void printMethod(const char *cname, const char *cargs) {
+            //string args(cargs);
 
-        printf(name.c_str());
+            const char * type2tes[][2] = {
+                "HandleT", "int",
+                "Index", "int",
+                "BSFixedString", "string",
+                "Float32", "float",
+                "SInt32", "int",
+            };
+            std::map<string,string> type2tesMap ;
+            for (int i = 0; i < sizeof(type2tes) / (2 * sizeof(char*));++i) {
+                type2tesMap[type2tes[i][0]] = type2tes[i][1];
+            }
+
+
+            string name;
+
+            vector<string> strings; // #2: Search for tokens
+            boost::split( strings, string(cargs), boost::is_any_of(", ") );
+
+            if (strings[0] != "void") {
+                name += type2tesMap[strings[0]] + ' ';
+            }
+
+            name += "Function ";
+            name += cname;
+            name += "(";
+
+            int argNum = 0;
+
+            for (int i = 1; i < strings.size(); ++i, ++argNum) {
+                if (strings[i].empty()) {
+                    continue;
+                }
+
+
+                name += (type2tesMap.find(strings[i]) != type2tesMap.end() ? type2tesMap[strings[i]] : strings[i]);
+                name += " arg";
+                name += (char)((argNum - 1) + '0');
+                if ((i+1) < strings.size())
+                    name += ", ";
+            }
+
+            name += ") global native\n";
+
+            printf(name.c_str());
+        }
+
+#define ARGS(...) __VA_ARGS__
+
+        static bool registerFuncs(VMClassRegistry* registry) {
+
+            #define REGISTER2(name, func, argCount,  ... /*types*/ ) \
+                if (registry) { \
+                registry->RegisterFunction( \
+                new NativeFunction ## argCount <StaticFunctionTag, __VA_ARGS__ >(name, TesName(), func, registry)); \
+                registry->SetFunctionFlags(TesName(), name, VMClassRegistry::kFunctionFlag_NoWait); \
+                }\
+                printMethod(name, #__VA_ARGS__);
+
+            #define REGISTER(func, argCount,  ... /*types*/ ) REGISTER2(#func, func, argCount, __VA_ARGS__)
+
+            REGISTER(release, 1, void, HandleT);
+            REGISTER(retain, 1, HandleT, HandleT);
+            REGISTER(autorelease, 1, HandleT, HandleT);
+
+            REGISTER(readFromFile, 1, HandleT, BSFixedString);
+            REGISTER(writeToFile, 2, void, HandleT, BSFixedString);
+
+            REGISTER(isArray, 1, bool, HandleT);
+            REGISTER(isMap, 1, bool, HandleT);
+
+            return true;
+        }
     }
-
 
     namespace tes_array {
         using namespace tes_object;
@@ -118,7 +183,7 @@ namespace collections {
                 return 0;
             }
 
-            lock g(obj->_mutex);
+            mutex_lock g(obj->_mutex);
             return index < obj->_array.size() ? obj->_array[index].readAs<T>() : 0;
         }
 
@@ -129,7 +194,7 @@ namespace collections {
                 return;
             }
 
-            lock g(obj->_mutex);
+            mutex_lock g(obj->_mutex);
             if (index < obj->_array.size()) {
                 obj->_array[index] = Item((T)item);
             }
@@ -141,7 +206,7 @@ namespace collections {
                 return;
             }
 
-            lock g(obj->_mutex);
+            mutex_lock g(obj->_mutex);
             if (index < obj->_array.size()) {
                 obj->_array.erase(obj->_array.begin() + index);
             }
@@ -153,7 +218,7 @@ namespace collections {
             print(item);
             auto obj = find(handle);
             if (obj) {
-                lock g(obj->_mutex);
+                mutex_lock g(obj->_mutex);
                 obj->_array.push_back(Item((T)item));
             }
         }
@@ -162,7 +227,7 @@ namespace collections {
             _DMESSAGE(__FUNCTION__);
             auto obj = find(handle);
             if (obj) {
-                lock g(obj->_mutex);
+                mutex_lock g(obj->_mutex);
                 return  obj->_array.size();
             }
             return 0;
@@ -171,39 +236,17 @@ namespace collections {
         static void clear(StaticFunctionTag*, HandleT handle) {
             auto obj = find(handle);
             if (obj) {
-                lock g(obj->_mutex);
+                mutex_lock g(obj->_mutex);
                 obj->_array.clear();
             }
         }
 
-#define ARGS(...) __VA_ARGS__
-
         static bool registerFuncs(VMClassRegistry* registry) {
-
-            //SkyrimVM			** skyrimVM = (SkyrimVM **)0x012E568C;
-
-            //assert(registry && (*skyrimVM)->GetClassRegistry() == registry);
-           // registry = (*skyrimVM)->GetClassRegistry();
 
             _DMESSAGE("register array funcs");
 
-            //registry->RegisterFunction(
-            //    new NativeFunction0<StaticFunctionTag, void>("Hello", "SKSE", doShit, registry));
-
-#define REGISTER2(name, func, argCount,  ... /*types*/ ) \
-    if (registry) { \
-            registry->RegisterFunction( \
-                new NativeFunction ## argCount <StaticFunctionTag, __VA_ARGS__ >(name, TesName(), func, registry)); \
-                registry->SetFunctionFlags(TesName(), name, VMClassRegistry::kFunctionFlag_NoWait); \
-    }\
-    printMethod(name, #__VA_ARGS__);
-
-#define REGISTER(func, argCount,  ... /*types*/ ) REGISTER2(#func, func, argCount, __VA_ARGS__)
-
             REGISTER2("create", create<array>, 0, HandleT);
             REGISTER2("object", object<array>, 0, HandleT);
-            REGISTER(release, 1, void, HandleT);
-            REGISTER(retain, 1, HandleT, HandleT);
 
             REGISTER(count, 1, Index, HandleT);
 
@@ -248,7 +291,7 @@ namespace collections {
                 return 0;
             }
 
-            lock g(obj->_mutex);
+            mutex_lock g(obj->_mutex);
             auto itr = obj->cnt.find(key.data);
             return itr != obj->cnt.end() ? itr->second.readAs<T>() : 0;
         }
@@ -261,7 +304,7 @@ namespace collections {
                 return;
             }
 
-            lock g(obj->_mutex);
+            mutex_lock g(obj->_mutex);
             obj->cnt[key.data] = Item((T)item);
         }
 
@@ -272,7 +315,7 @@ namespace collections {
                 return 0;
             }
 
-            lock g(obj->_mutex);
+            mutex_lock g(obj->_mutex);
             auto itr = obj->cnt.find(key.data);
             return itr != obj->cnt.end();
         }
@@ -284,7 +327,7 @@ namespace collections {
                 return 0;
             }
 
-            lock g(obj->_mutex);
+            mutex_lock g(obj->_mutex);
             auto itr = obj->cnt.find(key.data);
             bool hasKey = itr != obj->cnt.end();
 
@@ -299,7 +342,7 @@ namespace collections {
                 return 0;
             }
 
-            lock g(obj->_mutex);
+            mutex_lock g(obj->_mutex);
             return obj->cnt.size();
         }
 
@@ -310,7 +353,7 @@ namespace collections {
                 return;
             }
 
-            lock g(obj->_mutex);
+            mutex_lock g(obj->_mutex);
             obj->cnt.clear();
         }
 
@@ -318,8 +361,6 @@ namespace collections {
 
             REGISTER2("create", create<array>, 0, HandleT);
             REGISTER2("object", object<array>, 0, HandleT);
-            REGISTER(release, 1, void, HandleT);
-            REGISTER(retain, 1, HandleT, HandleT);
 
             REGISTER(count, 1, SInt32, HandleT);
             REGISTER2("clear", clear, 1, void, HandleT);

@@ -19,6 +19,9 @@
 #include <mutex>
 #include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/shared_lock_guard.hpp>
+#include <boost/thread/lock_guard.hpp>
+
+#include "id_generator.h"
 
 class VMClassRegistry;
 struct StaticFunctionTag;
@@ -26,11 +29,12 @@ class T_Base;
 
 namespace collections {
 
-    typedef std::lock_guard<std::mutex> lock;
+    typedef std::lock_guard<std::mutex> mutex_lock;
     using std::mutex;
 
-    typedef boost::shared_mutex shared_mutex;
-    typedef boost::shared_lock_guard<shared_mutex> shared_lock;
+    typedef boost::shared_mutex bshared_mutex;
+    typedef boost::lock_guard<bshared_mutex> write_lock;
+    typedef boost::shared_lock_guard<bshared_mutex> read_lock;
 
     typedef UInt32 HandleT;
 
@@ -50,28 +54,32 @@ namespace collections {
     class collection_registry
     {
         std::map<HandleT, collection_base *> _map;
-        HandleT _counter;
-        mutex& _mutex;
+        id_generator<HandleT> _idGen;
+        bshared_mutex& _mutex;
 
- 
         collection_registry(const collection_registry& );
         collection_registry& operator = (const collection_registry& );
 
     public:
 
-        collection_registry(mutex &mt) : _mutex(mt) {}
+        collection_registry(bshared_mutex &mt) : _mutex(mt) {}
 
         static Handle registerObject(collection_base *collection);
 
         static void removeObject(HandleT hdl) {
+            if (!hdl) {
+                return;
+            }
+            
             collection_registry& me = instance();
-            lock g(me._mutex);
+            write_lock g(me._mutex);
             me._map.erase(hdl);
+            me._idGen.reuseId(hdl);
         }
 
         static collection_base *getObject(HandleT hdl) {
             collection_registry& me = instance();
-            lock g(me._mutex);
+            read_lock g(me._mutex);
             auto itr = me._map.find(hdl);
             if (itr != me._map.end())
                 return itr->second;
@@ -95,14 +103,18 @@ namespace collections {
             ar.register_type(static_cast<map *>(NULL));
 
             ar & _map;
-            ar & _counter;
+            ar & _idGen;
         }
     };
 
     class collection_base
     {
-        shared_mutex shm;
         std::atomic_int32_t _refCount;
+
+    public:
+
+        virtual ~collection_base() {}
+
     public:
         std::mutex _mutex;
         union {
@@ -134,16 +146,28 @@ namespace collections {
             return _id != 0;
         }
 
-        void retain() {
-            std::atomic_fetch_add(&_refCount, 1);
+        template<class T> T* as() {
+            return T::TypeId == _type ? static_cast<T*>(this) : nullptr;
         }
+
+        collection_base * retain() {
+            std::atomic_fetch_add(&_refCount, 1);
+            return this;
+        }
+
+        collection_base * autorelease();
 
         void release() {
             int32_t prev = std::atomic_fetch_sub(&_refCount, 1);
             if (prev == 1) {
-                collection_registry::removeObject(id);
-                delete this;
+                dealloc();
             }
+        }
+
+        void dealloc() {
+            mutex_lock g(_mutex);
+            collection_registry::removeObject(id);
+            delete this;
         }
 
         friend class boost::serialization::access;
@@ -166,8 +190,6 @@ namespace collections {
 
             _refCount = refCnt;
         }
-
-        virtual ~collection_base() {}
     };
 
     Handle collection_registry::registerObject(collection_base *collection) {
@@ -176,8 +198,8 @@ namespace collections {
         }
 
         collection_registry& me = instance();
-        lock g(me._mutex);
-        auto newId = ++me._counter;
+        write_lock g(me._mutex);
+        auto newId = me._idGen.newId();
         collection->_id = newId;
         me._map[newId] = collection;
         return (Handle)newId;
@@ -185,7 +207,7 @@ namespace collections {
 
     void collection_registry::_clear() {
         for (auto pair : _map) {
-            delete pair.second;
+            pair.second->dealloc();
         }
         _map.clear();
     }
@@ -211,9 +233,14 @@ namespace collections {
 
     public:
 
-        static HandleT create() {
+        static T* create() {
             auto obj = new T();
-            return collection_registry::registerObject(obj);
+            collection_registry::registerObject(obj);
+            return obj;
+        }
+
+        static T* object() {
+            return (T *)create()->autorelease();
         }
     };
 
@@ -274,37 +301,37 @@ namespace collections {
             map* _map;
         };
 
-        ItemType type;
+        ItemType _type;
 
     public:
 
-        Item() : _stringVal(nullptr), type(ItemTypeNone) {}
+        Item() : _stringVal(nullptr), _type(ItemTypeNone) {}
 
-        explicit Item(Float32 val) : _floatVal(val), type(ItemTypeFloat32) {}
-        explicit Item(double val) : _floatVal(val), type(ItemTypeFloat32) {}
-        explicit Item(SInt32 val) : _intVal(val), type(ItemTypeInt32) {}
-        explicit Item(int val) : _intVal(val), type(ItemTypeInt32) {}
+        explicit Item(Float32 val) : _floatVal(val), _type(ItemTypeFloat32) {}
+        explicit Item(double val) : _floatVal(val), _type(ItemTypeFloat32) {}
+        explicit Item(SInt32 val) : _intVal(val), _type(ItemTypeInt32) {}
+        explicit Item(int val) : _intVal(val), _type(ItemTypeInt32) {}
 
-        explicit Item(const char * val) : _stringVal(NULL), type(ItemTypeNone) {
+        explicit Item(const char * val) : _stringVal(NULL), _type(ItemTypeNone) {
             setStringVal(val);
         }
 
-        explicit Item(const BSFixedString& str) : _stringVal(NULL), type(ItemTypeNone) {
+        explicit Item(const BSFixedString& str) : _stringVal(NULL), _type(ItemTypeNone) {
             setStringVal(str.data);
         }
 
-        explicit Item(collection_base *collection) : _stringVal(NULL), type(ItemTypeNone) {
+        explicit Item(collection_base *collection) : _stringVal(NULL), _type(ItemTypeNone) {
             setObjectVal(collection);
         }
 
-        explicit Item(Handle hdl) : _stringVal(NULL), type(ItemTypeNone) {
+        explicit Item(Handle hdl) : _stringVal(NULL), _type(ItemTypeNone) {
             auto obj = collection_registry::getObject(hdl);
             if (obj)
                 setObjectVal(obj);
         }
 
         bool operator == (const Item& other) const {
-            return type == other.type && _object == other._object;
+            return _type == other._type && _object == other._object;
         }
 
         bool operator != (const Item& other) const {
@@ -319,8 +346,8 @@ namespace collections {
             ar.register_type(static_cast<array *>(NULL));
             ar.register_type(static_cast<map *>(NULL));
 
-            ar & type;
-            switch (type)
+            ar & _type;
+            switch (_type)
             {
             case ItemTypeNone:
                 break;
@@ -347,8 +374,8 @@ namespace collections {
             ar.register_type(static_cast<array *>(NULL));
             ar.register_type(static_cast<map *>(NULL));
 
-            ar & type;
-            switch (type)
+            ar & _type;
+            switch (_type)
             {
             case ItemTypeNone:
                 break;
@@ -376,12 +403,30 @@ namespace collections {
             }
         }
 
+        void setFlt(float val) {
+            _freeObject();
+            _freeString();
+
+            _type = ItemTypeFloat32;
+            _floatVal = val;
+        }
+
+        void setInt(SInt32 val) {
+            _freeObject();
+            _freeString();
+
+            _type = ItemTypeInt32;
+            _intVal = val;
+        }
+
+        ItemType type() const { return _type;}
+
         void setStringVal(const char *val) {
 
             _freeObject();
 
-            StringMem *block = (type == ItemTypeCString ? _stringVal : 0);
-            type = ItemTypeCString;
+            StringMem *block = (_type == ItemTypeCString ? _stringVal : 0);
+            _type = ItemTypeCString;
 
             if (!val) {
                 if (block) {
@@ -420,7 +465,7 @@ namespace collections {
         }
 
         bool _freeString() {
-            if (type == ItemTypeCString) {
+            if (_type == ItemTypeCString) {
                 delete _stringVal;
                 _stringVal = nullptr;
                 return true;
@@ -433,7 +478,7 @@ namespace collections {
             if (!_freeObject())
                 _freeString();
 
-            type = ItemTypeObject;
+            _type = ItemTypeObject;
             _object = obj;
 
             if (obj)
@@ -445,7 +490,7 @@ namespace collections {
                 _freeString();
             }
 
-            type = iType;
+            _type = iType;
         }
 
         ~Item() {
@@ -457,25 +502,25 @@ namespace collections {
             }
         }
 
-        Item(Item&& other) : _stringVal(other._stringVal), type(other.type) {
+        Item(Item&& other) : _stringVal(other._stringVal), _type(other._type) {
             other._stringVal = nullptr;
-            other.type = ItemTypeNone;
+            other._type = ItemTypeNone;
         }
 
         Item& operator=(Item&& other) {
             _freeString();
             _freeObject();
 
-            type = other.type;
+            _type = other._type;
             _stringVal = other._stringVal;
 
             other._stringVal = nullptr;
-            other.type = ItemTypeNone;
+            other._type = ItemTypeNone;
 
             return *this;
         }
 
-        Item(const Item& other) : _stringVal(nullptr), type(ItemTypeNone) {
+        Item(const Item& other) : _stringVal(nullptr), _type(ItemTypeNone) {
             _copy(other);
         }
 
@@ -485,45 +530,45 @@ namespace collections {
         }
 
         void _copy(const Item &other) {
-            if (other.type == ItemTypeCString) {
+            if (other._type == ItemTypeCString) {
                 setStringVal(other.strValue());
             } else if (other.objValue()){
                 setObjectVal(other.objValue());
             } else {
-                type = other.type;
+                _type = other._type;
                 _stringVal = other._stringVal;
             }
         }
 
         Float32 fltValue() const {
-            return type == ItemTypeFloat32 ? _floatVal : 0;
+            return _type == ItemTypeFloat32 ? _floatVal : (_type == ItemTypeInt32 ? _intVal : 0);
         }
 
         SInt32 intValue() const {
-            return type == ItemTypeInt32 ? _intVal : 0;
+            return _type == ItemTypeInt32 ? _intVal : (_type == ItemTypeFloat32 ? _floatVal : 0);
         }
 
         const char * strValue() const {
-            return (type == ItemTypeCString && _stringVal) ? _stringVal->string : 0;
+            return (_type == ItemTypeCString && _stringVal) ? _stringVal->string : 0;
         }
 
         bool isNull() const {
-            return type == ItemTypeNone;
+            return _type == ItemTypeNone;
         }
 
         collection_base *objValue() const {
-            return (type == ItemTypeObject) ? _object : nullptr;
+            return (_type == ItemTypeObject) ? _object : nullptr;
         }
 
         template<class T> T readAs();
     };
 
     template<> inline float Item::readAs<Float32>() {
-        return type == ItemTypeFloat32 ? _floatVal : 0;
+        return fltValue();
     }
 
     template<> inline SInt32 Item::readAs<SInt32>() {
-        return type == ItemTypeInt32 ? _intVal : 0;
+        return intValue();
     }
 
     template<> inline const char * Item::readAs<const char *>() {
@@ -572,7 +617,7 @@ namespace collections {
         std::vector<Item> _array;
 
         void push(const Item& item) {
-            lock g(_mutex);
+            mutex_lock g(_mutex);
             _array.push_back(item);
         }
 
@@ -583,7 +628,7 @@ namespace collections {
 
         template<class Archive>
         void serialize(Archive & ar, const unsigned int version) {
-            lock g(_mutex);
+            mutex_lock g(_mutex);
             ar & boost::serialization::base_object<collection_base>(*this);
             ar & _array;
         }
@@ -591,7 +636,7 @@ namespace collections {
 
     };
 
-    class map : public collection_base_T< array >
+    class map : public collection_base_T< map >
     {
     public:
 
@@ -606,7 +651,7 @@ namespace collections {
 
 
         Item& operator[](const std::string& str) {
-            lock g(_mutex);
+            mutex_lock g(_mutex);
             return cnt[str];
         }
 
@@ -615,7 +660,7 @@ namespace collections {
 
         template<class Archive>
         void serialize(Archive & ar, const unsigned int version) {
-            lock g(_mutex);
+            mutex_lock g(_mutex);
             ar & boost::serialization::base_object<collection_base>(*this);
             ar & cnt;
         }
@@ -623,10 +668,11 @@ namespace collections {
 
 }
 
-#include "collections.tesregistration.hpp"
+
 #include "collections.from_json.h"
 #include "autorelease_queue.h"
 #include "serialization.h"
+#include "collections.tesregistration.hpp"
 
 #include "collections.tests.hpp"
 
