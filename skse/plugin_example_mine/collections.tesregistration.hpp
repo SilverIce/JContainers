@@ -6,13 +6,15 @@
 #include "autorelease_queue.h"
 #include <boost/algorithm/string.hpp>
 
+#define MESSAGE(...) // _DMESSAGE(__VA_ARGS__);
+
 namespace collections {
 
     namespace tes_object {
         static const char * TesName() { return "JValue";}
 
         static HandleT retain(StaticFunctionTag*, HandleT handle) {
-            _DMESSAGE(__FUNCTION__);
+            MESSAGE(__FUNCTION__);
             auto obj = collection_registry::getObject(handle);
             if (obj) {
                 obj->retain();
@@ -23,25 +25,25 @@ namespace collections {
         }
 
         static HandleT autorelease(StaticFunctionTag*, HandleT handle) {
-            _DMESSAGE(__FUNCTION__);
+            MESSAGE(__FUNCTION__);
             autorelease_queue::instance().push(handle);
             return handle;
         }
 
         template<class T>
         static HandleT create(StaticFunctionTag *) {
-            _DMESSAGE(__FUNCTION__);
+            MESSAGE(__FUNCTION__);
             return T::create()->id;
         }
 
         template<class T>
         static HandleT object(StaticFunctionTag *tt) {
-             _DMESSAGE(__FUNCTION__);
+            MESSAGE(__FUNCTION__);
             return T::object()->id;
         }
 
         static void release(StaticFunctionTag*, HandleT handle) {
-            _DMESSAGE(__FUNCTION__);
+            MESSAGE(__FUNCTION__);
             collection_base *obj = collection_registry::getObject(handle);
             if (obj) {
                 obj->release();
@@ -49,13 +51,13 @@ namespace collections {
         }
 
         static bool isArray(StaticFunctionTag*, HandleT handle) {
-            _DMESSAGE(__FUNCTION__);
+            MESSAGE(__FUNCTION__);
             collection_base *obj = collection_registry::getObject(handle);
             return obj && obj->_type == CollectionTypeArray;
         }
 
         static bool isMap(StaticFunctionTag*, HandleT handle) {
-            _DMESSAGE(__FUNCTION__);
+            MESSAGE(__FUNCTION__);
             collection_base *obj = collection_registry::getObject(handle);
             return obj && obj->_type == CollectionTypeMap;
         }
@@ -73,7 +75,7 @@ namespace collections {
 
             auto obj = collection_registry::getObject(handle);
             if (!obj)  return;
-            
+           
             char * data = json_parsing::createJSONData(*obj);
             if (!data) return;
 
@@ -85,6 +87,15 @@ namespace collections {
             fwrite(data, 1, strlen(data), file);
             fclose(file);
             free(data);
+        }
+
+        template<class T>
+        static typename Tes2Value<T>::tes_type resolveT(StaticFunctionTag*, HandleT handle, BSFixedString path) {
+            auto obj = collection_registry::getObject(handle);
+            if (!obj) return 0;
+
+            Item itm = json_parsing::resolvePath(obj, path.data);
+            return T(itm.readAs<T>());
         }
 
         void printMethod(const char *cname, const char *cargs) {
@@ -160,6 +171,11 @@ namespace collections {
             REGISTER(isArray, 1, bool, HandleT);
             REGISTER(isMap, 1, bool, HandleT);
 
+            REGISTER2("resolveVal", resolveT<Handle>, 2, HandleT, HandleT, BSFixedString);
+            REGISTER2("resolveFlt", resolveT<Float32>, 2, Float32, HandleT, BSFixedString);
+            REGISTER2("resolveStr", resolveT<BSFixedString>, 2, BSFixedString, HandleT, BSFixedString);
+            REGISTER2("resolveInt", resolveT<SInt32>, 2, SInt32, HandleT, BSFixedString);
+
             return true;
         }
     }
@@ -177,7 +193,7 @@ namespace collections {
 
         template<class T>
         static typename Tes2Value<T>::tes_type itemAtIndex(StaticFunctionTag*, HandleT handle, Index index) {
-            _DMESSAGE(__FUNCTION__);
+            MESSAGE(__FUNCTION__);
             auto obj = find(handle);
             if (!obj) {
                 return 0;
@@ -214,7 +230,7 @@ namespace collections {
 
         template<class T>
         static void add(StaticFunctionTag*, HandleT handle, typename Tes2Value<T>::tes_type item) {
-            _DMESSAGE(__FUNCTION__);
+            MESSAGE(__FUNCTION__);
             print(item);
             auto obj = find(handle);
             if (obj) {
@@ -224,7 +240,7 @@ namespace collections {
         }
 
         static Index count(StaticFunctionTag*, HandleT handle) {
-            _DMESSAGE(__FUNCTION__);
+            MESSAGE(__FUNCTION__);
             auto obj = find(handle);
             if (obj) {
                 mutex_lock g(obj->_mutex);
@@ -243,7 +259,7 @@ namespace collections {
 
         static bool registerFuncs(VMClassRegistry* registry) {
 
-            _DMESSAGE("register array funcs");
+            MESSAGE("register array funcs");
 
             REGISTER2("create", create<array>, 0, HandleT);
             REGISTER2("object", object<array>, 0, HandleT);
@@ -267,7 +283,7 @@ namespace collections {
 
             REGISTER2("clear", clear, 1, void, HandleT);
 
-            _DMESSAGE("funcs registered");
+            MESSAGE("funcs registered");
 
             return true;
         }
@@ -285,7 +301,7 @@ namespace collections {
 
         template<class T>
         static typename Tes2Value<T>::tes_type getItem(StaticFunctionTag*, HandleT handle, BSFixedString key) {
-            _DMESSAGE(__FUNCTION__);
+            MESSAGE(__FUNCTION__);
             auto obj = find(handle);
             if (!obj || key.data == nullptr) {
                 return 0;
@@ -298,7 +314,7 @@ namespace collections {
 
         template<class T>
         static void setItem(StaticFunctionTag*, HandleT handle, BSFixedString key, typename Tes2Value<T>::tes_type item) {
-            _DMESSAGE(__FUNCTION__);
+            MESSAGE(__FUNCTION__);
             auto obj = find(handle);
             if (!obj || key.data == nullptr) {
                 return;
@@ -309,7 +325,7 @@ namespace collections {
         }
 
         static bool hasKey(StaticFunctionTag*, HandleT handle, BSFixedString key) {
-            _DMESSAGE(__FUNCTION__);
+            MESSAGE(__FUNCTION__);
             auto obj = find(handle);
             if (!obj || key.data == nullptr) {
                 return 0;
@@ -321,7 +337,7 @@ namespace collections {
         }
 
         static bool removeKey(StaticFunctionTag*, HandleT handle, BSFixedString key) {
-            _DMESSAGE(__FUNCTION__);
+            MESSAGE(__FUNCTION__);
             auto obj = find(handle);
             if (!obj || key.data == nullptr) {
                 return 0;
@@ -336,7 +352,7 @@ namespace collections {
         }
 
         static SInt32 count(StaticFunctionTag*, HandleT handle) {
-            _DMESSAGE(__FUNCTION__);
+            MESSAGE(__FUNCTION__);
             auto obj = find(handle);
             if (!obj) {
                 return 0;
@@ -347,7 +363,7 @@ namespace collections {
         }
 
         static void clear(StaticFunctionTag*, HandleT handle) {
-            _DMESSAGE(__FUNCTION__);
+            MESSAGE(__FUNCTION__);
             auto obj = find(handle);
             if (!obj) {
                 return;

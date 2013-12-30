@@ -12,6 +12,8 @@
 #include <sstream>
 #include <memory>
 
+#ifndef NO_TESTS
+
 namespace collections {
     // static unsigned long create(StaticFunctionTag *) {
 
@@ -119,9 +121,9 @@ namespace collections {
         {
             "glossary": {
                 "title": "example glossary",
-                    "GlossDiv": {
+                "GlossDiv": {
                         "title": "S",
-                            "GlossList": {
+                        "GlossList": {
                                 "GlossEntry": {
                                     "ID": "SGML",
                                         "SortAs": "SGML",
@@ -150,6 +152,9 @@ namespace collections {
         char *data2 = cJSON_Print(cjson2);
 
         //EXPECT_TRUE(strcmp(data2, data1) == 0);
+
+        Item resolvedItem = json_parsing::resolvePath(obj, ".glossary.GlossDiv.title");
+        EXPECT_TRUE(strcmp(resolvedItem.strValue(), "S") == 0 );
 
         free(data1);
         free(data2);
@@ -206,3 +211,6 @@ namespace collections {
 
     //template<> bool array<Float32>::registerFuncs(VMClassRegistry* registry);
 }
+
+#endif
+

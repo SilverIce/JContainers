@@ -78,6 +78,10 @@ namespace collections {
         }
 
         static collection_base *getObject(HandleT hdl) {
+            if (!hdl) {
+                return nullptr;
+            }
+            
             collection_registry& me = instance();
             read_lock g(me._mutex);
             auto itr = me._map.find(hdl);
@@ -109,7 +113,7 @@ namespace collections {
 
     class collection_base
     {
-        std::atomic_int32_t _refCount;
+        int32_t _refCount;
 
     public:
 
@@ -151,44 +155,32 @@ namespace collections {
         }
 
         collection_base * retain() {
-            std::atomic_fetch_add(&_refCount, 1);
+            mutex_lock g(_mutex);
+            ++_refCount;
             return this;
         }
 
         collection_base * autorelease();
 
         void release() {
-            int32_t prev = std::atomic_fetch_sub(&_refCount, 1);
-            if (prev == 1) {
-                dealloc();
+            _mutex.lock();
+            --_refCount;
+            if (_refCount == 0) {
+                collection_registry::removeObject(id);
+                _mutex.unlock();
+                delete this;
+            } else {
+                _mutex.unlock();
             }
         }
 
-        void dealloc() {
-            mutex_lock g(_mutex);
-            collection_registry::removeObject(id);
-            delete this;
-        }
-
-        friend class boost::serialization::access;
-        BOOST_SERIALIZATION_SPLIT_MEMBER();
+        virtual void clear() = 0;
 
         template<class Archive>
-        void save(Archive & ar, const unsigned int version) const {
-            int refCnt = refCount();
-            ar & refCnt;
+        void serialize(Archive & ar, const unsigned int version) {
+            ar & _refCount;
             ar & _type;
             ar & _id;
-        }
-
-        template<class Archive>
-        void load(Archive & ar, const unsigned int version) {
-            int refCnt = 0;
-            ar & refCnt;
-            ar & _type;
-            ar & _id;
-
-            _refCount = refCnt;
         }
     };
 
@@ -201,13 +193,31 @@ namespace collections {
         write_lock g(me._mutex);
         auto newId = me._idGen.newId();
         collection->_id = newId;
+        assert(me._map.find(newId) == me._map.end());
         me._map[newId] = collection;
         return (Handle)newId;
     }
 
     void collection_registry::_clear() {
+        /*  Not good, but working solution.
+
+            issue: deadlock during loading savegame - e.g. cleaning current state.
+
+            due to: collection release -> dealloc -> collection_registry::removeObject
+                 introduces deadlock ( registry locked during _clear call)
+
+            solution: +1 refCount to all objects & clear & delete them
+
+            all we need is just free the memory but this will require track allocated collection & stl memory blocks 
+        */
         for (auto pair : _map) {
-            pair.second->dealloc();
+            pair.second->retain(); // to guarant that removeObject will not be called during clear method call
+        }
+        for (auto pair : _map) {
+            pair.second->clear(); // to force ~Item() calls while all collections alive (~Item() may release collection)
+        }
+        for (auto pair : _map) {
+            delete pair.second;
         }
         _map.clear();
     }
@@ -621,6 +631,10 @@ namespace collections {
             _array.push_back(item);
         }
 
+        void clear() override {
+            _array.clear();
+        }
+
         //////////////////////////////////////////////////////////////////////////
 
    
@@ -653,6 +667,10 @@ namespace collections {
         Item& operator[](const std::string& str) {
             mutex_lock g(_mutex);
             return cnt[str];
+        }
+
+        void clear() {
+            cnt.clear();
         }
 
 

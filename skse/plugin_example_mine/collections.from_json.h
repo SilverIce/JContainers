@@ -8,6 +8,76 @@ namespace collections {
     class json_parsing {
     public:
 
+        static Item resolvePath(collection_base *collection, const char *path) {
+            const char *c = path;
+
+            Item itm(collection);
+
+            collection_base *id = nullptr;
+
+            while (*c ) {
+
+                char s = *c++;
+
+                id = itm.objValue();
+
+                if (s == '.') {
+
+                    if (!id || !id->as<map>()) {
+                         return Item();
+                    }
+
+                    char buff[256] = {'\0'};
+                    char *buffPtr = buff;
+
+                    while (*c && *c != '.' && *c != '[') {
+                        if (*c == ']') {
+                            return Item();
+                        }
+                        *buffPtr++ = *c++;
+                    }
+                    *buffPtr = '\0';
+
+                    auto& cnt = id->as<map>()->cnt;
+                    auto itr = cnt.find(buff);
+                    if (itr != cnt.end()) {
+                        itm = itr->second;
+                    } else {
+                        return Item();
+                    }
+                }
+                else if (s == '[') {
+                    if (!id || !id->as<array>()) {
+                        return Item();
+                    }
+
+                    if (*c == ']') {
+                        return Item();
+                    }
+
+                    int num = 0;
+                    while (*c != ']') {
+                        if (!*c || 
+                            !(*c >= '0' && *c <= '9')) {
+                                return Item();
+                        }
+                        num = num * 10 + (*c - '0');
+                        ++c;
+                    }
+                    //c is ] now
+
+                    auto& arr = id->as<array>()->_array;
+                    if (num < arr.size()) {
+                        itm = arr[num];
+                    } else {
+                        return Item();
+                    }
+                }
+            }
+
+            return itm;
+        }
+
         static collection_base * readJSONFile(const char *path) {
             auto cj = cJSONFromFile(path);
             auto res = readCJSON(cj);
@@ -124,6 +194,7 @@ namespace collections {
 
             if (type == ItemTypeObject && item.objValue()) {
                 auto obj = item.objValue();
+                mutex_lock g(obj->_mutex);
                 if (obj->as<array>()) {
                     val = cJSON_CreateArray();
                     array *ar = obj->as<array>();

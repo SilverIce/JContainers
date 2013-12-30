@@ -55,7 +55,7 @@ namespace collections {
         }
 
         void start() {
-            lock g(_mutex);
+            write_lock g(_mutex);
             if (!_run) {
                 _run = true;
                 _thread = std::thread(&autorelease_queue::run, std::ref(*this));
