@@ -15,6 +15,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JContainers", "JContainers\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "plugin_example", "plugin_example\plugin_example.vcxproj", "{547171CB-F934-40B9-B788-3C520FE66363}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PIZDA", "PIZDA\PIZDA.vcxproj", "{FAA39367-64F7-4552-A537-002A1FFB8365}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -54,6 +56,12 @@ Global
 		{547171CB-F934-40B9-B788-3C520FE66363}.Debug|Win32.Build.0 = Debug|Win32
 		{547171CB-F934-40B9-B788-3C520FE66363}.plugin|Win32.ActiveCfg = Release|Win32
 		{547171CB-F934-40B9-B788-3C520FE66363}.Release|Win32.ActiveCfg = Release|Win32
+		{FAA39367-64F7-4552-A537-002A1FFB8365}.Debug|Win32.ActiveCfg = Debug|Win32
+		{FAA39367-64F7-4552-A537-002A1FFB8365}.Debug|Win32.Build.0 = Debug|Win32
+		{FAA39367-64F7-4552-A537-002A1FFB8365}.plugin|Win32.ActiveCfg = Release|Win32
+		{FAA39367-64F7-4552-A537-002A1FFB8365}.plugin|Win32.Build.0 = Release|Win32
+		{FAA39367-64F7-4552-A537-002A1FFB8365}.Release|Win32.ActiveCfg = Release|Win32
+		{FAA39367-64F7-4552-A537-002A1FFB8365}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

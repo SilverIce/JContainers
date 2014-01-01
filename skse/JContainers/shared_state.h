@@ -24,17 +24,24 @@ namespace collections {
         shared_state()
             : registry(_mutex)
             , aqueue(_mutex)
+            , databaseId(0)
         {
         }
 
     public:
         collection_registry registry;
         autorelease_queue aqueue;
+        HandleT databaseId;
 
         static shared_state& instance() {
             static shared_state st;
             return st;
         }
+
+  /*      map* database() {
+            auto db = registry.getObject(databaseId);
+            return db;
+        }*/
 
         void loadAll(const vector<char> &data) {
 
@@ -44,13 +51,20 @@ namespace collections {
             boost::iostreams::stream_buffer<Device> buffer(data.data(), data.size());
             boost::archive::binary_iarchive archive(buffer);
 
-            write_lock g(_mutex);
+            {
+                write_lock g(_mutex);
 
-            registry._clear();
-            aqueue._clear();
+                registry._clear();
+                aqueue._clear();
 
-            archive >> registry;
-            archive >> aqueue;
+                archive >> registry;
+                archive >> aqueue;
+                archive >> databaseId;
+            }
+        }
+
+        void setupForFirstTime() {
+            databaseId = map::create()->id;
         }
 
         vector<char> saveToArray() {
@@ -68,6 +82,7 @@ namespace collections {
 
                 arch << registry;
                 arch << aqueue;
+                arch << databaseId;
 
                 for (auto pair : registry._map) {
                     pair.second->_mutex.unlock();

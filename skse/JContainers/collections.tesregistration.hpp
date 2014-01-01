@@ -92,13 +92,37 @@ namespace collections {
             fwrite(data.get(), 1, strlen(data.get()), file.get());
         }
 
+        typedef const char * cstring;
+
         template<class T>
         static typename Tes2Value<T>::tes_type resolveT(StaticFunctionTag*, HandleT handle, BSFixedString path) {
             auto obj = collection_registry::getObject(handle);
             if (!obj) return 0;
 
-            Item itm = json_parsing::resolvePath(obj, path.data);
-            return T(itm.readAs<T>());
+            T val((T)0);
+            json_parsing::resolvePath(obj, path.data, [&](Item* itmPtr) {
+                if (itmPtr) {
+                    val = itmPtr->readAs<T>();
+                }
+            });
+
+            return typename Tes2Value<T>::tes_type(val);
+        }
+
+        template<class T>
+        static bool solveT(StaticFunctionTag*, HandleT handle, BSFixedString path, typename Tes2Value<T>::tes_type value) {
+            auto obj = collection_registry::getObject(handle);
+            if (!obj) return false;
+
+            bool succeed = false;
+            json_parsing::resolvePath(obj, path.data, [&](Item* itmPtr) {
+                if (itmPtr) {
+                    val = itmPtr->writeAs(value);
+                    succeed = true;
+                }
+            });
+
+            return succeed;
         }
 
         void printMethod(const char *cname, const char *cargs) {
@@ -403,61 +427,42 @@ namespace collections {
        // using namespace tes_map;
 
         static const char * TesName() { return "JDB";}
-        /*
+        
         template<class T>
-        static typename Tes2Value<T>::tes_type getItem(StaticFunctionTag*, BSFixedString key) {
-            MESSAGE(__FUNCTION__);
-            auto obj = find(handle);
-            if (!obj || key.data == nullptr) {
-                return 0;
-            }
-
-            Item itm = json_parsing::resolvePath(obj, key.data);
-            return itm.readAs<T>();
-        }
-
-        static bool hasKey(StaticFunctionTag*, BSFixedString key) {
-            MESSAGE(__FUNCTION__);
-            auto obj = find(handle);
-            if (!obj || key.data == nullptr) {
-                return false;
-            }
-
-            Item itm = json_parsing::resolvePath(obj, key.data);
-            return itm.type() != ItemTypeNone;
+        static typename Tes2Value<T>::tes_type resolveT(StaticFunctionTag* tag, BSFixedString path) {
+            return  tes_map::resolveT<T>(tag, shared_state::instance().databaseId, path); 
         }
 
         template<class T>
-        static void setItem(StaticFunctionTag*, BSFixedString key, typename Tes2Value<T>::tes_type item) {
-            MESSAGE(__FUNCTION__);
-            auto obj = find(handle);
-            if (!obj || key.data == nullptr) {
-                return;
-            }
+        static bool solveT(StaticFunctionTag*, BSFixedString path, typename Tes2Value<T>::tes_type value) { 
+            auto obj = collection_registry::getObject(shared_state::instance().databaseId);
+            if (!obj) return false;
 
-            Item itm = json_parsing::resolvePath(obj, key.data);
-            if (itm.type() == ItemTypeNone) {
+            bool succeed = false;
+            json_parsing::resolvePath(obj, path.data, [&](Item* itmPtr) {
+                if (itmPtr) {
+                    *itmPtr = Item(value);
+                    succeed = true;
+                }
+            });
 
-            }
-            
-
-            obj->cnt[key.data] = Item((T)item);
+            return succeed;
         }
 
         static bool registerFuncs(VMClassRegistry* registry) {
 
-            REGISTER2("setFlt", setItem<Float32>, 3, void, HandleT, BSFixedString, Float32);
-            REGISTER2("setInt", setItem<SInt32>, 3, void, HandleT, BSFixedString, SInt32);
-            REGISTER2("setStr", setItem<BSFixedString>, 3, void, HandleT, BSFixedString, BSFixedString);
-            REGISTER2("setVal", setItem<Handle>, 3, void, HandleT, BSFixedString, HandleT);
+            REGISTER2("setFlt", solveT<Float32>, 2, bool, BSFixedString, Float32);
+            REGISTER2("setInt", solveT<SInt32>, 2, bool, BSFixedString, SInt32);
+            REGISTER2("setStr", solveT<BSFixedString>, 2, bool, BSFixedString, BSFixedString);
+            REGISTER2("setVal", solveT<Handle>, 2, bool, BSFixedString, HandleT);
 
-            REGISTER2("getFlt", getItem<Float32>, 2, Float32, HandleT, BSFixedString);
-            REGISTER2("getInt", getItem<SInt32>, 2, SInt32, HandleT, BSFixedString);
-            REGISTER2("getStr", getItem<BSFixedString>, 2, BSFixedString, HandleT, BSFixedString);
-            REGISTER2("getVal", getItem<Handle>, 2, HandleT, HandleT, BSFixedString);
+            REGISTER2("getFlt", resolveT<Float32>, 1, Float32, BSFixedString);
+            REGISTER2("getInt", resolveT<SInt32>, 1, SInt32, BSFixedString);
+            REGISTER2("getStr", resolveT<BSFixedString>, 1, BSFixedString, BSFixedString);
+            REGISTER2("getVal", resolveT<Handle>, 1, HandleT, BSFixedString);
 
 
             return true;
-        }*/
+        }
     }
 }

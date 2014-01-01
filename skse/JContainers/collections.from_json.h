@@ -15,7 +15,7 @@ namespace collections {
         class collection_owner {
             object_base *_collection;
         public:
-            explicit collection_owner(object_base *coll) {
+            explicit collection_owner(object_base *coll) : _collection(nullptr) {
                 setCollection(coll);
             }
 
@@ -50,29 +50,34 @@ namespace collections {
             }
         };
 
-        static Item resolvePath(object_base *collection, const char *path) {
+        static void lockObjs(std::vector<object_base *>& list, object_base *obj) {
+            obj->_mutex.lock();
+            list.push_back(obj);
+        }
+
+        template<class F>
+        static void resolvePath(object_base *collection, const char *path, F func) {
             const char *c = path;
 
-            Item itm;
+            Item *itm = nullptr;
 
-    /*        auto unlocker = [=](collection_base *obj) {
-                if (obj) {
-                    obj->_mutex.unlock();
-                }
-            };
 
-            std::unique_ptr<collection_base, decltype(unlocker)> objOwner(collection, unlocker);*/
 
-            collection_owner id (collection);
+            object_base * id = collection;
+
+
+            collection_owner owner (nullptr);
 
             while (*c ) {
+
+                owner.setCollection(id);
 
                 char s = *c++;
 
                 if (s == '.') {
 
                     if (!id || !id->as<map>()) {
-                         return Item();
+                        break;
                     }
 
                     char buff[256] = {'\0'};
@@ -80,7 +85,7 @@ namespace collections {
 
                     while (*c && *c != '.' && *c != '[') {
                         if (*c == ']') {
-                            return Item();
+                            return;
                         }
                         *buffPtr++ = *c++;
                     }
@@ -89,30 +94,26 @@ namespace collections {
                     auto& cnt = id->as<map>()->cnt;
                     auto itr = cnt.find(buff);
                     if (itr != cnt.end()) {
-
-                        if (!itr->second.objValue())
-                            itm = itr->second;
-
-                        id.setCollection(itr->second.objValue());
-
+                        id = itr->second.object();
+                        itm = &itr->second;
                     } else {
-                        return Item();
+                        return;
                     }
                 }
                 else if (s == '[') {
                     if (!id || !id->as<array>()) {
-                        return Item();
+                        return;
                     }
 
                     if (*c == ']') {
-                        return Item();
+                        return;
                     }
 
                     int num = 0;
                     while (*c != ']') {
                         if (!*c || 
                             !(*c >= '0' && *c <= '9')) {
-                                return Item();
+                                return;
                         }
                         num = num * 10 + (*c - '0');
                         ++c;
@@ -121,20 +122,20 @@ namespace collections {
 
                     auto& arr = id->as<array>()->_array;
                     if (num < arr.size()) {
-                        if (!arr[num].objValue())
-                            itm = arr[num];
-
-                        id.setCollection(arr[num].objValue());
+                        id = arr[num].object();
+                        itm = &arr[num];
                     } else {
-                        return Item();
+                        return;
                     }
+                }
+
+                if (!*c && itm) {
+                    func(itm);
+                    break;
                 }
             }
 
-            object_base *obj = id.get();
-            id.setCollection(nullptr);
-
-            return obj ? Item(obj) : itm;
+            owner.setCollection(nullptr);
         }
 
         static object_base * readJSONFile(const char *path) {
@@ -159,7 +160,7 @@ namespace collections {
             object_base *obj = nullptr;
             if (value->type == cJSON_Array || value->type == cJSON_Object) {
                 Item itm = makeItem(value);
-                obj = itm.objValue();
+                obj = itm.object();
             }
 
             return obj;
@@ -254,8 +255,8 @@ namespace collections {
 
             ItemType type = item.type();
 
-            if (type == ItemTypeObject && item.objValue()) {
-                auto obj = item.objValue();
+            if (type == ItemTypeObject && item.object()) {
+                auto obj = item.object();
                 mutex_lock g(obj->_mutex);
                 if (obj->as<array>()) {
                     val = cJSON_CreateArray();

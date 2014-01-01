@@ -153,8 +153,17 @@ namespace collections {
 
         //EXPECT_TRUE(strcmp(data2, data1) == 0);
 
-        Item resolvedItem = json_parsing::resolvePath(obj, ".glossary.GlossDiv.title");
-        EXPECT_TRUE(strcmp(resolvedItem.strValue(), "S") == 0 );
+        json_parsing::resolvePath(obj, ".glossary.GlossDiv.title", [&](Item * item) {
+            EXPECT_TRUE(item && strcmp(item->strValue(), "S") == 0 );
+        });
+
+        float floatVal = 10.5;
+        json_parsing::resolvePath(obj, ".glossary.GlossDiv.title", [&](Item * item) {
+            EXPECT_TRUE(item);
+            item->setFlt(floatVal);
+        });
+
+     //   json_parsing::solv
 
         free(data1);
         free(data2);

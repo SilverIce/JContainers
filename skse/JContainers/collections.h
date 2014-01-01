@@ -29,8 +29,8 @@ class T_Base;
 
 namespace collections {
 
-    typedef std::mutex collection_mutex;
-    typedef std::lock_guard<collection_mutex> mutex_lock;
+    typedef std::recursive_mutex object_mutex;
+    typedef std::lock_guard<object_mutex> mutex_lock;
 
     typedef boost::shared_mutex bshared_mutex;
     typedef boost::lock_guard<bshared_mutex> write_lock;
@@ -54,6 +54,9 @@ namespace collections {
     class collection_registry
     {
     private:
+
+         
+       // template<class T> friend void serialize(T & ar, collection_registry& reg, const unsigned int version);
 
         friend class shared_state;
 
@@ -133,7 +136,7 @@ namespace collections {
         virtual ~object_base() {}
 
     public:
-        collection_mutex _mutex;
+        object_mutex _mutex;
         union {
             Handle id;
             UInt32 _id;
@@ -355,6 +358,12 @@ namespace collections {
                 setObjectVal(obj);
         }
 
+        explicit Item(HandleT hdl) : _stringVal(NULL), _type(ItemTypeNone) {
+            auto obj = collection_registry::getObject(hdl);
+            if (obj)
+                setObjectVal(obj);
+        }
+
         bool operator == (const Item& other) const {
             return _type == other._type && _object == other._object;
         }
@@ -472,14 +481,14 @@ namespace collections {
         }
 
         void setObjectVal(object_base *obj) {
-            if (objValue() == obj)
+            if (object() == obj)
                 return;
 
             _replaceObject(obj);
         }
 
         bool _freeObject() {
-            object_base *prev = objValue();
+            object_base *prev = object();
             if (prev) {
                 prev->release();
                 _object = nullptr;
@@ -557,8 +566,8 @@ namespace collections {
         void _copy(const Item &other) {
             if (other._type == ItemTypeCString) {
                 setStringVal(other.strValue());
-            } else if (other.objValue()){
-                setObjectVal(other.objValue());
+            } else if (other.object()){
+                setObjectVal(other.object());
             } else {
                 _type = other._type;
                 _stringVal = other._stringVal;
@@ -581,23 +590,40 @@ namespace collections {
             return _type == ItemTypeNone;
         }
 
-        object_base *objValue() const {
+        object_base *object() const {
             return (_type == ItemTypeObject) ? _object : nullptr;
         }
 
         template<class T> T readAs();
+        template<class T> void writeAs(T val);
     };
 
     template<> inline float Item::readAs<Float32>() {
         return fltValue();
     }
 
+    template<> inline void Item::writeAs(Float32 val) {
+        setFlt(val);
+    }
+
     template<> inline SInt32 Item::readAs<SInt32>() {
         return intValue();
     }
 
+    template<> inline void Item::writeAs(SInt32 val) {
+        setInt(val);
+    }
+
     template<> inline const char * Item::readAs<const char *>() {
         return strValue();
+    }
+
+    template<> inline void Item::writeAs(const char * val) {
+        setStringVal(val);
+    }
+
+    template<> inline void Item::writeAs(BSFixedString val) {
+        setStringVal(val.data);
     }
 
     template<> inline BSFixedString Item::readAs<BSFixedString>() {
@@ -606,7 +632,7 @@ namespace collections {
     }
 
     template<> inline Handle Item::readAs<Handle>() {
-        auto obj = objValue();
+        auto obj = object();
         return obj ? obj->id : HandleNull;
     }
 
@@ -693,7 +719,7 @@ namespace collections {
 
 #include "collections.from_json.h"
 #include "autorelease_queue.h"
-#include "serialization.h"
+#include "shared_state.h"
 #include "collections.tesregistration.hpp"
 
 #include "collections.tests.hpp"

@@ -45,38 +45,22 @@ void Serialization_Load(SKSESerializationInterface * intfc)
 	UInt32	length;
 	bool	error = false;
 
+    bool hasStorage = false;
+
 	while(!error && intfc->GetNextRecordInfo(&type, &version, &length))
 	{
-		switch(type)
-		{
-			case kJStorageChunk:
-			{
-				if(version == kSerializationDataVersion)
-				{
-					if(length)
-					{
-                        std::vector<char> data(length);
-                        intfc->ReadRecordData(data.data(), length);
-                        collections::shared_state::instance().loadAll(data);
-					}
-					else
-					{
-						_MESSAGE("empty data?");
-					}
-				}
-				else
-				{
-					error = true;
-				}
-			}
-			break;
+        if (kJStorageChunk && version == kSerializationDataVersion && length) {
+            std::vector<char> data(length);
+            intfc->ReadRecordData(data.data(), length);
+            collections::shared_state::instance().loadAll(data);
 
-			default:
-				_MESSAGE("unhandled type %08X", type);
-				error = true;
-				break;
+            hasStorage = true;
 		}
 	}
+
+    if (!hasStorage) {
+        collections::shared_state::instance().setupForFirstTime();
+    }
 }
 
 extern "C"
@@ -143,11 +127,13 @@ void registerFuncs(VMClassRegistry **registryPtr) {
     collections::tes_array::registerFuncs(registry);
     collections::tes_map::registerFuncs(registry);
     collections::tes_object::registerFuncs(registry);
+    collections::tes_db::registerFuncs(registry);
 }
 
 bool SKSEPlugin_Load(const SKSEInterface * skse)
 {
     _MESSAGE("load");
+        _MESSAGE("it avile!");
 
 	// register callbacks and unique ID for serialization
 	// ### this must be a UNIQUE ID, change this and email me the ID so I can let you know if someone else has already taken it
@@ -165,15 +151,11 @@ bool SKSEPlugin_Load(const SKSEInterface * skse)
     g_papyrus->Register(collections::tes_map::registerFuncs);
 */
 
-
-/*
-    VMClassRegistry		* registry =	(*g_skyrimVM)->GetClassRegistry();
-    collections::tes_array::registerFuncs(registry);
-    collections::tes_map::registerFuncs(registry);
-    collections::tes_object::registerFuncs(registry);
-*/
-
 	return true;
+}
+
+__declspec(dllexport) void launchShityTest() {
+     testing::runTests(meta<testing::TestInfo>::getListConst());
 }
 
 };
