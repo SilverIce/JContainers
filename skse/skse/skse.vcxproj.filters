@@ -2,34 +2,34 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="obscript">
-      <UniqueIdentifier>{a047c0d5-49a8-48d8-8aa1-fe5619f1abbd}</UniqueIdentifier>
+      <UniqueIdentifier>{20f209a4-4ba2-43e8-9385-c640c52aabe2}</UniqueIdentifier>
     </Filter>
     <Filter Include="papyrus">
-      <UniqueIdentifier>{2f48d366-7b12-4eee-b8a8-27cb6de53240}</UniqueIdentifier>
+      <UniqueIdentifier>{379a26c4-5373-4f66-ae79-57066af0ff80}</UniqueIdentifier>
     </Filter>
     <Filter Include="papyrus\functions">
-      <UniqueIdentifier>{e973e9ee-7349-448d-b7be-9425faf0f068}</UniqueIdentifier>
+      <UniqueIdentifier>{697edd86-caf4-4307-af11-25b1f227a534}</UniqueIdentifier>
     </Filter>
     <Filter Include="papyrus\vm">
-      <UniqueIdentifier>{b7a45ba1-4ba7-40dd-b3df-4c74ca7230b3}</UniqueIdentifier>
+      <UniqueIdentifier>{62f80239-f0ef-4fd4-bf87-958b5b783733}</UniqueIdentifier>
     </Filter>
     <Filter Include="papyrus\internals">
-      <UniqueIdentifier>{c0a8f7cd-a147-426c-bbd7-0e0a0aa50674}</UniqueIdentifier>
+      <UniqueIdentifier>{3f2d89c6-667a-4665-bfbc-b535f4b4433c}</UniqueIdentifier>
     </Filter>
     <Filter Include="api">
-      <UniqueIdentifier>{e39b39fe-d39f-4526-86b7-dacdc3ad5ceb}</UniqueIdentifier>
+      <UniqueIdentifier>{868c13b8-b5cf-4b93-b6c4-9fce65651992}</UniqueIdentifier>
     </Filter>
     <Filter Include="scaleform">
-      <UniqueIdentifier>{82b8196e-a3c7-458b-8e9e-e540a587f3ea}</UniqueIdentifier>
+      <UniqueIdentifier>{39d967f9-c745-4a5d-8004-c768a28b23db}</UniqueIdentifier>
     </Filter>
     <Filter Include="hooks">
-      <UniqueIdentifier>{9481a2cb-3e48-49cf-a19b-56dc21ec5026}</UniqueIdentifier>
+      <UniqueIdentifier>{ba948f8a-96d9-42b5-9418-1e58a2c9127a}</UniqueIdentifier>
     </Filter>
     <Filter Include="internals">
-      <UniqueIdentifier>{61e5ec9f-945e-4cd0-950f-9d0a5859093b}</UniqueIdentifier>
+      <UniqueIdentifier>{7f22a50c-5196-40f1-b3e3-56da72d2f342}</UniqueIdentifier>
     </Filter>
     <Filter Include="netimmerse">
-      <UniqueIdentifier>{42928664-2e43-47a9-a9a5-0234bbb70363}</UniqueIdentifier>
+      <UniqueIdentifier>{7f2a2b29-1b77-4ff2-b0eb-c59c92c39a85}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

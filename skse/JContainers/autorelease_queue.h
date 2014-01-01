@@ -110,8 +110,6 @@ namespace collections {
             chrono::seconds sleepTime(sleep_duration);
             vector<HandleT> toRelease;
 
-            printf("autorelease_queue addr 0x%x\n", (void*)&self);
-
             while (true) {
                 {
                     write_lock g(self._mutex);
@@ -151,7 +149,7 @@ namespace collections {
     };
 
 
-    collection_base * collection_base::autorelease() {
+    object_base * object_base::autorelease() {
         autorelease_queue::instance().push(id);
         return this;
     }

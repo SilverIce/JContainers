@@ -238,7 +238,7 @@ public:
 			intfc->WriteRecordData(&numRegs, sizeof(numRegs));
 			// Regs
 			for (RegSet::iterator elems = iter->second.begin(); elems != iter->second.end(); ++elems)
-				const_cast<EventRegistration<D> &>(*elems).Save(intfc, version);
+				const_cast<EventRegistration<D>&>(*elems).Save(intfc, version);
 		}
 
 		intfc->OpenRecord('REGE', version);
@@ -432,7 +432,7 @@ public:
 			
 		// Regs
 		for (RegSet::iterator iter = m_data.begin(); iter != m_data.end(); ++iter)
-			const_cast<EventRegistration<D> &>(*iter).Save(intfc, version);
+			const_cast<EventRegistration<D>&>(*iter).Save(intfc, version);
 
 		Release();
 

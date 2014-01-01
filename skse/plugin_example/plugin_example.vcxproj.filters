@@ -2,13 +2,13 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="skse">
-      <UniqueIdentifier>{d7ac680b-d707-42ea-8d54-0928ed2871a7}</UniqueIdentifier>
+      <UniqueIdentifier>{6da2f608-8f1b-47d3-90ff-579d426fa52e}</UniqueIdentifier>
     </Filter>
     <Filter Include="skse\api">
-      <UniqueIdentifier>{58ebfcc5-7a86-416e-a72e-777804ffb656}</UniqueIdentifier>
+      <UniqueIdentifier>{671ab473-40a5-4293-a17a-6b2fd2a2041a}</UniqueIdentifier>
     </Filter>
     <Filter Include="skse\scaleform">
-      <UniqueIdentifier>{ca92bcd6-0c29-4997-9b84-1a28f49cd65c}</UniqueIdentifier>
+      <UniqueIdentifier>{558eb06b-e0a9-4162-a63b-df32a436fda0}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

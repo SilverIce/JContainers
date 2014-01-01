@@ -62,7 +62,7 @@ namespace collections {
         //EXPECT_TRUE(strcmp(obj["array"].strValue(), testStr) == 0);
     }
 
-    TEST(collection_base, refCount)
+    TEST(object_base, refCount)
     {
         auto obj = new array;
         EXPECT_TRUE(obj->refCount() == 1);
@@ -145,7 +145,7 @@ namespace collections {
 
         cJSON *cjson = cJSON_Parse(jsonString);
 
-        collection_base *obj = json_parsing::readCJSON(cjson);
+        object_base *obj = json_parsing::readCJSON(cjson);
         cJSON * cjson2 = json_parsing::createCJSON(*obj);
 
         char *data1 = cJSON_Print(cjson);

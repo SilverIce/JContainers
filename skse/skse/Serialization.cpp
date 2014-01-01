@@ -307,7 +307,7 @@ namespace Serialization
 			return;
 		}
 
-		//try
+		try
 		{
 			// init header
 			s_fileHeader.signature =		Header::kSignature;
@@ -358,10 +358,10 @@ namespace Serialization
 			s_currentFile.SetOffset(0);
 			s_currentFile.WriteBuf(&s_fileHeader, sizeof(s_fileHeader));
 		}
-	/*	catch(...)
+		catch(...)
 		{
 			_ERROR("HandleSaveGame: exception during save");
-		}*/
+		}
 
 		s_currentFile.Close();
 	}

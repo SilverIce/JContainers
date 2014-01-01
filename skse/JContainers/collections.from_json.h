@@ -5,21 +5,69 @@
 
 namespace collections {
 
+    std::unique_ptr<FILE, decltype(&fclose)> make_unique_file(FILE *file) {
+        return std::unique_ptr<FILE, decltype(&fclose)> (file, &fclose);
+    }
+
     class json_parsing {
     public:
 
-        static Item resolvePath(collection_base *collection, const char *path) {
+        class collection_owner {
+            object_base *_collection;
+        public:
+            explicit collection_owner(object_base *coll) {
+                setCollection(coll);
+            }
+
+            ~collection_owner() {
+                setCollection(nullptr);
+            }
+
+            object_base* operator -> () const {
+                return _collection;
+            }
+
+            object_base* get () const {
+                return _collection;
+            }
+
+            bool operator !() const {
+                return _collection == nullptr;
+            }
+
+            void setCollection(object_base *coll) {
+                if (_collection != coll) {
+                    if (_collection) {
+                        _collection->_mutex.unlock();
+                        _collection->release();
+                    }
+                    _collection = coll;
+                    if (coll) {
+                        coll->retain();
+                        coll->_mutex.lock();
+                    }
+                }
+            }
+        };
+
+        static Item resolvePath(object_base *collection, const char *path) {
             const char *c = path;
 
-            Item itm(collection);
+            Item itm;
 
-            collection_base *id = nullptr;
+    /*        auto unlocker = [=](collection_base *obj) {
+                if (obj) {
+                    obj->_mutex.unlock();
+                }
+            };
+
+            std::unique_ptr<collection_base, decltype(unlocker)> objOwner(collection, unlocker);*/
+
+            collection_owner id (collection);
 
             while (*c ) {
 
                 char s = *c++;
-
-                id = itm.objValue();
 
                 if (s == '.') {
 
@@ -41,7 +89,12 @@ namespace collections {
                     auto& cnt = id->as<map>()->cnt;
                     auto itr = cnt.find(buff);
                     if (itr != cnt.end()) {
-                        itm = itr->second;
+
+                        if (!itr->second.objValue())
+                            itm = itr->second;
+
+                        id.setCollection(itr->second.objValue());
+
                     } else {
                         return Item();
                     }
@@ -68,36 +121,42 @@ namespace collections {
 
                     auto& arr = id->as<array>()->_array;
                     if (num < arr.size()) {
-                        itm = arr[num];
+                        if (!arr[num].objValue())
+                            itm = arr[num];
+
+                        id.setCollection(arr[num].objValue());
                     } else {
                         return Item();
                     }
                 }
             }
 
-            return itm;
+            object_base *obj = id.get();
+            id.setCollection(nullptr);
+
+            return obj ? Item(obj) : itm;
         }
 
-        static collection_base * readJSONFile(const char *path) {
+        static object_base * readJSONFile(const char *path) {
             auto cj = cJSONFromFile(path);
             auto res = readCJSON(cj);
             cJSON_Delete(cj);
             return res;
         }
 
-        static collection_base * readJSONData(const char *text) {
+        static object_base * readJSONData(const char *text) {
             auto cj = cJSON_Parse(text);
             auto res = readCJSON(cj);
             cJSON_Delete(cj);
             return res;
         }
 
-        static collection_base * readCJSON(cJSON *value) {
+        static object_base * readCJSON(cJSON *value) {
             if (!value) {
                 return nullptr;
             }
 
-            collection_base *obj = nullptr;
+            object_base *obj = nullptr;
             if (value->type == cJSON_Array || value->type == cJSON_Object) {
                 Item itm = makeItem(value);
                 obj = itm.objValue();
@@ -107,15 +166,18 @@ namespace collections {
         }
 
         static cJSON * cJSONFromFile(const char *path) {
-            FILE *file = fopen(path, "r");
-            if (!file)
+            using namespace std;
+
+            auto file = make_unique_file(fopen(path, "r"));
+           // FILE *file = fopen(path, "r");
+            if (!file.get())
                 return 0;
 
             char buffer[1024];
             std::vector<char> bytes;
             size_t readen = 0;
-            while (!ferror(file) && !feof(file)) {
-                readen = fread(buffer, 1, sizeof(buffer), file);
+            while (!ferror(file.get()) && !feof(file.get())) {
+                readen = fread(buffer, 1, sizeof(buffer), file.get());
                 if (readen > 0) {
                     bytes.insert(bytes.end(), buffer, buffer + readen);
                 }
@@ -124,7 +186,7 @@ namespace collections {
                 }
             }
             bytes.push_back(0);
-            fclose(file);
+            //fclose(file);
 
             return cJSON_Parse(&bytes[0]);
         }
@@ -175,11 +237,11 @@ namespace collections {
         }
 
 
-        static cJSON * createCJSON(collection_base & collection) {
+        static cJSON * createCJSON(object_base & collection) {
             return createCJSONNode(Item(&collection));
         }
 
-        static char * createJSONData(collection_base & collection) {
+        static char * createJSONData(object_base & collection) {
             auto node = createCJSONNode(Item(&collection));
             char *data = cJSON_Print(node);
             cJSON_Delete(node);

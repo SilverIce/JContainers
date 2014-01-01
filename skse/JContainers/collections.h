@@ -29,8 +29,8 @@ class T_Base;
 
 namespace collections {
 
-    typedef std::lock_guard<std::mutex> mutex_lock;
-    using std::mutex;
+    typedef std::mutex collection_mutex;
+    typedef std::lock_guard<collection_mutex> mutex_lock;
 
     typedef boost::shared_mutex bshared_mutex;
     typedef boost::lock_guard<bshared_mutex> write_lock;
@@ -42,7 +42,7 @@ namespace collections {
         HandleNull = 0,
     };
 
-    class collection_base;
+    class object_base;
 
     enum CollectionType
     {
@@ -53,18 +53,29 @@ namespace collections {
 
     class collection_registry
     {
-        std::map<HandleT, collection_base *> _map;
+    private:
+
+        friend class shared_state;
+
+        typedef std::map<HandleT, object_base *> registry_container;
+
+        std::map<HandleT, object_base *> _map;
         id_generator<HandleT> _idGen;
         bshared_mutex& _mutex;
+        int objectsCreated;
+        int objectDestroyed;
 
         collection_registry(const collection_registry& );
         collection_registry& operator = (const collection_registry& );
-
+         
     public:
 
-        collection_registry(bshared_mutex &mt) : _mutex(mt) {}
+        explicit collection_registry(bshared_mutex &mt)
+            : _mutex(mt)
+        {
+        }
 
-        static Handle registerObject(collection_base *collection);
+        static Handle registerObject(object_base *collection);
 
         static void removeObject(HandleT hdl) {
             if (!hdl) {
@@ -73,11 +84,13 @@ namespace collections {
             
             collection_registry& me = instance();
             write_lock g(me._mutex);
-            me._map.erase(hdl);
+            auto itr = me._map.find(hdl);
+            assert(itr != me._map.end());
+            me._map.erase(itr);
             me._idGen.reuseId(hdl);
         }
 
-        static collection_base *getObject(HandleT hdl) {
+        static object_base *getObject(HandleT hdl) {
             if (!hdl) {
                 return nullptr;
             }
@@ -111,16 +124,16 @@ namespace collections {
         }
     };
 
-    class collection_base
+    class object_base
     {
         int32_t _refCount;
 
     public:
 
-        virtual ~collection_base() {}
+        virtual ~object_base() {}
 
     public:
-        std::mutex _mutex;
+        collection_mutex _mutex;
         union {
             Handle id;
             UInt32 _id;
@@ -128,14 +141,14 @@ namespace collections {
 
         CollectionType _type;
 
-        explicit collection_base(CollectionType type)
+        explicit object_base(CollectionType type)
             : _refCount(1)
             , id(HandleNull)
             , _type(type)
         {
         }
 
-        collection_base()
+        object_base()
             : _refCount(0)
             , _id(0)
             , _type(CollectionTypeNone)
@@ -154,20 +167,22 @@ namespace collections {
             return T::TypeId == _type ? static_cast<T*>(this) : nullptr;
         }
 
-        collection_base * retain() {
+        object_base * retain() {
             mutex_lock g(_mutex);
             ++_refCount;
             return this;
         }
 
-        collection_base * autorelease();
+        object_base * autorelease();
 
         void release() {
             _mutex.lock();
             --_refCount;
             if (_refCount == 0) {
-                collection_registry::removeObject(id);
+                auto myId = id;
                 _mutex.unlock();
+
+                collection_registry::removeObject(myId);
                 delete this;
             } else {
                 _mutex.unlock();
@@ -184,7 +199,7 @@ namespace collections {
         }
     };
 
-    Handle collection_registry::registerObject(collection_base *collection) {
+    Handle collection_registry::registerObject(object_base *collection) {
         if (collection->registered()) {
             return collection->id;
         }
@@ -235,11 +250,11 @@ namespace collections {
     };
 
     template<class T>
-    class collection_base_T : public collection_base
+    class collection_base_T : public object_base
     {
     protected:
 
-        collection_base_T() : collection_base((CollectionType)T::TypeId) {}
+        collection_base_T() : object_base((CollectionType)T::TypeId) {}
 
     public:
 
@@ -306,7 +321,7 @@ namespace collections {
             SInt32 _intVal;
             Float32 _floatVal;
             StringMem *_stringVal;
-            collection_base *_object;
+            object_base *_object;
             array *_array;
             map* _map;
         };
@@ -330,7 +345,7 @@ namespace collections {
             setStringVal(str.data);
         }
 
-        explicit Item(collection_base *collection) : _stringVal(NULL), _type(ItemTypeNone) {
+        explicit Item(object_base *collection) : _stringVal(NULL), _type(ItemTypeNone) {
             setObjectVal(collection);
         }
 
@@ -456,7 +471,7 @@ namespace collections {
             }
         }
 
-        void setObjectVal(collection_base *obj) {
+        void setObjectVal(object_base *obj) {
             if (objValue() == obj)
                 return;
 
@@ -464,7 +479,7 @@ namespace collections {
         }
 
         bool _freeObject() {
-            collection_base *prev = objValue();
+            object_base *prev = objValue();
             if (prev) {
                 prev->release();
                 _object = nullptr;
@@ -484,7 +499,7 @@ namespace collections {
             return false;
         }
 
-        void _replaceObject(collection_base *obj) {
+        void _replaceObject(object_base *obj) {
             if (!_freeObject())
                 _freeString();
 
@@ -566,7 +581,7 @@ namespace collections {
             return _type == ItemTypeNone;
         }
 
-        collection_base *objValue() const {
+        object_base *objValue() const {
             return (_type == ItemTypeObject) ? _object : nullptr;
         }
 
@@ -637,32 +652,23 @@ namespace collections {
 
         //////////////////////////////////////////////////////////////////////////
 
-   
-        //////////////////////////////////////////////////////////////////////////
-
         template<class Archive>
         void serialize(Archive & ar, const unsigned int version) {
-            mutex_lock g(_mutex);
-            ar & boost::serialization::base_object<collection_base>(*this);
+            ar & boost::serialization::base_object<object_base>(*this);
             ar & _array;
         }
-
-
     };
 
     class map : public collection_base_T< map >
     {
     public:
-
-        enum 
-        {
+        enum  {
             TypeId = CollectionTypeMap,
         };
 
         typedef const char * Key;
 
         std::map<std::string, Item> cnt;
-
 
         Item& operator[](const std::string& str) {
             mutex_lock g(_mutex);
@@ -673,13 +679,11 @@ namespace collections {
             cnt.clear();
         }
 
-
         //////////////////////////////////////////////////////////////////////////
 
         template<class Archive>
         void serialize(Archive & ar, const unsigned int version) {
-            mutex_lock g(_mutex);
-            ar & boost::serialization::base_object<collection_base>(*this);
+            ar & boost::serialization::base_object<object_base>(*this);
             ar & cnt;
         }
     };

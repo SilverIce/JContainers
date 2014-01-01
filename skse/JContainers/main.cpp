@@ -3,6 +3,7 @@
 #include <ShlObj.h>
 
 #include "collections.h"
+#include "skse/SafeWrite.h"
 
 
 PluginHandle	g_pluginHandle = kPluginHandle_Invalid;
@@ -10,6 +11,7 @@ PluginHandle	g_pluginHandle = kPluginHandle_Invalid;
 SKSEScaleformInterface		* g_scaleform = NULL;
 SKSESerializationInterface	* g_serialization = NULL;
 SKSEPapyrusInterface        * g_papyrus = NULL;
+
 
 /**** serialization ****/
 
@@ -82,15 +84,13 @@ extern "C"
 
 bool SKSEPlugin_Query(const SKSEInterface * skse, PluginInfo * info)
 {
-    gLog.OpenRelative(CSIDL_MYDOCUMENTS, "\\My Games\\Skyrim\\SKSE\\data_structures.log");
+    gLog.OpenRelative(CSIDL_MYDOCUMENTS, "\\My Games\\Skyrim\\SKSE\\JContainers.log");
     gLog.SetPrintLevel(IDebugLog::kLevel_Error);
     gLog.SetLogLevel(IDebugLog::kLevel_DebugMessage);
 
-	_MESSAGE("skse_collections ololo");
-
 	// populate info structure
 	info->infoVersion =	PluginInfo::kInfoVersion;
-	info->name =		"skse collections";
+	info->name =		"JContainers";
 	info->version =		1;
 
 	// store plugin handle so we can identify ourselves later
@@ -108,15 +108,6 @@ bool SKSEPlugin_Query(const SKSEInterface * skse, PluginInfo * info)
 
 		return false;
 	}
-
-    g_papyrus = (SKSEPapyrusInterface *)skse->QueryInterface(kInterface_Papyrus);
-    if (!g_papyrus)
-    {
-        _MESSAGE("couldn't get g_papyrus interface");
-
-        return false;
-    }
-
    
 	// get the serialization interface and query its version
 	g_serialization = (SKSESerializationInterface *)skse->QueryInterface(kInterface_Serialization);
@@ -125,16 +116,33 @@ bool SKSEPlugin_Query(const SKSEInterface * skse, PluginInfo * info)
 		return false;
 	}
 
-	if(g_serialization->version < SKSESerializationInterface::kVersion) {
+	if (g_serialization->version < SKSESerializationInterface::kVersion) {
 		_MESSAGE("serialization interface too old (%d expected %d)", g_serialization->version, SKSESerializationInterface::kVersion);
 		return false;
 	}
-    
+
+/*
+    g_papyrus = (SKSEPapyrusInterface *)skse->QueryInterface(kInterface_Papyrus);
+    if (!g_papyrus)
+    {
+        _MESSAGE("couldn't get g_papyrus interface");
+
+        return false;
+    }*/
+
 	// ### do not do anything else in this callback
 	// ### only fill out PluginInfo and return true/false
 
 	// supported runtime version
 	return true;
+}
+
+void registerFuncs(VMClassRegistry **registryPtr) {
+    VMClassRegistry *registry =*registryPtr;
+
+    collections::tes_array::registerFuncs(registry);
+    collections::tes_map::registerFuncs(registry);
+    collections::tes_object::registerFuncs(registry);
 }
 
 bool SKSEPlugin_Load(const SKSEInterface * skse)
@@ -149,9 +157,21 @@ bool SKSEPlugin_Load(const SKSEInterface * skse)
 	g_serialization->SetSaveCallback(g_pluginHandle, Serialization_Save);
 	g_serialization->SetLoadCallback(g_pluginHandle, Serialization_Load);
 
+    WriteRelCall(0x8F99B4u, (UInt32)registerFuncs);
+
+/*
     g_papyrus->Register(collections::tes_object::registerFuncs);
     g_papyrus->Register(collections::tes_array::registerFuncs);
     g_papyrus->Register(collections::tes_map::registerFuncs);
+*/
+
+
+/*
+    VMClassRegistry		* registry =	(*g_skyrimVM)->GetClassRegistry();
+    collections::tes_array::registerFuncs(registry);
+    collections::tes_map::registerFuncs(registry);
+    collections::tes_object::registerFuncs(registry);
+*/
 
 	return true;
 }
@@ -159,12 +179,11 @@ bool SKSEPlugin_Load(const SKSEInterface * skse)
 };
 
 
-
 int main(int argc, char** argv) {
 
     collections::tes_array::registerFuncs(NULL);
     collections::tes_map::registerFuncs(NULL);
-     collections::tes_object::registerFuncs(NULL);
+    collections::tes_object::registerFuncs(NULL);
 
     testing::runTests(meta<testing::TestInfo>::getListConst());
 

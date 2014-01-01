@@ -57,14 +57,22 @@ namespace collections {
             vector<char> buffer;
             boost::iostreams::back_insert_device<decltype(buffer) > device(buffer);
             boost::iostreams::stream<decltype(device)> stream(device);
-
-            // std::ofstream fstr("abjkbjklXCBjk");
-
-            write_lock g(_mutex);
-
             boost::archive::binary_oarchive arch(stream);
-            arch << registry;
-            arch << aqueue;
+
+            {
+                read_lock g(_mutex);
+
+                for (auto pair : registry._map) {
+                    pair.second->_mutex.lock();
+                }
+
+                arch << registry;
+                arch << aqueue;
+
+                for (auto pair : registry._map) {
+                    pair.second->_mutex.unlock();
+                }
+            }
 
             _DMESSAGE("%u bytes saved", buffer.size());
 

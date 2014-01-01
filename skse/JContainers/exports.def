@@ -1,4 +1,4 @@
-LIBRARY	"data_structures"
+LIBRARY	"JContainers"
 EXPORTS
 SKSEPlugin_Query
 SKSEPlugin_Load

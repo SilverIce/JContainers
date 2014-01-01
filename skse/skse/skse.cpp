@@ -71,11 +71,11 @@ void SKSE_Initialize(void)
 #endif
 		_MESSAGE("imagebase = %08X", GetModuleHandle(NULL));
 
-#ifdef _DEBUG
+//#ifdef _DEBUG
 		SetPriorityClass(GetCurrentProcess(), IDLE_PRIORITY_CLASS);
 
 		WaitForDebugger();
-#endif
+//#endif
 
 //		Commands_Dump();
 
