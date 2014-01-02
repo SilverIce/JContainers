@@ -1,10 +1,5 @@
 #pragma once
 
-#include "skse/PapyrusVM.h"
-#include "skse/PapyrusNativeFunctions.h"
-#include "collections.h"
-#include "autorelease_queue.h"
-#include <boost/algorithm/string.hpp>
 
 #define MESSAGE(...) // _DMESSAGE(__VA_ARGS__);
 
@@ -107,6 +102,18 @@ namespace collections {
             });
 
             return typename Tes2Value<T>::tes_type(val);
+        }
+
+        static bool hasPath(StaticFunctionTag*, HandleT handle, BSFixedString path) {
+            auto obj = collection_registry::getObject(handle);
+            if (!obj) return false;
+
+            bool succeed = false;
+            json_parsing::resolvePath(obj, path.data, [&](Item* itmPtr) {
+                succeed = (itmPtr != nullptr);
+            });
+
+            return succeed;
         }
 
         template<class T>
@@ -284,6 +291,16 @@ namespace collections {
             }
         }
 
+        static void eraseIndex(StaticFunctionTag*, HandleT handle, SInt32 index) {
+            auto obj = find(handle);
+            if (obj) {
+                mutex_lock g(obj->_mutex);
+                if (index >= 0 && index < obj->_array.size()) {
+                    obj->_array.erase(obj->_array.begin() + index);
+                }
+            }
+        }
+
         static bool registerFuncs(VMClassRegistry* registry) {
 
             MESSAGE("register array funcs");
@@ -309,6 +326,7 @@ namespace collections {
             REGISTER2("valAtIndex", itemAtIndex<Handle>, 2, HandleT, HandleT, Index);
 
             REGISTER2("clear", clear, 1, void, HandleT);
+            REGISTER(eraseIndex, 2, void, HandleT, SInt32);
 
             MESSAGE("funcs registered");
 
@@ -430,12 +448,12 @@ namespace collections {
         
         template<class T>
         static typename Tes2Value<T>::tes_type resolveT(StaticFunctionTag* tag, BSFixedString path) {
-            return  tes_map::resolveT<T>(tag, shared_state::instance().databaseId, path); 
+            return  tes_map::resolveT<T>(tag, shared_state::instance().databaseId(), path); 
         }
 
         template<class T>
         static bool solveT(StaticFunctionTag*, BSFixedString path, typename Tes2Value<T>::tes_type value) { 
-            auto obj = collection_registry::getObject(shared_state::instance().databaseId);
+            auto obj = collection_registry::getObject(shared_state::instance().databaseId());
             if (!obj) return false;
 
             bool succeed = false;
@@ -447,6 +465,27 @@ namespace collections {
             });
 
             return succeed;
+        }
+
+        static void setValue(StaticFunctionTag*tag, BSFixedString path, HandleT obj) {
+            if (obj) {
+                tes_map::setItem<Handle>(tag, shared_state::instance().databaseId(), path, obj);
+            } else {
+                tes_map::removeKey(tag, shared_state::instance().databaseId(), path);
+            }
+        }
+
+        static bool hasPath(StaticFunctionTag*tag, BSFixedString path) {
+            return tes_object::hasPath(tag, shared_state::instance().databaseId(), path);
+        }
+
+        static void writeToFile(StaticFunctionTag* tag, BSFixedString path) {
+            tes_object::writeToFile(tag, shared_state::instance().databaseId(), path);
+        }
+
+        static void readFromFile(StaticFunctionTag* tag, BSFixedString path) {
+            auto objNew = json_parsing::readJSONFile(path.data);
+            shared_state::instance().setDataBase(objNew);
         }
 
         static bool registerFuncs(VMClassRegistry* registry) {
@@ -461,8 +500,22 @@ namespace collections {
             REGISTER2("getStr", resolveT<BSFixedString>, 1, BSFixedString, BSFixedString);
             REGISTER2("getVal", resolveT<Handle>, 1, HandleT, BSFixedString);
 
+            REGISTER(setValue, 2, void, BSFixedString, HandleT);
+            REGISTER(hasPath, 1, bool, BSFixedString);
+
+            REGISTER(writeToFile, 1, void, BSFixedString);
+            REGISTER(readFromFile, 1, void, BSFixedString);
 
             return true;
         }
+    }
+
+    void registerFuncs(VMClassRegistry **registryPtr) {
+        VMClassRegistry *registry =*registryPtr;
+
+        collections::tes_array::registerFuncs(registry);
+        collections::tes_map::registerFuncs(registry);
+        collections::tes_object::registerFuncs(registry);
+        collections::tes_db::registerFuncs(registry);
     }
 }

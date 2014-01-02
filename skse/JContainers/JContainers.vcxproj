@@ -98,7 +98,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <Optimization>Disabled</Optimization>
+      <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <AdditionalIncludeDirectories>I:\dev\boost\boost_1_53_0;$(SolutionDir);$(SolutionDir)\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;NDEBUG;_WINDOWS;_USRDLL;PLUGIN_EXAMPLE_EXPORTS;_PPAPI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -166,6 +166,7 @@
     <ClCompile Include="cJSON.cpp" />
     <ClCompile Include="gtest.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="serialization.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\skse\GameAPI.h" />

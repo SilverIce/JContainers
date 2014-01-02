@@ -2,7 +2,18 @@
 #include "skse/skse_version.h"
 #include <ShlObj.h>
 
+#include "skse/PapyrusVM.h"
+#include "skse/PapyrusNativeFunctions.h"
+
+#include <boost/algorithm/string.hpp>
+
 #include "collections.h"
+#include "collections.from_json.h"
+#include "autorelease_queue.h"
+#include "shared_state.h"
+#include "collections.tesregistration.hpp"
+#include "collections.tests.hpp"
+
 #include "skse/SafeWrite.h"
 
 
@@ -121,19 +132,9 @@ bool SKSEPlugin_Query(const SKSEInterface * skse, PluginInfo * info)
 	return true;
 }
 
-void registerFuncs(VMClassRegistry **registryPtr) {
-    VMClassRegistry *registry =*registryPtr;
-
-    collections::tes_array::registerFuncs(registry);
-    collections::tes_map::registerFuncs(registry);
-    collections::tes_object::registerFuncs(registry);
-    collections::tes_db::registerFuncs(registry);
-}
-
 bool SKSEPlugin_Load(const SKSEInterface * skse)
 {
     _MESSAGE("load");
-        _MESSAGE("it avile!");
 
 	// register callbacks and unique ID for serialization
 	// ### this must be a UNIQUE ID, change this and email me the ID so I can let you know if someone else has already taken it
@@ -143,32 +144,18 @@ bool SKSEPlugin_Load(const SKSEInterface * skse)
 	g_serialization->SetSaveCallback(g_pluginHandle, Serialization_Save);
 	g_serialization->SetLoadCallback(g_pluginHandle, Serialization_Load);
 
-    WriteRelCall(0x8F99B4u, (UInt32)registerFuncs);
-
-/*
-    g_papyrus->Register(collections::tes_object::registerFuncs);
-    g_papyrus->Register(collections::tes_array::registerFuncs);
-    g_papyrus->Register(collections::tes_map::registerFuncs);
-*/
+    WriteRelCall(0x8F99B4u, (UInt32)collections::registerFuncs);
 
 	return true;
 }
 
 __declspec(dllexport) void launchShityTest() {
-     testing::runTests(meta<testing::TestInfo>::getListConst());
+    VMClassRegistry *reg = nullptr;
+    collections::registerFuncs(&reg);
+
+    testing::runTests(meta<testing::TestInfo>::getListConst());
 }
 
 };
 
-
-int main(int argc, char** argv) {
-
-    collections::tes_array::registerFuncs(NULL);
-    collections::tes_map::registerFuncs(NULL);
-    collections::tes_object::registerFuncs(NULL);
-
-    testing::runTests(meta<testing::TestInfo>::getListConst());
-
-    return 0;
-}
 

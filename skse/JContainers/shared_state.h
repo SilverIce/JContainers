@@ -1,20 +1,5 @@
 #pragma once
 
-#include <boost/serialization/serialization.hpp>
-#include <boost/archive/binary_oarchive.hpp>
-#include <boost/archive/xml_oarchive.hpp>
-#include <boost/archive/binary_iarchive.hpp>
-
-//#include <sstream>
-//#include <memory>
-
-#include <boost/iostreams/device/array.hpp>
-#include <boost/iostreams/stream.hpp>
-#include <boost/iostreams/device/back_inserter.hpp>
-
-#include <fstream>
-#include <sstream>
-
 namespace collections {
     // static unsigned long create(StaticFunctionTag *) {
 
@@ -24,82 +9,61 @@ namespace collections {
         shared_state()
             : registry(_mutex)
             , aqueue(_mutex)
-            , databaseId(0)
+            , _databaseId(0)
         {
         }
 
     public:
         collection_registry registry;
         autorelease_queue aqueue;
-        HandleT databaseId;
+        HandleT _databaseId;
 
         static shared_state& instance() {
             static shared_state st;
             return st;
         }
 
-  /*      map* database() {
-            auto db = registry.getObject(databaseId);
-            return db;
-        }*/
-
-        void loadAll(const vector<char> &data) {
-
-            _DMESSAGE("%u bytes loaded", data.size());
-
-            typedef boost::iostreams::basic_array_source<char> Device;
-            boost::iostreams::stream_buffer<Device> buffer(data.data(), data.size());
-            boost::archive::binary_iarchive archive(buffer);
-
-            {
-                write_lock g(_mutex);
-
-                registry._clear();
-                aqueue._clear();
-
-                archive >> registry;
-                archive >> aqueue;
-                archive >> databaseId;
-            }
+        HandleT databaseId() {
+            read_lock r(_mutex);
+            return _databaseId;
         }
+
+        void setDataBaseId(HandleT hdl) {
+            setDataBase(registry.getObject(hdl));
+        }
+
+        void setDataBase(object_base *db) {
+            auto prev = registry.getObject(databaseId());
+            if (prev == db) {
+                return;
+            }
+
+            if (prev) {
+                prev->release(); // may cause deadlock in removeObject
+            }
+
+            if (db) {
+                db->retain();
+            }
+
+            write_lock g(_mutex);
+            _databaseId = db ? db->id : 0;
+        }
+
+        void loadAll(const vector<char> &data);
 
         void setupForFirstTime() {
-            databaseId = map::create()->id;
+            setDataBase(map::object());
         }
 
-        vector<char> saveToArray() {
-            vector<char> buffer;
-            boost::iostreams::back_insert_device<decltype(buffer) > device(buffer);
-            boost::iostreams::stream<decltype(device)> stream(device);
-            boost::archive::binary_oarchive arch(stream);
-
-            {
-                read_lock g(_mutex);
-
-                for (auto pair : registry._map) {
-                    pair.second->_mutex.lock();
-                }
-
-                arch << registry;
-                arch << aqueue;
-                arch << databaseId;
-
-                for (auto pair : registry._map) {
-                    pair.second->_mutex.unlock();
-                }
-            }
-
-            _DMESSAGE("%u bytes saved", buffer.size());
-
-            return buffer;
-        }
+        vector<char> saveToArray();
     };
 
-    autorelease_queue& autorelease_queue::instance() {
+    inline autorelease_queue& autorelease_queue::instance() {
         return shared_state::instance().aqueue;
     }
 
-    collection_registry& collection_registry::instance() {
+    inline collection_registry& collection_registry::instance() {
         return shared_state::instance().registry;
     }
 }

@@ -5,7 +5,7 @@
 
 namespace collections {
 
-    std::unique_ptr<FILE, decltype(&fclose)> make_unique_file(FILE *file) {
+    inline std::unique_ptr<FILE, decltype(&fclose)> make_unique_file(FILE *file) {
         return std::unique_ptr<FILE, decltype(&fclose)> (file, &fclose);
     }
 

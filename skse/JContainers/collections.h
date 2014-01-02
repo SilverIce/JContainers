@@ -12,8 +12,6 @@
 #include <assert.h>
 #include <atomic>
 
-#include <boost/serialization/vector.hpp>
-#include <boost/serialization/map.hpp>
 #include <boost/serialization/split_member.hpp>
 
 #include <mutex>
@@ -54,9 +52,6 @@ namespace collections {
     class collection_registry
     {
     private:
-
-         
-       // template<class T> friend void serialize(T & ar, collection_registry& reg, const unsigned int version);
 
         friend class shared_state;
 
@@ -118,13 +113,7 @@ namespace collections {
         void _clear();
 
         template<class Archive>
-        void serialize(Archive & ar, const unsigned int version) {
-            ar.register_type(static_cast<array *>(NULL));
-            ar.register_type(static_cast<map *>(NULL));
-
-            ar & _map;
-            ar & _idGen;
-        }
+        void serialize(Archive & ar, const unsigned int version);
     };
 
     class object_base
@@ -195,14 +184,10 @@ namespace collections {
         virtual void clear() = 0;
 
         template<class Archive>
-        void serialize(Archive & ar, const unsigned int version) {
-            ar & _refCount;
-            ar & _type;
-            ar & _id;
-        }
+        void serialize(Archive & ar, const unsigned int version);
     };
 
-    Handle collection_registry::registerObject(object_base *collection) {
+    inline Handle collection_registry::registerObject(object_base *collection) {
         if (collection->registered()) {
             return collection->id;
         }
@@ -216,7 +201,7 @@ namespace collections {
         return (Handle)newId;
     }
 
-    void collection_registry::_clear() {
+    inline void collection_registry::_clear() {
         /*  Not good, but working solution.
 
             issue: deadlock during loading savegame - e.g. cleaning current state.
@@ -376,66 +361,9 @@ namespace collections {
         BOOST_SERIALIZATION_SPLIT_MEMBER();
 
         template<class Archive>
-        void save(Archive & ar, const unsigned int version) const {
-            ar.register_type(static_cast<array *>(NULL));
-            ar.register_type(static_cast<map *>(NULL));
-
-            ar & _type;
-            switch (_type)
-            {
-            case ItemTypeNone:
-                break;
-            case ItemTypeInt32:
-                ar & _intVal;
-                break;
-            case ItemTypeFloat32:
-                ar & _floatVal;
-                break;
-            case ItemTypeCString: 
-                ar & std::string(strValue() ? _stringVal->string : "");
-                break;
-            case ItemTypeObject:
-                ar & _object;
-                break;
-            default:
-                break;
-            }
-        }
-
+        void save(Archive & ar, const unsigned int version) const;
         template<class Archive>
-        void load(Archive & ar, const unsigned int version)
-        {
-            ar.register_type(static_cast<array *>(NULL));
-            ar.register_type(static_cast<map *>(NULL));
-
-            ar & _type;
-            switch (_type)
-            {
-            case ItemTypeNone:
-                break;
-            case ItemTypeInt32:
-                ar & _intVal;
-                break;
-            case ItemTypeFloat32:
-                ar & _floatVal;
-                break;
-            case ItemTypeCString:
-            {
-                std::string string;
-                ar & string;
-
-                if (!string.empty()) {
-                    _stringVal = StringMem::allocWithString(string.c_str());
-                }
-                break;
-            }
-            case ItemTypeObject:
-                ar & _object;
-                break;
-            default:
-                break;
-            }
-        }
+        void load(Archive & ar, const unsigned int version);
 
         void setFlt(float val) {
             _freeObject();
@@ -679,10 +607,7 @@ namespace collections {
         //////////////////////////////////////////////////////////////////////////
 
         template<class Archive>
-        void serialize(Archive & ar, const unsigned int version) {
-            ar & boost::serialization::base_object<object_base>(*this);
-            ar & _array;
-        }
+        void serialize(Archive & ar, const unsigned int version);
     };
 
     class map : public collection_base_T< map >
@@ -708,21 +633,13 @@ namespace collections {
         //////////////////////////////////////////////////////////////////////////
 
         template<class Archive>
-        void serialize(Archive & ar, const unsigned int version) {
-            ar & boost::serialization::base_object<object_base>(*this);
-            ar & cnt;
-        }
+        void serialize(Archive & ar, const unsigned int version);
     };
 
 }
 
 
-#include "collections.from_json.h"
-#include "autorelease_queue.h"
-#include "shared_state.h"
-#include "collections.tesregistration.hpp"
 
-#include "collections.tests.hpp"
 
 
 

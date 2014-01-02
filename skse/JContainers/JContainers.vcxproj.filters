@@ -24,6 +24,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="gtest.cpp" />
     <ClCompile Include="cJSON.cpp" />
+    <ClCompile Include="serialization.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\skse\GameAPI.h">

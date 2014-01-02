@@ -149,7 +149,7 @@ namespace collections {
     };
 
 
-    object_base * object_base::autorelease() {
+    inline object_base * object_base::autorelease() {
         autorelease_queue::instance().push(id);
         return this;
     }

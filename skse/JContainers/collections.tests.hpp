@@ -1,13 +1,6 @@
 #pragma once
 
-#include "collections.h"
-
 #include "gtest.h"
-
-
-#include <boost/serialization/serialization.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/archive/text_iarchive.hpp>
 
 #include <sstream>
 #include <memory>
@@ -16,51 +9,6 @@
 
 namespace collections {
     // static unsigned long create(StaticFunctionTag *) {
-
-
-    TEST(Item, serialization)
-    {
-        std::ostringstream str;
-        ::boost::archive::text_oarchive arch(str);
-
-        const char *testStr = "hey, babe!";
-
-        auto ar = new array;
-        ar->push(Item(testStr));
-
-        {
-            arch << Item(3);
-            arch << Item(3.5);
-            arch << Item(testStr);
-
-            map obj;
-            obj["tttt"] = Item(testStr);
-            obj["array"] = Item(ar);
-
-            arch << obj;
-        }
-        ar->release();
-
-        // reading
-        std::string string = str.str();
-        std::istringstream istr(string);
-        boost::archive::text_iarchive ia(istr);
-
-        Item item;
-        ia >> item;
-        EXPECT_TRUE(item.intValue() == 3);
-        ia >> item;
-        EXPECT_TRUE(item.fltValue() == 3.5);
-
-        ia >> item;
-        EXPECT_TRUE(strcmp(item.strValue(),testStr) == 0);
-
-        map obj;
-        ia >> obj;
-
-        EXPECT_TRUE(obj.cnt.size() == 2);
-        //EXPECT_TRUE(strcmp(obj["array"].strValue(), testStr) == 0);
-    }
 
     TEST(object_base, refCount)
     {
@@ -88,30 +36,6 @@ namespace collections {
         EXPECT_TRUE(queue.count() == 0);
     }
 
-    TEST(autorelease_queue, serialization)
-    {
-        bshared_mutex mt;
-        autorelease_queue queue(mt);
-      //  queue.start();
-        queue.push(10);
-        queue.push(20);
-
-        std::ostringstream str;
-        ::boost::archive::text_oarchive arch(str);
-        arch << queue;
-
-        bshared_mutex mt2;
-        autorelease_queue queue2(mt2);
-        // reading
-        std::string string = str.str();
-        std::istringstream istr(string);
-        boost::archive::text_iarchive ia(istr);
-
-        ia >> queue2;
-
-        EXPECT_TRUE(queue.count() == queue2.count());
-        ;
-    }
 
 #define STR(...)    #__VA_ARGS__
 
@@ -138,7 +62,9 @@ namespace collections {
                                 }
                         }
                 }
-            }
+            },
+
+            "array": [["NPC Head [Head]", 0, -0.330000]]
         }
 
             );
@@ -157,9 +83,13 @@ namespace collections {
             EXPECT_TRUE(item && strcmp(item->strValue(), "S") == 0 );
         });
 
+        json_parsing::resolvePath(obj, ".array[0][0]", [&](Item * item) {
+            EXPECT_TRUE(item && strcmp(item->strValue(), "NPC Head [Head]") == 0 );
+        });
+
         float floatVal = 10.5;
         json_parsing::resolvePath(obj, ".glossary.GlossDiv.title", [&](Item * item) {
-            EXPECT_TRUE(item);
+            EXPECT_TRUE(item != nullptr);
             item->setFlt(floatVal);
         });
 
