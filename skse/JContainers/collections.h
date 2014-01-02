@@ -213,13 +213,13 @@ namespace collections {
 
             all we need is just free the memory but this will require track allocated collection & stl memory blocks 
         */
-        for (auto pair : _map) {
+        for (auto& pair : _map) {
             pair.second->retain(); // to guarant that removeObject will not be called during clear method call
         }
-        for (auto pair : _map) {
+        for (auto& pair : _map) {
             pair.second->clear(); // to force ~Item() calls while all collections alive (~Item() may release collection)
         }
-        for (auto pair : _map) {
+        for (auto& pair : _map) {
             delete pair.second;
         }
         _map.clear();

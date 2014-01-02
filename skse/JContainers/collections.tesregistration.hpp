@@ -510,12 +510,17 @@ namespace collections {
         }
     }
 
-    void registerFuncs(VMClassRegistry **registryPtr) {
-        VMClassRegistry *registry =*registryPtr;
 
+    bool registerFuncs(VMClassRegistry *registry) {
         collections::tes_array::registerFuncs(registry);
         collections::tes_map::registerFuncs(registry);
         collections::tes_object::registerFuncs(registry);
         collections::tes_db::registerFuncs(registry);
+
+        return true;
+    }
+
+    void registerFuncsHook(VMClassRegistry **registryPtr) {
+        registerFuncs(*registryPtr);
     }
 }

@@ -144,14 +144,14 @@ bool SKSEPlugin_Load(const SKSEInterface * skse)
 	g_serialization->SetSaveCallback(g_pluginHandle, Serialization_Save);
 	g_serialization->SetLoadCallback(g_pluginHandle, Serialization_Load);
 
-    WriteRelCall(0x8F99B4u, (UInt32)collections::registerFuncs);
+    g_papyrus->Register(collections::registerFuncs);
+    //WriteRelCall(0x8F99B4u, (UInt32)collections::registerFuncsHook);
 
 	return true;
 }
 
 __declspec(dllexport) void launchShityTest() {
-    VMClassRegistry *reg = nullptr;
-    collections::registerFuncs(&reg);
+    collections::registerFuncs(nullptr);
 
     testing::runTests(meta<testing::TestInfo>::getListConst());
 }

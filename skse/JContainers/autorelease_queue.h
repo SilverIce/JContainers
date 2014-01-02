@@ -132,7 +132,7 @@ namespace collections {
                     self.cycleIncr();
                 }
 
-                for(auto val : toRelease) {
+                for(auto& val : toRelease) {
                     printf("handle %u released\n", val);
                     auto obj = collection_registry::getObject(val);
                     if (obj)

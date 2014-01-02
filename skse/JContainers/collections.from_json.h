@@ -261,13 +261,13 @@ namespace collections {
                 if (obj->as<array>()) {
                     val = cJSON_CreateArray();
                     array *ar = obj->as<array>();
-                    for (auto itm : ar->_array) {
+                    for (auto& itm : ar->_array) {
                         cJSON_AddItemToArray(val, createCJSONNode(itm));
                     }
 
                 } else if (obj->as<map>()) {
                     val = cJSON_CreateObject();
-                    for (auto pair : obj->as<map>()->cnt) {
+                    for (auto& pair : obj->as<map>()->cnt) {
                         cJSON_AddItemToObject(val, pair.first.c_str(), createCJSONNode(pair.second));
                     }
                 }
