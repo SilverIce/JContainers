@@ -116,14 +116,13 @@ bool SKSEPlugin_Query(const SKSEInterface * skse, PluginInfo * info)
 		return false;
 	}
 
-/*
     g_papyrus = (SKSEPapyrusInterface *)skse->QueryInterface(kInterface_Papyrus);
     if (!g_papyrus)
     {
         _MESSAGE("couldn't get g_papyrus interface");
 
         return false;
-    }*/
+    }
 
 	// ### do not do anything else in this callback
 	// ### only fill out PluginInfo and return true/false
