@@ -20,6 +20,14 @@ namespace collections {
         obj->release();
         EXPECT_TRUE(obj->refCount() == 1);
 
+        obj->tes_retain();
+        obj->tes_retain();
+        EXPECT_TRUE(obj->refCount() == 1 + 2);
+        for (int i = 0; i < 20 ; i++) {
+        	obj->tes_release();
+        }
+        EXPECT_TRUE(obj->refCount() == 1);
+
         obj->release();
     }
 

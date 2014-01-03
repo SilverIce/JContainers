@@ -11,6 +11,7 @@ namespace collections {
             , aqueue(_mutex)
             , _databaseId(0)
         {
+            setupForFirstTime();
         }
 
     public:
@@ -49,6 +50,8 @@ namespace collections {
             write_lock g(_mutex);
             _databaseId = db ? db->id : 0;
         }
+
+        void clearState();
 
         void loadAll(const vector<char> &data);
 

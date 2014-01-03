@@ -43,6 +43,7 @@
     <ClInclude Include="cJSON.h" />
     <ClInclude Include="id_generator.h" />
     <ClInclude Include="shared_state.h" />
+    <ClInclude Include="shared_state.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="exports.def" />

@@ -12,7 +12,7 @@ namespace collections {
             MESSAGE(__FUNCTION__);
             auto obj = collection_registry::getObject(handle);
             if (obj) {
-                obj->retain();
+                obj->tes_retain();
                 return handle;
             }
 
@@ -41,7 +41,7 @@ namespace collections {
             MESSAGE(__FUNCTION__);
             object_base *obj = collection_registry::getObject(handle);
             if (obj) {
-                obj->release();
+                obj->tes_release();
             }
         }
 
@@ -299,6 +299,19 @@ namespace collections {
                     obj->_array.erase(obj->_array.begin() + index);
                 }
             }
+        }
+
+        template<class T>
+        static HandleT fromArray(StaticFunctionTag*, VMArray<T> arr) {
+            auto obj = array::objectWithInitializer([](array *me) {
+                for (UInt32 i = 0; i < arr->Length(); ++i) {
+                    T val;
+                    arr.Get(&val, i);
+                    me->_array.push_back(Item(val));
+                }
+            });
+
+            return obj;
         }
 
         static bool registerFuncs(VMClassRegistry* registry) {

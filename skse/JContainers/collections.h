@@ -119,6 +119,7 @@ namespace collections {
     class object_base
     {
         int32_t _refCount;
+        int32_t _tes_refCount;
 
     public:
 
@@ -135,6 +136,7 @@ namespace collections {
 
         explicit object_base(CollectionType type)
             : _refCount(1)
+            , _tes_refCount(0)
             , id(HandleNull)
             , _type(type)
         {
@@ -142,13 +144,15 @@ namespace collections {
 
         object_base()
             : _refCount(0)
+            , _tes_refCount(0)
             , _id(0)
             , _type(CollectionTypeNone)
         {
         }
 
-        int refCount() const {
-            return _refCount;
+        int refCount() {
+            mutex_lock g(_mutex);
+            return _refCount + _tes_refCount;
         }
 
         bool registered() const {
@@ -165,19 +169,41 @@ namespace collections {
             return this;
         }
 
+        object_base * tes_retain() {
+            mutex_lock g(_mutex);
+            ++_tes_refCount;
+            return this;
+        }
+
         object_base * autorelease();
 
         void release() {
-            _mutex.lock();
-            --_refCount;
-            if (_refCount == 0) {
-                auto myId = id;
-                _mutex.unlock();
+            bool deleteObject = false; {
+                mutex_lock g(_mutex);
+                if (_refCount > 0) {
+                    --_refCount;
+                    deleteObject = (_refCount == 0 && _tes_refCount == 0);
+                }
+            }
 
-                collection_registry::removeObject(myId);
+            if (deleteObject) {
+                collection_registry::removeObject(id);
                 delete this;
-            } else {
-                _mutex.unlock();
+            }
+        }
+
+        void tes_release() {
+            bool deleteObject = false; {
+                mutex_lock g(_mutex);
+                if (_tes_refCount > 0) {
+                    --_tes_refCount;
+                    deleteObject = (_refCount == 0 && _tes_refCount == 0);
+                }
+            }
+
+            if (deleteObject) {
+                collection_registry::removeObject(id);
+                delete this;
             }
         }
 
@@ -246,14 +272,31 @@ namespace collections {
 
     public:
 
+        static T* allocUnregisered() {
+            return return new T();
+        }
+
         static T* create() {
             auto obj = new T();
             collection_registry::registerObject(obj);
             return obj;
         }
 
+        template<class Init>
+        static T* createWithInitializer(Init init) {
+            auto obj = new T();
+            init(obj)
+            collection_registry::registerObject(obj);
+            return obj;
+        }
+
         static T* object() {
-            return (T *)create()->autorelease();
+            return static_cast<T *> (create()->autorelease());
+        }
+
+        template<class Init>
+        static T* objectWithInitializer(Init init) {
+            return static_cast<T *> (createWithInitializer(init)->autorelease());
         }
     };
 
@@ -343,11 +386,12 @@ namespace collections {
                 setObjectVal(obj);
         }
 
+/*
         explicit Item(HandleT hdl) : _stringVal(NULL), _type(ItemTypeNone) {
             auto obj = collection_registry::getObject(hdl);
             if (obj)
                 setObjectVal(obj);
-        }
+        }*/
 
         bool operator == (const Item& other) const {
             return _type == other._type && _object == other._object;

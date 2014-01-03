@@ -26,16 +26,17 @@ SKSEPapyrusInterface        * g_papyrus = NULL;
 
 /**** serialization ****/
 
-void Serialization_Revert(SKSESerializationInterface * intfc)
-{
-	_MESSAGE("revert");
-}
-
 const UInt32 kSerializationDataVersion = 1;
 
 enum {
     kJStorageChunk = 'JSTR',
 };
+
+void Serialization_Revert(SKSESerializationInterface * intfc)
+{
+    _MESSAGE("revert");
+     collections::shared_state::instance().clearState();
+}
 
 void Serialization_Save(SKSESerializationInterface * intfc)
 {
@@ -56,22 +57,14 @@ void Serialization_Load(SKSESerializationInterface * intfc)
 	UInt32	length;
 	bool	error = false;
 
-    bool hasStorage = false;
-
 	while(!error && intfc->GetNextRecordInfo(&type, &version, &length))
 	{
-        if (kJStorageChunk && version == kSerializationDataVersion && length) {
+        if (kJStorageChunk && version == kSerializationDataVersion && length > 0) {
             std::vector<char> data(length);
             intfc->ReadRecordData(data.data(), length);
             collections::shared_state::instance().loadAll(data);
-
-            hasStorage = true;
 		}
 	}
-
-    if (!hasStorage) {
-        collections::shared_state::instance().setupForFirstTime();
-    }
 }
 
 extern "C"

@@ -103,7 +103,7 @@
     </Link>
     <PostBuildEvent>
       <Message>Installing Loader...</Message>
-      <Command>copy "$(TargetPath)" "$(SkyrimPath)\$(TargetFileName)"</Command>
+      <Command>copy "$(TargetPath)" "..\..\..\$(TargetFileName)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

@@ -1,11 +1,12 @@
+#include <boost/serialization/serialization.hpp>
+
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/map.hpp>
-#include <boost/serialization/split_member.hpp>
-//#include <boost/serialization/split_free.hpp>
 
-#include <boost/serialization/serialization.hpp>
+#include <boost/serialization/split_member.hpp>
+#include <boost/serialization/version.hpp>
+
 #include <boost/archive/binary_oarchive.hpp>
-//#include <boost/archive/xml_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 
 #include <boost/iostreams/device/array.hpp>
@@ -15,15 +16,17 @@
 #include <fstream>
 #include <sstream>
 
+#include "gtest.h"
+
 #include "collections.h"
 #include "autorelease_queue.h"
 #include "shared_state.h"
 
-#include "gtest.h"
+#include "shared_state.hpp"
+
+BOOST_CLASS_VERSION(collections::object_base, 1);
 
 namespace collections {
-
-
 
     TEST(Item, serialization)
     {
@@ -175,6 +178,9 @@ namespace collections {
     template<class Archive>
     void object_base::serialize(Archive & ar, const unsigned int version) {
         ar & _refCount;
+        if (version >= 1) {
+            ar & _tes_refCount;
+        }
         ar & _type;
         ar & _id;
     }
@@ -189,54 +195,6 @@ namespace collections {
     void map::serialize(Archive & ar, const unsigned int version) {
         ar & boost::serialization::base_object<object_base>(*this);
         ar & cnt;
-    }
-
-
-    void shared_state::loadAll(const vector<char> &data) {
-
-        _DMESSAGE("%u bytes loaded", data.size());
-
-        typedef boost::iostreams::basic_array_source<char> Device;
-        boost::iostreams::stream_buffer<Device> buffer(data.data(), data.size());
-        boost::archive::binary_iarchive archive(buffer);
-
-        {
-            write_lock g(_mutex);
-
-            registry._clear();
-            aqueue._clear();
-
-            archive >> registry;
-            archive >> aqueue;
-            archive >> _databaseId;
-        }
-    }
-
-    vector<char> shared_state::saveToArray() {
-        vector<char> buffer;
-        boost::iostreams::back_insert_device<decltype(buffer) > device(buffer);
-        boost::iostreams::stream<decltype(device)> stream(device);
-        boost::archive::binary_oarchive arch(stream);
-
-        {
-            read_lock g(_mutex);
-
-            for (auto pair : registry._map) {
-                pair.second->_mutex.lock();
-            }
-
-            arch << registry;
-            arch << aqueue;
-            arch << _databaseId;
-
-            for (auto pair : registry._map) {
-                pair.second->_mutex.unlock();
-            }
-        }
-
-        _DMESSAGE("%u bytes saved", buffer.size());
-
-        return buffer;
     }
 }
 
