@@ -303,15 +303,15 @@ namespace collections {
 
         template<class T>
         static HandleT fromArray(StaticFunctionTag*, VMArray<T> arr) {
-            auto obj = array::objectWithInitializer([](array *me) {
-                for (UInt32 i = 0; i < arr->Length(); ++i) {
+            auto obj = array::objectWithInitializer([&](array *me) {
+                for (UInt32 i = 0; i < arr.Length(); ++i) {
                     T val;
                     arr.Get(&val, i);
                     me->_array.push_back(Item(val));
                 }
             });
 
-            return obj;
+            return obj ? obj->id : 0;
         }
 
         static bool registerFuncs(VMClassRegistry* registry) {
@@ -322,6 +322,11 @@ namespace collections {
             REGISTER2("object", object<array>, 0, HandleT);
 
             REGISTER(count, 1, Index, HandleT);
+
+            REGISTER2("objectWithInts", fromArray<SInt32>, 1, HandleT, VMArray<SInt32>);
+            REGISTER2("objectWithStrings", fromArray<BSFixedString>, 1, HandleT, VMArray<BSFixedString>);
+            REGISTER2("objectWithFloats", fromArray<Float32>, 1, HandleT, VMArray<Float32>);
+            REGISTER2("objectWithBooleans", fromArray<bool>, 1, HandleT, VMArray<bool>);
 
             REGISTER2("addFlt", add<Float32>, 2, void, HandleT, Float32);
             REGISTER2("addInt", add<SInt32>, 2, void, HandleT, SInt32);
@@ -472,7 +477,7 @@ namespace collections {
             bool succeed = false;
             json_parsing::resolvePath(obj, path.data, [&](Item* itmPtr) {
                 if (itmPtr) {
-                    *itmPtr = Item(value);
+                    *itmPtr = Item((T)value);
                     succeed = true;
                 }
             });

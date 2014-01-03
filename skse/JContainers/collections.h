@@ -272,10 +272,6 @@ namespace collections {
 
     public:
 
-        static T* allocUnregisered() {
-            return return new T();
-        }
-
         static T* create() {
             auto obj = new T();
             collection_registry::registerObject(obj);
@@ -367,6 +363,7 @@ namespace collections {
         explicit Item(double val) : _floatVal(val), _type(ItemTypeFloat32) {}
         explicit Item(SInt32 val) : _intVal(val), _type(ItemTypeInt32) {}
         explicit Item(int val) : _intVal(val), _type(ItemTypeInt32) {}
+        explicit Item(bool val) : _intVal(val), _type(ItemTypeInt32) {}
 
         explicit Item(const char * val) : _stringVal(NULL), _type(ItemTypeNone) {
             setStringVal(val);
