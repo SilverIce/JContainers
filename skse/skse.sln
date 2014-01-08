@@ -41,6 +41,7 @@ Global
 		{C7305D8C-5514-4C58-9ED7-04D1D7A53D8D}.plugin|Win32.Build.0 = Release|Win32
 		{C7305D8C-5514-4C58-9ED7-04D1D7A53D8D}.skse|Win32.ActiveCfg = Release|Win32
 		{FAA39367-64F7-4552-A537-002A1FFB8365}.plugin|Win32.ActiveCfg = Release|Win32
+		{FAA39367-64F7-4552-A537-002A1FFB8365}.plugin|Win32.Build.0 = Release|Win32
 		{FAA39367-64F7-4552-A537-002A1FFB8365}.skse|Win32.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution

@@ -135,6 +135,9 @@ namespace collections {
         case ItemTypeObject:
             ar & _object;
             break;
+        case ItemTypeForm:
+            ar & _uintVal;
+            break;
         default:
             break;
         }
@@ -169,6 +172,9 @@ namespace collections {
             }
         case ItemTypeObject:
             ar & _object;
+            break;
+        case ItemTypeForm:
+            ar & _uintVal;
             break;
         default:
             break;

@@ -55,7 +55,7 @@ void PackHandle(VMValue * dst, void * src, UInt32 typeID, VMClassRegistry * regi
 template <typename T>
 void PackValue(VMValue * dst, T ** src, VMClassRegistry * registry)
 {
-	typedef remove_pointer <T>::type	BaseType;
+	typedef ::remove_pointer <T>::type	BaseType;
 	PackHandle(dst, *src, BaseType::kTypeID, registry);
 }
 
@@ -116,7 +116,7 @@ UInt32 GetTypeID <T *>(VMClassRegistry * registry)
 {
 	UInt32		result;
 
-	typedef remove_pointer <T>::type	BaseType;
+	typedef ::remove_pointer <T>::type	BaseType;
 
 	result = GetTypeIDFromFormTypeID(BaseType::kTypeID, registry);
 

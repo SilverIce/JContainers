@@ -3,6 +3,7 @@
 
 #include "windows.h"
 #include <tchar.h>
+#include <conio.h>
 
 typedef void (*ShityTests)();
 
@@ -14,7 +15,7 @@ int _tmain(int argc, _TCHAR* argv[])
        test();
     }
 
-
+    getch();
 	return 0;
 }
 

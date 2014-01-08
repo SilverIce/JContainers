@@ -20,6 +20,7 @@
 #include <boost/thread/lock_guard.hpp>
 
 #include "id_generator.h"
+#include "skse/GameForms.h"
 
 class VMClassRegistry;
 struct StaticFunctionTag;
@@ -281,7 +282,7 @@ namespace collections {
         template<class Init>
         static T* createWithInitializer(Init init) {
             auto obj = new T();
-            init(obj)
+            init(obj);
             collection_registry::registerObject(obj);
             return obj;
         }
@@ -303,6 +304,7 @@ namespace collections {
         ItemTypeFloat32 = 2,
         ItemTypeCString = 3,
         ItemTypeObject = 4,
+        ItemTypeForm = 5,
     };
 
     struct StringMem
@@ -345,6 +347,7 @@ namespace collections {
     class Item
     {
         union {
+            UInt32 _uintVal;
             SInt32 _intVal;
             Float32 _floatVal;
             StringMem *_stringVal;
@@ -364,6 +367,7 @@ namespace collections {
         explicit Item(SInt32 val) : _intVal(val), _type(ItemTypeInt32) {}
         explicit Item(int val) : _intVal(val), _type(ItemTypeInt32) {}
         explicit Item(bool val) : _intVal(val), _type(ItemTypeInt32) {}
+        explicit Item(const TESForm *form) : _uintVal(form ? form->formID : 0), _type(ItemTypeForm) {}
 
         explicit Item(const char * val) : _stringVal(NULL), _type(ItemTypeNone) {
             setStringVal(val);
@@ -488,14 +492,6 @@ namespace collections {
                 obj->retain();
         }
 
-        void setType(ItemType iType) {
-            if (iType != ItemTypeCString) {
-                _freeString();
-            }
-
-            _type = iType;
-        }
-
         ~Item() {
             if (_freeString()) {
                 ;
@@ -555,6 +551,18 @@ namespace collections {
             return (_type == ItemTypeCString && _stringVal) ? _stringVal->string : 0;
         }
 
+        TESForm * form() const {
+            return _type == ItemTypeForm ? LookupFormByID(_uintVal) : nullptr;
+        }
+
+        void setForm(const TESForm *form) {
+            _freeString();
+            _freeObject();
+
+            _type = ItemTypeForm;
+            _uintVal = (form ? form->formID : 0);
+        }
+
         bool isNull() const {
             return _type == ItemTypeNone;
         }
@@ -603,6 +611,14 @@ namespace collections {
     template<> inline Handle Item::readAs<Handle>() {
         auto obj = object();
         return obj ? obj->id : HandleNull;
+    }
+
+    template<> inline TESForm * Item::readAs<TESForm*>() {
+        return form();
+    }
+
+    template<> inline void Item::writeAs(TESForm *form) {
+        return setForm(form);
     }
 
     template<class T>

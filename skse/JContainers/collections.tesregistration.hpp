@@ -124,7 +124,7 @@ namespace collections {
             bool succeed = false;
             json_parsing::resolvePath(obj, path.data, [&](Item* itmPtr) {
                 if (itmPtr) {
-                    val = itmPtr->writeAs(value);
+                    itmPtr->writeAs(value);
                     succeed = true;
                 }
             });
@@ -135,13 +135,16 @@ namespace collections {
         void printMethod(const char *cname, const char *cargs) {
             //string args(cargs);
 
+#define C2TES(c, tes) #c, #tes
             const char * type2tes[][2] = {
-                "HandleT", "int",
-                "Index", "int",
-                "BSFixedString", "string",
-                "Float32", "float",
-                "SInt32", "int",
+                C2TES(HandleT, int),
+                C2TES(Index, int),
+                C2TES(BSFixedString, string),
+                C2TES(Float32, float),
+                C2TES(SInt32, int),
+                C2TES(TESForm*, form),
             };
+#undef C2TES
             std::map<string,string> type2tesMap ;
             for (int i = 0; i < sizeof(type2tes) / (2 * sizeof(char*));++i) {
                 type2tesMap[type2tes[i][0]] = type2tes[i][1];
@@ -153,8 +156,12 @@ namespace collections {
             vector<string> strings; // #2: Search for tokens
             boost::split( strings, string(cargs), boost::is_any_of(", ") );
 
+            auto strToStr = [&](const std::string& str) {
+                return type2tesMap.find(str) != type2tesMap.end() ? type2tesMap[str] : str;
+            };
+
             if (strings[0] != "void") {
-                name += type2tesMap[strings[0]] + ' ';
+                name += strToStr(strings[0]) + ' ';
             }
 
             name += "Function ";
@@ -169,7 +176,7 @@ namespace collections {
                 }
 
 
-                name += (type2tesMap.find(strings[i]) != type2tesMap.end() ? type2tesMap[strings[i]] : strings[i]);
+                name += strToStr(strings[i]);
                 name += " arg";
                 name += (char)((argNum - 1) + '0');
                 if ((i+1) < strings.size())
@@ -234,7 +241,7 @@ namespace collections {
             }
 
             mutex_lock g(obj->_mutex);
-            return index < obj->_array.size() ? obj->_array[index].readAs<T>() : 0;
+            return (index >= 0 && index < obj->_array.size()) ? obj->_array[index].readAs<T>() : 0;
         }
 
         template<class T>
@@ -245,7 +252,7 @@ namespace collections {
             }
 
             mutex_lock g(obj->_mutex);
-            if (index < obj->_array.size()) {
+            if (index >= 0 && index < obj->_array.size()) {
                 obj->_array[index] = Item((T)item);
             }
         }
@@ -257,7 +264,7 @@ namespace collections {
             }
 
             mutex_lock g(obj->_mutex);
-            if (index < obj->_array.size()) {
+            if (index >= 0 && index < obj->_array.size()) {
                 obj->_array.erase(obj->_array.begin() + index);
             }
         }
@@ -314,12 +321,37 @@ namespace collections {
             return obj ? obj->id : 0;
         }
 
+/*
+
+        template<class Func> struct return_type{};
+        template<class R,  typename... Params>
+        struct return_type<declR (*) {
+            typedef R ret_type;
+            typedef Params ret_type;
+        };
+
+        */
+/*
+        template<class Fun, Fun func>
+        struct TESMethodGen {
+        };
+
+
+        template<class R, typename... Params, R (*func)(Params... ) >
+        struct TESMethodGen<R (*)(Params... ), func> {
+            static R method(StaticFunctionTag* tag, Params&&... args) {
+                return func(tag, args...);
+            }
+        };*/
+
         static bool registerFuncs(VMClassRegistry* registry) {
 
             MESSAGE("register array funcs");
 
             REGISTER2("create", create<array>, 0, HandleT);
             REGISTER2("object", object<array>, 0, HandleT);
+
+          // &TESMethodGen<decltype(create<array>), create<array> >::method;
 
             REGISTER(count, 1, Index, HandleT);
 
@@ -332,16 +364,19 @@ namespace collections {
             REGISTER2("addInt", add<SInt32>, 2, void, HandleT, SInt32);
             REGISTER2("addStr", add<BSFixedString>, 2, void, HandleT, BSFixedString);
             REGISTER2("addVal", add<Handle>, 2, void, HandleT, HandleT);
+            REGISTER2("addForm", add<TESForm*>, 2, void, HandleT, TESForm*);
 
-            REGISTER2("replaceFltAtIndex", replaceItemAtIndex<Float32>, 3, void, HandleT, Index, Float32);
-            REGISTER2("replaceIntAtIndex", replaceItemAtIndex<SInt32>, 3, void, HandleT, Index, SInt32);
-            REGISTER2("replaceStrAtIndex", replaceItemAtIndex<BSFixedString>, 3, void, HandleT, Index, BSFixedString);
-            REGISTER2("replaceValAtIndex", replaceItemAtIndex<Handle>, 3, void, HandleT, Index, HandleT);
+            REGISTER2("setFltAtIndex", replaceItemAtIndex<Float32>, 3, void, HandleT, Index, Float32);
+            REGISTER2("setIntAtIndex", replaceItemAtIndex<SInt32>, 3, void, HandleT, Index, SInt32);
+            REGISTER2("setStrAtIndex", replaceItemAtIndex<BSFixedString>, 3, void, HandleT, Index, BSFixedString);
+            REGISTER2("setValAtIndex", replaceItemAtIndex<Handle>, 3, void, HandleT, Index, HandleT);
+            REGISTER2("setFormAtIndex", replaceItemAtIndex<TESForm*>, 3, void, HandleT, Index, TESForm*);
 
             REGISTER2("fltAtIndex", itemAtIndex<Float32>, 2, Float32, HandleT, Index);
             REGISTER2("intAtIndex", itemAtIndex<SInt32>, 2, SInt32, HandleT, Index);
             REGISTER2("strAtIndex", itemAtIndex<BSFixedString>, 2, BSFixedString, HandleT, Index);
             REGISTER2("valAtIndex", itemAtIndex<Handle>, 2, HandleT, HandleT, Index);
+            REGISTER2("formAtIndex", itemAtIndex<TESForm*>, 2, TESForm*, HandleT, Index);
 
             REGISTER2("clear", clear, 1, void, HandleT);
             REGISTER(eraseIndex, 2, void, HandleT, SInt32);
@@ -448,11 +483,13 @@ namespace collections {
             REGISTER2("setInt", setItem<SInt32>, 3, void, HandleT, BSFixedString, SInt32);
             REGISTER2("setStr", setItem<BSFixedString>, 3, void, HandleT, BSFixedString, BSFixedString);
             REGISTER2("setVal", setItem<Handle>, 3, void, HandleT, BSFixedString, HandleT);
+            REGISTER2("setForm", setItem<TESForm*>, 3, void, HandleT, BSFixedString, TESForm*);
 
             REGISTER2("getFlt", getItem<Float32>, 2, Float32, HandleT, BSFixedString);
             REGISTER2("getInt", getItem<SInt32>, 2, SInt32, HandleT, BSFixedString);
             REGISTER2("getStr", getItem<BSFixedString>, 2, BSFixedString, HandleT, BSFixedString);
             REGISTER2("getVal", getItem<Handle>, 2, HandleT, HandleT, BSFixedString);
+            REGISTER2("getForm", getItem<TESForm*>, 2, TESForm*, HandleT, BSFixedString);
 
             return true;
         }
@@ -465,12 +502,12 @@ namespace collections {
         static const char * TesName() { return "JDB";}
         
         template<class T>
-        static typename Tes2Value<T>::tes_type resolveT(StaticFunctionTag* tag, BSFixedString path) {
+        static typename Tes2Value<T>::tes_type solveGetter(StaticFunctionTag* tag, BSFixedString path) {
             return  tes_map::resolveT<T>(tag, shared_state::instance().databaseId(), path); 
         }
 
         template<class T>
-        static bool solveT(StaticFunctionTag*, BSFixedString path, typename Tes2Value<T>::tes_type value) { 
+        static bool solveSetter(StaticFunctionTag*, BSFixedString path, typename Tes2Value<T>::tes_type value) { 
             auto obj = collection_registry::getObject(shared_state::instance().databaseId());
             if (!obj) return false;
 
@@ -508,15 +545,17 @@ namespace collections {
 
         static bool registerFuncs(VMClassRegistry* registry) {
 
-            REGISTER2("setFlt", solveT<Float32>, 2, bool, BSFixedString, Float32);
-            REGISTER2("setInt", solveT<SInt32>, 2, bool, BSFixedString, SInt32);
-            REGISTER2("setStr", solveT<BSFixedString>, 2, bool, BSFixedString, BSFixedString);
-            REGISTER2("setVal", solveT<Handle>, 2, bool, BSFixedString, HandleT);
+            REGISTER2("solveFltSetter", solveSetter<Float32>, 2, bool, BSFixedString, Float32);
+            REGISTER2("solveIntSetter", solveSetter<SInt32>, 2, bool, BSFixedString, SInt32);
+            REGISTER2("solveStrSetter", solveSetter<BSFixedString>, 2, bool, BSFixedString, BSFixedString);
+            REGISTER2("solveValSetter", solveSetter<Handle>, 2, bool, BSFixedString, HandleT);
+            REGISTER2("solveFormSetter", solveSetter<TESForm*>, 2, bool, BSFixedString, TESForm*);
 
-            REGISTER2("getFlt", resolveT<Float32>, 1, Float32, BSFixedString);
-            REGISTER2("getInt", resolveT<SInt32>, 1, SInt32, BSFixedString);
-            REGISTER2("getStr", resolveT<BSFixedString>, 1, BSFixedString, BSFixedString);
-            REGISTER2("getVal", resolveT<Handle>, 1, HandleT, BSFixedString);
+            REGISTER2("solveFlt", solveGetter<Float32>, 1, Float32, BSFixedString);
+            REGISTER2("solveInt", solveGetter<SInt32>, 1, SInt32, BSFixedString);
+            REGISTER2("solveStr", solveGetter<BSFixedString>, 1, BSFixedString, BSFixedString);
+            REGISTER2("solveVal", solveGetter<Handle>, 1, HandleT, BSFixedString);
+            REGISTER2("solveForm", solveGetter<TESForm*>, 1, TESForm*, BSFixedString);
 
             REGISTER(setValue, 2, void, BSFixedString, HandleT);
             REGISTER(hasPath, 1, bool, BSFixedString);
