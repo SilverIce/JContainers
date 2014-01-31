@@ -202,5 +202,11 @@ namespace collections {
         ar & boost::serialization::base_object<object_base>(*this);
         ar & cnt;
     }
+
+    template<class Archive>
+    void form_map::serialize(Archive & ar, const unsigned int version) {
+        ar & boost::serialization::base_object<object_base>(*this);
+        ar & cnt;
+    }
 }
 

@@ -122,35 +122,35 @@ namespace collections {
 
     TEST(array,  test)
     {
-        using namespace tes_array;
+
 
         _DMESSAGE(__FUNCTION__ " begin");
 
-        HandleT arr = create<array>(0);
+        HandleT arr = tes_array::create<array>()->id;
 
-        EXPECT_TRUE(count(0, arr) == 0);
+        EXPECT_TRUE(tes_array::count(0, arr) == 0);
 
         auto str = 10;
-        add<SInt32>(0, arr, str);
-        EXPECT_TRUE(count(0, arr) == 1);
-        EXPECT_TRUE( itemAtIndex<SInt32>(0, arr, 0) == 10);
+        tes_array::add<SInt32>(0, arr, str);
+        EXPECT_TRUE(tes_array::count(0, arr) == 1);
+        EXPECT_TRUE( tes_array::itemAtIndex<SInt32>(0, arr, 0) == 10);
 
         str = 30;
-        add<SInt32>(0, arr, str);
-        EXPECT_TRUE(count(0, arr) == 2);
-        EXPECT_TRUE(itemAtIndex<SInt32>(0, arr, 1) == 30);
+        tes_array::add<SInt32>(0, arr, str);
+        EXPECT_TRUE(tes_array::count(0, arr) == 2);
+        EXPECT_TRUE(tes_array::itemAtIndex<SInt32>(0, arr, 1) == 30);
 
-        HandleT arr2 = create<array>(0);
-        add<SInt32>(0, arr2, 4);
+        HandleT arr2 = tes_array::create<array>()->id;
+        tes_array::add<SInt32>(0, arr2, 4);
 
-        add<Handle>(0, arr, arr2);
-        EXPECT_TRUE(itemAtIndex<Handle>(0, arr, 2) == arr2);
+        tes_array::add<Handle>(0, arr, arr2);
+        EXPECT_TRUE(tes_array::itemAtIndex<Handle>(0, arr, 2) == arr2);
 
-        release(0, arr);
+        tes_array::release(0, arr);
 
-        EXPECT_TRUE(itemAtIndex<SInt32>(0, arr2, 0) == 4);
+        EXPECT_TRUE(tes_array::itemAtIndex<SInt32>(0, arr2, 0) == 4);
 
-        release(0, arr2);
+        tes_array::release(0, arr2);
 
         _DMESSAGE(__FUNCTION__ " end");
         

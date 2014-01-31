@@ -33,6 +33,10 @@ namespace collections {
             setDataBase(registry.getObject(hdl));
         }
 
+        object_base* database() {
+            return registry.getObject(databaseId());
+        }
+
         void setDataBase(object_base *db) {
             auto prev = registry.getObject(databaseId());
             if (prev == db) {

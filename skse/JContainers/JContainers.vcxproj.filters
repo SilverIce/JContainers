@@ -21,10 +21,10 @@
     <ClCompile Include="..\skse\ScaleformCallbacks.cpp">
       <Filter>skse\scaleform</Filter>
     </ClCompile>
-    <ClCompile Include="main.cpp" />
     <ClCompile Include="gtest.cpp" />
     <ClCompile Include="cJSON.cpp" />
     <ClCompile Include="serialization.cpp" />
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\skse\GameAPI.h">
@@ -44,6 +44,8 @@
     <ClInclude Include="id_generator.h" />
     <ClInclude Include="shared_state.h" />
     <ClInclude Include="shared_state.hpp" />
+    <ClInclude Include="meta.h" />
+    <ClInclude Include="tes_binding.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="exports.def" />

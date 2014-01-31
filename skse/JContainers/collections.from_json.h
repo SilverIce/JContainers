@@ -50,11 +50,6 @@ namespace collections {
             }
         };
 
-        static void lockObjs(std::vector<object_base *>& list, object_base *obj) {
-            obj->_mutex.lock();
-            list.push_back(obj);
-        }
-
         template<class F>
         static void resolvePath(object_base *collection, const char *path, F func) {
             const char *c = path;

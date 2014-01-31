@@ -48,6 +48,7 @@ namespace collections {
         CollectionTypeNone = 0,
         CollectionTypeArray,
         CollectionTypeMap,
+        CollectionTypeFormMap,
     };
 
     class collection_registry
@@ -621,6 +622,10 @@ namespace collections {
         return setForm(form);
     }
 
+    template<> inline object_base * Item::readAs<object_base*>() {
+        return object();
+    }
+
     template<class T>
     inline void print(const T& str) {}
 
@@ -674,8 +679,6 @@ namespace collections {
             TypeId = CollectionTypeMap,
         };
 
-        typedef const char * Key;
-
         std::map<std::string, Item> cnt;
 
         Item& operator[](const std::string& str) {
@@ -692,6 +695,33 @@ namespace collections {
         template<class Archive>
         void serialize(Archive & ar, const unsigned int version);
     };
+
+
+    class form_map : public collection_base_T< form_map >
+    {
+    public:
+        enum  {
+            TypeId = CollectionTypeFormMap,
+        };
+
+        std::map<UInt32, Item> cnt;
+
+        Item& operator[](UInt32 str) {
+            mutex_lock g(_mutex);
+            return cnt[str];
+        }
+
+        void clear() {
+            cnt.clear();
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+
+        template<class Archive>
+        void serialize(Archive & ar, const unsigned int version);
+    };
+
+   // typedef map<std::string> map;
 
 }
 

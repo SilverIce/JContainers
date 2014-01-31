@@ -176,8 +176,10 @@
     <ClInclude Include="collections.tests.hpp" />
     <ClInclude Include="gtest.h" />
     <ClInclude Include="id_generator.h" />
+    <ClInclude Include="meta.h" />
     <ClInclude Include="shared_state.h" />
     <ClInclude Include="shared_state.hpp" />
+    <ClInclude Include="tes_binding.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="collections.from_json.h" />

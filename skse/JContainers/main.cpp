@@ -5,8 +5,6 @@
 #include "skse/PapyrusVM.h"
 #include "skse/PapyrusNativeFunctions.h"
 
-#include <boost/algorithm/string.hpp>
-
 #include "collections.h"
 #include "collections.from_json.h"
 #include "autorelease_queue.h"
@@ -110,12 +108,11 @@ bool SKSEPlugin_Query(const SKSEInterface * skse, PluginInfo * info)
 	}
 
     g_papyrus = (SKSEPapyrusInterface *)skse->QueryInterface(kInterface_Papyrus);
-    if (!g_papyrus)
-    {
+/*
+    if (!g_papyrus) {
         _MESSAGE("couldn't get g_papyrus interface");
-
         return false;
-    }
+    }*/
 
 	// ### do not do anything else in this callback
 	// ### only fill out PluginInfo and return true/false
@@ -136,8 +133,11 @@ bool SKSEPlugin_Load(const SKSEInterface * skse)
 	g_serialization->SetSaveCallback(g_pluginHandle, Serialization_Save);
 	g_serialization->SetLoadCallback(g_pluginHandle, Serialization_Load);
 
-    g_papyrus->Register(collections::registerFuncs);
-    //WriteRelCall(0x8F99B4u, (UInt32)collections::registerFuncsHook);
+    if (g_papyrus) {
+        g_papyrus->Register(collections::registerFuncs);
+    } else {
+        WriteRelCall(0x8F99B4u, (UInt32)collections::registerFuncsHook);
+    }
 
 	return true;
 }
