@@ -6,28 +6,6 @@
 
 namespace collections {
 
-    template<class T>
-    struct hashas {
-        static std::vector<FunctionMetaInfo>& metaInfo() {
-            static std::vector<FunctionMetaInfo> infos;
-            return infos;
-        }
-
-        static void register_me(FunctionMetaInfo *info) {
-            metaInfo().push_back(*info);
-            //printf("func %s registered\n", info->function_string().c_str());
-        }
-
-        static void bind(VMClassRegistry* registry, const char *className) {
-            T instance;
-            printf("\nScriptname %s extends JValue Hidden\n\n", className);
-            for (auto itm : T::metaInfo()) {
-                itm.bind(registry, className);
-                printf("%s\n", itm.function_string().c_str());
-            }
-        }
-    };
-
     const char *kCommentObject = "creates new container. returns container identifier (integral number).\n\
                                  identifier is the thing you will have to pass to the most of container's functions as first argument";
 
@@ -54,13 +32,13 @@ namespace collections {
         }
 
         template<class T>
-        static T* create() {
+        static object_base* create() {
             MESSAGE(__FUNCTION__);
             return T::create();
         }
 
         template<class T>
-        static T* object() {
+        static object_base* object(float, float) {
             MESSAGE(__FUNCTION__);
             return T::object();
         }
@@ -259,8 +237,12 @@ namespace collections {
         }
     };
 
-    class tes_array : public tes_object, public hashas<array> {
+    class tes_array : public tes_object, public tes_binding::class_meta_mixin< tes_array > {
     public:
+
+        REGISTER_TES_NAME("JArray");
+
+        static void additionalSetup() {}
 
         static const char * TesName() { return "JArray";}
 
@@ -270,7 +252,7 @@ namespace collections {
             return collection_registry::getObjectOfType<array>(handle);
         }
 
-        REGISTERF(create<array>, "create", "", "");
+        //REGISTERF(create<array>, "create", "", "");
         REGISTERF(object<array>, "object", "", kCommentObject);
 
         template<class T>
@@ -411,14 +393,16 @@ namespace collections {
     }
 
     template<class Key, class Cnt>
-    class tes_map_t : public tes_object, public hashas< tes_map_t<Key, Cnt> > {
+    class tes_map_t : public tes_object, public tes_binding::class_meta_mixin< tes_map_t<Key, Cnt> > {
     public:
 
         static Cnt* find(HandleT handle) {
             return collection_registry::getObjectOfType<Cnt>(handle);
         }
 
-        REGISTERF(create<Cnt>, "create", "", "");
+        REGISTER_TES_NAME("tt");
+
+        //REGISTERF(create<Cnt>, "create", "", "");
         REGISTERF(object<Cnt>, "object", "", kCommentObject);
 
         template<class T>
@@ -497,17 +481,31 @@ namespace collections {
         }
         REGISTERF2(clear, "object", NULL);
 
-        static bool registerFuncs(VMClassRegistry* registry, const char *className) {
-            bind(registry, className);
+        static bool registerFuncs(VMClassRegistry* registry) {
+            bind(registry);
             return true;
         }
+
+        static void additionalSetup();
     };
 
-    typedef tes_map_t<const char*, map> tes_map;
+    typedef tes_map_t<const char*, map > tes_map;
     typedef tes_map_t<TESForm *, form_map> tes_form_map;
 
-    class tes_db : public tes_object, public hashas<tes_db> {
+    void tes_map::additionalSetup() {
+        metaInfo().className = "JMap";
+    }
+
+    void tes_form_map::additionalSetup() {
+        metaInfo().className = "JFormMap";
+    }
+
+    class tes_db : public tes_object, public tes_binding::class_meta_mixin<tes_db> {
     public:
+
+        REGISTER_TES_NAME("JDB");
+
+        static void additionalSetup() {}
 
         static const char * TesName() { return "JDB";}
         
@@ -580,9 +578,7 @@ namespace collections {
 
             REGISTER(writeToFile, 1, void, BSFixedString);
 
-            bind(registry, "JDB");
-
-           // proxy<decltype(&readFromFile), &readFromFile>::bind(registry, "readFromFile", TesName());
+            bind(registry);
 
             return true;
         }
@@ -592,8 +588,8 @@ namespace collections {
     bool registerFuncs(VMClassRegistry *registry) {
         collections::tes_array::registerFuncs(registry);
 
-        collections::tes_map::registerFuncs(registry, "JMap");
-        collections::tes_form_map::registerFuncs(registry, "JFormMap");
+        collections::tes_map::registerFuncs(registry);
+        collections::tes_form_map::registerFuncs(registry);
 
         collections::tes_object::registerFuncs(registry);
 
