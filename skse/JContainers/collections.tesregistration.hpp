@@ -6,11 +6,13 @@
 
 namespace collections {
 
-    const char *kCommentObject = "creates new container. returns container identifier (integral number).\n\
-                                 identifier is the thing you will have to pass to the most of container's functions as first argument";
+    const char *kCommentObject = "creates new container object. returns container identifier (integral number).\n"
+                                 "identifier is the thing you will have to pass to the most of container's functions as first argument";
 
-    class tes_object {
+    class tes_object : public tes_binding::class_meta_mixin< tes_object > {
     public:
+
+        REGISTER_TES_NAME("JValue");
 
         static const char * TesName() { return "JValue";}
 
@@ -32,24 +34,24 @@ namespace collections {
         }
 
         template<class T>
-        static object_base* create() {
+        static T* create() {
             MESSAGE(__FUNCTION__);
             return T::create();
         }
 
         template<class T>
-        static object_base* object(float, float) {
+        static object_base* object() {
             MESSAGE(__FUNCTION__);
             return T::object();
         }
 
-        static void release(StaticFunctionTag*, HandleT handle) {
+        static void release(object_base *obj) {
             MESSAGE(__FUNCTION__);
-            object_base *obj = collection_registry::getObject(handle);
             if (obj) {
                 obj->tes_release();
             }
         }
+        REGISTERF2(release, "*", "releases the object");
 
         static bool isArray(StaticFunctionTag*, HandleT handle) {
             object_base *obj = collection_registry::getObject(handle);
@@ -95,8 +97,6 @@ namespace collections {
 
             fwrite(data.get(), 1, strlen(data.get()), file.get());
         }
-
-        typedef const char * cstring;
 
         template<class T>
         static typename Tes2Value<T>::tes_type resolveT(StaticFunctionTag*, HandleT handle, BSFixedString path) {
@@ -217,7 +217,7 @@ namespace collections {
                 new NativeFunction1 <StaticFunctionTag, __VA_ARGS__ >("release", TesName(), addr, registry));
                // registry->SetFunctionFlags(TesName(), name, VMClassRegistry::kFunctionFlag_NoWait);*/
 
-            REGISTER(release, 1, void, HandleT);
+            //REGISTER(release, 1, void, HandleT);
             REGISTER(retain, 1, HandleT, HandleT);
             REGISTER(autorelease, 1, HandleT, HandleT);
 
@@ -233,16 +233,20 @@ namespace collections {
             REGISTER2("resolveStr", resolveT<BSFixedString>, 2, BSFixedString, HandleT, BSFixedString);
             REGISTER2("resolveInt", resolveT<SInt32>, 2, SInt32, HandleT, BSFixedString);
 
+            bind(registry);
+
             return true;
         }
     };
 
-    class tes_array : public tes_object, public tes_binding::class_meta_mixin< tes_array > {
+    class tes_array : public tes_binding::class_meta_mixin< tes_array > {
     public:
 
         REGISTER_TES_NAME("JArray");
 
-        static void additionalSetup() {}
+        static void additionalSetup() {
+            metaInfo().extendsClass = "JValue";
+        }
 
         static const char * TesName() { return "JArray";}
 
@@ -252,87 +256,10 @@ namespace collections {
             return collection_registry::getObjectOfType<array>(handle);
         }
 
-        //REGISTERF(create<array>, "create", "", "");
-        REGISTERF(object<array>, "object", "", kCommentObject);
+        REGISTERF(tes_object::object<array>, "object", "", kCommentObject);
 
         template<class T>
-        static typename Tes2Value<T>::tes_type itemAtIndex(StaticFunctionTag*, HandleT handle, Index index) {
-            MESSAGE(__FUNCTION__);
-            auto obj = find(handle);
-            if (!obj) {
-                return 0;
-            }
-
-            mutex_lock g(obj->_mutex);
-            return (index >= 0 && index < obj->_array.size()) ? obj->_array[index].readAs<T>() : 0;
-        }
-
-        template<class T>
-        static void replaceItemAtIndex(StaticFunctionTag*, HandleT handle, Index index, typename Tes2Value<T>::tes_type item) {
-            auto obj = find(handle);
-            if (!obj) {
-                return;
-            }
-
-            mutex_lock g(obj->_mutex);
-            if (index >= 0 && index < obj->_array.size()) {
-                obj->_array[index] = Item((T)item);
-            }
-        }
-
-        static void removeItemAtIndex(StaticFunctionTag*, Handle handle, Index index) {
-            auto obj = find(handle);
-            if (!obj) {
-                return;
-            }
-
-            mutex_lock g(obj->_mutex);
-            if (index >= 0 && index < obj->_array.size()) {
-                obj->_array.erase(obj->_array.begin() + index);
-            }
-        }
-
-        template<class T>
-        static void add(StaticFunctionTag*, HandleT handle, typename Tes2Value<T>::tes_type item) {
-            MESSAGE(__FUNCTION__);
-            print(item);
-            auto obj = find(handle);
-            if (obj) {
-                mutex_lock g(obj->_mutex);
-                obj->_array.push_back(Item((T)item));
-            }
-        }
-
-        static Index count(StaticFunctionTag*, HandleT handle) {
-            MESSAGE(__FUNCTION__);
-            auto obj = find(handle);
-            if (obj) {
-                mutex_lock g(obj->_mutex);
-                return  obj->_array.size();
-            }
-            return 0;
-        }
-
-        static void clear(StaticFunctionTag*, HandleT handle) {
-            auto obj = find(handle);
-            if (obj) {
-                mutex_lock g(obj->_mutex);
-                obj->_array.clear();
-            }
-        }
-
-        static void eraseIndex(StaticFunctionTag*, HandleT handle, SInt32 index) {
-            auto obj = find(handle);
-            if (obj) {
-                mutex_lock g(obj->_mutex);
-                if (index >= 0 && index < obj->_array.size()) {
-                    obj->_array.erase(obj->_array.begin() + index);
-                }
-            }
-        }
-
-        template<class T>
-        static HandleT fromArray(StaticFunctionTag*, VMArray<T> arr) {
+        static object_base* fromArray(VMArray<T> arr) {
             auto obj = array::objectWithInitializer([&](array *me) {
                 for (UInt32 i = 0; i < arr.Length(); ++i) {
                     T val;
@@ -341,44 +268,93 @@ namespace collections {
                 }
             });
 
-            return obj ? obj->id : 0;
+            return obj;
         }
+        REGISTERF(fromArray<SInt32>, "objectWithInts", "values", "creates new array that contains given values");
+        REGISTERF(fromArray<BSFixedString>, "objectWithStrings",  "values", NULL);
+        REGISTERF(fromArray<Float32>, "objectWithFloats",  "values", NULL);
+        REGISTERF(fromArray<bool>, "objectWithBooleans",  "values", NULL);
+
+        template<class T>
+        static T itemAtIndex(array *obj, Index index) {
+            if (!obj) {
+                return T(0);
+            }
+
+            mutex_lock g(obj->_mutex);
+            return (index >= 0 && index < obj->_array.size()) ? obj->_array[index].readAs<T>() : T(0);
+        }
+        REGISTERF(itemAtIndex<SInt32>, "getInt", "* index", "returns value at index");
+        REGISTERF(itemAtIndex<Float32>, "getFlt", "* index", "");
+        REGISTERF(itemAtIndex<const char *>, "getStr", "* index", "");
+        REGISTERF(itemAtIndex<Handle>, "getObj", "* index", "");
+        REGISTERF(itemAtIndex<TESForm*>, "getForm", "* index", "");
+
+        template<class T>
+        static void replaceItemAtIndex(array *obj, Index index, T item) {
+            if (!obj) {
+                return;
+            }
+
+            mutex_lock g(obj->_mutex);
+            if (index >= 0 && index < obj->_array.size()) {
+                obj->_array[index] = Item(item);
+            }
+        }
+        REGISTERF(replaceItemAtIndex<SInt32>, "setInt", "* index value", "replaces existing value at index with new value");
+        REGISTERF(replaceItemAtIndex<Float32>, "setFlt", "* index value", "");
+        REGISTERF(replaceItemAtIndex<const char *>, "setStr", "* index value", "");
+        REGISTERF(replaceItemAtIndex<object_base*>, "setObj", "* index value", "");
+        REGISTERF(replaceItemAtIndex<TESForm*>, "setForm", "* index value", "");
+
+        template<class T>
+        static void add(array *obj, T item) {
+            MESSAGE(__FUNCTION__);
+            if (obj) {
+                mutex_lock g(obj->_mutex);
+                obj->_array.push_back(Item(item));
+            }
+        }
+        REGISTERF(add<SInt32>, "addInt", "* value", "appends value to the end of array");
+        REGISTERF(add<Float32>, "addFlt", "* value", "");
+        REGISTERF(add<const char *>, "addStr", "* value", "");
+        REGISTERF(add<object_base*>, "addObj", "* value", "");
+        REGISTERF(add<TESForm*>, "addForm", "* value", "");
+
+        static Index count(array *obj) {
+            MESSAGE(__FUNCTION__);
+            if (obj) {
+                mutex_lock g(obj->_mutex);
+                return  obj->_array.size();
+            }
+            return 0;
+        }
+        REGISTERF2(count, "*", "inserted items count");
+
+        static void clear(array *obj) {
+            if (obj) {
+                mutex_lock g(obj->_mutex);
+                obj->_array.clear();
+            }
+        }
+        REGISTERF2(clear, "*", "remove all items from array");
+
+        static void eraseIndex(array *obj, SInt32 index) {
+            if (obj) {
+                mutex_lock g(obj->_mutex);
+                if (index >= 0 && index < obj->_array.size()) {
+                    obj->_array.erase(obj->_array.begin() + index);
+                }
+            }
+        }
+        REGISTERF2(eraseIndex, "* index", "erases item at index");
 
         static bool registerFuncs(VMClassRegistry* registry) {
-
             MESSAGE("register array funcs");
 
-          // &TESMethodGen<decltype(create<array>), create<array> >::method;
+            OutputDebugStringW(L"reg arr fun");
 
-            REGISTER(count, 1, Index, HandleT);
-
-            REGISTER2("objectWithInts", fromArray<SInt32>, 1, HandleT, VMArray<SInt32>);
-            REGISTER2("objectWithStrings", fromArray<BSFixedString>, 1, HandleT, VMArray<BSFixedString>);
-            REGISTER2("objectWithFloats", fromArray<Float32>, 1, HandleT, VMArray<Float32>);
-            REGISTER2("objectWithBooleans", fromArray<bool>, 1, HandleT, VMArray<bool>);
-
-            REGISTER2("addFlt", add<Float32>, 2, void, HandleT, Float32);
-            REGISTER2("addInt", add<SInt32>, 2, void, HandleT, SInt32);
-            REGISTER2("addStr", add<BSFixedString>, 2, void, HandleT, BSFixedString);
-            REGISTER2("addVal", add<Handle>, 2, void, HandleT, HandleT);
-            REGISTER2("addForm", add<TESForm*>, 2, void, HandleT, TESForm*);
-
-            REGISTER2("setFltAtIndex", replaceItemAtIndex<Float32>, 3, void, HandleT, Index, Float32);
-            REGISTER2("setIntAtIndex", replaceItemAtIndex<SInt32>, 3, void, HandleT, Index, SInt32);
-            REGISTER2("setStrAtIndex", replaceItemAtIndex<BSFixedString>, 3, void, HandleT, Index, BSFixedString);
-            REGISTER2("setValAtIndex", replaceItemAtIndex<Handle>, 3, void, HandleT, Index, HandleT);
-            REGISTER2("setFormAtIndex", replaceItemAtIndex<TESForm*>, 3, void, HandleT, Index, TESForm*);
-
-            REGISTER2("fltAtIndex", itemAtIndex<Float32>, 2, Float32, HandleT, Index);
-            REGISTER2("intAtIndex", itemAtIndex<SInt32>, 2, SInt32, HandleT, Index);
-            REGISTER2("strAtIndex", itemAtIndex<BSFixedString>, 2, BSFixedString, HandleT, Index);
-            REGISTER2("valAtIndex", itemAtIndex<Handle>, 2, HandleT, HandleT, Index);
-            REGISTER2("formAtIndex", itemAtIndex<TESForm*>, 2, TESForm*, HandleT, Index);
-
-            REGISTER2("clear", clear, 1, void, HandleT);
-            REGISTER(eraseIndex, 2, void, HandleT, SInt32);
-
-            MESSAGE("funcs registered");
+            bind(registry);
 
             return true;
         }
@@ -393,7 +369,7 @@ namespace collections {
     }
 
     template<class Key, class Cnt>
-    class tes_map_t : public tes_object, public tes_binding::class_meta_mixin< tes_map_t<Key, Cnt> > {
+    class tes_map_t : public tes_binding::class_meta_mixin< tes_map_t<Key, Cnt> > {
     public:
 
         static Cnt* find(HandleT handle) {
@@ -403,7 +379,7 @@ namespace collections {
         REGISTER_TES_NAME("tt");
 
         //REGISTERF(create<Cnt>, "create", "", "");
-        REGISTERF(object<Cnt>, "object", "", kCommentObject);
+        REGISTERF(tes_object::object<Cnt>, "object", "", kCommentObject);
 
         template<class T>
         static T getItem(Cnt *obj, Key key) {
@@ -415,10 +391,10 @@ namespace collections {
             auto itr = obj->cnt.find(tes_hash(key));
             return itr != obj->cnt.end() ? itr->second.readAs<T>() : T(0);
         }
-        REGISTERF(getItem<SInt32>, "getInt", "object key", "");
+        REGISTERF(getItem<SInt32>, "getInt", "object key", "returns value associated with key");
         REGISTERF(getItem<Float32>, "getFlt", "object key", "");
         REGISTERF(getItem<const char *>, "getStr", "object key", "");
-        REGISTERF(getItem<Handle>, "getVal", "object key", "");
+        REGISTERF(getItem<Handle>, "getObj", "object key", "");
         REGISTERF(getItem<TESForm*>, "getForm", "object key", "");
 
         template<class T>
@@ -430,11 +406,11 @@ namespace collections {
             mutex_lock g(obj->_mutex);
             obj->cnt[tes_hash(key)] = Item((T)item);
         }
-        REGISTERF(setItem<SInt32>, "setInt", "object key", "");
-        REGISTERF(setItem<Float32>, "setFlt", "object key", "");
-        REGISTERF(setItem<const char *>, "setStr", "object key", "");
-        REGISTERF(setItem<object_base*>, "setVal", "object key", "");
-        REGISTERF(setItem<TESForm*>, "setForm", "object key", "");
+        REGISTERF(setItem<SInt32>, "setInt", "* key", "creates key-value association. replaces existing value if any");
+        REGISTERF(setItem<Float32>, "setFlt", "* key", "");
+        REGISTERF(setItem<const char *>, "setStr", "* key", "");
+        REGISTERF(setItem<object_base*>, "setObj", "* key object2", "");
+        REGISTERF(setItem<TESForm*>, "setForm", "* key", "");
 
         static bool hasKey(Cnt *obj, Key key) {
             if (!obj || !key) {
@@ -445,7 +421,7 @@ namespace collections {
             auto itr = obj->cnt.find(tes_hash(key));
             return itr != obj->cnt.end();
         }
-        REGISTERF2(hasKey, "* key", "");
+        REGISTERF2(hasKey, "* key", "true, if something associated with key");
 
         static bool removeKey(Cnt *obj, Key key) {
             if (!obj || !key) {
@@ -459,7 +435,7 @@ namespace collections {
             obj->cnt.erase(itr);
             return hasKey;
         }
-        REGISTERF2(removeKey, "* key", NULL);
+        REGISTERF2(removeKey, "* key", "destroys key-value association");
 
         static SInt32 count(Cnt *obj) {
             if (!obj) {
@@ -469,7 +445,7 @@ namespace collections {
             mutex_lock g(obj->_mutex);
             return obj->cnt.size();
         }
-        REGISTERF2(count, "object", NULL);
+        REGISTERF2(count, "*", "count of items/associations");
 
         static void clear(Cnt *obj) {
             if (!obj) {
@@ -479,7 +455,7 @@ namespace collections {
             mutex_lock g(obj->_mutex);
             obj->cnt.clear();
         }
-        REGISTERF2(clear, "object", NULL);
+        REGISTERF2(clear, "*", "remove all items from map container");
 
         static bool registerFuncs(VMClassRegistry* registry) {
             bind(registry);
@@ -494,13 +470,15 @@ namespace collections {
 
     void tes_map::additionalSetup() {
         metaInfo().className = "JMap";
+        metaInfo().extendsClass = "JValue";
     }
 
     void tes_form_map::additionalSetup() {
         metaInfo().className = "JFormMap";
+        metaInfo().extendsClass = "JValue";
     }
 
-    class tes_db : public tes_object, public tes_binding::class_meta_mixin<tes_db> {
+    class tes_db : public tes_binding::class_meta_mixin<tes_db> {
     public:
 
         REGISTER_TES_NAME("JDB");
@@ -511,7 +489,7 @@ namespace collections {
         
         template<class T>
         static typename Tes2Value<T>::tes_type solveGetter(StaticFunctionTag* tag, BSFixedString path) {
-            return tes_map::resolveT<T>(tag, shared_state::instance().databaseId(), path); 
+            return tes_object::resolveT<T>(tag, shared_state::instance().databaseId(), path); 
         }
 
         template<class T>
@@ -544,7 +522,7 @@ namespace collections {
                 tes_map::removeKey(dbMap, path);
             }
         }
-        REGISTERF2(setValue, "path", "");
+        REGISTERF(setValue, "setObj", "key object", "");
 
         static bool hasPath(StaticFunctionTag*tag, BSFixedString path) {
             return tes_object::hasPath(tag, shared_state::instance().databaseId(), path);
@@ -565,13 +543,13 @@ namespace collections {
             REGISTER2("solveFltSetter", solveSetter<Float32>, 2, bool, BSFixedString, Float32);
             REGISTER2("solveIntSetter", solveSetter<SInt32>, 2, bool, BSFixedString, SInt32);
             REGISTER2("solveStrSetter", solveSetter<BSFixedString>, 2, bool, BSFixedString, BSFixedString);
-            REGISTER2("solveValSetter", solveSetter<Handle>, 2, bool, BSFixedString, HandleT);
+            REGISTER2("solveObjSetter", solveSetter<Handle>, 2, bool, BSFixedString, HandleT);
             REGISTER2("solveFormSetter", solveSetter<TESForm*>, 2, bool, BSFixedString, TESForm*);
 
             REGISTER2("solveFlt", solveGetter<Float32>, 1, Float32, BSFixedString);
             REGISTER2("solveInt", solveGetter<SInt32>, 1, SInt32, BSFixedString);
             REGISTER2("solveStr", solveGetter<BSFixedString>, 1, BSFixedString, BSFixedString);
-            REGISTER2("solveVal", solveGetter<Handle>, 1, HandleT, BSFixedString);
+            REGISTER2("solveObj", solveGetter<Handle>, 1, HandleT, BSFixedString);
             REGISTER2("solveForm", solveGetter<TESForm*>, 1, TESForm*, BSFixedString);
 
             REGISTER(hasPath, 1, bool, BSFixedString);

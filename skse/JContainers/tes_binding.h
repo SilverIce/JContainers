@@ -108,12 +108,12 @@ namespace collections {
 
 
         struct j_type_info {
-            const char * tes_type_name;
-            const char * tes_arg_name;
+            std::string tes_type_name;
+            std::string tes_arg_name;
         };
 
         inline j_type_info j_type_info_make(const char * ttn,  const char * tan) {
-            j_type_info info = {ttn, tan};
+            j_type_info info = {ttn ? ttn : "", tan ? tan : ""};
             return info;
         }
 
@@ -158,6 +158,15 @@ namespace collections {
             static j_type_info typeInfo() { return j_type_info_make("form", nullptr); }
         };
 
+        template<class T> struct j2Str<VMArray<T> > {
+            static j_type_info typeInfo() {
+                std::string str( j2Str<T>::typeInfo().tes_type_name );
+                str += "[]";
+                j_type_info info = {str, "values"};
+                return info;
+            }
+        };
+
 
         template <typename T, T func> struct proxy;
 
@@ -187,6 +196,11 @@ namespace collections {
             }
 
             static void bind(VMClassRegistry *registry, const char *name, const char *className) {
+                 //printf("%s %s\n", name, typeid(decltype(tes_func)).name());
+                 printf("register func %s for %s\n", name, className);
+
+                if (!registry) return;
+
                 registry->RegisterFunction(
                     new NativeFunction2 <
                             StaticFunctionTag,
@@ -194,6 +208,8 @@ namespace collections {
                             typename J2Tes<Arg0>::tes_type,
                             typename J2Tes<Arg1>::tes_type > (name, className, &tes_func, registry)
                 );
+
+                registry->SetFunctionFlags(className, name, VMClassRegistry::kFunctionFlag_NoWait); \
             }
         };
 
@@ -218,6 +234,12 @@ namespace collections {
             }
 
             static void bind(VMClassRegistry *registry, const char *name, const char *className) {
+
+                //printf("%s %s\n", name, typeid(decltype(tes_func)).name());
+                printf("register func %s for %s\n", name, className);
+
+                if (!registry) return;
+
                 registry->RegisterFunction(
                     new NativeFunction2 <
                     StaticFunctionTag,
@@ -225,6 +247,8 @@ namespace collections {
                     typename J2Tes<Arg0>::tes_type,
                     typename J2Tes<Arg1>::tes_type > (name, className, &tes_func, registry)
                     );
+
+                registry->SetFunctionFlags(className, name, VMClassRegistry::kFunctionFlag_NoWait); \
             }
         };
 
@@ -265,10 +289,13 @@ namespace collections {
             }     \
                  \
             static void bind(VMClassRegistry *registry, const char *name, const char *className) {     \
+                printf("register func %s for %s\n", name, className);\
+                if (!registry) return;\
                 registry->RegisterFunction(     \
                     new NativeFunction##N <StaticFunctionTag, typename J2Tes<R>::tes_type   \
                         DO_##N(TESTYPE_NTH, COMA, COMA, NOTHING)  > (name, className, &tes_func, registry)   \
                 );     \
+                registry->SetFunctionFlags(className, name, VMClassRegistry::kFunctionFlag_NoWait); \
             }     \
         };  \
             \
@@ -291,10 +318,13 @@ namespace collections {
             }     \
                  \
             static void bind(VMClassRegistry *registry, const char *name, const char *className) {     \
+                printf("register func %s for %s\n", name, className);\
+                if (!registry) return;\
                 registry->RegisterFunction(     \
                     new NativeFunction##N <StaticFunctionTag, void   \
                         DO_##N(TESTYPE_NTH, COMA, COMA, NOTHING)  > (name, className, tes_func, registry)   \
                 );     \
+                registry->SetFunctionFlags(className, name, VMClassRegistry::kFunctionFlag_NoWait); \
             }     \
         };
 
@@ -331,7 +361,6 @@ namespace collections {
             }
 
             void bind(VMClassRegistry *registry, const char *className) {
-                if (!registry) return;
                 registrator(registry, funcName, className);
             }
 
@@ -345,8 +374,8 @@ namespace collections {
                 else {
                     auto types = typeStrings();
 
-                    auto argName = types[paramIdx]().tes_arg_name; 
-                    if (argName) {
+                    auto argName = types[paramIdx + 1]().tes_arg_name; 
+                    if (argName.empty() == false) {
                         str += argName;
                     } else {
                         str += "arg";
@@ -360,7 +389,7 @@ namespace collections {
                     return ;
                 }
 
-                str += ";/";
+                str += "\n;/";
                 str += comment;
                 str += "\n/;\n";
             }
@@ -371,7 +400,7 @@ namespace collections {
 
                 _pushComment(str);
 
-                if (strcmp(types[0]().tes_type_name, "void") != 0) {
+                if (types[0]().tes_type_name != "void") {
                     str += types[0]().tes_type_name;
                     str += ' ';
                 }
@@ -399,9 +428,10 @@ namespace collections {
         struct class_meta_info {
             std::vector<FunctionMetaInfo> methods;
             const char *className;
+            const char *extendsClass;
             bool initialized;
 
-            class_meta_info() : className(nullptr), initialized(false) {}
+            class_meta_info() : className("NoClassName"), extendsClass(NULL), initialized(false) {}
         };
 
         template<class T>
@@ -429,7 +459,11 @@ namespace collections {
 
             static std::string produceTesCode() {
                 std::stringstream stream;
-                stream << "Scriptname " << metaInfo().className << " extends JValue Hidden" << std::endl << std::endl;
+                stream << "Scriptname " << metaInfo().className;
+                if (metaInfo().extendsClass) {
+                    stream << " extends " << metaInfo().extendsClass;
+                }
+                stream << " Hidden" << std::endl << std::endl;
 
                 for (auto itm : metaInfo().methods) {
                     stream << itm.function_string() << std::endl;
@@ -438,8 +472,19 @@ namespace collections {
                 return stream.str();
             }
 
+            static void writeToFile() {
+                auto file = fopen((std::string(metaInfo().className) + ".psc").c_str(), "w");
+                if (file) {
+                    auto code = produceTesCode();
+                    fwrite(code.c_str(), 1, code.length(), file);
+                    fclose(file);
+                }
+            }
+
             static void bind(VMClassRegistry* registry) {
                 assert(metaInfo().className);
+
+                writeToFile();
 
                 printf("%s\n", produceTesCode().c_str());
 

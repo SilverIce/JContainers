@@ -126,31 +126,31 @@ namespace collections {
 
         _DMESSAGE(__FUNCTION__ " begin");
 
-        HandleT arr = tes_array::create<array>()->id;
+        auto arr = tes_object::create<array>();
 
-        EXPECT_TRUE(tes_array::count(0, arr) == 0);
+        EXPECT_TRUE(tes_array::count(arr) == 0);
 
         auto str = 10;
-        tes_array::add<SInt32>(0, arr, str);
-        EXPECT_TRUE(tes_array::count(0, arr) == 1);
-        EXPECT_TRUE( tes_array::itemAtIndex<SInt32>(0, arr, 0) == 10);
+        tes_array::add<SInt32>(arr, str);
+        EXPECT_TRUE(tes_array::count(arr) == 1);
+        EXPECT_TRUE( tes_array::itemAtIndex<SInt32>(arr, 0) == 10);
 
         str = 30;
-        tes_array::add<SInt32>(0, arr, str);
-        EXPECT_TRUE(tes_array::count(0, arr) == 2);
-        EXPECT_TRUE(tes_array::itemAtIndex<SInt32>(0, arr, 1) == 30);
+        tes_array::add<SInt32>( arr, str);
+        EXPECT_TRUE(tes_array::count(arr) == 2);
+        EXPECT_TRUE(tes_array::itemAtIndex<SInt32>(arr, 1) == 30);
 
-        HandleT arr2 = tes_array::create<array>()->id;
-        tes_array::add<SInt32>(0, arr2, 4);
+        auto arr2 = tes_object::create<array>();
+        tes_array::add<SInt32>(arr2, 4);
 
-        tes_array::add<Handle>(0, arr, arr2);
-        EXPECT_TRUE(tes_array::itemAtIndex<Handle>(0, arr, 2) == arr2);
+        tes_array::add<Handle>(arr, arr2->id);
+        EXPECT_TRUE(tes_array::itemAtIndex<Handle>(arr, 2) == arr2->id);
 
-        tes_array::release(0, arr);
+        tes_object::release(arr);
 
-        EXPECT_TRUE(tes_array::itemAtIndex<SInt32>(0, arr2, 0) == 4);
+        EXPECT_TRUE(tes_array::itemAtIndex<SInt32>( arr2, 0) == 4);
 
-        tes_array::release(0, arr2);
+        tes_object::release( arr2);
 
         _DMESSAGE(__FUNCTION__ " end");
         
