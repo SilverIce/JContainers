@@ -29,12 +29,13 @@ namespace collections {
             return _databaseId;
         }
 
+/*
         void setDataBaseId(HandleT hdl) {
             setDataBase(registry.getObject(hdl));
-        }
+        }*/
 
-        object_base* database() {
-            return registry.getObject(databaseId());
+        map* database() {
+            return registry.getObjectOfType<map>(databaseId());
         }
 
         void setDataBase(object_base *db) {

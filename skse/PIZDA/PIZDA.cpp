@@ -11,6 +11,9 @@ int _tmain(int argc, _TCHAR* argv[])
 {
     HMODULE handle = (HMODULE)LoadLibrary(L"JContainers.dll");
     if(handle) {
+        ShityTests code = (ShityTests)GetProcAddress(handle, "produceCode");
+        code();
+
        ShityTests test = (ShityTests)GetProcAddress(handle, "launchShityTest");
        test();
     }

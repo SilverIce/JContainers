@@ -281,7 +281,7 @@ namespace collections {
         }
 
         template<class Init>
-        static T* createWithInitializer(Init init) {
+        static T* _createWithInitializer(Init init) {
             auto obj = new T();
             init(obj);
             collection_registry::registerObject(obj);
@@ -294,7 +294,7 @@ namespace collections {
 
         template<class Init>
         static T* objectWithInitializer(Init init) {
-            return static_cast<T *> (createWithInitializer(init)->autorelease());
+            return static_cast<T *> (_createWithInitializer(init)->autorelease());
         }
     };
 
@@ -308,15 +308,17 @@ namespace collections {
         ItemTypeForm = 5,
     };
 
+    enum FormId : UInt32 {};
+
     struct StringMem
     {
-        UInt32 size;
+        UInt32 bufferSize;
         char string[1];
 
-        static StringMem* allocWithSize(UInt32 size) {
-            UInt32 memSize = size + 1 + sizeof(StringMem) - 1;
+        static StringMem* allocWithSize(UInt32 aBufferSize) {
+            UInt32 memSize = (aBufferSize + 1) + sizeof(StringMem) - 1;
             StringMem *me = (StringMem *)operator new(memSize);
-            me->size = memSize;
+            me->bufferSize = aBufferSize + 1;
             me->string[0] = '\0';
             return me;
         }
@@ -324,12 +326,12 @@ namespace collections {
         static StringMem* allocWithString(const char* string) {
             StringMem *me = allocWithSize(string ? strlen(string) : 0);
             if (string)
-                strcpy_s(me->string, me->size, string);
+                strcpy_s(me->string, me->bufferSize, string);
             return me;
         }
 
         static StringMem* null() {
-            static StringMem nullObj = {0, '\0'};
+            static StringMem nullObj = {1, '\0'};
             return &nullObj;
         }
 
@@ -368,10 +370,16 @@ namespace collections {
         explicit Item(SInt32 val) : _intVal(val), _type(ItemTypeInt32) {}
         explicit Item(int val) : _intVal(val), _type(ItemTypeInt32) {}
         explicit Item(bool val) : _intVal(val), _type(ItemTypeInt32) {}
+
         explicit Item(const TESForm *form) : _uintVal(form ? form->formID : 0), _type(ItemTypeForm) {}
+        explicit Item(FormId id) : _uintVal(id), _type(ItemTypeForm) {}
 
         explicit Item(const char * val) : _stringVal(NULL), _type(ItemTypeNone) {
             setStringVal(val);
+        }
+
+        explicit Item(const std::string& val) : _stringVal(NULL), _type(ItemTypeNone) {
+            setStringVal(val.c_str());
         }
 
         explicit Item(const BSFixedString& str) : _stringVal(NULL), _type(ItemTypeNone) {
@@ -443,10 +451,10 @@ namespace collections {
                     _stringVal = nullptr;
                 }
             } else {
-                int len = strlen(val);
+                int lenPlusEnd = strlen(val);
 
-                if (block && block->size >= len) {
-                    strcpy_s(block->string, block->size, val);
+                if (block && block->bufferSize >= lenPlusEnd) {
+                    strcpy_s(block->string, block->bufferSize, val);
                 } else {
                     delete block;
                     _stringVal = StringMem::allocWithString(val);
@@ -562,6 +570,49 @@ namespace collections {
 
             _type = ItemTypeForm;
             _uintVal = (form ? form->formID : 0);
+        }
+
+        bool isEqual(SInt32 value) const {
+            return _type == ItemTypeInt32 && _intVal == value;
+        }
+
+        bool isEqual(Float32 value) const {
+            return _type == ItemTypeFloat32 && _floatVal == value;
+        }
+
+        bool isEqual(const char* value) const {
+            auto str1 = strValue();
+            auto str2 = value;
+            return  _type == ItemTypeCString && (str1 && str2 && strcmp(str1, str2) == 0) || (!str1 && !str2);
+        }
+
+        bool isEqual(const object_base *value) const {
+            return _type == ItemTypeObject && _object == value;
+        }
+
+        bool isEqual(const TESForm *value) const {
+            return _type == ItemTypeForm && _uintVal == (value ? value->formID : 0);
+        }
+
+        bool isEqual(const Item& other) const {
+            if (type() != other.type()) {
+                return false;
+            }
+
+            switch(type()) {
+            case ItemTypeInt32:
+                return _intVal == other._intVal;
+            case ItemTypeFloat32:
+                return _floatVal == other._floatVal;
+            case ItemTypeForm:
+                return _uintVal == other._uintVal;
+            case ItemTypeObject:
+                return _object == other._object;
+            case ItemTypeCString:
+                return isEqual(other.strValue());
+            default:
+                return true;
+            }
         }
 
         bool isNull() const {
@@ -704,9 +755,9 @@ namespace collections {
             TypeId = CollectionTypeFormMap,
         };
 
-        std::map<UInt32, Item> cnt;
+        std::map<FormId, Item> cnt;
 
-        Item& operator[](UInt32 str) {
+        Item& operator[](FormId str) {
             mutex_lock g(_mutex);
             return cnt[str];
         }

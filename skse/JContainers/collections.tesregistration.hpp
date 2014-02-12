@@ -16,18 +16,22 @@ namespace collections {
 
         static const char * TesName() { return "JValue";}
 
-        static HandleT retain(StaticFunctionTag*, HandleT handle) {
-            MESSAGE(__FUNCTION__);
-            auto obj = collection_registry::getObject(handle);
+        static object_base* retain(object_base *obj) {
             if (obj) {
                 obj->tes_retain();
-                return handle;
+                return obj;
             }
 
-            return HandleNull;
+            return nullptr;
         }
+        REGISTERF2(retain, "*",
+            "Retains and returns the object.\n\
+            All containers that created with object* or objectWith* methods get automatically destroyed after some amount of time (~10 seconds)\n\
+            To keep object alive you must retain in once and you have to __release__ it when you do not need it anymore (also to not pollute save file).\n\
+            An alternative to retain-release is store object in JDB container"
+        );
 
-        static HandleT autorelease(StaticFunctionTag*, HandleT handle) {
+        static HandleT autorelease(HandleT handle) {
             MESSAGE(__FUNCTION__);
             autorelease_queue::instance().push(handle);
             return handle;
@@ -53,43 +57,40 @@ namespace collections {
         }
         REGISTERF2(release, "*", "releases the object");
 
-        static bool isArray(StaticFunctionTag*, HandleT handle) {
-            object_base *obj = collection_registry::getObject(handle);
+        static bool isArray(object_base *obj) {
             return obj && obj->_type == CollectionTypeArray;
         }
+        REGISTERF2(isArray, "*", "returns true if object is map, array or formmap container");
 
-        static bool isMap(StaticFunctionTag*, HandleT handle) {
-            object_base *obj = collection_registry::getObject(handle);
+        static bool isMap(object_base *obj) {
             return obj && obj->_type == CollectionTypeMap;
         }
+        REGISTERF2(isMap, "*", NULL);
 
-        static bool isFormMap(StaticFunctionTag*, HandleT handle) {
-            object_base *obj = collection_registry::getObject(handle);
+        static bool isFormMap(object_base *obj) {
             return obj && obj->as<form_map>();
         }
+        REGISTERF2(isFormMap, "*", NULL);
 
-        static HandleT readFromFile(StaticFunctionTag*, BSFixedString path) {
-            if (path.data == nullptr)
+        static object_base* readFromFile(const char *path) {
+            if (path == nullptr)
                 return 0;
 
-            auto obj = json_parsing::readJSONFile(path.data);
-            return  obj ? obj->id : 0;
+            auto obj = json_parsing::readJSONFile(path);
+            return  obj;
         }
+        REGISTERF2(readFromFile, "* filePath", "parse JSON and create a new object (array or map)");
 
-        static void writeToFile(StaticFunctionTag*, HandleT handle, BSFixedString path) {
-            if (path.data == nullptr)  return;
-
-            auto obj = collection_registry::getObject(handle);
+        static void writeToFile(object_base *obj, const char * path) {
+            if (path == nullptr)  return;
             if (!obj)  return;
 
-
-           
             std::unique_ptr<char, decltype(&free)> data(json_parsing::createJSONData(*obj), &free);
             //char * data = json_parsing::createJSONData(*obj);
             if (!data) return;
 
             //unique_ptr<FILE, decltype(&fclose)> 
-            auto file = make_unique_file(fopen(path.data, "w"));
+            auto file = make_unique_file(fopen(path, "w"));
             if (!file) {
                 //free(data);
                 return;
@@ -97,6 +98,7 @@ namespace collections {
 
             fwrite(data.get(), 1, strlen(data.get()), file.get());
         }
+        REGISTERF2(writeToFile, "* filePath", "write object into JSON file");
 
         template<class T>
         static typename Tes2Value<T>::tes_type resolveT(StaticFunctionTag*, HandleT handle, BSFixedString path) {
@@ -217,21 +219,13 @@ namespace collections {
                 new NativeFunction1 <StaticFunctionTag, __VA_ARGS__ >("release", TesName(), addr, registry));
                // registry->SetFunctionFlags(TesName(), name, VMClassRegistry::kFunctionFlag_NoWait);*/
 
-            //REGISTER(release, 1, void, HandleT);
-            REGISTER(retain, 1, HandleT, HandleT);
-            REGISTER(autorelease, 1, HandleT, HandleT);
 
-            REGISTER(readFromFile, 1, HandleT, BSFixedString);
-            REGISTER(writeToFile, 2, void, HandleT, BSFixedString);
 
-            REGISTER(isArray, 1, bool, HandleT);
-            REGISTER(isMap, 1, bool, HandleT);
-            REGISTER(isFormMap, 1, bool, HandleT);
-
+/*
             REGISTER2("resolveVal", resolveT<Handle>, 2, HandleT, HandleT, BSFixedString);
             REGISTER2("resolveFlt", resolveT<Float32>, 2, Float32, HandleT, BSFixedString);
             REGISTER2("resolveStr", resolveT<BSFixedString>, 2, BSFixedString, HandleT, BSFixedString);
-            REGISTER2("resolveInt", resolveT<SInt32>, 2, SInt32, HandleT, BSFixedString);
+            REGISTER2("resolveInt", resolveT<SInt32>, 2, SInt32, HandleT, BSFixedString);*/
 
             bind(registry);
 
@@ -257,6 +251,15 @@ namespace collections {
         }
 
         REGISTERF(tes_object::object<array>, "object", "", kCommentObject);
+
+        static object_base* objectWithSize(UInt32 size) {
+            auto obj = array::objectWithInitializer([&](array *me) {
+                me->_array.resize(size);
+            });
+
+            return obj;
+        }
+        REGISTERF2(objectWithSize, "size", "creates array of given size, filled with nothing");
 
         template<class T>
         static object_base* fromArray(VMArray<T> arr) {
@@ -289,6 +292,27 @@ namespace collections {
         REGISTERF(itemAtIndex<const char *>, "getStr", "* index", "");
         REGISTERF(itemAtIndex<Handle>, "getObj", "* index", "");
         REGISTERF(itemAtIndex<TESForm*>, "getForm", "* index", "");
+
+        template<class T>
+        static SInt32 findVal(array *obj, T value) {
+            if (!obj) {
+                return -1;
+            }
+
+            mutex_lock g(obj->_mutex);
+
+            auto itr = std::find_if(obj->_array.begin(), obj->_array.end(), [=](const Item& item) {
+                return item.isEqual(value);
+            });
+
+            return itr != obj->_array.end() ? (itr - obj->_array.begin()) : -1;
+        }
+        REGISTERF(findVal<SInt32>, "findInt", "* value", "returns index of the first found value that equals to given value.\n\
+            if found nothing returns -1.");
+        REGISTERF(findVal<Float32>, "findFlt", "* value", "");
+        REGISTERF(findVal<const char *>, "findStr", "* value", "");
+        REGISTERF(findVal<object_base*>, "findObj", "* value", "");
+        REGISTERF(findVal<TESForm*>, "findForm", "* value", "");
 
         template<class T>
         static void replaceItemAtIndex(array *obj, Index index, T item) {
@@ -352,7 +376,6 @@ namespace collections {
         static bool registerFuncs(VMClassRegistry* registry) {
             MESSAGE("register array funcs");
 
-            OutputDebugStringW(L"reg arr fun");
 
             bind(registry);
 
@@ -364,9 +387,19 @@ namespace collections {
         return in;
     }
 
+    inline FormId tes_hash(TESForm * in) {
+        return (FormId) (in ? in->formID : 0); 
+    }
+/*
+
+
+    inline const char* hash2Tes(UInt32 formId) {
+        return ;
+    }
+
     inline UInt32 tes_hash(TESForm * in) {
         return in ? in->formID : 0; 
-    }
+    }*/
 
     template<class Key, class Cnt>
     class tes_map_t : public tes_binding::class_meta_mixin< tes_map_t<Key, Cnt> > {
@@ -422,6 +455,38 @@ namespace collections {
             return itr != obj->cnt.end();
         }
         REGISTERF2(hasKey, "* key", "true, if something associated with key");
+
+        static object_base* allKeys(Cnt *obj) {
+            if (!obj) {
+                return nullptr;
+            }
+
+            return array::objectWithInitializer([=](array *arr) {
+                mutex_lock g(obj->_mutex);
+
+                arr->_array.reserve( obj->cnt.size() );
+                for each(auto& pair in obj->cnt) {
+                    arr->_array.push_back( Item(pair.first) );
+                }
+            });
+        }
+        REGISTERF2(allKeys, "*", "returns array containing all keys");
+
+        static object_base* allValues(Cnt *obj) {
+            if (!obj) {
+                return nullptr;
+            }
+
+            return array::objectWithInitializer([=](array *arr) {
+                mutex_lock g(obj->_mutex);
+
+                arr->_array.reserve( obj->cnt.size() );
+                for each(auto& pair in obj->cnt) {
+                    arr->_array.push_back( pair.second );
+                }
+            });
+        }
+        REGISTERF2(allValues, "*", "returns array containing all values");
 
         static bool removeKey(Cnt *obj, Key key) {
             if (!obj || !key) {
@@ -528,15 +593,26 @@ namespace collections {
             return tes_object::hasPath(tag, shared_state::instance().databaseId(), path);
         }
 
-        static void writeToFile(StaticFunctionTag* tag, BSFixedString path) {
-            tes_object::writeToFile(tag, shared_state::instance().databaseId(), path);
+        static object_base* allKeys() {
+            return tes_map::allKeys( shared_state::instance().database() );
         }
+        REGISTERF2(allKeys, "*", "returns array containing all keys");
 
-        static void readFromFile(/*StaticFunctionTag* tag,*/ BSFixedString path) {
-            auto objNew = json_parsing::readJSONFile(path.data);
+        static object_base* allValues() {
+            return tes_map::allValues( shared_state::instance().database() );
+        }
+        REGISTERF2(allValues, "*", "returns array containing all containers associated with JDB");
+
+        static void writeToFile(const char * path) {
+            tes_object::writeToFile( shared_state::instance().database(), path);
+        }
+        REGISTERF2(writeToFile, "path", "writes storage data into JSON file");
+
+        static void readFromFile(/*StaticFunctionTag* tag,*/ const char *path) {
+            auto objNew = json_parsing::readJSONFile(path);
             shared_state::instance().setDataBase(objNew);
         }
-        REGISTERF(readFromFile, "readFromFile", "path", "fills storage with JSON data");
+        REGISTERF2(readFromFile, "path", "fills storage with JSON data");
 
         static bool registerFuncs(VMClassRegistry* registry) {
 
@@ -553,8 +629,6 @@ namespace collections {
             REGISTER2("solveForm", solveGetter<TESForm*>, 1, TESForm*, BSFixedString);
 
             REGISTER(hasPath, 1, bool, BSFixedString);
-
-            REGISTER(writeToFile, 1, void, BSFixedString);
 
             bind(registry);
 

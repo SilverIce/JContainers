@@ -108,11 +108,11 @@ bool SKSEPlugin_Query(const SKSEInterface * skse, PluginInfo * info)
 	}
 
     g_papyrus = (SKSEPapyrusInterface *)skse->QueryInterface(kInterface_Papyrus);
-/*
+
     if (!g_papyrus) {
         _MESSAGE("couldn't get g_papyrus interface");
         return false;
-    }*/
+    }
 
 	// ### do not do anything else in this callback
 	// ### only fill out PluginInfo and return true/false
@@ -133,19 +133,23 @@ bool SKSEPlugin_Load(const SKSEInterface * skse)
 	g_serialization->SetSaveCallback(g_pluginHandle, Serialization_Save);
 	g_serialization->SetLoadCallback(g_pluginHandle, Serialization_Load);
 
-    if (g_papyrus) {
-        g_papyrus->Register(collections::registerFuncs);
-    } else {
-        WriteRelCall(0x8F99B4u, (UInt32)collections::registerFuncsHook);
-    }
+    g_papyrus->Register(collections::registerFuncs);
 
 	return true;
 }
 
 __declspec(dllexport) void launchShityTest() {
-    collections::registerFuncs(nullptr);
+    //collections::registerFuncs(nullptr);
 
     testing::runTests(meta<testing::TestInfo>::getListConst());
+}
+
+__declspec(dllexport) void produceCode() {
+    collections::tes_array::writeSourceToFile();
+    collections::tes_map::writeSourceToFile();
+    collections::tes_form_map::writeSourceToFile();
+    collections::tes_object::writeSourceToFile();
+    collections::tes_db::writeSourceToFile();
 }
 
 };

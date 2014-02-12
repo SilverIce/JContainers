@@ -5,10 +5,10 @@
 #include <sstream>
 #include <memory>
 
-#ifndef NO_TESTS
-
 namespace collections {
     // static unsigned long create(StaticFunctionTag *) {
+
+    #ifndef TEST_COMPILATION_DISABLED
 
     TEST(object_base, refCount)
     {
@@ -47,7 +47,7 @@ namespace collections {
 
 #define STR(...)    #__VA_ARGS__
 
-    TEST(json_parsing, readJSONData)
+    TEST_DISABLED(json_parsing, readJSONData)
     {
         const char *jsonString = STR(
         {
@@ -112,7 +112,27 @@ namespace collections {
 
     }
 
+    TEST(Item, isEqual)
+    {
+        Item i1, i2;
 
+        EXPECT_TRUE(i1.isEqual(i1));
+        EXPECT_TRUE(i1.isEqual(i2));
+
+        i1.setStringVal("me");
+        i2.setStringVal("me");
+        EXPECT_TRUE(i1.isEqual(i2));
+
+        i2.setStringVal("not me");
+        EXPECT_FALSE(i1.isEqual(i2));
+
+        i1 = Item(1);
+        i2 = Item(1);
+        EXPECT_TRUE(i1.isEqual(i2));
+
+        i2 = Item(1.5f);
+        EXPECT_FALSE(i1.isEqual(i2));
+    }
    
 /*
     TEST(saveAll, test)
@@ -156,8 +176,7 @@ namespace collections {
         
     }
 
+    #endif
     //template<> bool array<Float32>::registerFuncs(VMClassRegistry* registry);
 }
-
-#endif
 

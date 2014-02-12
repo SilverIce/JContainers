@@ -15,6 +15,7 @@
 
 #include <fstream>
 #include <sstream>
+#include <set>
 
 #include "gtest.h"
 
@@ -27,6 +28,8 @@
 BOOST_CLASS_VERSION(collections::object_base, 1);
 
 namespace collections {
+
+#ifndef TEST_COMPILATION_DISABLED
 
     TEST(Item, serialization)
     {
@@ -72,6 +75,39 @@ namespace collections {
         //EXPECT_TRUE(strcmp(obj["array"].strValue(), testStr) == 0);
     }
 
+    template<class T>
+    struct Hum {
+        T val;
+
+        explicit Hum(T value) : val(value) {}
+
+        template<class Archive>
+        void serialize(Archive & ar, const unsigned int version) {
+            ar & val;
+        }
+    };
+
+    TEST(Item, serialization2)
+    {
+        std::ostringstream str;
+        ::boost::archive::binary_oarchive arch(str);
+
+        std::map<UInt32, Item> oldStruct;
+        oldStruct[0xbaadc0de] = Item("testt");
+
+        arch << oldStruct;
+
+        // reading
+        std::string string = str.str();
+        std::istringstream istr(string);
+        boost::archive::binary_iarchive ia(istr);
+
+        std::map<FormId, Item> newStruct;
+        ia >> newStruct;
+
+        EXPECT_TRUE(oldStruct.begin()->first == newStruct.begin()->first);
+    }
+
     TEST(autorelease_queue, serialization)
     {
         bshared_mutex mt;
@@ -97,17 +133,23 @@ namespace collections {
         ;
     }
 
+#endif
+
 /*
     template<class Archive>
     inline void serialize(Archive & ar, CString & s, const unsigned int file_version) {
         split_free(ar, s, file_version); 
     }*/
 
+    template<class T> void registerContainers(T & ar) {
+        ar.register_type(static_cast<array *>(NULL));
+        ar.register_type(static_cast<map *>(NULL));
+        ar.register_type(static_cast<form_map *>(NULL));
+    }
 
     template<class Archive>
     void collection_registry::serialize(Archive & ar, const unsigned int version) {
-        ar.register_type(static_cast<array *>(NULL));
-        ar.register_type(static_cast<map *>(NULL));
+        registerContainers(ar);
 
         ar & _map;
         ar & _idGen;
@@ -115,8 +157,7 @@ namespace collections {
 
     template<class Archive>
     void Item::save(Archive & ar, const unsigned int version) const {
-        ar.register_type(static_cast<array *>(NULL));
-        ar.register_type(static_cast<map *>(NULL));
+        registerContainers(ar);
 
         ar & _type;
         switch (_type)
@@ -146,8 +187,7 @@ namespace collections {
     template<class Archive>
     void Item::load(Archive & ar, const unsigned int version)
     {
-        ar.register_type(static_cast<array *>(NULL));
-        ar.register_type(static_cast<map *>(NULL));
+        registerContainers(ar);
 
         ar & _type;
         switch (_type)
@@ -184,9 +224,8 @@ namespace collections {
     template<class Archive>
     void object_base::serialize(Archive & ar, const unsigned int version) {
         ar & _refCount;
-        if (version >= 1) {
-            ar & _tes_refCount;
-        }
+        ar & _tes_refCount;
+        
         ar & _type;
         ar & _id;
     }

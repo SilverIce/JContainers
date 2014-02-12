@@ -197,7 +197,6 @@ namespace collections {
 
             static void bind(VMClassRegistry *registry, const char *name, const char *className) {
                  //printf("%s %s\n", name, typeid(decltype(tes_func)).name());
-                 printf("register func %s for %s\n", name, className);
 
                 if (!registry) return;
 
@@ -235,8 +234,6 @@ namespace collections {
 
             static void bind(VMClassRegistry *registry, const char *name, const char *className) {
 
-                //printf("%s %s\n", name, typeid(decltype(tes_func)).name());
-                printf("register func %s for %s\n", name, className);
 
                 if (!registry) return;
 
@@ -289,7 +286,6 @@ namespace collections {
             }     \
                  \
             static void bind(VMClassRegistry *registry, const char *name, const char *className) {     \
-                printf("register func %s for %s\n", name, className);\
                 if (!registry) return;\
                 registry->RegisterFunction(     \
                     new NativeFunction##N <StaticFunctionTag, typename J2Tes<R>::tes_type   \
@@ -318,7 +314,6 @@ namespace collections {
             }     \
                  \
             static void bind(VMClassRegistry *registry, const char *name, const char *className) {     \
-                printf("register func %s for %s\n", name, className);\
                 if (!registry) return;\
                 registry->RegisterFunction(     \
                     new NativeFunction##N <StaticFunctionTag, void   \
@@ -472,7 +467,7 @@ namespace collections {
                 return stream.str();
             }
 
-            static void writeToFile() {
+            static void writeSourceToFile() {
                 auto file = fopen((std::string(metaInfo().className) + ".psc").c_str(), "w");
                 if (file) {
                     auto code = produceTesCode();
@@ -484,9 +479,9 @@ namespace collections {
             static void bind(VMClassRegistry* registry) {
                 assert(metaInfo().className);
 
-                writeToFile();
+                writeSourceToFile();
 
-                printf("%s\n", produceTesCode().c_str());
+                //printf("%s\n", produceTesCode().c_str());
 
                 for (auto itm : metaInfo().methods) {
                     itm.bind(registry, metaInfo().className);
