@@ -2,6 +2,11 @@
 
 #include "tes_binding.h"
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <stdio.h>
+#include <errno.h>
+
 #define MESSAGE(...) // _DMESSAGE(__VA_ARGS__);
 
 namespace collections {
@@ -81,6 +86,15 @@ namespace collections {
         }
         REGISTERF2(readFromFile, "* filePath", "parse JSON and create a new object (array or map)");
 
+        static object_base* objectFromPrototype(const char *prototype) {
+            if (!prototype)
+                return nullptr;
+
+            auto obj = json_parsing::readJSONData(prototype);
+            return obj;
+        }
+        //REGISTERF2(objectFromPrototype, "* prototype", "creates new container object using given string-prototype");
+
         static void writeToFile(object_base *obj, const char * path) {
             if (path == nullptr)  return;
             if (!obj)  return;
@@ -142,63 +156,6 @@ namespace collections {
 
             return succeed;
         }
-
-        static void printMethod(const char *cname, const char *cargs) {
-            //string args(cargs);
-
-#define C2TES(c, tes) #c, #tes
-            const char * type2tes[][2] = {
-                C2TES(HandleT, int),
-                C2TES(Index, int),
-                C2TES(BSFixedString, string),
-                C2TES(Float32, float),
-                C2TES(SInt32, int),
-                C2TES(TESForm*, form),
-            };
-#undef C2TES
-            std::map<string,string> type2tesMap ;
-            for (int i = 0; i < sizeof(type2tes) / (2 * sizeof(char*));++i) {
-                type2tesMap[type2tes[i][0]] = type2tes[i][1];
-            }
-
-
-            string name;
-
-            vector<string> strings; // #2: Search for tokens
-            boost::split( strings, string(cargs), boost::is_any_of(", ") );
-
-            auto strToStr = [&](const std::string& str) {
-                return type2tesMap.find(str) != type2tesMap.end() ? type2tesMap[str] : str;
-            };
-
-            if (strings[0] != "void") {
-                name += strToStr(strings[0]) + ' ';
-            }
-
-            name += "Function ";
-            name += cname;
-            name += "(";
-
-            int argNum = 0;
-
-            for (int i = 1; i < strings.size(); ++i, ++argNum) {
-                if (strings[i].empty()) {
-                    continue;
-                }
-
-
-                name += strToStr(strings[i]);
-                name += " arg";
-                name += (char)((argNum - 1) + '0');
-                if ((i+1) < strings.size())
-                    name += ", ";
-            }
-
-            name += ") global native\n";
-
-            printf(name.c_str());
-        }
-
 #define ARGS(...) __VA_ARGS__
 
         static bool registerFuncs(VMClassRegistry* registry) {
@@ -212,20 +169,6 @@ namespace collections {
                 //printMethod(name, #__VA_ARGS__);
 
             #define REGISTER(func, argCount,  ... /*types*/ ) REGISTER2(#func, func, argCount, __VA_ARGS__)
-
- /*           auto addr = &proxy<decltype(&release), release>::tes_func_noreturn;
-
-            registry->RegisterFunction(
-                new NativeFunction1 <StaticFunctionTag, __VA_ARGS__ >("release", TesName(), addr, registry));
-               // registry->SetFunctionFlags(TesName(), name, VMClassRegistry::kFunctionFlag_NoWait);*/
-
-
-
-/*
-            REGISTER2("resolveVal", resolveT<Handle>, 2, HandleT, HandleT, BSFixedString);
-            REGISTER2("resolveFlt", resolveT<Float32>, 2, Float32, HandleT, BSFixedString);
-            REGISTER2("resolveStr", resolveT<BSFixedString>, 2, BSFixedString, HandleT, BSFixedString);
-            REGISTER2("resolveInt", resolveT<SInt32>, 2, SInt32, HandleT, BSFixedString);*/
 
             bind(registry);
 
@@ -390,16 +333,6 @@ namespace collections {
     inline FormId tes_hash(TESForm * in) {
         return (FormId) (in ? in->formID : 0); 
     }
-/*
-
-
-    inline const char* hash2Tes(UInt32 formId) {
-        return ;
-    }
-
-    inline UInt32 tes_hash(TESForm * in) {
-        return in ? in->formID : 0; 
-    }*/
 
     template<class Key, class Cnt>
     class tes_map_t : public tes_binding::class_meta_mixin< tes_map_t<Key, Cnt> > {
@@ -470,7 +403,7 @@ namespace collections {
                 }
             });
         }
-        REGISTERF2(allKeys, "*", "returns array containing all keys");
+        REGISTERF2(allKeys, "*", "returns new array containing all keys");
 
         static object_base* allValues(Cnt *obj) {
             if (!obj) {
@@ -486,7 +419,7 @@ namespace collections {
                 }
             });
         }
-        REGISTERF2(allValues, "*", "returns array containing all values");
+        REGISTERF2(allValues, "*", "returns new array containing all values");
 
         static bool removeKey(Cnt *obj, Key key) {
             if (!obj || !key) {
@@ -596,12 +529,12 @@ namespace collections {
         static object_base* allKeys() {
             return tes_map::allKeys( shared_state::instance().database() );
         }
-        REGISTERF2(allKeys, "*", "returns array containing all keys");
+        REGISTERF2(allKeys, "*", "returns new array containing all keys");
 
         static object_base* allValues() {
             return tes_map::allValues( shared_state::instance().database() );
         }
-        REGISTERF2(allValues, "*", "returns array containing all containers associated with JDB");
+        REGISTERF2(allValues, "*", "returns new array containing all containers associated with JDB");
 
         static void writeToFile(const char * path) {
             tes_object::writeToFile( shared_state::instance().database(), path);
@@ -636,6 +569,28 @@ namespace collections {
         }
     };
 
+    class tes_jcontainers : public tes_binding::class_meta_mixin<tes_jcontainers> {
+    public:
+
+        REGISTER_TES_NAME("JContainers");
+
+        static void additionalSetup() {
+            metaInfo().comment = "Various utility methods";
+        }
+
+        static bool isInstalled() {
+            return true;
+        }
+        REGISTERF2(isInstalled, NULL, "returns true if JContainers plugin is installed");
+
+        static bool fileExistsAtPath(const char *filename) {
+            struct _stat buf;
+            // Get data associated with "crt_stat.c": 
+            int result = _stat(filename, &buf);
+            return result == 0;
+        }
+        REGISTERF2(fileExistsAtPath, "path", "returns true if file at path exists");
+    };
 
     bool registerFuncs(VMClassRegistry *registry) {
         collections::tes_array::registerFuncs(registry);
@@ -646,6 +601,8 @@ namespace collections {
         collections::tes_object::registerFuncs(registry);
 
         collections::tes_db::registerFuncs(registry);
+
+        collections::tes_jcontainers::bind(registry);
 
         return true;
     }

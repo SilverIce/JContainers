@@ -10,6 +10,15 @@
     <Filter Include="skse\scaleform">
       <UniqueIdentifier>{ca92bcd6-0c29-4997-9b84-1a28f49cd65c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="tests">
+      <UniqueIdentifier>{5c78a6c6-cc2b-4ca5-9f66-477fd348017d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="tes_interface">
+      <UniqueIdentifier>{2c083f8d-8546-477b-851e-5eb515359766}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="tes_objects">
+      <UniqueIdentifier>{36211b98-169e-46fc-961c-48122146285c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\skse\GameAPI.cpp">
@@ -21,10 +30,17 @@
     <ClCompile Include="..\skse\ScaleformCallbacks.cpp">
       <Filter>skse\scaleform</Filter>
     </ClCompile>
-    <ClCompile Include="gtest.cpp" />
     <ClCompile Include="cJSON.cpp" />
-    <ClCompile Include="serialization.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="gtest.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
+    <ClCompile Include="code_producer.cpp">
+      <Filter>tes_interface</Filter>
+    </ClCompile>
+    <ClCompile Include="serialization.cpp">
+      <Filter>tes_objects</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\skse\GameAPI.h">
@@ -36,23 +52,45 @@
     <ClInclude Include="..\skse\ScaleformCallbacks.h">
       <Filter>skse\scaleform</Filter>
     </ClInclude>
-    <ClInclude Include="collections.h" />
-    <ClInclude Include="gtest.h" />
-    <ClInclude Include="collections.tests.hpp" />
-    <ClInclude Include="autorelease_queue.h" />
     <ClInclude Include="cJSON.h" />
-    <ClInclude Include="id_generator.h" />
-    <ClInclude Include="shared_state.h" />
-    <ClInclude Include="shared_state.hpp" />
-    <ClInclude Include="meta.h" />
-    <ClInclude Include="tes_binding.h" />
+    <ClInclude Include="collections.tests.hpp">
+      <Filter>tests</Filter>
+    </ClInclude>
+    <ClInclude Include="gtest.h">
+      <Filter>tests</Filter>
+    </ClInclude>
+    <ClInclude Include="tes_binding.h">
+      <Filter>tes_interface</Filter>
+    </ClInclude>
+    <ClInclude Include="code_producer.h">
+      <Filter>tes_interface</Filter>
+    </ClInclude>
+    <ClInclude Include="autorelease_queue.h">
+      <Filter>tes_objects</Filter>
+    </ClInclude>
+    <ClInclude Include="id_generator.h">
+      <Filter>tes_objects</Filter>
+    </ClInclude>
+    <ClInclude Include="shared_state.h">
+      <Filter>tes_objects</Filter>
+    </ClInclude>
+    <ClInclude Include="shared_state.hpp">
+      <Filter>tes_objects</Filter>
+    </ClInclude>
+    <ClInclude Include="meta.h">
+      <Filter>tests</Filter>
+    </ClInclude>
+    <ClInclude Include="collections.h">
+      <Filter>tes_objects</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="exports.def" />
-    <None Include="collections.tesregistration.hpp" />
-    <None Include="collections.from_json.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="tests\test1" />
+    <None Include="collections.tesregistration.hpp">
+      <Filter>tes_interface</Filter>
+    </None>
+    <None Include="collections.from_json.h">
+      <Filter>tes_objects</Filter>
+    </None>
   </ItemGroup>
 </Project>

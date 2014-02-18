@@ -12,7 +12,7 @@ namespace collections {
 
     TEST(object_base, refCount)
     {
-        auto obj = new array;
+        auto obj = array::create();
         EXPECT_TRUE(obj->refCount() == 1);
         obj->retain();
         EXPECT_TRUE(obj->refCount() == 2);
@@ -47,15 +47,14 @@ namespace collections {
 
 #define STR(...)    #__VA_ARGS__
 
-    TEST_DISABLED(json_parsing, readJSONData)
-    {
+    const char * jsonTestString() {
         const char *jsonString = STR(
         {
             "glossary": {
                 "title": "example glossary",
-                "GlossDiv": {
+                    "GlossDiv": {
                         "title": "S",
-                        "GlossList": {
+                            "GlossList": {
                                 "GlossEntry": {
                                     "ID": "SGML",
                                         "SortAs": "SGML",
@@ -72,12 +71,19 @@ namespace collections {
                 }
             },
 
-            "array": [["NPC Head [Head]", 0, -0.330000]]
+                "array": [["NPC Head [Head]", 0, -0.330000]]
         }
 
-            );
+        );
 
-        cJSON *cjson = cJSON_Parse(jsonString);
+        return jsonString;
+    }
+
+    TEST_DISABLED(json_parsing, readJSONData)
+    {
+
+
+        cJSON *cjson = cJSON_Parse(jsonTestString());
 
         object_base *obj = json_parsing::readCJSON(cjson);
         cJSON * cjson2 = json_parsing::createCJSON(*obj);
@@ -112,6 +118,21 @@ namespace collections {
 
     }
 
+    TEST(json_parsing, objectFromPrototype)
+    {
+        object_base *obj = tes_object::objectFromPrototype("{ \"timesTrained\" : 10, \"trainers\" : [] }");
+
+        EXPECT_TRUE(obj->as<map>() != nullptr);
+        
+        json_parsing::resolvePath(obj, ".timesTrained", [&](Item * item) {
+            EXPECT_TRUE(item && item->intValue() == 10 );
+        });
+
+        json_parsing::resolvePath(obj, ".trainers", [&](Item * item) {
+            EXPECT_TRUE(item && item->object()->as<array>() );
+        });
+    }
+
     TEST(Item, isEqual)
     {
         Item i1, i2;
@@ -142,10 +163,6 @@ namespace collections {
 
     TEST(array,  test)
     {
-
-
-        _DMESSAGE(__FUNCTION__ " begin");
-
         auto arr = tes_object::create<array>();
 
         EXPECT_TRUE(tes_array::count(arr) == 0);
@@ -171,12 +188,18 @@ namespace collections {
         EXPECT_TRUE(tes_array::itemAtIndex<SInt32>( arr2, 0) == 4);
 
         tes_object::release( arr2);
+    }
 
-        _DMESSAGE(__FUNCTION__ " end");
-        
+    TEST(tes_jcontainers, tes_jcontainers)
+    {
+        EXPECT_TRUE(tes_jcontainers::isInstalled());
+
+
+        const char *path1 = "I:/Games/Elder Scrolls Skyrim/Data/SKSE/Plugins/SafetyLoad.log";
+        const char *path2 = "SafetyLoad.log";
+        EXPECT_TRUE(tes_jcontainers::fileExistsAtPath(path2));
     }
 
     #endif
-    //template<> bool array<Float32>::registerFuncs(VMClassRegistry* registry);
 }
 

@@ -12,7 +12,7 @@
 #include "collections.tesregistration.hpp"
 #include "collections.tests.hpp"
 
-#include "skse/SafeWrite.h"
+//#include "skse/SafeWrite.h"
 
 
 PluginHandle	g_pluginHandle = kPluginHandle_Invalid;
@@ -32,14 +32,11 @@ enum {
 
 void Serialization_Revert(SKSESerializationInterface * intfc)
 {
-    _MESSAGE("revert");
      collections::shared_state::instance().clearState();
 }
 
 void Serialization_Save(SKSESerializationInterface * intfc)
 {
-	_MESSAGE("save");
-
 	if (intfc->OpenRecord(kJStorageChunk, kSerializationDataVersion)) {
         auto data = collections::shared_state::instance().saveToArray();
         intfc->WriteRecordData(data.data(), data.size());
@@ -48,8 +45,6 @@ void Serialization_Save(SKSESerializationInterface * intfc)
 
 void Serialization_Load(SKSESerializationInterface * intfc)
 {
-	_MESSAGE("load");
-
 	UInt32	type;
 	UInt32	version;
 	UInt32	length;
@@ -57,10 +52,11 @@ void Serialization_Load(SKSESerializationInterface * intfc)
 
 	while(!error && intfc->GetNextRecordInfo(&type, &version, &length))
 	{
-        if (kJStorageChunk && version == kSerializationDataVersion && length > 0) {
+        if (type == kJStorageChunk && version == kSerializationDataVersion && length > 0) {
             std::vector<char> data(length);
             intfc->ReadRecordData(data.data(), length);
             collections::shared_state::instance().loadAll(data);
+            break;
 		}
 	}
 }
@@ -82,22 +78,18 @@ bool SKSEPlugin_Query(const SKSEInterface * skse, PluginInfo * info)
 	// store plugin handle so we can identify ourselves later
 	g_pluginHandle = skse->GetPluginHandle();
 
-	if(skse->isEditor)
-	{
+	if (skse->isEditor) {
 		_MESSAGE("loaded in editor, marking as incompatible");
-
 		return false;
 	}
-	else if(skse->runtimeVersion != RUNTIME_VERSION_1_9_32_0)
-	{
+	else if(skse->runtimeVersion != RUNTIME_VERSION_1_9_32_0) {
 		_MESSAGE("unsupported runtime version %08X", skse->runtimeVersion);
-
 		return false;
 	}
    
 	// get the serialization interface and query its version
 	g_serialization = (SKSESerializationInterface *)skse->QueryInterface(kInterface_Serialization);
-	if(!g_serialization) {
+	if (!g_serialization) {
 		_MESSAGE("couldn't get serialization interface");
 		return false;
 	}
@@ -114,10 +106,6 @@ bool SKSEPlugin_Query(const SKSEInterface * skse, PluginInfo * info)
         return false;
     }
 
-	// ### do not do anything else in this callback
-	// ### only fill out PluginInfo and return true/false
-
-	// supported runtime version
 	return true;
 }
 
@@ -139,8 +127,6 @@ bool SKSEPlugin_Load(const SKSEInterface * skse)
 }
 
 __declspec(dllexport) void launchShityTest() {
-    //collections::registerFuncs(nullptr);
-
     testing::runTests(meta<testing::TestInfo>::getListConst());
 }
 
@@ -150,6 +136,7 @@ __declspec(dllexport) void produceCode() {
     collections::tes_form_map::writeSourceToFile();
     collections::tes_object::writeSourceToFile();
     collections::tes_db::writeSourceToFile();
+    collections::tes_jcontainers::writeSourceToFile();
 }
 
 };

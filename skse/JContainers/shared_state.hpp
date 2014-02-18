@@ -1,4 +1,13 @@
 namespace collections {
+
+    autorelease_queue& autorelease_queue::instance() {
+        return shared_state::instance().aqueue;
+    }
+
+    collection_registry& collection_registry::instance() {
+        return shared_state::instance().registry;
+    }
+
     void shared_state::clearState() { 
         {
             write_lock g(_mutex);

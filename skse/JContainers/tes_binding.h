@@ -2,13 +2,12 @@
 
 #include "collections.h"
 
-#include "skse/PapyrusVM.h"
+//#include "skse/PapyrusVM.h"
 #include "skse/PapyrusNativeFunctions.h"
-#include "gtest.h"
 
 #include <type_traits>
-#include <boost/algorithm/string.hpp>
-#include <sstream>
+
+#include "code_producer.h"
 
 namespace collections {
 
@@ -54,13 +53,13 @@ namespace collections {
         struct J2Tes<const char*> {
             typedef BSFixedString tes_type;
         };
-        template<> BSFixedString convert2Tes<BSFixedString>(const char * str) {
+        template<> inline BSFixedString convert2Tes<BSFixedString>(const char * str) {
             return BSFixedString(str);
         }
-        template<> const char* convert2J(const BSFixedString& str) {
+        template<> inline const char* convert2J(const BSFixedString& str) {
             return str.data;
         }
-        template<> const char* convert2J(BSFixedString str) {
+        template<> inline const char* convert2J(BSFixedString str) {
             return str.data;
         }
 
@@ -68,7 +67,7 @@ namespace collections {
         struct J2Tes<object_base*> {
             typedef HandleT tes_type;
         };
-        template<> HandleT convert2Tes(object_base* obj) {
+        template<> inline HandleT convert2Tes(object_base* obj) {
             return obj ? obj->id : 0;
         }
 
@@ -86,23 +85,23 @@ namespace collections {
         template<> struct J2Tes<form_map*> {
             typedef HandleT tes_type;
         };
-        template<> object_base* convert2J(HandleT hdl) {
+        template<> inline object_base* convert2J(HandleT hdl) {
             return collection_registry::getObject(hdl);
         }
-        template<> array* convert2J(HandleT hdl) {
+        template<> inline array* convert2J(HandleT hdl) {
             return collection_registry::getObjectOfType<array>(hdl);
         }
-        template<> map* convert2J(HandleT hdl) {
+        template<> inline map* convert2J(HandleT hdl) {
             return collection_registry::getObjectOfType<map>(hdl);
         }
-        template<> form_map* convert2J(HandleT hdl) {
+        template<> inline form_map* convert2J(HandleT hdl) {
             return collection_registry::getObjectOfType<form_map>(hdl);
         }
         template<>
         struct J2Tes<Handle> {
             typedef HandleT tes_type;
         };
-        template<> HandleT convert2Tes(Handle hdl) {
+        template<> inline HandleT convert2Tes(Handle hdl) {
             return (HandleT)hdl;
         }
 
@@ -329,17 +328,7 @@ namespace collections {
         //MAKE_PROXY_NTH(2);
         MAKE_PROXY_NTH(3);
         MAKE_PROXY_NTH(4);
-    
-
-        void tes_fake_func(array *, Float32) {
-          //  return BSFixedString(NULL);
-        }
-
-        TEST(proxy, proxy) {
-            &proxy<decltype(&tes_fake_func), &tes_fake_func>:: tes_func;
-            &proxy<decltype(&tes_fake_func), &tes_fake_func>:: bind;
-            proxy<decltype(&tes_fake_func), &tes_fake_func>:: type_strings();
-        }
+   
 
         struct FunctionMetaInfo {
             typedef  void (*Registrator)(VMClassRegistry* registry, const char*, const char*);
@@ -358,65 +347,6 @@ namespace collections {
             void bind(VMClassRegistry *registry, const char *className) {
                 registrator(registry, funcName, className);
             }
-
-            void _pushArgStr(int paramIdx, std::string& str) const {
-                vector<string> strings; // #2: Search for tokens
-                boost::split( strings, string(args), boost::is_space() );
-
-                if (paramIdx < strings.size() && strings[paramIdx] != "*") {
-                    str += strings[paramIdx];
-                }
-                else {
-                    auto types = typeStrings();
-
-                    auto argName = types[paramIdx + 1]().tes_arg_name; 
-                    if (argName.empty() == false) {
-                        str += argName;
-                    } else {
-                        str += "arg";
-                        str += (char)(paramIdx + '0');
-                    }
-                }
-            }
-
-            void _pushComment(std::string& str) const {
-                if (!comment || !*comment) {
-                    return ;
-                }
-
-                str += "\n;/";
-                str += comment;
-                str += "\n/;\n";
-            }
-
-            std::string function_string() const {
-                std::string str;
-                auto types = typeStrings();
-
-                _pushComment(str);
-
-                if (types[0]().tes_type_name != "void") {
-                    str += types[0]().tes_type_name;
-                    str += ' ';
-                }
-
-                str += "Function ";
-                str += funcName;
-                str += '(';
-                for (int i = 1; i < types.size(); ++i) {
-                    str += types[i]().tes_type_name;
-                    str += " ";
-
-                    int paramIdx = i - 1;
-                    _pushArgStr(paramIdx, str);
-
-                    if (i < (types.size() - 1))
-                        str += ", ";
-                }
-
-                str += ") global native";
-                return str;
-            }
         };
 
 
@@ -424,9 +354,16 @@ namespace collections {
             std::vector<FunctionMetaInfo> methods;
             const char *className;
             const char *extendsClass;
+            const char *comment;
             bool initialized;
 
-            class_meta_info() : className("NoClassName"), extendsClass(NULL), initialized(false) {}
+            class_meta_info() {
+                className = "NoClassName";
+                extendsClass = NULL;
+                comment = nullptr;
+                initialized = false;
+            }
+
         };
 
         template<class T>
@@ -453,37 +390,17 @@ namespace collections {
             }
 
             static std::string produceTesCode() {
-                std::stringstream stream;
-                stream << "Scriptname " << metaInfo().className;
-                if (metaInfo().extendsClass) {
-                    stream << " extends " << metaInfo().extendsClass;
-                }
-                stream << " Hidden" << std::endl << std::endl;
-
-                for (auto itm : metaInfo().methods) {
-                    stream << itm.function_string() << std::endl;
-                }
-
-                return stream.str();
+                return code_producer::produceClassCode(metaInfo());
             }
 
             static void writeSourceToFile() {
-                auto file = fopen((std::string(metaInfo().className) + ".psc").c_str(), "w");
-                if (file) {
-                    auto code = produceTesCode();
-                    fwrite(code.c_str(), 1, code.length(), file);
-                    fclose(file);
-                }
+                code_producer::produceClassToFile(metaInfo());
             }
 
             static void bind(VMClassRegistry* registry) {
                 assert(metaInfo().className);
 
-                writeSourceToFile();
-
-                //printf("%s\n", produceTesCode().c_str());
-
-                for (auto itm : metaInfo().methods) {
+                for (auto& itm : metaInfo().methods) {
                     itm.bind(registry, metaInfo().className);
                 }
             }

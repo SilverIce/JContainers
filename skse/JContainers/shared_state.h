@@ -1,7 +1,6 @@
 #pragma once
 
 namespace collections {
-    // static unsigned long create(StaticFunctionTag *) {
 
     class shared_state {
         bshared_mutex _mutex;
@@ -67,12 +66,5 @@ namespace collections {
         vector<char> saveToArray();
     };
 
-    inline autorelease_queue& autorelease_queue::instance() {
-        return shared_state::instance().aqueue;
-    }
-
-    inline collection_registry& collection_registry::instance() {
-        return shared_state::instance().registry;
-    }
 }
 

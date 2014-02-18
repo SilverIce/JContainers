@@ -62,8 +62,6 @@ namespace collections {
         std::map<HandleT, object_base *> _map;
         id_generator<HandleT> _idGen;
         bshared_mutex& _mutex;
-        int objectsCreated;
-        int objectDestroyed;
 
         collection_registry(const collection_registry& );
         collection_registry& operator = (const collection_registry& );
@@ -107,7 +105,7 @@ namespace collections {
         template<class T>
         static T *getObjectOfType(HandleT hdl) {
             auto obj = getObject(hdl);
-            return (obj && obj->_type == T::TypeId) ? (T*)obj : nullptr;
+            return (obj && obj->_type == T::TypeId) ? static_cast<T*>(obj) : nullptr;
         }
 
         static collection_registry& instance();
@@ -355,8 +353,6 @@ namespace collections {
             Float32 _floatVal;
             StringMem *_stringVal;
             object_base *_object;
-            array *_array;
-            map* _map;
         };
 
         ItemType _type;

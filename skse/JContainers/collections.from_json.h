@@ -165,15 +165,13 @@ namespace collections {
             using namespace std;
 
             auto file = make_unique_file(fopen(path, "r"));
-           // FILE *file = fopen(path, "r");
             if (!file.get())
                 return 0;
 
             char buffer[1024];
             std::vector<char> bytes;
-            size_t readen = 0;
             while (!ferror(file.get()) && !feof(file.get())) {
-                readen = fread(buffer, 1, sizeof(buffer), file.get());
+                size_t readen = fread(buffer, 1, sizeof(buffer), file.get());
                 if (readen > 0) {
                     bytes.insert(bytes.end(), buffer, buffer + readen);
                 }
@@ -182,7 +180,6 @@ namespace collections {
                 }
             }
             bytes.push_back(0);
-            //fclose(file);
 
             return cJSON_Parse(&bytes[0]);
         }
