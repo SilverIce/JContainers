@@ -1,4 +1,4 @@
-#include <boost/serialization/serialization.hpp>
+
 
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/map.hpp>
@@ -8,6 +8,8 @@
 
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
+
+#include <boost/serialization/serialization.hpp>
 
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/stream.hpp>
@@ -39,7 +41,7 @@ namespace collections {
         const char *testStr = "hey, babe!";
 
         auto ar = new array;
-        ar->push(Item(testStr));
+        ar->u_push(Item(testStr));
 
         {
             arch << Item(3);
@@ -71,7 +73,7 @@ namespace collections {
         map obj;
         ia >> obj;
 
-        EXPECT_TRUE(obj.cnt.size() == 2);
+        EXPECT_TRUE(obj.u_count() == 2);
         //EXPECT_TRUE(strcmp(obj["array"].strValue(), testStr) == 0);
     }
 
@@ -94,6 +96,7 @@ namespace collections {
 
         std::map<UInt32, Item> oldStruct;
         oldStruct[0xbaadc0de] = Item("testt");
+        oldStruct[0xf0f0] = Item("ololo");
 
         arch << oldStruct;
 
@@ -102,7 +105,7 @@ namespace collections {
         std::istringstream istr(string);
         boost::archive::binary_iarchive ia(istr);
 
-        std::map<FormId, Item> newStruct;
+        std::map<FormId, Item, std::greater<FormId> > newStruct;
         ia >> newStruct;
 
         EXPECT_TRUE(oldStruct.begin()->first == newStruct.begin()->first);
@@ -131,6 +134,37 @@ namespace collections {
 
         EXPECT_TRUE(queue.count() == queue2.count());
         ;
+    }
+
+    TEST_DISABLED(shit, shit)
+    {
+        {
+            std::ostringstream str;
+            ::boost::archive::binary_oarchive arch(str);
+            arch << Item(3);
+        }
+
+
+        std::vector<char> buffer;
+        auto inserter = boost::iostreams::back_inserter(buffer);
+
+        boost::iostreams::stream< decltype(inserter) > s(inserter);
+        boost::archive::binary_oarchive arch(s);
+
+/*
+        vector<char> buffer;
+        boost::iostreams::back_insert_device<decltype(buffer) > device(buffer);
+        boost::iostreams::stream<decltype(device)> stream(device);
+        boost::archive::binary_oarchive arch(stream);*/
+
+
+        //s->write("hello", 5);
+        //EXPECT_TRUE(s == false);
+
+        Item itm("empty");
+        arch << itm;
+
+        EXPECT_TRUE(buffer.empty() == false);
     }
 
 #endif

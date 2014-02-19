@@ -35,9 +35,7 @@ Global
 		{B657620B-DED4-48F8-ACD4-F2BA9ECBC696}.skse|Win32.ActiveCfg = Release|Win32
 		{B657620B-DED4-48F8-ACD4-F2BA9ECBC696}.skse|Win32.Build.0 = Release|Win32
 		{AA0365EC-47EA-45AA-BB1F-EBBCCCC466F2}.plugin|Win32.ActiveCfg = release_lib|Win32
-		{AA0365EC-47EA-45AA-BB1F-EBBCCCC466F2}.plugin|Win32.Build.0 = release_lib|Win32
 		{AA0365EC-47EA-45AA-BB1F-EBBCCCC466F2}.production|Win32.ActiveCfg = release_lib|Win32
-		{AA0365EC-47EA-45AA-BB1F-EBBCCCC466F2}.production|Win32.Build.0 = release_lib|Win32
 		{AA0365EC-47EA-45AA-BB1F-EBBCCCC466F2}.skse|Win32.ActiveCfg = Release|Win32
 		{AA0365EC-47EA-45AA-BB1F-EBBCCCC466F2}.skse|Win32.Build.0 = Release|Win32
 		{AE1AA342-F084-4F67-997D-2222369FBBE1}.plugin|Win32.ActiveCfg = Release|Win32
@@ -50,9 +48,7 @@ Global
 		{C7305D8C-5514-4C58-9ED7-04D1D7A53D8D}.production|Win32.Build.0 = production|Win32
 		{C7305D8C-5514-4C58-9ED7-04D1D7A53D8D}.skse|Win32.ActiveCfg = Release|Win32
 		{FAA39367-64F7-4552-A537-002A1FFB8365}.plugin|Win32.ActiveCfg = Release|Win32
-		{FAA39367-64F7-4552-A537-002A1FFB8365}.plugin|Win32.Build.0 = Release|Win32
 		{FAA39367-64F7-4552-A537-002A1FFB8365}.production|Win32.ActiveCfg = Release|Win32
-		{FAA39367-64F7-4552-A537-002A1FFB8365}.production|Win32.Build.0 = Release|Win32
 		{FAA39367-64F7-4552-A537-002A1FFB8365}.skse|Win32.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution

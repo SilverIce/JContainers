@@ -77,6 +77,18 @@ namespace collections {
         }
         REGISTERF2(isFormMap, "*", NULL);
 
+        static SInt32 count(object_base *obj) {
+            return obj ? obj->s_count() : 0;
+        }
+        //REGISTERF2(count, "*", "items count");
+
+        static void clear(object_base *obj) {
+            if (obj) {
+                obj->s_clear();
+            }
+        }
+        //REGISTERF2(clear, "*", "remove all items");
+
         static object_base* readFromFile(const char *path) {
             if (path == nullptr)
                 return 0;
@@ -338,10 +350,6 @@ namespace collections {
     class tes_map_t : public tes_binding::class_meta_mixin< tes_map_t<Key, Cnt> > {
     public:
 
-        static Cnt* find(HandleT handle) {
-            return collection_registry::getObjectOfType<Cnt>(handle);
-        }
-
         REGISTER_TES_NAME("tt");
 
         //REGISTERF(create<Cnt>, "create", "", "");
@@ -354,8 +362,8 @@ namespace collections {
             }
 
             mutex_lock g(obj->_mutex);
-            auto itr = obj->cnt.find(tes_hash(key));
-            return itr != obj->cnt.end() ? itr->second.readAs<T>() : T(0);
+            auto item = obj->find(tes_hash(key));
+            return item ? item->readAs<T>() : T(0);
         }
         REGISTERF(getItem<SInt32>, "getInt", "object key", "returns value associated with key");
         REGISTERF(getItem<Float32>, "getFlt", "object key", "");
@@ -370,7 +378,7 @@ namespace collections {
             }
 
             mutex_lock g(obj->_mutex);
-            obj->cnt[tes_hash(key)] = Item((T)item);
+            (*obj)[tes_hash(key)] = Item((T)item);
         }
         REGISTERF(setItem<SInt32>, "setInt", "* key", "creates key-value association. replaces existing value if any");
         REGISTERF(setItem<Float32>, "setFlt", "* key", "");
@@ -384,8 +392,8 @@ namespace collections {
             }
 
             mutex_lock g(obj->_mutex);
-            auto itr = obj->cnt.find(tes_hash(key));
-            return itr != obj->cnt.end();
+            auto item = obj->find(tes_hash(key));
+            return item != nullptr;
         }
         REGISTERF2(hasKey, "* key", "true, if something associated with key");
 
@@ -397,9 +405,9 @@ namespace collections {
             return array::objectWithInitializer([=](array *arr) {
                 mutex_lock g(obj->_mutex);
 
-                arr->_array.reserve( obj->cnt.size() );
-                for each(auto& pair in obj->cnt) {
-                    arr->_array.push_back( Item(pair.first) );
+                arr->_array.reserve( obj->u_count() );
+                for each(auto& pair in obj->container()) {
+                    arr->u_push( Item(pair.first) );
                 }
             });
         }
@@ -413,8 +421,8 @@ namespace collections {
             return array::objectWithInitializer([=](array *arr) {
                 mutex_lock g(obj->_mutex);
 
-                arr->_array.reserve( obj->cnt.size() );
-                for each(auto& pair in obj->cnt) {
+                arr->_array.reserve( obj->u_count() );
+                for each(auto& pair in obj->container()) {
                     arr->_array.push_back( pair.second );
                 }
             });
@@ -427,11 +435,7 @@ namespace collections {
             }
 
             mutex_lock g(obj->_mutex);
-            auto itr = obj->cnt.find(tes_hash(key));
-            bool hasKey = (itr != obj->cnt.end());
-
-            obj->cnt.erase(itr);
-            return hasKey;
+            return obj->erase(tes_hash(key));
         }
         REGISTERF2(removeKey, "* key", "destroys key-value association");
 
@@ -440,8 +444,7 @@ namespace collections {
                 return 0;
             }
 
-            mutex_lock g(obj->_mutex);
-            return obj->cnt.size();
+            return obj->s_count();
         }
         REGISTERF2(count, "*", "count of items/associations");
 
@@ -450,8 +453,7 @@ namespace collections {
                 return;
             }
 
-            mutex_lock g(obj->_mutex);
-            obj->cnt.clear();
+            obj->s_clear();
         }
         REGISTERF2(clear, "*", "remove all items from map container");
 

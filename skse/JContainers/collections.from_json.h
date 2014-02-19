@@ -86,11 +86,10 @@ namespace collections {
                     }
                     *buffPtr = '\0';
 
-                    auto& cnt = id->as<map>()->cnt;
-                    auto itr = cnt.find(buff);
-                    if (itr != cnt.end()) {
-                        id = itr->second.object();
-                        itm = &itr->second;
+                    auto item = id->as<map>()->find(buff);
+                    if (item) {
+                        id = item->object();
+                        itm = item;
                     } else {
                         return;
                     }
@@ -189,7 +188,7 @@ namespace collections {
 
             int count = cJSON_GetArraySize(val);
             for (int i = 0; i < count; ++i) {
-            	ar->push(makeItem(cJSON_GetArrayItem(val, i)));
+            	ar->u_push(makeItem(cJSON_GetArrayItem(val, i)));
             }
 
             return ar;
@@ -259,7 +258,7 @@ namespace collections {
 
                 } else if (obj->as<map>()) {
                     val = cJSON_CreateObject();
-                    for (auto& pair : obj->as<map>()->cnt) {
+                    for (auto& pair : obj->as<map>()->container()) {
                         cJSON_AddItemToObject(val, pair.first.c_str(), createCJSONNode(pair.second));
                     }
                 }

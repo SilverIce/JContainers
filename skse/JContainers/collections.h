@@ -207,7 +207,18 @@ namespace collections {
             }
         }
 
-        virtual void clear() = 0;
+        virtual void u_clear() = 0;
+        virtual SInt32 u_count() = 0;
+
+        SInt32 s_count() {
+            mutex_lock g(_mutex);
+            return u_count();
+        }
+
+        void s_clear() {
+            mutex_lock g(_mutex);
+            u_clear();
+        }
 
         template<class Archive>
         void serialize(Archive & ar, const unsigned int version);
@@ -243,7 +254,7 @@ namespace collections {
             pair.second->retain(); // to guarant that removeObject will not be called during clear method call
         }
         for (auto& pair : _map) {
-            pair.second->clear(); // to force ~Item() calls while all collections alive (~Item() may release collection)
+            pair.second->u_clear(); // to force ~Item() calls while all collections alive (~Item() may release collection)
         }
         for (auto& pair : _map) {
             delete pair.second;
@@ -704,13 +715,16 @@ namespace collections {
 
         std::vector<Item> _array;
 
-        void push(const Item& item) {
-            mutex_lock g(_mutex);
+        void u_push(const Item& item) {
             _array.push_back(item);
         }
 
-        void clear() override {
+        void u_clear() override {
             _array.clear();
+        }
+
+        SInt32 u_count() override {
+            return _array.size();
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -722,19 +736,67 @@ namespace collections {
     class map : public collection_base_T< map >
     {
     public:
+
         enum  {
             TypeId = CollectionTypeMap,
         };
 
-        std::map<std::string, Item> cnt;
+        struct comp { 
+            bool operator() (const std::string& lhs, const std::string& rhs) const {
+                return _stricmp(lhs.c_str(), rhs.c_str()) < 0;
+            }
+        };
 
+        typedef std::map<std::string, Item, comp> container_type;
+
+    private:
+        container_type cnt;
+
+    public:
+
+        const container_type& container() const {
+            return cnt;
+        }
+
+/*
+        static std::string lowerString(const std::string& key) {
+            std::string lowerKey(key);
+            std::transform(lowerKey.begin(), lowerKey.end(), lowerKey.begin(), ::tolower);
+            return lowerKey;
+        }*/
+
+        container_type::iterator findItr(const std::string& key) {
+            return cnt.find(key);
+        }
+
+        Item* find(const std::string& key) {
+            auto itr = findItr(key);
+            return itr != cnt.end() ? &(itr->second) : nullptr;
+        }
+
+        bool erase(const std::string& key) {
+            auto itr = findItr(key);
+            return itr != cnt.end() ? (cnt.erase(itr), true) : false;
+        }
+
+        Item& operator [] (const std::string& key) {
+            return cnt[key];
+        }
+
+/*
         Item& operator[](const std::string& str) {
             mutex_lock g(_mutex);
             return cnt[str];
+        }*/
+
+
+
+        void u_clear() override {
+            cnt.clear();
         }
 
-        void clear() {
-            cnt.clear();
+        SInt32 u_count() override {
+            return cnt.size();
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -751,15 +813,44 @@ namespace collections {
             TypeId = CollectionTypeFormMap,
         };
 
-        std::map<FormId, Item> cnt;
+        typedef std::map<FormId, Item> container_type;
 
+    private:
+        container_type cnt;
+
+    public:
+
+        const container_type& container() const {
+            return cnt;
+        }
+
+        Item& operator [] (FormId key) {
+            return cnt[key];
+        }
+
+        Item* find(FormId key) {
+            auto itr = cnt.find(key);
+            return itr != cnt.end() ? &(itr->second) : nullptr;
+        }
+
+        bool erase(FormId key) {
+            auto itr = cnt.find(key);
+            return itr != cnt.end() ? (cnt.erase(itr), true) : false;
+        }
+
+/*
         Item& operator[](FormId str) {
             mutex_lock g(_mutex);
             return cnt[str];
         }
+*/
 
-        void clear() {
+        void u_clear() {
             cnt.clear();
+        }
+
+        SInt32 u_count() override {
+            return cnt.size();
         }
 
         //////////////////////////////////////////////////////////////////////////
