@@ -50,11 +50,13 @@ void Serialization_Load(SKSESerializationInterface * intfc)
 	UInt32	length;
 	bool	error = false;
 
+    collections::shared_state::instance().clearState();
+
 	while(!error && intfc->GetNextRecordInfo(&type, &version, &length))
 	{
         if (type == kJStorageChunk && version == kSerializationDataVersion && length > 0) {
-            std::vector<char> data(length);
-            intfc->ReadRecordData(data.data(), length);
+            std::string data(length, '\0');
+            intfc->ReadRecordData((void *)data.data(), data.size());
             collections::shared_state::instance().loadAll(data);
             break;
 		}

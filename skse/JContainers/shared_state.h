@@ -57,13 +57,13 @@ namespace collections {
 
         void clearState();
 
-        void loadAll(const vector<char> &data);
+        void loadAll(const string & data);
 
         void setupForFirstTime() {
             setDataBase(map::object());
         }
 
-        vector<char> saveToArray();
+        string saveToArray();
     };
 
 }

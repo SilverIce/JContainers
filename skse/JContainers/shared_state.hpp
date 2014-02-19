@@ -20,13 +20,12 @@ namespace collections {
         setupForFirstTime();
     }
 
-    void shared_state::loadAll(const vector<char> &data) {
+    void shared_state::loadAll(const string &data) {
 
         _DMESSAGE("%u bytes loaded", data.size());
 
-        typedef boost::iostreams::basic_array_source<char> Device;
-        boost::iostreams::stream_buffer<Device> buffer(data.data(), data.size());
-        boost::archive::binary_iarchive archive(buffer);
+        std::istringstream stream(data);
+        boost::archive::binary_iarchive archive(stream);
 
         {
             write_lock g(_mutex);
@@ -41,10 +40,8 @@ namespace collections {
         }
     }
 
-    vector<char> shared_state::saveToArray() {
-        vector<char> buffer;
-        boost::iostreams::back_insert_device<decltype(buffer) > device(buffer);
-        boost::iostreams::stream<decltype(device)> stream(device);
+    string shared_state::saveToArray() {
+        std::ostringstream stream;
         boost::archive::binary_oarchive arch(stream);
 
         {
@@ -63,8 +60,10 @@ namespace collections {
             }
         }
 
-        _DMESSAGE("%u bytes saved", buffer.size());
+        string data(stream.str());
 
-        return buffer;
+        _DMESSAGE("%u bytes saved", data.size());
+
+        return data;
     }
 }
