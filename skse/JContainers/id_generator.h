@@ -33,6 +33,11 @@ namespace collections {
             ar & m_freeNums;
             ar & m_highest;
         }
+
+        void u_clear() {
+            m_highest = 0;
+            m_freeNums.clear();
+        }
     };
 
 }

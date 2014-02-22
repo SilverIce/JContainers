@@ -289,6 +289,8 @@ namespace collections {
             delete pair.second;
         }
         _map.clear();
+
+        _idGen.u_clear();
     }
 
     template<class T>

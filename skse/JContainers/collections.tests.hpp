@@ -6,7 +6,6 @@
 #include <memory>
 
 namespace collections {
-    // static unsigned long create(StaticFunctionTag *) {
 
     #ifndef TEST_COMPILATION_DISABLED
 

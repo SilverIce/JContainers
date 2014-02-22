@@ -14,12 +14,17 @@ namespace collections {
     const char *kCommentObject = "creates new container object. returns container identifier (integral number).\n"
                                  "identifier is the thing you will have to pass to the most of container's functions as first argument";
 
+#define ARGS(...)   #__VA_ARGS__
+
     class tes_object : public tes_binding::class_meta_mixin< tes_object > {
     public:
 
         REGISTER_TES_NAME("JValue");
 
-        static const char * TesName() { return "JValue";}
+        static void additionalSetup() {
+            metaInfo().comment = "Each container (JArray, JMap & JFormMap) inherits JValue functionality";
+        }
+        //static const char * TesName() { return "JValue";}
 
         static object_base* retain(object_base *obj) {
             if (obj) {
@@ -31,8 +36,8 @@ namespace collections {
         }
         REGISTERF2(retain, "*",
             "Retains and returns the object.\n\
-            All containers that created with object* or objectWith* methods get automatically destroyed after some amount of time (~10 seconds)\n\
-            To keep object alive you must retain in once and you have to __release__ it when you do not need it anymore (also to not pollute save file).\n\
+            All containers that were created with object* or objectWith* methods are automatically destroyed after some amount of time (~10 seconds)\n\
+            To keep object alive you must retain it once and you have to __release__ it when you do not need it anymore (also to not pollute save file).\n\
             An alternative to retain-release is store object in JDB container"
         );
 
@@ -80,19 +85,19 @@ namespace collections {
         static bool empty(object_base *obj) {
             return count(obj) == 0;
         }
-        REGISTERF2(empty, "*", "true, if container is empty");
+        REGISTERF2(empty, "*", "returns true, if container is empty");
 
         static SInt32 count(object_base *obj) {
             return obj ? obj->s_count() : 0;
         }
-        REGISTERF2(count, "*", "items count");
+        REGISTERF2(count, "*", "returns the number of items in container");
 
         static void clear(object_base *obj) {
             if (obj) {
                 obj->s_clear();
             }
         }
-        REGISTERF2(clear, "*", "remove all items");
+        REGISTERF2(clear, "*", "removes all items from container");
 
         static object_base* readFromFile(const char *path) {
             if (path == nullptr)
@@ -101,7 +106,7 @@ namespace collections {
             auto obj = json_parsing::readJSONFile(path);
             return  obj;
         }
-        REGISTERF2(readFromFile, "* filePath", "parse JSON and create a new object (array or map)");
+        REGISTERF2(readFromFile, "filePath", ARGS(creates and returns new container (JArray or JMap) containing the contents of JSON file));
 
         static object_base* objectFromPrototype(const char *prototype) {
             if (!prototype)
@@ -129,7 +134,7 @@ namespace collections {
 
             fwrite(data.get(), 1, strlen(data.get()), file.get());
         }
-        REGISTERF2(writeToFile, "* filePath", "write object into JSON file");
+        REGISTERF2(writeToFile, "* filePath", "writes object into JSON file");
 
         static bool hasPath(object_base *obj, const char *path) {
             if (!obj || !path)
@@ -142,7 +147,7 @@ namespace collections {
 
             return succeed;
         }
-        REGISTERF2(hasPath, "* path", "true, if container capable resolve given path.\n\
+        REGISTERF2(hasPath, "* path", "returns true, if container capable resolve given path.\n\
                                       for ex. JValue.hasPath(container, \".player.health\") will check if given container has 'player' which has 'health' information"
                                       );
 
@@ -187,7 +192,6 @@ namespace collections {
         REGISTERF(solveSetter<object_base*>, "solveObjSetter", "* path value", NULL);
         REGISTERF(solveSetter<TESForm*>, "solveFormSetter", "* path value", NULL);
 
-//#define ARGS(...) __VA_ARGS__
 
         static bool registerFuncs(VMClassRegistry* registry) {
 
@@ -235,7 +239,7 @@ namespace collections {
 
             return obj;
         }
-        REGISTERF2(objectWithSize, "size", "creates array of given size, filled with nothing");
+        REGISTERF2(objectWithSize, "size", "creates array of given size, filled with empty items");
 
         template<class T>
         static object_base* fromArray(VMArray<T> arr) {
@@ -263,7 +267,7 @@ namespace collections {
             mutex_lock g(obj->_mutex);
             return (index >= 0 && index < obj->_array.size()) ? obj->_array[index].readAs<T>() : T(0);
         }
-        REGISTERF(itemAtIndex<SInt32>, "getInt", "* index", "returns value at index");
+        REGISTERF(itemAtIndex<SInt32>, "getInt", "* index", "returns item at index. getObj function returns container");
         REGISTERF(itemAtIndex<Float32>, "getFlt", "* index", "");
         REGISTERF(itemAtIndex<const char *>, "getStr", "* index", "");
         REGISTERF(itemAtIndex<Handle>, "getObj", "* index", "");
@@ -283,11 +287,11 @@ namespace collections {
 
             return itr != obj->_array.end() ? (itr - obj->_array.begin()) : -1;
         }
-        REGISTERF(findVal<SInt32>, "findInt", "* value", "returns index of the first found value that equals to given value.\n\
+        REGISTERF(findVal<SInt32>, "findInt", "* value", "returns index of the first found value/container that equals to given value/container.\n\
             if found nothing returns -1.");
         REGISTERF(findVal<Float32>, "findFlt", "* value", "");
         REGISTERF(findVal<const char *>, "findStr", "* value", "");
-        REGISTERF(findVal<object_base*>, "findObj", "* value", "");
+        REGISTERF(findVal<object_base*>, "findObj", "* container", "");
         REGISTERF(findVal<TESForm*>, "findForm", "* value", "");
 
         template<class T>
@@ -301,10 +305,10 @@ namespace collections {
                 obj->_array[index] = Item(item);
             }
         }
-        REGISTERF(replaceItemAtIndex<SInt32>, "setInt", "* index value", "replaces existing value at index with new value");
+        REGISTERF(replaceItemAtIndex<SInt32>, "setInt", "* index value", "replaces existing value at index with new value. setObj sets container");
         REGISTERF(replaceItemAtIndex<Float32>, "setFlt", "* index value", "");
         REGISTERF(replaceItemAtIndex<const char *>, "setStr", "* index value", "");
-        REGISTERF(replaceItemAtIndex<object_base*>, "setObj", "* index value", "");
+        REGISTERF(replaceItemAtIndex<object_base*>, "setObj", "* index container", "");
         REGISTERF(replaceItemAtIndex<TESForm*>, "setForm", "* index value", "");
 
         template<class T>
@@ -315,10 +319,10 @@ namespace collections {
                 obj->_array.push_back(Item(item));
             }
         }
-        REGISTERF(add<SInt32>, "addInt", "* value", "appends value to the end of array");
+        REGISTERF(add<SInt32>, "addInt", "* value", "appends value/container to the end of array");
         REGISTERF(add<Float32>, "addFlt", "* value", "");
         REGISTERF(add<const char *>, "addStr", "* value", "");
-        REGISTERF(add<object_base*>, "addObj", "* value", "");
+        REGISTERF(add<object_base*>, "addObj", "* container", "");
         REGISTERF(add<TESForm*>, "addForm", "* value", "");
 
         static Index count(array *obj) {
@@ -329,7 +333,7 @@ namespace collections {
             }
             return 0;
         }
-        REGISTERF2(count, "*", "inserted items count");
+        REGISTERF2(count, "*", "returns number of items in array");
 
         static void clear(array *obj) {
             if (obj) {
@@ -337,7 +341,7 @@ namespace collections {
                 obj->_array.clear();
             }
         }
-        REGISTERF2(clear, "*", "remove all items from array");
+        REGISTERF2(clear, "*", "removes all items from array");
 
         static void eraseIndex(array *obj, SInt32 index) {
             if (obj) {
@@ -504,8 +508,6 @@ namespace collections {
         REGISTER_TES_NAME("JDB");
 
         static void additionalSetup() {}
-
-        static const char * TesName() { return "JDB";}
         
         template<class T>
         static T solveGetter(const char* path) {
@@ -553,14 +555,14 @@ namespace collections {
         }
         REGISTERF2(writeToFile, "path", "writes storage data into JSON file");
 
-        static void readFromFile(/*StaticFunctionTag* tag,*/ const char *path) {
+        static void readFromFile(const char *path) {
             auto objNew = json_parsing::readJSONFile(path);
             shared_state::instance().setDataBase(objNew);
         }
         REGISTERF2(readFromFile, "path", "fills storage with JSON data");
 
         template<class T>
-        static bool solveSetter(StaticFunctionTag* , const char* path, T value) { 
+        static bool solveSetter(const char* path, T value) { 
             return tes_object::solveSetter(shared_state::instance().database(), path, value);
         }
         REGISTERF(solveSetter<Float32>, "solveFltSetter", "path value", NULL);
