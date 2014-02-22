@@ -22,10 +22,11 @@ namespace collections {
         queue _queue;
         time_point _timeNow;
         bool _run;
+        bool _paused;
 
     public:
 
-        void _clear() {
+        void u_clear() {
             _queue.clear();
         }
 
@@ -35,15 +36,11 @@ namespace collections {
             ar & _queue;
         }
 
-        enum {
-            obj_lifetime = 10, // seconds
-            sleep_duration = 2, // seconds
-        };
-
         autorelease_queue(bshared_mutex &mt) 
             : _thread()
             , _timeNow(0)
             , _run(false)
+            , _paused(false)
             , _mutex(mt)
         {
             start();
@@ -58,6 +55,7 @@ namespace collections {
             write_lock g(_mutex);
             if (!_run) {
                 _run = true;
+                _paused = false;
                 _thread = std::thread(&autorelease_queue::run, std::ref(*this));
             }
         }
@@ -67,10 +65,16 @@ namespace collections {
             return _queue.size();
         }
 
+        void setPaused(bool paused) {
+            write_lock g(_mutex);
+            _paused = paused;
+        }
+
         void stop() {
             {
                 write_lock g(_mutex);
                 _run = false;
+                _paused = false;
             }
 
             //assert(_thread.joinable());
@@ -102,9 +106,18 @@ namespace collections {
             }
         }
 
+    public:
+
+        enum {
+            obj_lifetime = 10, // seconds
+            sleep_duration = 2, // seconds
+        };
+
         enum {
             obj_lifeInTicks = obj_lifetime / sleep_duration, // ticks
         };
+
+    private:
 
         static void run(autorelease_queue &self) {
             chrono::seconds sleepTime(sleep_duration);
@@ -118,18 +131,20 @@ namespace collections {
                         break;
                     }
 
-                    self._queue.erase(
-                        remove_if(self._queue.begin(), self._queue.end(), [&](const queue::value_type& val) {
-                            auto diff = self.lifetimeDiff(val.second);
-                            bool release = diff >= obj_lifeInTicks;
+                    if (!self._paused) {
+                        self._queue.erase(
+                            remove_if(self._queue.begin(), self._queue.end(), [&](const queue::value_type& val) {
+                                auto diff = self.lifetimeDiff(val.second);
+                                bool release = diff >= obj_lifeInTicks;
 
-                            if (release)
-                                toRelease.push_back(val.first);
-                            return release;
+                                if (release)
+                                    toRelease.push_back(val.first);
+                                return release;
                         }),
                             self._queue.end());
 
-                    self.cycleIncr();
+                        self.cycleIncr();
+                    }
                 }
 
                 for(auto& val : toRelease) {
@@ -140,7 +155,7 @@ namespace collections {
                 }
                 toRelease.clear();
 
-                printf("autorelease_queue alive\n");
+                printf("autorelease_queue time - %u\n", self._timeNow);
                 std::this_thread::sleep_for(sleepTime);
             }
 

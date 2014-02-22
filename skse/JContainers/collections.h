@@ -53,13 +53,15 @@ namespace collections {
 
     class collection_registry
     {
+    public:
+        typedef std::map<HandleT, object_base *> registry_container;
+
     private:
 
         friend class shared_state;
 
-        typedef std::map<HandleT, object_base *> registry_container;
 
-        std::map<HandleT, object_base *> _map;
+        registry_container _map;
         id_generator<HandleT> _idGen;
         bshared_mutex& _mutex;
 
@@ -110,7 +112,11 @@ namespace collections {
 
         static collection_registry& instance();
 
-        void _clear();
+        void u_clear();
+
+        registry_container& u_container() {
+            return _map;
+        }
 
         template<class Archive>
         void serialize(Archive & ar, const unsigned int version);
@@ -238,7 +244,7 @@ namespace collections {
         return (Handle)newId;
     }
 
-    inline void collection_registry::_clear() {
+    inline void collection_registry::u_clear() {
         /*  Not good, but working solution.
 
             issue: deadlock during loading savegame - e.g. cleaning current state.
@@ -261,18 +267,6 @@ namespace collections {
         }
         _map.clear();
     }
-
-    template<class Val>
-    struct Tes2Value
-    {
-        typedef Val tes_type;
-    };
-
-    template<>
-    struct Tes2Value<Handle>
-    {
-        typedef HandleT tes_type;
-    };
 
     template<class T>
     class collection_base_T : public object_base
@@ -359,7 +353,7 @@ namespace collections {
     class Item
     {
         union {
-            UInt32 _uintVal;
+            UInt32 _formId;
             SInt32 _intVal;
             Float32 _floatVal;
             StringMem *_stringVal;
@@ -378,8 +372,8 @@ namespace collections {
         explicit Item(int val) : _intVal(val), _type(ItemTypeInt32) {}
         explicit Item(bool val) : _intVal(val), _type(ItemTypeInt32) {}
 
-        explicit Item(const TESForm *form) : _uintVal(form ? form->formID : 0), _type(ItemTypeForm) {}
-        explicit Item(FormId id) : _uintVal(id), _type(ItemTypeForm) {}
+        explicit Item(const TESForm *form) : _formId(form ? form->formID : 0), _type(ItemTypeForm) {}
+        explicit Item(FormId id) : _formId(id), _type(ItemTypeForm) {}
 
         explicit Item(const char * val) : _stringVal(NULL), _type(ItemTypeNone) {
             setStringVal(val);
@@ -568,7 +562,7 @@ namespace collections {
         }
 
         TESForm * form() const {
-            return _type == ItemTypeForm ? LookupFormByID(_uintVal) : nullptr;
+            return _type == ItemTypeForm ? LookupFormByID(_formId) : nullptr;
         }
 
         void setForm(const TESForm *form) {
@@ -576,7 +570,7 @@ namespace collections {
             _freeObject();
 
             _type = ItemTypeForm;
-            _uintVal = (form ? form->formID : 0);
+            _formId = (form ? form->formID : 0);
         }
 
         bool isEqual(SInt32 value) const {
@@ -598,7 +592,7 @@ namespace collections {
         }
 
         bool isEqual(const TESForm *value) const {
-            return _type == ItemTypeForm && _uintVal == (value ? value->formID : 0);
+            return _type == ItemTypeForm && _formId == (value ? value->formID : 0);
         }
 
         bool isEqual(const Item& other) const {
@@ -612,7 +606,7 @@ namespace collections {
             case ItemTypeFloat32:
                 return _floatVal == other._floatVal;
             case ItemTypeForm:
-                return _uintVal == other._uintVal;
+                return _formId == other._formId;
             case ItemTypeObject:
                 return _object == other._object;
             case ItemTypeCString:
@@ -683,25 +677,6 @@ namespace collections {
     template<> inline object_base * Item::readAs<object_base*>() {
         return object();
     }
-
-    template<class T>
-    inline void print(const T& str) {}
-
-    inline void print(const BSFixedString& str) {
-        _DMESSAGE(" %s", str.data);
-    }
-
-    inline void print(const SInt32& val) {
-        _DMESSAGE(" %u", val);
-    }
-    inline void print(const char* val) {
-        _DMESSAGE(" %s", val);
-    }
-
-    inline void print(const Float32& val) {
-        _DMESSAGE(" %f", val);
-    }
-
 
     class array : public collection_base_T< array >
     {
@@ -783,6 +758,10 @@ namespace collections {
             return cnt[key];
         }
 
+        void setValueForKey(const std::string& key, const Item& value) {
+            cnt[key] = value;
+        }
+
 /*
         Item& operator[](const std::string& str) {
             mutex_lock g(_mutex);
@@ -853,10 +832,19 @@ namespace collections {
             return cnt.size();
         }
 
+        // may call release if key is invalid
+        // may also produces retain calls
+        void u_updateKeys();
+
         //////////////////////////////////////////////////////////////////////////
 
+        friend class boost::serialization::access;
+        BOOST_SERIALIZATION_SPLIT_MEMBER();
+
         template<class Archive>
-        void serialize(Archive & ar, const unsigned int version);
+        void save(Archive & ar, const unsigned int version) const;
+        template<class Archive>
+        void load(Archive & ar, const unsigned int version);
     };
 
    // typedef map<std::string> map;

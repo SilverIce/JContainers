@@ -19,6 +19,8 @@
 #include <sstream>
 #include <set>
 
+#include "skse/PluginAPI.h"
+
 #include "gtest.h"
 
 #include "collections.h"
@@ -28,6 +30,8 @@
 #include "shared_state.hpp"
 
 BOOST_CLASS_VERSION(collections::object_base, 1);
+
+extern SKSESerializationInterface	* g_serialization;
 
 namespace collections {
 
@@ -99,6 +103,7 @@ namespace collections {
         oldStruct[0xf0f0] = Item("ololo");
 
         arch << oldStruct;
+       /* arch << Hum<UInt32>(999);*/
 
         // reading
         std::string string = str.str();
@@ -108,7 +113,12 @@ namespace collections {
         std::map<FormId, Item, std::greater<FormId> > newStruct;
         ia >> newStruct;
 
-        EXPECT_TRUE(oldStruct.begin()->first == newStruct.begin()->first);
+/*
+        Hum<UInt64> val(0);
+        ia >> val;
+*/
+
+        EXPECT_TRUE(oldStruct.size() == newStruct.size());
     }
 
     TEST(autorelease_queue, serialization)
@@ -189,6 +199,19 @@ namespace collections {
         ar & _idGen;
     }
 
+    static UInt32 converOldFormIdToNew(UInt32 oldId) {
+        UInt64 newId = 0;
+        g_serialization->ResolveHandle(oldId, &newId);
+        return newId;
+    }
+
+    template<class Archive>
+    static UInt32 readOldFormIdToNew(Archive& ar) {
+        UInt32 oldId = 0;
+        ar & oldId;
+        return converOldFormIdToNew(oldId);
+    }
+
     template<class Archive>
     void Item::save(Archive & ar, const unsigned int version) const {
         registerContainers(ar);
@@ -211,7 +234,7 @@ namespace collections {
             ar & _object;
             break;
         case ItemTypeForm:
-            ar & _uintVal;
+            ar & _formId;
             break;
         default:
             break;
@@ -248,7 +271,7 @@ namespace collections {
             ar & _object;
             break;
         case ItemTypeForm:
-            ar & _uintVal;
+            _formId = readOldFormIdToNew(ar);
             break;
         default:
             break;
@@ -276,10 +299,43 @@ namespace collections {
         ar & cnt;
     }
 
+    //////////////////////////////////////////////////////////////////////////
+
     template<class Archive>
-    void form_map::serialize(Archive & ar, const unsigned int version) {
+    void form_map::save(Archive & ar, const unsigned int version) const {
         ar & boost::serialization::base_object<object_base>(*this);
         ar & cnt;
+    }
+
+    template<class Archive>
+    void form_map::load(Archive & ar, const unsigned int version) {
+        ar & boost::serialization::base_object<object_base>(*this);
+        ar & cnt;
+    }
+
+    void form_map::u_updateKeys() {
+        container_type tmpCnt;
+
+        std::vector<FormId> keys;
+        keys.reserve(cnt.size());
+        for (auto& pair : cnt) {
+            keys.push_back(pair.first);
+        }
+
+        for(auto& oldKey : keys) {
+            FormId newKey = static_cast<FormId>(converOldFormIdToNew(oldKey));
+
+            if (oldKey == newKey) {
+                ;
+            }
+            else if (newKey == 0) {
+                cnt.erase(oldKey);
+            } else if (newKey != oldKey) {
+                Item item = cnt[oldKey];
+                cnt.erase(oldKey);
+                cnt[newKey] = item;
+            }
+        }
     }
 }
 

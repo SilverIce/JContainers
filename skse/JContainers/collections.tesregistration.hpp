@@ -77,17 +77,22 @@ namespace collections {
         }
         REGISTERF2(isFormMap, "*", NULL);
 
+        static bool empty(object_base *obj) {
+            return count(obj) == 0;
+        }
+        REGISTERF2(empty, "*", "true, if container is empty");
+
         static SInt32 count(object_base *obj) {
             return obj ? obj->s_count() : 0;
         }
-        //REGISTERF2(count, "*", "items count");
+        REGISTERF2(count, "*", "items count");
 
         static void clear(object_base *obj) {
             if (obj) {
                 obj->s_clear();
             }
         }
-        //REGISTERF2(clear, "*", "remove all items");
+        REGISTERF2(clear, "*", "remove all items");
 
         static object_base* readFromFile(const char *path) {
             if (path == nullptr)
@@ -105,7 +110,7 @@ namespace collections {
             auto obj = json_parsing::readJSONData(prototype);
             return obj;
         }
-        //REGISTERF2(objectFromPrototype, "* prototype", "creates new container object using given string-prototype");
+        REGISTERF2(objectFromPrototype, "* prototype", "creates new container object using given JSON string-prototype");
 
         static void writeToFile(object_base *obj, const char * path) {
             if (path == nullptr)  return;
@@ -126,49 +131,63 @@ namespace collections {
         }
         REGISTERF2(writeToFile, "* filePath", "write object into JSON file");
 
-        template<class T>
-        static typename Tes2Value<T>::tes_type resolveT(StaticFunctionTag*, HandleT handle, BSFixedString path) {
-            auto obj = collection_registry::getObject(handle);
-            if (!obj) return 0;
-
-            T val((T)0);
-            json_parsing::resolvePath(obj, path.data, [&](Item* itmPtr) {
-                if (itmPtr) {
-                    val = itmPtr->readAs<T>();
-                }
-            });
-
-            return typename Tes2Value<T>::tes_type(val);
-        }
-
-        static bool hasPath(StaticFunctionTag*, HandleT handle, BSFixedString path) {
-            auto obj = collection_registry::getObject(handle);
-            if (!obj) return false;
+        static bool hasPath(object_base *obj, const char *path) {
+            if (!obj || !path)
+                return false;
 
             bool succeed = false;
-            json_parsing::resolvePath(obj, path.data, [&](Item* itmPtr) {
+            json_parsing::resolvePath(obj, path, [&](Item* itmPtr) {
                 succeed = (itmPtr != nullptr);
             });
 
             return succeed;
         }
+        REGISTERF2(hasPath, "* path", "true, if container capable resolve given path.\n\
+                                      for ex. JValue.hasPath(container, \".player.health\") will check if given container has 'player' which has 'health' information"
+                                      );
 
         template<class T>
-        static bool solveT(StaticFunctionTag*, HandleT handle, BSFixedString path, typename Tes2Value<T>::tes_type value) {
-            auto obj = collection_registry::getObject(handle);
-            if (!obj) return false;
+        static T resolveGetter(object_base *obj, const char* path) {
+            if (!obj || !path)
+                return 0;
+
+            T val((T)0);
+            json_parsing::resolvePath(obj, path, [&](Item* itmPtr) {
+                if (itmPtr) {
+                    val = itmPtr->readAs<T>();
+                }
+            });
+
+            return val;
+        }
+        REGISTERF(resolveGetter<Float32>, "solveFlt", "* path", "attempts to get value at given path.\nJValue.solveInt(container, \".player.mood\") will return player's mood");
+        REGISTERF(resolveGetter<SInt32>, "solveInt", "* path", NULL);
+        REGISTERF(resolveGetter<const char*>, "solveStr", "* path", NULL);
+        REGISTERF(resolveGetter<object_base*>, "solveObj", "* path", NULL);
+        REGISTERF(resolveGetter<TESForm*>, "solveForm", "* path", NULL);
+
+        template<class T>
+        static bool solveSetter(object_base *obj, const char* path, T value) { 
+            if (!obj || !path)
+                return false;
 
             bool succeed = false;
-            json_parsing::resolvePath(obj, path.data, [&](Item* itmPtr) {
+            json_parsing::resolvePath(obj, path, [&](Item* itmPtr) {
                 if (itmPtr) {
-                    itmPtr->writeAs(value);
+                    *itmPtr = Item((T)value);
                     succeed = true;
                 }
             });
 
             return succeed;
         }
-#define ARGS(...) __VA_ARGS__
+        REGISTERF(solveSetter<Float32>, "solveFltSetter", "* path value", "attempts to set value.\nJValue.solveIntSetter(container, \".player.mood\", 12) will set player's mood to 12");
+        REGISTERF(solveSetter<SInt32>, "solveIntSetter", "* path value", NULL);
+        REGISTERF(solveSetter<const char*>, "solveStrSetter", "* path value", NULL);
+        REGISTERF(solveSetter<object_base*>, "solveObjSetter", "* path value", NULL);
+        REGISTERF(solveSetter<TESForm*>, "solveFormSetter", "* path value", NULL);
+
+//#define ARGS(...) __VA_ARGS__
 
         static bool registerFuncs(VMClassRegistry* registry) {
 
@@ -194,7 +213,9 @@ namespace collections {
         REGISTER_TES_NAME("JArray");
 
         static void additionalSetup() {
-            metaInfo().extendsClass = "JValue";
+            //metaInfo().extendsClass = "JValue";
+            metaInfo().comment = "Resizeable, unlimited size array (Skyrim size limit is 128) that may contain any value (value is float, integer, string or another container) in one time.\n"
+                                 "Inherits all JValue functions";
         }
 
         static const char * TesName() { return "JArray";}
@@ -329,11 +350,7 @@ namespace collections {
         REGISTERF2(eraseIndex, "* index", "erases item at index");
 
         static bool registerFuncs(VMClassRegistry* registry) {
-            MESSAGE("register array funcs");
-
-
             bind(registry);
-
             return true;
         }
     };
@@ -470,12 +487,15 @@ namespace collections {
 
     void tes_map::additionalSetup() {
         metaInfo().className = "JMap";
-        metaInfo().extendsClass = "JValue";
+        metaInfo().comment = "Associative key-value container.\n"
+            "Inherits all JValue functions";
+        //metaInfo().extendsClass = "JValue";
     }
 
     void tes_form_map::additionalSetup() {
         metaInfo().className = "JFormMap";
-        metaInfo().extendsClass = "JValue";
+        metaInfo().comment = "Associative key-value container.\n"
+            "Inherits all JValue functions";
     }
 
     class tes_db : public tes_binding::class_meta_mixin<tes_db> {
@@ -488,27 +508,16 @@ namespace collections {
         static const char * TesName() { return "JDB";}
         
         template<class T>
-        static typename Tes2Value<T>::tes_type solveGetter(StaticFunctionTag* tag, BSFixedString path) {
-            return tes_object::resolveT<T>(tag, shared_state::instance().databaseId(), path); 
+        static T solveGetter(const char* path) {
+            return tes_object::resolveGetter<T>(shared_state::instance().database(), path); 
         }
+        REGISTERF(solveGetter<Float32>, "solveFlt", "path", NULL);
+        REGISTERF(solveGetter<SInt32>, "solveInt", "path", NULL);
+        REGISTERF(solveGetter<const char*>, "solveStr", "path", NULL);
+        REGISTERF(solveGetter<object_base*>, "solveObj", "path", NULL);
+        REGISTERF(solveGetter<TESForm*>, "solveForm", "path", NULL);
 
-        template<class T>
-        static bool solveSetter(StaticFunctionTag*, BSFixedString path, typename Tes2Value<T>::tes_type value) { 
-            auto obj = collection_registry::getObject(shared_state::instance().databaseId());
-            if (!obj) return false;
-
-            bool succeed = false;
-            json_parsing::resolvePath(obj, path.data, [&](Item* itmPtr) {
-                if (itmPtr) {
-                    *itmPtr = Item((T)value);
-                    succeed = true;
-                }
-            });
-
-            return succeed;
-        }
-
-        static void setValue(const char *path, object_base *obj) {
+        static void setObj(const char *path, object_base *obj) {
             object_base *db = shared_state::instance().database();
             map *dbMap = db ? db->as<map>() : nullptr;
 
@@ -522,11 +531,12 @@ namespace collections {
                 tes_map::removeKey(dbMap, path);
             }
         }
-        REGISTERF(setValue, "setObj", "key object", "");
+        REGISTERF(setObj, "setObj", "key object", "");
 
-        static bool hasPath(StaticFunctionTag*tag, BSFixedString path) {
-            return tes_object::hasPath(tag, shared_state::instance().databaseId(), path);
+        static bool hasPath(const char* path) {
+            return tes_object::hasPath(shared_state::instance().database(), path);
         }
+        REGISTERF2(hasPath, "path", "");
 
         static object_base* allKeys() {
             return tes_map::allKeys( shared_state::instance().database() );
@@ -549,24 +559,18 @@ namespace collections {
         }
         REGISTERF2(readFromFile, "path", "fills storage with JSON data");
 
+        template<class T>
+        static bool solveSetter(StaticFunctionTag* , const char* path, T value) { 
+            return tes_object::solveSetter(shared_state::instance().database(), path, value);
+        }
+        REGISTERF(solveSetter<Float32>, "solveFltSetter", "path value", NULL);
+        REGISTERF(solveSetter<SInt32>, "solveIntSetter", "path value", NULL);
+        REGISTERF(solveSetter<const char*>, "solveStrSetter", "path value", NULL);
+        REGISTERF(solveSetter<object_base*>, "solveObjSetter", "path value", NULL);
+        REGISTERF(solveSetter<TESForm*>, "solveFormSetter", "path value", NULL);
+
         static bool registerFuncs(VMClassRegistry* registry) {
-
-            REGISTER2("solveFltSetter", solveSetter<Float32>, 2, bool, BSFixedString, Float32);
-            REGISTER2("solveIntSetter", solveSetter<SInt32>, 2, bool, BSFixedString, SInt32);
-            REGISTER2("solveStrSetter", solveSetter<BSFixedString>, 2, bool, BSFixedString, BSFixedString);
-            REGISTER2("solveObjSetter", solveSetter<Handle>, 2, bool, BSFixedString, HandleT);
-            REGISTER2("solveFormSetter", solveSetter<TESForm*>, 2, bool, BSFixedString, TESForm*);
-
-            REGISTER2("solveFlt", solveGetter<Float32>, 1, Float32, BSFixedString);
-            REGISTER2("solveInt", solveGetter<SInt32>, 1, SInt32, BSFixedString);
-            REGISTER2("solveStr", solveGetter<BSFixedString>, 1, BSFixedString, BSFixedString);
-            REGISTER2("solveObj", solveGetter<Handle>, 1, HandleT, BSFixedString);
-            REGISTER2("solveForm", solveGetter<TESForm*>, 1, TESForm*, BSFixedString);
-
-            REGISTER(hasPath, 1, bool, BSFixedString);
-
             bind(registry);
-
             return true;
         }
     };

@@ -31,7 +31,7 @@ namespace collections {
         obj->release();
     }
 
-    TEST_DISABLED(autorelease_queue, qqq)
+    TEST(autorelease_queue, qqq)
     {
         bshared_mutex mt;
         autorelease_queue queue(mt);
@@ -39,7 +39,7 @@ namespace collections {
         queue.push(10);
         queue.push(20);
         EXPECT_TRUE(queue.count() == 2);
-        std::this_thread::sleep_for(chrono::seconds(autorelease_queue::obj_lifetime + 2));
+        std::this_thread::sleep_for(chrono::seconds(autorelease_queue::obj_lifetime + 10));
 
         EXPECT_TRUE(queue.count() == 0);
     }
@@ -79,7 +79,7 @@ namespace collections {
         return jsonString;
     }
 
-    TEST_DISABLED(json_parsing, readJSONData)
+    TEST(json_parsing, readJSONData)
     {
 
 
@@ -194,10 +194,18 @@ namespace collections {
     {
         EXPECT_TRUE(tes_jcontainers::isInstalled());
 
+        EXPECT_TRUE(tes_jcontainers::fileExistsAtPath("SafetyLoad.log"));
+        EXPECT_TRUE(!tes_jcontainers::fileExistsAtPath("abracadabra"));
+    }
 
-        const char *path1 = "I:/Games/Elder Scrolls Skyrim/Data/SKSE/Plugins/SafetyLoad.log";
-        const char *path2 = "SafetyLoad.log";
-        EXPECT_TRUE(tes_jcontainers::fileExistsAtPath(path2));
+    TEST(map, key_case_insensitivity)
+    {
+        map *cnt = map::object();
+
+        const char *name = "back in black";
+        cnt->setValueForKey("ACDC", Item(name));
+
+        EXPECT_TRUE(strcmp(cnt->find("acdc")->strValue(), name) == 0);
     }
 
     #endif

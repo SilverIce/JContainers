@@ -1,11 +1,12 @@
 #pragma once
 
+#include "tes_meta_info.h"
+
 #include "collections.h"
 
-//#include "skse/PapyrusVM.h"
 #include "skse/PapyrusNativeFunctions.h"
 
-#include <type_traits>
+//#include <type_traits>
 
 #include "code_producer.h"
 
@@ -19,7 +20,7 @@ namespace collections {
 #define NOTHING 
 
 #define DO_0(rep, f, m, l)
-#define DO_1(rep, f, m, l)   f rep(1) l
+#define DO_1(rep, f, m_, l)   f rep(1) l
 #define DO_2(rep, f, m, l)   DO_1(rep, f, m, NOTHING) m  rep(2) l
 #define DO_3(rep, f, m, l)   DO_2(rep, f, m, NOTHING) m  rep(3) l
 #define DO_4(rep, f, m, l)   DO_3(rep, f, m, NOTHING) m  rep(4) l
@@ -104,19 +105,6 @@ namespace collections {
         template<> inline HandleT convert2Tes(Handle hdl) {
             return (HandleT)hdl;
         }
-
-
-        struct j_type_info {
-            std::string tes_type_name;
-            std::string tes_arg_name;
-        };
-
-        inline j_type_info j_type_info_make(const char * ttn,  const char * tan) {
-            j_type_info info = {ttn ? ttn : "", tan ? tan : ""};
-            return info;
-        }
-
-        typedef j_type_info (*type_info_func)();
 
         template<class T> struct j2Str {
             static j_type_info typeInfo() { return j_type_info_make(typeid(T).name(), nullptr); }
@@ -328,84 +316,7 @@ namespace collections {
         //MAKE_PROXY_NTH(2);
         MAKE_PROXY_NTH(3);
         MAKE_PROXY_NTH(4);
-   
-
-        struct FunctionMetaInfo {
-            typedef  void (*Registrator)(VMClassRegistry* registry, const char*, const char*);
-            typedef  std::vector<type_info_func> (*TypeStrings)();
-
-            Registrator registrator;
-            TypeStrings typeStrings;
-            const char *comment;
-            const char *args;
-            const char *funcName;
-
-            FunctionMetaInfo() {
-                memset(this, 0, sizeof(*this));
-            }
-
-            void bind(VMClassRegistry *registry, const char *className) {
-                registrator(registry, funcName, className);
-            }
-        };
-
-
-        struct class_meta_info {
-            std::vector<FunctionMetaInfo> methods;
-            const char *className;
-            const char *extendsClass;
-            const char *comment;
-            bool initialized;
-
-            class_meta_info() {
-                className = "NoClassName";
-                extendsClass = NULL;
-                comment = nullptr;
-                initialized = false;
-            }
-
-        };
-
-        template<class T>
-        struct class_meta_mixin {
-
-            static class_meta_info& metaInfo() {
-                static class_meta_info info;
-                if (!info.initialized) {
-                    info.initialized = true;
-
-                    T t;
-
-                    T::additionalSetup();
-                }
-
-                return info;
-            }
-
-            static void additionalSetup() {}
-
-            static void register_me(FunctionMetaInfo *info) {
-                metaInfo().methods.push_back(*info);
-                //printf("func %s registered\n", info->function_string().c_str());
-            }
-
-            static std::string produceTesCode() {
-                return code_producer::produceClassCode(metaInfo());
-            }
-
-            static void writeSourceToFile() {
-                code_producer::produceClassToFile(metaInfo());
-            }
-
-            static void bind(VMClassRegistry* registry) {
-                assert(metaInfo().className);
-
-                for (auto& itm : metaInfo().methods) {
-                    itm.bind(registry, metaInfo().className);
-                }
-            }
-        };
-    }
+   }
 
 #define CONCAT(x, y) CONCAT1 (x, y)
 #define CONCAT1(x, y) x##y
