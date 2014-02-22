@@ -31,17 +31,49 @@ namespace collections {
         obj->release();
     }
 
+/*
     TEST(autorelease_queue, qqq)
     {
-        bshared_mutex mt;
-        autorelease_queue queue(mt);
-        queue.start();
-        queue.push(10);
-        queue.push(20);
+        auto& queue = autorelease_queue::instance();
+
+        queue.push(map::create());
+        queue.push(array::create());
+
         EXPECT_TRUE(queue.count() == 2);
+
         std::this_thread::sleep_for(chrono::seconds(autorelease_queue::obj_lifetime + 10));
 
         EXPECT_TRUE(queue.count() == 0);
+
+         autorelease_queue::instance().setPaused(false);
+    }*/
+
+
+    TEST(autorelease_queue, high_level)
+    {
+        using namespace std;
+
+        auto& queue = autorelease_queue::instance();
+
+        vector<Handle> identifiers;
+        int countBefore = queue.count();
+
+        for (int i = 0; i < 10; ++i) {
+            auto obj = map::create();
+
+            identifiers.push_back(obj->id);
+            obj->autorelease();
+        }
+
+        EXPECT_TRUE(queue.count() == (countBefore + identifiers.size()));
+
+        std::this_thread::sleep_for(chrono::seconds(autorelease_queue::obj_lifetime * 2 + 1));
+
+        bool allDeleted = std::all_of(identifiers.begin(), identifiers.end(), [&](Handle id) {
+            return collection_registry::getObject(id) == nullptr;
+        });
+
+        EXPECT_TRUE(allDeleted);
     }
 
 
@@ -208,6 +240,7 @@ namespace collections {
         EXPECT_TRUE(strcmp(cnt->find("acdc")->strValue(), name) == 0);
     }
 
+ 
     #endif
 }
 

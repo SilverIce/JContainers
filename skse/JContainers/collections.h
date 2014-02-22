@@ -183,18 +183,39 @@ namespace collections {
 
         object_base * autorelease();
 
-        void release() {
+        // decreases internal ref counter - _refCount OR deletes if summ refCount is 0
+        // if old refCountSumm is 1 - then release, if 0 - delete
+        // true, if object deleted
+        bool _deleteOrRelease(class autorelease_queue*) {
             bool deleteObject = false; {
                 mutex_lock g(_mutex);
                 if (_refCount > 0) {
                     --_refCount;
-                    deleteObject = (_refCount == 0 && _tes_refCount == 0);
                 }
+
+                deleteObject = (_refCount == 0 && _tes_refCount == 0);
             }
 
             if (deleteObject) {
                 collection_registry::removeObject(id);
                 delete this;
+            }
+
+            return deleteObject;
+        }
+
+        void release() {
+            bool deleteObject = false; {
+                mutex_lock g(_mutex);
+                if (_refCount > 0) {
+                    --_refCount;
+                }
+
+                deleteObject = (_refCount == 0 && _tes_refCount == 0);
+            }
+
+            if (deleteObject) {
+                _addToDeleteQueue();
             }
         }
 
@@ -203,15 +224,17 @@ namespace collections {
                 mutex_lock g(_mutex);
                 if (_tes_refCount > 0) {
                     --_tes_refCount;
-                    deleteObject = (_refCount == 0 && _tes_refCount == 0);
                 }
+
+                deleteObject = (_refCount == 0 && _tes_refCount == 0);
             }
 
             if (deleteObject) {
-                collection_registry::removeObject(id);
-                delete this;
+                _addToDeleteQueue();
             }
         }
+
+        void _addToDeleteQueue();
 
         virtual void u_clear() = 0;
         virtual SInt32 u_count() = 0;

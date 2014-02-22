@@ -148,10 +148,11 @@ namespace collections {
                 }
 
                 for(auto& val : toRelease) {
-                    printf("handle %u released\n", val);
                     auto obj = collection_registry::getObject(val);
-                    if (obj)
-                        obj->release();
+                    if (obj) {
+                        bool deleted = obj->_deleteOrRelease(nullptr);
+                        printf("handle %u %s\n", val, (deleted ? "deleted" : "released"));
+                    }
                 }
                 toRelease.clear();
 
@@ -167,5 +168,9 @@ namespace collections {
     inline object_base * object_base::autorelease() {
         autorelease_queue::instance().push(id);
         return this;
+    }
+
+    inline void object_base::_addToDeleteQueue() {
+        autorelease_queue::instance().push(id);
     }
 }
