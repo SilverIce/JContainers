@@ -115,7 +115,7 @@ namespace collections {
             auto obj = json_parsing::readJSONData(prototype);
             return obj;
         }
-        REGISTERF2(objectFromPrototype, "* prototype", "creates new container object using given JSON string-prototype");
+        REGISTERF2(objectFromPrototype, "prototype", "creates new container object using given JSON string-prototype");
 
         static void writeToFile(object_base *obj, const char * path) {
             if (path == nullptr)  return;
