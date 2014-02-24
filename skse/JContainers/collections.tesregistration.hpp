@@ -401,11 +401,11 @@ namespace collections {
             mutex_lock g(obj->_mutex);
             (*obj)[tes_hash(key)] = Item((T)item);
         }
-        REGISTERF(setItem<SInt32>, "setInt", "* key", "creates key-value association. replaces existing value if any");
-        REGISTERF(setItem<Float32>, "setFlt", "* key", "");
-        REGISTERF(setItem<const char *>, "setStr", "* key", "");
-        REGISTERF(setItem<object_base*>, "setObj", "* key object2", "");
-        REGISTERF(setItem<TESForm*>, "setForm", "* key", "");
+        REGISTERF(setItem<SInt32>, "setInt", "* key value", "creates key-value association. replaces existing value if any");
+        REGISTERF(setItem<Float32>, "setFlt", "* key value", "");
+        REGISTERF(setItem<const char *>, "setStr", "* key value", "");
+        REGISTERF(setItem<object_base*>, "setObj", "* key container", "");
+        REGISTERF(setItem<TESForm*>, "setForm", "* key value", "");
 
         static bool hasKey(Cnt *obj, Key key) {
             if (!obj || !key) {
