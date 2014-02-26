@@ -84,10 +84,14 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <ForcedIncludeFiles>common/IPrefix.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <StringPooling>true</StringPooling>
+      <BrowseInformation>true</BrowseInformation>
     </ClCompile>
     <PostBuildEvent>
       <Command>copy "$(TargetPath)" "..\..\..\$(TargetFileName)"</Command>
     </PostBuildEvent>
+    <Bscmake>
+      <PreserveSbr>true</PreserveSbr>
+    </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Error.cpp" />

@@ -22,7 +22,7 @@ namespace collections {
         setupForFirstTime();
     }
 
-    void shared_state::loadAll(const string &data) {
+    void shared_state::loadAll(const std::string &data) {
 
         _DMESSAGE("%u bytes loaded", data.size());
 
@@ -58,13 +58,13 @@ namespace collections {
         aqueue.setPaused(false);
     }
 
-    string shared_state::saveToArray() {
+    std::string shared_state::saveToArray() {
         std::ostringstream stream;
         boost::archive::binary_oarchive arch(stream);
 
         aqueue.setPaused(true);
         {
-            // i have assumend that Skyrim devs are not idiots to run scripts in process of saving
+            // i have assumed that Skyrim devs are not idiots to run scripts in process of saving
             // but didn't dare to disable all that locks
             read_lock g(_mutex);
 
@@ -82,7 +82,7 @@ namespace collections {
         }
         aqueue.setPaused(false);
 
-        string data(stream.str());
+        std::string data(stream.str());
 
         _DMESSAGE("%u bytes saved", data.size());
 

@@ -8,14 +8,13 @@
 #include <algorithm>
 
 namespace collections {
-    using namespace std;
 
     class autorelease_queue {
 
         std::thread _thread;
         bshared_mutex& _mutex;
 
-        typedef lock_guard<decltype(_mutex)> lock;
+        typedef std::lock_guard<decltype(_mutex)> lock;
         typedef unsigned int time_point;
         //typedef chrono::time_point<chrono::system_clock> time_point;
         typedef std::vector<std::pair<HandleT, time_point> > queue;
@@ -120,6 +119,8 @@ namespace collections {
     private:
 
         static void run(autorelease_queue &self) {
+            using namespace std;
+
             chrono::seconds sleepTime(sleep_duration);
             vector<HandleT> toRelease;
 
