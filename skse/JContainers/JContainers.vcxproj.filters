@@ -62,6 +62,9 @@
     <ClInclude Include="tes_meta_info.h">
       <Filter>tes_interface</Filter>
     </ClInclude>
+    <ClInclude Include="spinlock.h">
+      <Filter>tes_objects</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="exports.def" />

@@ -314,7 +314,6 @@ namespace collections {
     }
 
     void form_map::u_updateKeys() {
-        container_type tmpCnt;
 
         std::vector<FormId> keys;
         keys.reserve(cnt.size());

@@ -139,6 +139,7 @@
     <ClInclude Include="collections.h" />
     <ClInclude Include="collections.tests.hpp" />
     <ClInclude Include="gtest.h" />
+    <ClInclude Include="spinlock.h" />
     <ClInclude Include="id_generator.h" />
     <ClInclude Include="meta.h" />
     <ClInclude Include="shared_state.h" />

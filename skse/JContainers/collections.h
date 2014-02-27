@@ -7,10 +7,10 @@
 #include "skse/PapyrusVM.h"
 
 #include <vector>
-#include <hash_map>
+//#include <hash_map>
 #include <string>
 #include <assert.h>
-#include <atomic>
+//#include <atomic>
 
 #include <boost/serialization/split_member.hpp>
 
@@ -18,6 +18,7 @@
 #include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/shared_lock_guard.hpp>
 #include <boost/thread/lock_guard.hpp>
+#include "spinlock.h"
 
 #include "id_generator.h"
 #include "skse/GameForms.h"
@@ -28,7 +29,9 @@ class T_Base;
 
 namespace collections {
 
-    typedef std::recursive_mutex object_mutex;
+    //typedef std::recursive_mutex object_mutex;
+    typedef spinlock object_mutex;
+
     typedef std::lock_guard<object_mutex> mutex_lock;
 
     typedef boost::shared_mutex bshared_mutex;
