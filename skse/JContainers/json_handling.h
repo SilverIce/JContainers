@@ -2,6 +2,7 @@
 
 #include "collections.h"
 #include "cJSON.h"
+#include <set>
 
 namespace collections {
 
@@ -9,7 +10,7 @@ namespace collections {
         return std::unique_ptr<FILE, decltype(&fclose)> (file, &fclose);
     }
 
-    class json_parsing {
+    class json_handling {
     public:
 
         class collection_owner {
@@ -228,45 +229,71 @@ namespace collections {
             return item;
         }
 
+        typedef std::set<object_base*> collection_set;
 
         static cJSON * createCJSON(object_base & collection) {
-            return createCJSONNode(Item(&collection));
+            collection_set serialized;
+            return createCJSONNode(Item(&collection), serialized);
         }
 
         static char * createJSONData(object_base & collection) {
-            auto node = createCJSONNode(Item(&collection));
+            collection_set serialized;
+            auto node = createCJSONNode(Item(&collection), serialized);
             char *data = cJSON_Print(node);
             cJSON_Delete(node);
             return data;
         }
 
-        static cJSON * createCJSONNode(const Item& item) {
+        static cJSON * createCJSONNode(const Item& item, collection_set& serializedObjects) {
 
             cJSON *val = nullptr;
 
             ItemType type = item.type();
 
             if (type == ItemTypeObject && item.object()) {
+
                 auto obj = item.object();
+
+                if (serializedObjects.find(obj) != serializedObjects.end()) {
+                    goto createNullNode;
+                    // do not serialize object twice
+                }
+
+                serializedObjects.insert(obj);
+
                 mutex_lock g(obj->_mutex);
+
                 if (obj->as<array>()) {
+
                     val = cJSON_CreateArray();
                     array *ar = obj->as<array>();
                     for (auto& itm : ar->_array) {
-                        cJSON_AddItemToArray(val, createCJSONNode(itm));
+                        auto cnode = createCJSONNode(itm, serializedObjects);
+                        if (cnode) {
+                            cJSON_AddItemToArray(val, cnode);
+                        }
                     }
+                }
+                else if (obj->as<map>()) {
 
-                } else if (obj->as<map>()) {
                     val = cJSON_CreateObject();
                     for (auto& pair : obj->as<map>()->container()) {
-                        cJSON_AddItemToObject(val, pair.first.c_str(), createCJSONNode(pair.second));
+                         auto cnode = createCJSONNode(pair.second, serializedObjects);
+                         if (cnode) {
+                             cJSON_AddItemToObject(val, pair.first.c_str(), cnode);
+                         }
                     }
                 }
             }
             else if (type == ItemTypeCString) {
                 val = cJSON_CreateString(item.strValue());
-            } else if (type == ItemTypeInt32 || type == ItemTypeFloat32) {
+            }
+            else if (type == ItemTypeInt32 || type == ItemTypeFloat32) {
                 val = cJSON_CreateNumber(item.fltValue());
+            }
+            else {
+            createNullNode:
+                val = cJSON_CreateNull();
             }
 
             return val;

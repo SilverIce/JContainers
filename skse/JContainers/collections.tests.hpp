@@ -48,7 +48,7 @@ namespace collections {
     }*/
 
 
-    TEST(autorelease_queue, high_level)
+    TEST_DISABLED(autorelease_queue, high_level)
     {
         using namespace std;
 
@@ -110,30 +110,30 @@ namespace collections {
         return jsonString;
     }
 
-    TEST(json_parsing, readJSONData)
+    TEST(json_handling, readJSONData)
     {
 
 
         cJSON *cjson = cJSON_Parse(jsonTestString());
 
-        object_base *obj = json_parsing::readCJSON(cjson);
-        cJSON * cjson2 = json_parsing::createCJSON(*obj);
+        object_base *obj = json_handling::readCJSON(cjson);
+        cJSON * cjson2 = json_handling::createCJSON(*obj);
 
         char *data1 = cJSON_Print(cjson);
         char *data2 = cJSON_Print(cjson2);
 
         //EXPECT_TRUE(strcmp(data2, data1) == 0);
 
-        json_parsing::resolvePath(obj, ".glossary.GlossDiv.title", [&](Item * item) {
+        json_handling::resolvePath(obj, ".glossary.GlossDiv.title", [&](Item * item) {
             EXPECT_TRUE(item && strcmp(item->strValue(), "S") == 0 );
         });
 
-        json_parsing::resolvePath(obj, ".array[0][0]", [&](Item * item) {
+        json_handling::resolvePath(obj, ".array[0][0]", [&](Item * item) {
             EXPECT_TRUE(item && strcmp(item->strValue(), "NPC Head [Head]") == 0 );
         });
 
         float floatVal = 10.5;
-        json_parsing::resolvePath(obj, ".glossary.GlossDiv.title", [&](Item * item) {
+        json_handling::resolvePath(obj, ".glossary.GlossDiv.title", [&](Item * item) {
             EXPECT_TRUE(item != nullptr);
             item->setFlt(floatVal);
         });
@@ -149,17 +149,17 @@ namespace collections {
 
     }
 
-    TEST(json_parsing, objectFromPrototype)
+    TEST(json_handling, objectFromPrototype)
     {
         object_base *obj = tes_object::objectFromPrototype("{ \"timesTrained\" : 10, \"trainers\" : [] }");
 
         EXPECT_TRUE(obj->as<map>() != nullptr);
         
-        json_parsing::resolvePath(obj, ".timesTrained", [&](Item * item) {
+        json_handling::resolvePath(obj, ".timesTrained", [&](Item * item) {
             EXPECT_TRUE(item && item->intValue() == 10 );
         });
 
-        json_parsing::resolvePath(obj, ".trainers", [&](Item * item) {
+        json_handling::resolvePath(obj, ".trainers", [&](Item * item) {
             EXPECT_TRUE(item && item->object()->as<array>() );
         });
     }
@@ -237,6 +237,17 @@ namespace collections {
         cnt->setValueForKey("ACDC", Item(name));
 
         EXPECT_TRUE(strcmp(cnt->find("acdc")->strValue(), name) == 0);
+    }
+
+
+    TEST(json_handling, recursion)
+    {
+        map *cnt = map::object();
+        cnt->setValueForKey("cycle", Item(cnt));
+
+        char *data = json_handling::createJSONData(*cnt);
+
+        free(data);
     }
 
  

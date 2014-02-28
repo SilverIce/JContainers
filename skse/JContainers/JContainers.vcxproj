@@ -67,12 +67,13 @@
       <AdditionalIncludeDirectories>I:\dev\boost\boost_1_53_0;$(SolutionDir);$(SolutionDir)\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;NDEBUG;_WINDOWS;_USRDLL;PLUGIN_EXAMPLE_EXPORTS;_PPAPI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <PrecompiledHeader />
+      <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <ForcedIncludeFiles>common/IPrefix.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <ForcedIncludeFiles>jcontainers_pch.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <StringPooling>true</StringPooling>
+      <PrecompiledHeaderFile>jcontainers_pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <ModuleDefinitionFile>exports.def</ModuleDefinitionFile>
@@ -92,14 +93,14 @@
       <AdditionalIncludeDirectories>I:\dev\boost\boost_1_53_0;$(SolutionDir);$(SolutionDir)\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;NDEBUG;_WINDOWS;_USRDLL;PLUGIN_EXAMPLE_EXPORTS;_PPAPI;TEST_COMPILATION_DISABLED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
+      <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <ForcedIncludeFiles>common/IPrefix.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <ForcedIncludeFiles>jcontainers_pch.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <StringPooling>true</StringPooling>
       <BrowseInformation>true</BrowseInformation>
+      <PrecompiledHeaderFile>jcontainers_pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <ModuleDefinitionFile>exports.def</ModuleDefinitionFile>
@@ -129,8 +130,13 @@
     <ClCompile Include="cJSON.cpp" />
     <ClCompile Include="code_producer.cpp" />
     <ClCompile Include="gtest.cpp" />
+    <ClCompile Include="jcontainers_pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='production|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="serialization.cpp" />
+    <ClCompile Include="tes_inteface.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="autorelease_queue.h" />
@@ -139,17 +145,23 @@
     <ClInclude Include="collections.h" />
     <ClInclude Include="collections.tests.hpp" />
     <ClInclude Include="gtest.h" />
+    <ClInclude Include="jcontainers_pch.h" />
     <ClInclude Include="spinlock.h" />
     <ClInclude Include="id_generator.h" />
     <ClInclude Include="meta.h" />
     <ClInclude Include="shared_state.h" />
     <ClInclude Include="shared_state.hpp" />
+    <ClInclude Include="tes_array.h" />
     <ClInclude Include="tes_binding.h" />
+    <ClInclude Include="tes_db.h" />
+    <ClInclude Include="tes_jcontainers.h" />
+    <ClInclude Include="tes_map.h" />
     <ClInclude Include="tes_meta_info.h" />
+    <ClInclude Include="tes_object.h" />
+    <ClInclude Include="typedefs.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="collections.from_json.h" />
-    <None Include="collections.tesregistration.hpp" />
+    <None Include="json_handling.h" />
     <None Include="exports.def" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

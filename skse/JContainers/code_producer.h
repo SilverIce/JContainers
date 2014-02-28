@@ -8,6 +8,7 @@ namespace collections {
         struct class_meta_info;
     }
 
+    // Produces script files using meta class information
     namespace code_producer {
 
         std::string produceClassCode(const tes_binding::class_meta_info& self);

@@ -13,32 +13,43 @@
     <Filter Include="tes_objects">
       <UniqueIdentifier>{36211b98-169e-46fc-961c-48122146285c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="gtest">
+      <UniqueIdentifier>{9fe98443-90a1-4d4a-8155-1f06db3a251b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="cJSON">
+      <UniqueIdentifier>{1cc8956e-8c00-468c-9d3d-d9efe751cfa9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="tes_interface\tes_classes">
+      <UniqueIdentifier>{a481ff76-9ab2-4bb4-91f6-f5d5e21c603c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="tes_interface\code_producer">
+      <UniqueIdentifier>{d21e5bf5-2f63-4cc1-b1ed-e9500125c58a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="cJSON.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="gtest.cpp">
-      <Filter>tests</Filter>
-    </ClCompile>
-    <ClCompile Include="code_producer.cpp">
-      <Filter>tes_interface</Filter>
-    </ClCompile>
     <ClCompile Include="serialization.cpp">
       <Filter>tes_objects</Filter>
     </ClCompile>
+    <ClCompile Include="gtest.cpp">
+      <Filter>gtest</Filter>
+    </ClCompile>
+    <ClCompile Include="cJSON.cpp">
+      <Filter>cJSON</Filter>
+    </ClCompile>
+    <ClCompile Include="jcontainers_pch.cpp" />
+    <ClCompile Include="tes_inteface.cpp">
+      <Filter>tes_interface</Filter>
+    </ClCompile>
+    <ClCompile Include="code_producer.cpp">
+      <Filter>tes_interface\code_producer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="cJSON.h" />
     <ClInclude Include="collections.tests.hpp">
       <Filter>tests</Filter>
     </ClInclude>
-    <ClInclude Include="gtest.h">
-      <Filter>tests</Filter>
-    </ClInclude>
     <ClInclude Include="tes_binding.h">
-      <Filter>tes_interface</Filter>
-    </ClInclude>
-    <ClInclude Include="code_producer.h">
       <Filter>tes_interface</Filter>
     </ClInclude>
     <ClInclude Include="autorelease_queue.h">
@@ -53,9 +64,6 @@
     <ClInclude Include="shared_state.hpp">
       <Filter>tes_objects</Filter>
     </ClInclude>
-    <ClInclude Include="meta.h">
-      <Filter>tests</Filter>
-    </ClInclude>
     <ClInclude Include="collections.h">
       <Filter>tes_objects</Filter>
     </ClInclude>
@@ -65,13 +73,39 @@
     <ClInclude Include="spinlock.h">
       <Filter>tes_objects</Filter>
     </ClInclude>
+    <ClInclude Include="meta.h">
+      <Filter>gtest</Filter>
+    </ClInclude>
+    <ClInclude Include="gtest.h">
+      <Filter>gtest</Filter>
+    </ClInclude>
+    <ClInclude Include="cJSON.h">
+      <Filter>cJSON</Filter>
+    </ClInclude>
+    <ClInclude Include="jcontainers_pch.h" />
+    <ClInclude Include="tes_object.h">
+      <Filter>tes_interface\tes_classes</Filter>
+    </ClInclude>
+    <ClInclude Include="tes_array.h">
+      <Filter>tes_interface\tes_classes</Filter>
+    </ClInclude>
+    <ClInclude Include="tes_map.h">
+      <Filter>tes_interface\tes_classes</Filter>
+    </ClInclude>
+    <ClInclude Include="tes_jcontainers.h">
+      <Filter>tes_interface\tes_classes</Filter>
+    </ClInclude>
+    <ClInclude Include="tes_db.h">
+      <Filter>tes_interface\tes_classes</Filter>
+    </ClInclude>
+    <ClInclude Include="typedefs.h" />
+    <ClInclude Include="code_producer.h">
+      <Filter>tes_interface\code_producer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="exports.def" />
-    <None Include="collections.tesregistration.hpp">
-      <Filter>tes_interface</Filter>
-    </None>
-    <None Include="collections.from_json.h">
+    <None Include="json_handling.h">
       <Filter>tes_objects</Filter>
     </None>
   </ItemGroup>

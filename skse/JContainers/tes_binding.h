@@ -1,13 +1,9 @@
 #pragma once
 
-#include "tes_meta_info.h"
-
-#include "collections.h"
-
 #include "skse/PapyrusNativeFunctions.h"
 
-//#include <type_traits>
-
+#include "tes_meta_info.h"
+#include "collections.h"
 #include "code_producer.h"
 
 namespace collections {

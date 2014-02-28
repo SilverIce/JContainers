@@ -3,7 +3,7 @@
 #include "common/ITypes.h"
 #include "common/IDebugLog.h"
 
-#include "skse/GameTypes.h"
+//#include "skse/GameTypes.h"
 #include "skse/PapyrusVM.h"
 
 #include <vector>

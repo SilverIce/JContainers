@@ -1,5 +1,8 @@
 #pragma once
 
+#include "collections.h"
+#include "autorelease_queue.h"
+
 namespace collections {
 
     class shared_state {
