@@ -39,8 +39,11 @@ namespace collections {
                 return ;
             }
 
-            str += "\n;/";
-            str += comment;
+            std::string commentStr(comment);
+            boost::replace_all(commentStr, "\n", "\n    ");
+
+            str += "\n;/  ";
+            str += commentStr;
             str += "\n/;\n";
         }
 

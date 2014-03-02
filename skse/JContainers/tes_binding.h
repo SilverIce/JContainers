@@ -330,15 +330,16 @@ namespace collections {
     } CONCAT(_mem_, __LINE__);
 
 #define REGISTERF(func, _funcname, _args, _comment)\
-    struct CONCAT(_struct_, __LINE__) : public tes_binding::FunctionMetaInfo {\
+    struct CONCAT(_struct_, __LINE__) {\
          CONCAT(_struct_, __LINE__)() {\
-             registrator = &tes_binding::proxy<decltype(msvc_identity(&(func))), &(func)>::bind;\
-             typeStrings = &tes_binding::proxy<decltype(msvc_identity(&(func))), &(func)>::type_strings;\
+             tes_binding::FunctionMetaInfo metaF;\
+             metaF.registrator = &tes_binding::proxy<decltype(msvc_identity(&(func))), &(func)>::bind;\
+             metaF.typeStrings = &tes_binding::proxy<decltype(msvc_identity(&(func))), &(func)>::type_strings;\
              \
-             args = _args;\
-             comment = _comment;\
-             funcName = _funcname;\
-             register_me(this);\
+             metaF.args = _args;\
+             metaF.comment = _comment;\
+             metaF.funcName = _funcname;\
+             register_me(&metaF);\
          }\
     } CONCAT(_mem_, __LINE__);
 

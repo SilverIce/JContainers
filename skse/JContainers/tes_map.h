@@ -55,7 +55,7 @@ namespace collections {
             auto item = obj->find(tes_hash(key));
             return item != nullptr;
         }
-        REGISTERF2(hasKey, "* key", "true, if something associated with key");
+        REGISTERF2(hasKey, "* key", "returns true, if something associated with key");
 
         static object_base* allKeys(Cnt *obj) {
             if (!obj) {
@@ -106,7 +106,7 @@ namespace collections {
 
             return obj->s_count();
         }
-        REGISTERF2(count, "*", "count of items/associations");
+        REGISTERF2(count, "*", "returns count of items/associations");
 
         static void clear(Cnt *obj) {
             if (!obj) {
@@ -115,7 +115,7 @@ namespace collections {
 
             obj->s_clear();
         }
-        REGISTERF2(clear, "*", "remove all items from map container");
+        REGISTERF2(clear, "*", "removes all items from container");
 
         static bool registerFuncs(VMClassRegistry* registry) {
             bind(registry);

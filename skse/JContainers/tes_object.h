@@ -23,10 +23,10 @@ namespace collections {
             return nullptr;
         }
         REGISTERF2(retain, "*",
-            "Retains and returns the object.\n\
-            All containers that were created with object* or objectWith* methods are automatically destroyed after some amount of time (~10 seconds)\n\
-            To keep object alive you must retain it once and you have to __release__ it when you do not need it anymore (also to not pollute save file).\n\
-            An alternative to retain-release is store object in JDB container"
+"Retains and returns the object.\n\
+All containers that were created with object* or objectWith* methods are automatically destroyed after some amount of time (~10 seconds)\n\
+To keep object alive you must retain it once and you have to __release__ it when you do not need it anymore (also to not pollute save file).\n\
+An alternative to retain-release is store object in JDB container"
             );
 
         static HandleT autorelease(HandleT handle) {
@@ -129,8 +129,9 @@ namespace collections {
 
             return succeed;
         }
-        REGISTERF2(hasPath, "* path", "returns true, if container capable resolve given path.\n\
-                                      for ex. JValue.hasPath(container, \".player.health\") will check if given container has 'player' which has 'health' information"
+        REGISTERF2(hasPath, "* path",
+"returns true, if container capable resolve given path.\n\
+for ex. JValue.hasPath(container, \".player.health\") will check if given container has 'player' which has 'health' information"
                                       );
 
         template<class T>
@@ -177,15 +178,6 @@ namespace collections {
 
         static bool registerFuncs(VMClassRegistry* registry) {
 
-#define REGISTER2(name, func, argCount,  ... /*types*/ ) \
-    if (registry) { \
-    registry->RegisterFunction( \
-    new NativeFunction ## argCount <StaticFunctionTag, __VA_ARGS__ >(name, TesName(), func, registry)); \
-    registry->SetFunctionFlags(TesName(), name, VMClassRegistry::kFunctionFlag_NoWait); \
-    }
-            //printMethod(name, #__VA_ARGS__);
-
-#define REGISTER(func, argCount,  ... /*types*/ ) REGISTER2(#func, func, argCount, __VA_ARGS__)
 
             bind(registry);
 

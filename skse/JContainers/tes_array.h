@@ -75,8 +75,9 @@ namespace collections {
 
             return itr != obj->_array.end() ? (itr - obj->_array.begin()) : -1;
         }
-        REGISTERF(findVal<SInt32>, "findInt", "* value", "returns index of the first found value/container that equals to given value/container.\n\
-                                                         if found nothing returns -1.");
+        REGISTERF(findVal<SInt32>, "findInt", "* value",
+"returns index of the first found value/container that equals to given value/container.\n\
+if found nothing returns -1.");
         REGISTERF(findVal<Float32>, "findFlt", "* value", "");
         REGISTERF(findVal<const char *>, "findStr", "* value", "");
         REGISTERF(findVal<object_base*>, "findObj", "* container", "");
@@ -93,7 +94,7 @@ namespace collections {
                 obj->_array[index] = Item(item);
             }
         }
-        REGISTERF(replaceItemAtIndex<SInt32>, "setInt", "* index value", "replaces existing value at index with new value. setObj sets container");
+        REGISTERF(replaceItemAtIndex<SInt32>, "setInt", "* index value", "replaces existing value/container at index with new value");
         REGISTERF(replaceItemAtIndex<Float32>, "setFlt", "* index value", "");
         REGISTERF(replaceItemAtIndex<const char *>, "setStr", "* index value", "");
         REGISTERF(replaceItemAtIndex<object_base*>, "setObj", "* index container", "");
