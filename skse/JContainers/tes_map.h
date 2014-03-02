@@ -1,4 +1,5 @@
 namespace collections {
+
     inline const char* tes_hash(const char* in) {
         return in;
     }

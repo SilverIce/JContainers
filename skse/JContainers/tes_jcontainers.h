@@ -19,6 +19,16 @@ namespace collections {
             return result == 0;
         }
         REGISTERF2(fileExistsAtPath, "path", "returns true if file at path exists");
+
+        static SInt32 lastError() {
+            return shared_state::instance().lastError();
+        }
+        REGISTERF2(lastError, NULL, "");
+
+        static const char* lastErrorString() {
+            return JErrorCodeToString(shared_state::instance().lastError());
+        }
+        REGISTERF2(lastErrorString, NULL, "");
     };
 
 }

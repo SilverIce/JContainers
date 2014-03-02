@@ -9,6 +9,8 @@
 #include "cJSON.h"
 #include "gtest.h"
 
+#include "tes_error_code.h"
+
 #include "collections.h"
 #include "autorelease_queue.h"
 #include "shared_state.h"

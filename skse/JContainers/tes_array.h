@@ -1,16 +1,18 @@
 namespace collections {
+
     class tes_array : public tes_binding::class_meta_mixin< tes_array > {
     public:
 
         REGISTER_TES_NAME("JArray");
 
         static void additionalSetup() {
-            //metaInfo().extendsClass = "JValue";
             metaInfo().comment = "Resizeable, unlimited size array (Skyrim size limit is 128) that may contain any value (value is float, integer, string or another container) in one time.\n"
                 "Inherits all JValue functions";
         }
 
-        static const char * TesName() { return "JArray";}
+        static void onOutOfBoundAccess() {
+            shared_state::instance().setLastError(JError_OutOfBoundAccess);
+        }
 
         typedef array::Index Index;
 
@@ -53,7 +55,12 @@ namespace collections {
             }
 
             mutex_lock g(obj->_mutex);
-            return (index >= 0 && index < obj->_array.size()) ? obj->_array[index].readAs<T>() : T(0);
+            if (index >= 0 && index < obj->_array.size()) {
+                return obj->_array[index].readAs<T>();
+            } else {
+                onOutOfBoundAccess();
+                return T(0);
+            }
         }
         REGISTERF(itemAtIndex<SInt32>, "getInt", "* index", "returns item at index. getObj function returns container");
         REGISTERF(itemAtIndex<Float32>, "getFlt", "* index", "");
@@ -92,6 +99,8 @@ if found nothing returns -1.");
             mutex_lock g(obj->_mutex);
             if (index >= 0 && index < obj->_array.size()) {
                 obj->_array[index] = Item(item);
+            } else {
+                onOutOfBoundAccess();
             }
         }
         REGISTERF(replaceItemAtIndex<SInt32>, "setInt", "* index value", "replaces existing value/container at index with new value");
@@ -135,6 +144,8 @@ if found nothing returns -1.");
                 mutex_lock g(obj->_mutex);
                 if (index >= 0 && index < obj->_array.size()) {
                     obj->_array.erase(obj->_array.begin() + index);
+                } else {
+                    onOutOfBoundAccess();
                 }
             }
         }
@@ -146,4 +157,4 @@ if found nothing returns -1.");
         }
     };
 
-}
+};

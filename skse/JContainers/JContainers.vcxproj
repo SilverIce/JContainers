@@ -154,6 +154,7 @@
     <ClInclude Include="tes_array.h" />
     <ClInclude Include="tes_binding.h" />
     <ClInclude Include="tes_db.h" />
+    <ClInclude Include="tes_error_code.h" />
     <ClInclude Include="tes_jcontainers.h" />
     <ClInclude Include="tes_map.h" />
     <ClInclude Include="tes_meta_info.h" />

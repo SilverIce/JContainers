@@ -2,6 +2,8 @@
 
 namespace collections {
 
+    //shared_state shared_state::_sharedInstance;
+
     autorelease_queue& autorelease_queue::instance() {
         return shared_state::instance().aqueue;
     }
@@ -17,6 +19,7 @@ namespace collections {
             registry.u_clear();
             aqueue.u_clear();
             _databaseId = 0;
+            _lastError = 0;
         }
 
         setupForFirstTime();

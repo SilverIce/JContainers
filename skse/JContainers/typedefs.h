@@ -6,6 +6,7 @@ enum {
     kSerializationDataVersion = 1,
 };
 
+#define STR(...) #__VA_ARGS__
 
 namespace Movement
 {

@@ -102,6 +102,9 @@
     <ClInclude Include="code_producer.h">
       <Filter>tes_interface\code_producer</Filter>
     </ClInclude>
+    <ClInclude Include="tes_error_code.h">
+      <Filter>tes_interface</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="exports.def" />
