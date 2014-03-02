@@ -1,8 +1,4 @@
-
-
-
 #pragma once
-
 
 enum {
     kJStorageChunk = 'JSTR',

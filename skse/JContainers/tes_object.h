@@ -34,10 +34,11 @@ namespace collections {
             return handle;
         }
 
+/*
         template<class T>
         static T* create() {
             return T::create();
-        }
+        }*/
 
         template<class T>
         static object_base* object() {

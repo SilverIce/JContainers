@@ -199,7 +199,7 @@ namespace collections {
         ar & _idGen;
     }
 
-    static UInt32 converOldFormIdToNew(UInt32 oldId) {
+    static UInt32 convertOldFormIdToNew(UInt32 oldId) {
         UInt64 newId = 0;
         g_serialization->ResolveHandle(oldId, &newId);
         return newId;
@@ -209,7 +209,7 @@ namespace collections {
     static UInt32 readOldFormIdToNew(Archive& ar) {
         UInt32 oldId = 0;
         ar & oldId;
-        return converOldFormIdToNew(oldId);
+        return convertOldFormIdToNew(oldId);
     }
 
     template<class Archive>
@@ -322,7 +322,7 @@ namespace collections {
         }
 
         for(auto& oldKey : keys) {
-            FormId newKey = static_cast<FormId>(converOldFormIdToNew(oldKey));
+            FormId newKey = static_cast<FormId>(convertOldFormIdToNew(oldKey));
 
             if (oldKey == newKey) {
                 ;
@@ -337,7 +337,6 @@ namespace collections {
         }
     }
 }
-
 
 void Serialization_Revert(SKSESerializationInterface * intfc)
 {

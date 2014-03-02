@@ -44,18 +44,22 @@ namespace collections {
 
             // post serialization
 
-            auto cntCopy = registry.u_container();
-            static_assert( std::is_reference<decltype(cntCopy)>::value == false , "");
-
-            for (auto& pair : cntCopy) {
-                form_map *fmap = pair.second->as<form_map>();
-                if (fmap) {
-                    fmap->u_updateKeys();
-                }
-            }
-
+            postLoadMaintenance();
         }
         aqueue.setPaused(false);
+    }
+
+    void shared_state::postLoadMaintenance() {
+
+        auto cntCopy = registry.u_container();
+        static_assert( std::is_reference<decltype(cntCopy)>::value == false , "");
+
+        for (auto& pair : cntCopy) {
+            form_map *fmap = pair.second->as<form_map>();
+            if (fmap) {
+                fmap->u_updateKeys();
+            }
+        }
     }
 
     std::string shared_state::saveToArray() {

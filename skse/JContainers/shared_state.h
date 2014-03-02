@@ -7,6 +7,7 @@ namespace collections {
 
     class shared_state {
         bshared_mutex _mutex;
+        HandleT _databaseId;
 
         shared_state()
             : registry(_mutex)
@@ -16,10 +17,11 @@ namespace collections {
             setupForFirstTime();
         }
 
+        void postLoadMaintenance();
+
     public:
         collection_registry registry;
         autorelease_queue aqueue;
-        HandleT _databaseId;
 
         static shared_state& instance() {
             static shared_state st;

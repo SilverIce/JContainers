@@ -1,7 +1,13 @@
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
 #include <errno.h>
+
+#include <set>
+
+#include "cJSON.h"
+#include "gtest.h"
 
 #include "collections.h"
 #include "autorelease_queue.h"

@@ -13,7 +13,6 @@ namespace collections {
 
         REGISTER_TES_NAME("tt");
 
-        //REGISTERF(create<Cnt>, "create", "", "");
         REGISTERF(tes_object::object<Cnt>, "object", "", kCommentObject);
 
         template<class T>

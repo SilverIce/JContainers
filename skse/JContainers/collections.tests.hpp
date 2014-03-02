@@ -1,10 +1,5 @@
 #pragma once
 
-#include "gtest.h"
-
-#include <sstream>
-#include <memory>
-
 namespace collections {
 
     #ifndef TEST_COMPILATION_DISABLED
@@ -194,7 +189,7 @@ namespace collections {
 
     TEST(array,  test)
     {
-        auto arr = tes_object::create<array>();
+        auto arr = array::create();
 
         EXPECT_TRUE(tes_array::count(arr) == 0);
 
@@ -208,7 +203,7 @@ namespace collections {
         EXPECT_TRUE(tes_array::count(arr) == 2);
         EXPECT_TRUE(tes_array::itemAtIndex<SInt32>(arr, 1) == 30);
 
-        auto arr2 = tes_object::create<array>();
+        auto arr2 = array::create();
         tes_array::add<SInt32>(arr2, 4);
 
         tes_array::add<Handle>(arr, arr2->id);
