@@ -337,7 +337,7 @@ namespace collections {
              metaF.typeStrings = &tes_binding::proxy<decltype(msvc_identity(&(func))), &(func)>::type_strings;\
              \
              metaF.args = _args;\
-             metaF.comment = _comment;\
+             metaF.setComment( _comment );\
              metaF.funcName = _funcname;\
              register_me(&metaF);\
          }\

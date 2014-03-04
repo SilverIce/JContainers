@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <functional>
 
 class VMClassRegistry;
 
@@ -27,12 +28,27 @@ namespace collections {
 
             Registrator registrator;
             TypeStrings typeStrings;
-            const char *comment;
             const char *args;
             const char *funcName;
 
+            std::function<std::string () > commentFunc;
+
             FunctionMetaInfo() {
-                memset(this, 0, sizeof(*this));
+                registrator = nullptr;
+                typeStrings = nullptr;
+                args = nullptr;
+                funcName = nullptr;
+            }
+
+            void setComment(const char *comment) {
+                commentFunc = [=]() {
+                    return std::string(comment ? comment : "");
+                };
+            }
+
+            template<class T>
+            void setComment(T &lambda) {
+                commentFunc = lambda;
             }
 
             void bind(VMClassRegistry *registry, const char *className) {

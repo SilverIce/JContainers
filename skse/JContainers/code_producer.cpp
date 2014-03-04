@@ -34,8 +34,8 @@ namespace collections {
             }
         }
 
-        void _pushComment(const char* comment, std::string& str) {
-            if (!comment || !*comment) {
+        void _pushComment(const std::string& comment, std::string& str) {
+            if (comment.empty()) {
                 return ;
             }
 
@@ -51,7 +51,7 @@ namespace collections {
             std::string str;
             auto types = self.typeStrings();
 
-            _pushComment(self.comment, str);
+            _pushComment(self.commentFunc(), str);
 
             if (types[0]().tes_type_name != "void") {
                 str += types[0]().tes_type_name;

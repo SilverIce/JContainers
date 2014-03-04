@@ -16,7 +16,12 @@ namespace collections {
         static UInt32 APIVersion() {
             return kJAPIVersion;
         }
-        REGISTERF2(APIVersion, NULL, "returns API version. Incremented by 1 each time old API is not backward compartible with new one");
+        REGISTERF2(APIVersion, NULL, []() {
+            std::stringstream comm;
+            comm << "returns API version. Incremented by 1 each time old API is not backward compartible with new one.\n";
+            comm << "current API version is " << APIVersion();
+            return comm.str();
+        });
 
         static bool fileExistsAtPath(const char *filename) {
             struct _stat buf;
@@ -28,12 +33,19 @@ namespace collections {
         static SInt32 lastError() {
             return shared_state::instance().lastError();
         }
-        REGISTERF2(lastError, NULL, "");
+        REGISTERF2(lastError, NULL, []() {
+            std::stringstream comm;
+            comm << "returns last occured error (error code):";
+            for (int i = 0; i < JErrorCount; ++i) {
+               comm << std::endl << i << " - " << JErrorCodeToString((JErrorCode)i);
+            }
+            return comm.str();
+        });
 
         static const char* lastErrorString() {
             return JErrorCodeToString(shared_state::instance().lastError());
         }
-        REGISTERF2(lastErrorString, NULL, "");
+        REGISTERF2(lastErrorString, NULL, "returns string that describes last error");
     };
 
 }
