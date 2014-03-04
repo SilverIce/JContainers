@@ -10,6 +10,14 @@ namespace collections {
                 "Inherits all JValue functions";
         }
 
+        static bool validateReadIndex(array *obj, UInt32 index) {
+            return obj && index < obj->_array.size();
+        }
+
+        static bool validateWriteIndex(array *obj, UInt32 index) {
+            return obj && index <= obj->_array.size();
+        }
+
         static void onOutOfBoundAccess() {
             shared_state::instance().setLastError(JError_OutOfBoundAccess);
         }
@@ -43,10 +51,31 @@ namespace collections {
 
             return obj;
         }
-        REGISTERF(fromArray<SInt32>, "objectWithInts", "values", "creates new array that contains given values");
+        REGISTERF(fromArray<SInt32>, "objectWithInts", "values",
+"creates new array that contains given values\n\
+objectWithBooleans converts booleans into integers");
         REGISTERF(fromArray<BSFixedString>, "objectWithStrings",  "values", NULL);
         REGISTERF(fromArray<Float32>, "objectWithFloats",  "values", NULL);
         REGISTERF(fromArray<bool>, "objectWithBooleans",  "values", NULL);
+
+        static void addFromArray(array *obj, array *another, SInt32 insertAtIndex = -1) {
+            if (!obj || !another) {
+                return ;
+            }
+
+            mutex_lock g1(obj->_mutex), g2(another->_mutex);
+
+            if (insertAtIndex >= 0 && validateWriteIndex(obj, insertAtIndex) == false) {
+                return;
+            }
+
+            SInt32 whereTo = insertAtIndex >= 0 ? insertAtIndex : obj->u_count();
+
+            obj->_array.insert(obj->_array.begin() + whereTo, another->_array.begin(), another->_array.end());
+        }
+        REGISTERF2(addFromArray, "* sourceArray insertAtIndex=-1",
+"adds values from source array into this array. if insertAtIndex is -1 (default behaviour) it adds to the end.\n\
+if insertAtIndex >= 0 it appends values starting from insertAtIndex index");
 
         template<class T>
         static T itemAtIndex(array *obj, Index index) {
@@ -55,7 +84,7 @@ namespace collections {
             }
 
             mutex_lock g(obj->_mutex);
-            if (index >= 0 && index < obj->_array.size()) {
+            if (validateReadIndex(obj, index)) {
                 return obj->_array[index].readAs<T>();
             } else {
                 onOutOfBoundAccess();
@@ -69,22 +98,27 @@ namespace collections {
         REGISTERF(itemAtIndex<TESForm*>, "getForm", "* index", "");
 
         template<class T>
-        static SInt32 findVal(array *obj, T value) {
+        static SInt32 findVal(array *obj, T value, SInt32 searchStartIndex = 0) {
             if (!obj) {
                 return -1;
             }
 
             mutex_lock g(obj->_mutex);
 
-            auto itr = std::find_if(obj->_array.begin(), obj->_array.end(), [=](const Item& item) {
+            if (validateReadIndex(obj, searchStartIndex) == false) {
+                return -1;
+            }
+
+            auto itr = std::find_if(obj->_array.begin() + searchStartIndex, obj->_array.end(), [=](const Item& item) {
                 return item.isEqual(value);
             });
 
             return itr != obj->_array.end() ? (itr - obj->_array.begin()) : -1;
         }
-        REGISTERF(findVal<SInt32>, "findInt", "* value",
-"returns index of the first found value/container that equals to given value/container.\n\
-if found nothing returns -1.");
+        REGISTERF(findVal<SInt32>, "findInt", "* value searchStartIndex=0",
+"returns index of the first found value/container that equals to given value/container (default behaviour if searchStartIndex is 0).\n\
+if found nothing returns -1.\n\
+searchStartIndex - array index where to start search");
         REGISTERF(findVal<Float32>, "findFlt", "* value", "");
         REGISTERF(findVal<const char *>, "findStr", "* value", "");
         REGISTERF(findVal<object_base*>, "findObj", "* container", "");
@@ -97,7 +131,7 @@ if found nothing returns -1.");
             }
 
             mutex_lock g(obj->_mutex);
-            if (index >= 0 && index < obj->_array.size()) {
+            if (validateReadIndex(obj, index)) {
                 obj->_array[index] = Item(item);
             } else {
                 onOutOfBoundAccess();
@@ -110,13 +144,21 @@ if found nothing returns -1.");
         REGISTERF(replaceItemAtIndex<TESForm*>, "setForm", "* index value", "");
 
         template<class T>
-        static void add(array *obj, T item) {
-            if (obj) {
-                mutex_lock g(obj->_mutex);
-                obj->_array.push_back(Item(item));
+        static void add(array *obj, T item, SInt32 addToIndex = -1) {
+            if (!obj) {
+                return;
             }
+
+            mutex_lock g(obj->_mutex);
+            if (addToIndex >= 0 && validateWriteIndex(obj, addToIndex) == false) {
+                return;
+            }
+
+            SInt32 whereTo = (addToIndex >= 0 ? addToIndex : obj->_array.size());
+            obj->_array.insert(obj->_array.begin() + whereTo, Item(item));
         }
-        REGISTERF(add<SInt32>, "addInt", "* value", "appends value/container to the end of array");
+        REGISTERF(add<SInt32>, "addInt", "* value", "appends value/container to the end of array (default behaviour when addToIndex is -1)\n\
+if addToIndex >= 0 it inserts value at given index");
         REGISTERF(add<Float32>, "addFlt", "* value", "");
         REGISTERF(add<const char *>, "addStr", "* value", "");
         REGISTERF(add<object_base*>, "addObj", "* container", "");
@@ -142,7 +184,7 @@ if found nothing returns -1.");
         static void eraseIndex(array *obj, SInt32 index) {
             if (obj) {
                 mutex_lock g(obj->_mutex);
-                if (index >= 0 && index < obj->_array.size()) {
+                if (validateReadIndex(obj, index)) {
                     obj->_array.erase(obj->_array.begin() + index);
                 } else {
                     onOutOfBoundAccess();

@@ -13,6 +13,11 @@ namespace collections {
         }
         REGISTERF2(isInstalled, NULL, "returns true if JContainers plugin is installed");
 
+        static UInt32 APIVersion() {
+            return kJAPIVersion;
+        }
+        REGISTERF2(APIVersion, NULL, "returns API version. Incremented by 1 each time old API is not backward compartible with new one");
+
         static bool fileExistsAtPath(const char *filename) {
             struct _stat buf;
             int result = _stat(filename, &buf);

@@ -345,7 +345,7 @@ void Serialization_Revert(SKSESerializationInterface * intfc)
 
 void Serialization_Save(SKSESerializationInterface * intfc)
 {
-    if (intfc->OpenRecord(kJStorageChunk, kSerializationDataVersion)) {
+    if (intfc->OpenRecord(kJStorageChunk, kJSerializationDataVersion)) {
         auto data = collections::shared_state::instance().saveToArray();
         intfc->WriteRecordData(data.data(), data.size());
     }
@@ -361,7 +361,7 @@ void Serialization_Load(SKSESerializationInterface * intfc)
 
     while (intfc->GetNextRecordInfo(&type, &version, &length)) {
 
-        if (type == kJStorageChunk && version == kSerializationDataVersion && length > 0) {
+        if (type == kJStorageChunk && version == kJSerializationDataVersion && length > 0) {
             std::string data(length, '\0');
             intfc->ReadRecordData((void *)data.data(), data.size());
             collections::shared_state::instance().loadAll(data);

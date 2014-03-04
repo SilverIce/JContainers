@@ -3,7 +3,8 @@
 enum {
     kJStorageChunk = 'JSTR',
 
-    kSerializationDataVersion = 1,
+    kJSerializationDataVersion = 1,
+    kJAPIVersion = 1,
 };
 
 #define STR(...) #__VA_ARGS__
