@@ -256,6 +256,13 @@ namespace collections {
         void serialize(Archive & ar, const unsigned int version);
     };
 
+    class object_lock {
+        mutex_lock _lock;
+    public:
+        explicit object_lock(object_base *obj) : _lock(obj->_mutex) {}
+        explicit object_lock(object_base &obj) : _lock(obj._mutex) {}
+    };
+
     inline Handle collection_registry::registerObject(object_base *collection) {
         if (collection->registered()) {
             return collection->id;
@@ -361,10 +368,10 @@ namespace collections {
             return me;
         }
 
-        static StringMem* null() {
+        /*static StringMem* null() {
             static StringMem nullObj = {1, '\0'};
             return &nullObj;
-        }
+        }*/
 
         void setEmpty() {
             string[0] = '\0';

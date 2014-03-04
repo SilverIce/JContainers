@@ -29,11 +29,6 @@ To keep object alive you must retain it once and you have to __release__ it when
 An alternative to retain-release is store object in JDB container"
             );
 
-        static HandleT autorelease(HandleT handle) {
-            autorelease_queue::instance().push(handle);
-            return handle;
-        }
-
         template<class T>
         static object_base* object() {
             return T::object();

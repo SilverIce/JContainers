@@ -14,6 +14,10 @@ namespace collections {
             return obj && index < obj->_array.size();
         }
 
+        static bool validateReadIndexRange(const array *obj, UInt32 begin, UInt32 end) {
+            return obj && begin < end && end <= obj->_array.size();
+        }
+
         static bool validateWriteIndex(const array *obj, UInt32 index) {
             return obj && index <= obj->_array.size();
         }
@@ -23,10 +27,6 @@ namespace collections {
         }
 
         typedef array::Index Index;
-
-        static array* find(HandleT handle) {
-            return collection_registry::getObjectOfType<array>(handle);
-        }
 
         REGISTERF(tes_object::object<array>, "object", "", kCommentObject);
 
@@ -58,12 +58,32 @@ objectWithBooleans converts booleans into integers");
         REGISTERF(fromArray<Float32>, "objectWithFloats",  "values", NULL);
         REGISTERF(fromArray<bool>, "objectWithBooleans",  "values", NULL);
 
+        static object_base* subArray(array *source, SInt32 startIndex, SInt32 endIndex) {
+            if (!source) {
+                return nullptr;
+            }
+
+            object_lock g(source);
+
+            if (!validateReadIndexRange(source, startIndex, endIndex)) {
+                return nullptr;
+            }
+
+            auto obj = array::objectWithInitializer([&](array *me) {
+                
+                me->_array.insert(me->_array.begin(), source->_array.begin() + startIndex, source->_array.begin() + endIndex);
+            });
+
+            return obj;
+        }
+        REGISTERF2(subArray, "* startIndex endIndex", "creates new array containing all values from source array in range [startIndex, endIndex)");
+
         static void addFromArray(array *obj, array *another, SInt32 insertAtIndex = -1) {
-            if (!obj || !another) {
+            if (!obj || !another || obj == another) {
                 return ;
             }
 
-            mutex_lock g1(obj->_mutex), g2(another->_mutex);
+            object_lock g1(obj), g2(another);
 
             if (insertAtIndex >= 0 && validateWriteIndex(obj, insertAtIndex) == false) {
                 onOutOfBoundAccess();
@@ -84,7 +104,7 @@ if insertAtIndex >= 0 it appends values starting from insertAtIndex index");
                 return T(0);
             }
 
-            mutex_lock g(obj->_mutex);
+            object_lock g(obj);
             if (validateReadIndex(obj, index)) {
                 return obj->_array[index].readAs<T>();
             } else {
@@ -104,7 +124,7 @@ if insertAtIndex >= 0 it appends values starting from insertAtIndex index");
                 return -1;
             }
 
-            mutex_lock g(obj->_mutex);
+            object_lock g(obj);
 
             if (validateReadIndex(obj, searchStartIndex) == false) {
                 onOutOfBoundAccess();
@@ -132,7 +152,7 @@ searchStartIndex - array index where to start search");
                 return;
             }
 
-            mutex_lock g(obj->_mutex);
+            object_lock g(obj);
             if (validateReadIndex(obj, index)) {
                 obj->_array[index] = Item(item);
             } else {
@@ -151,7 +171,7 @@ searchStartIndex - array index where to start search");
                 return;
             }
 
-            mutex_lock g(obj->_mutex);
+            object_lock g(obj);
             if (addToIndex >= 0 && validateWriteIndex(obj, addToIndex) == false) {
                 onOutOfBoundAccess();
                 return;
@@ -169,7 +189,7 @@ if addToIndex >= 0 it inserts value at given index");
 
         static Index count(array *obj) {
             if (obj) {
-                mutex_lock g(obj->_mutex);
+                object_lock g(obj);
                 return  obj->_array.size();
             }
             return 0;
@@ -186,7 +206,7 @@ if addToIndex >= 0 it inserts value at given index");
 
         static void eraseIndex(array *obj, SInt32 index) {
             if (obj) {
-                mutex_lock g(obj->_mutex);
+                object_lock g(obj);
                 if (validateReadIndex(obj, index)) {
                     obj->_array.erase(obj->_array.begin() + index);
                 } else {

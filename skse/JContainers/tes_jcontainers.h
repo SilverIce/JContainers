@@ -1,4 +1,5 @@
 namespace collections {
+
     class tes_jcontainers : public tes_binding::class_meta_mixin<tes_jcontainers> {
     public:
 

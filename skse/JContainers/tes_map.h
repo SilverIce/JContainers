@@ -22,7 +22,7 @@ namespace collections {
                 return T(0);
             }
 
-            mutex_lock g(obj->_mutex);
+            object_lock g(obj);
             auto item = obj->find(tes_hash(key));
             return item ? item->readAs<T>() : T(0);
         }
@@ -38,7 +38,7 @@ namespace collections {
                 return;
             }
 
-            mutex_lock g(obj->_mutex);
+            object_lock g(obj);
             (*obj)[tes_hash(key)] = Item((T)item);
         }
         REGISTERF(setItem<SInt32>, "setInt", "* key value", "creates key-value association. replaces existing value if any");
@@ -52,7 +52,7 @@ namespace collections {
                 return 0;
             }
 
-            mutex_lock g(obj->_mutex);
+            object_lock g(obj);
             auto item = obj->find(tes_hash(key));
             return item != nullptr;
         }
@@ -64,7 +64,7 @@ namespace collections {
             }
 
             return array::objectWithInitializer([=](array *arr) {
-                mutex_lock g(obj->_mutex);
+                object_lock g(obj);
 
                 arr->_array.reserve( obj->u_count() );
                 for each(auto& pair in obj->container()) {
@@ -80,7 +80,7 @@ namespace collections {
             }
 
             return array::objectWithInitializer([=](array *arr) {
-                mutex_lock g(obj->_mutex);
+                object_lock g(obj);
 
                 arr->_array.reserve( obj->u_count() );
                 for each(auto& pair in obj->container()) {
@@ -95,7 +95,7 @@ namespace collections {
                 return 0;
             }
 
-            mutex_lock g(obj->_mutex);
+            object_lock g(obj);
             return obj->erase(tes_hash(key));
         }
         REGISTERF2(removeKey, "* key", "destroys key-value association");

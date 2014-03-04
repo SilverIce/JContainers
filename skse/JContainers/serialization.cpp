@@ -179,12 +179,6 @@ namespace collections {
 
 #endif
 
-/*
-    template<class Archive>
-    inline void serialize(Archive & ar, CString & s, const unsigned int file_version) {
-        split_free(ar, s, file_version); 
-    }*/
-
     template<class T> void registerContainers(T & ar) {
         ar.register_type(static_cast<array *>(NULL));
         ar.register_type(static_cast<map *>(NULL));
