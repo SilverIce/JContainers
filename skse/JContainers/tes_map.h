@@ -9,7 +9,7 @@ namespace collections {
     }
 
     template<class Key, class Cnt>
-    class tes_map_t : public tes_binding::class_meta_mixin< tes_map_t<Key, Cnt> > {
+    class tes_map_t : public tes_binding::class_meta_mixin_t< tes_map_t<Key, Cnt> > {
     public:
 
         REGISTER_TES_NAME("tt");
@@ -118,28 +118,25 @@ namespace collections {
         }
         REGISTERF2(clear, "*", "removes all items from container");
 
-        static bool registerFuncs(VMClassRegistry* registry) {
-            bind(registry);
-            return true;
-        }
-
-        static void additionalSetup();
+        void additionalSetup();
     };
 
     typedef tes_map_t<const char*, map > tes_map;
     typedef tes_map_t<TESForm *, form_map> tes_form_map;
 
     void tes_map::additionalSetup() {
-        metaInfo().className = "JMap";
-        metaInfo().comment = "Associative key-value container.\n"
+        metaInfo.className = "JMap";
+        metaInfo.comment = "Associative key-value container.\n"
             "Inherits all JValue functions";
         //metaInfo().extendsClass = "JValue";
     }
 
     void tes_form_map::additionalSetup() {
-        metaInfo().className = "JFormMap";
-        metaInfo().comment = "Associative key-value container.\n"
+        metaInfo.className = "JFormMap";
+        metaInfo.comment = "Associative key-value container.\n"
             "Inherits all JValue functions";
     }
 
+    TES_META_INFO(tes_map);
+    TES_META_INFO(tes_form_map);
 }

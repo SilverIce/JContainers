@@ -1,4 +1,4 @@
-﻿#include "code_producer.h"
+﻿#include "CodeProducer.h"
 
 #include <boost/algorithm/string.hpp>
 #include <assert.h>
@@ -10,7 +10,7 @@
 
 namespace collections {
 
-    namespace code_producer {
+    namespace CodeProducer {
 
         using namespace tes_binding;
 

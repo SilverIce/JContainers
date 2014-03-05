@@ -1,12 +1,12 @@
 namespace collections {
 
-    class tes_jcontainers : public tes_binding::class_meta_mixin<tes_jcontainers> {
+    class tes_jcontainers : public tes_binding::class_meta_mixin_t<tes_jcontainers> {
     public:
 
         REGISTER_TES_NAME("JContainers");
 
-        static void additionalSetup() {
-            metaInfo().comment = "Various utility methods";
+        void additionalSetup() {
+            metaInfo.comment = "Various utility methods";
         }
 
         static bool isInstalled() {
@@ -49,4 +49,5 @@ namespace collections {
         REGISTERF2(lastErrorString, NULL, "returns string that describes last error");
     };
 
+    TES_META_INFO(tes_jcontainers);
 }

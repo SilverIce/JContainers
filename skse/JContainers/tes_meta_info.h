@@ -4,6 +4,8 @@
 #include <vector>
 #include <functional>
 
+#include "meta.h"
+
 class VMClassRegistry;
 
 namespace collections {
@@ -51,7 +53,7 @@ namespace collections {
                 commentFunc = lambda;
             }
 
-            void bind(VMClassRegistry *registry, const char *className) {
+            void bind(VMClassRegistry *registry, const char *className) const {
                 registrator(registry, funcName, className);
             }
         };
@@ -71,46 +73,55 @@ namespace collections {
                 initialized = false;
             }
 
+            void addFunction(const FunctionMetaInfo& info) {
+                methods.push_back(info);
+            }
+
+            void bind(VMClassRegistry* registry) const {
+                assert(metaInfo.className);
+
+                for (const auto& itm : methods) {
+                    itm.bind(registry, className);
+                }
+            }
+        };
+
+        struct class_meta_mixin {
+
+            class_meta_info metaInfo;
+
+            virtual void additionalSetup() {}
         };
 
         template<class T>
-        struct class_meta_mixin {
+        struct class_meta_mixin_t : class_meta_mixin  {
 
-            static class_meta_info& metaInfo() {
-                static class_meta_info info;
-                if (!info.initialized) {
-                    info.initialized = true;
+            static class_meta_info metaInfoFunc() {
+                T t;
+                t.additionalSetup();
 
-                    T t;
-
-                    T::additionalSetup();
-                }
-
-                return info;
+                return t.metaInfo;
             }
 
-            static void additionalSetup() {}
-
-            static void register_me(FunctionMetaInfo *info) {
-                metaInfo().methods.push_back(*info);
-                //printf("func %s registered\n", info->function_string().c_str());
-            }
-
-            static std::string produceTesCode() {
-                return code_producer::produceClassCode(metaInfo());
-            }
-
-            static void writeSourceToFile() {
-                code_producer::produceClassToFile(metaInfo());
-            }
-
-            static void bind(VMClassRegistry* registry) {
-                assert(metaInfo().className);
-
-                for (auto& itm : metaInfo().methods) {
-                    itm.bind(registry, metaInfo().className);
-                }
-            }
+            // special support for hack inside REGISTERF macro
+            typedef T __Type;
         };
+
+        typedef class_meta_info (*class_meta_info_creator)();
+
+        template<class T>
+        inline void foreach_metaInfo_do(T func) {
+            auto& list = meta<class_meta_info_creator>::getListConst();
+            auto first = list.first;
+            while(first) {
+                auto metaInfo = (*first->info)();
+                func(metaInfo);
+                first = first->next;
+            }
+        }
+
+#define TES_META_INFO(Class)    \
+    static const ::meta<::collections::tes_binding::class_meta_info_creator > g_tesMetaFunc_##Class ( &Class::metaInfoFunc );
+
     }
 }

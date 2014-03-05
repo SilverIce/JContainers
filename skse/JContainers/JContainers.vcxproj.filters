@@ -41,7 +41,7 @@
     <ClCompile Include="tes_inteface.cpp">
       <Filter>tes_interface</Filter>
     </ClCompile>
-    <ClCompile Include="code_producer.cpp">
+    <ClCompile Include="CodeProducer.cpp">
       <Filter>tes_interface\code_producer</Filter>
     </ClCompile>
   </ItemGroup>
@@ -99,11 +99,11 @@
       <Filter>tes_interface\tes_classes</Filter>
     </ClInclude>
     <ClInclude Include="typedefs.h" />
-    <ClInclude Include="code_producer.h">
-      <Filter>tes_interface\code_producer</Filter>
-    </ClInclude>
     <ClInclude Include="tes_error_code.h">
       <Filter>tes_interface</Filter>
+    </ClInclude>
+    <ClInclude Include="CodeProducer.h">
+      <Filter>tes_interface\code_producer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

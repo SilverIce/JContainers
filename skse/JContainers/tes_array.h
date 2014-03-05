@@ -1,12 +1,12 @@
 namespace collections {
 
-    class tes_array : public tes_binding::class_meta_mixin< tes_array > {
+    class tes_array : public tes_binding::class_meta_mixin_t< tes_array > {
     public:
 
         REGISTER_TES_NAME("JArray");
 
-        static void additionalSetup() {
-            metaInfo().comment = "Resizeable, unlimited size array (Skyrim size limit is 128) that may contain any value (value is float, integer, string or another container) in one time.\n"
+        void additionalSetup() {
+            metaInfo.comment = "Resizeable, unlimited size array (Skyrim size limit is 128) that may contain any value (value is float, integer, string or another container) in one time.\n"
                 "Inherits all JValue functions";
         }
 
@@ -215,11 +215,7 @@ if addToIndex >= 0 it inserts value at given index");
             }
         }
         REGISTERF2(eraseIndex, "* index", "erases item at index");
-
-        static bool registerFuncs(VMClassRegistry* registry) {
-            bind(registry);
-            return true;
-        }
     };
 
+    TES_META_INFO(tes_array);
 };

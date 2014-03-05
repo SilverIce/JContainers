@@ -128,7 +128,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cJSON.cpp" />
-    <ClCompile Include="code_producer.cpp" />
+    <ClCompile Include="CodeProducer.cpp" />
     <ClCompile Include="gtest.cpp" />
     <ClCompile Include="jcontainers_pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -141,7 +141,7 @@
   <ItemGroup>
     <ClInclude Include="autorelease_queue.h" />
     <ClInclude Include="cJSON.h" />
-    <ClInclude Include="code_producer.h" />
+    <ClInclude Include="CodeProducer.h" />
     <ClInclude Include="collections.h" />
     <ClInclude Include="collections.tests.hpp" />
     <ClInclude Include="gtest.h" />

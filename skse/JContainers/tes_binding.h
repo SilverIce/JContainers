@@ -4,7 +4,7 @@
 
 #include "tes_meta_info.h"
 #include "collections.h"
-#include "code_producer.h"
+#include "CodeProducer.h"
 
 namespace collections {
 
@@ -322,10 +322,19 @@ namespace collections {
     // MSVC2012 bug workaround
     template <typename T> T msvc_identity(T);
 
+    // specially for hack made in REGISTERF macro
+    namespace tes_binding {
+        inline class_meta_info& metaInfoFromFieldAndOffset(void * fieldAddress, int offset) {
+            auto mixin = (class_meta_mixin *)((char *)fieldAddress - offset);
+            return mixin->metaInfo;
+        }
+    }
+
 #define REGISTER_TES_NAME(ScriptTesName)\
     struct CONCAT(_struct_, __LINE__) {\
         CONCAT(_struct_, __LINE__)() {\
-            metaInfo().className = (ScriptTesName);\
+            auto& mInfo = tes_binding::metaInfoFromFieldAndOffset( this, offsetof(__Type, CONCAT(_mem_, __LINE__)) );\
+            mInfo.className = (ScriptTesName);\
         }\
     } CONCAT(_mem_, __LINE__);
 
@@ -336,10 +345,10 @@ namespace collections {
              metaF.registrator = &tes_binding::proxy<decltype(msvc_identity(&(func))), &(func)>::bind;\
              metaF.typeStrings = &tes_binding::proxy<decltype(msvc_identity(&(func))), &(func)>::type_strings;\
              \
-             metaF.args = _args;\
-             metaF.setComment( _comment );\
-             metaF.funcName = _funcname;\
-             register_me(&metaF);\
+             metaF.args = (_args);\
+             metaF.setComment(_comment);\
+             metaF.funcName = (_funcname);\
+             tes_binding::metaInfoFromFieldAndOffset(this, offsetof(__Type, CONCAT(_mem_, __LINE__))).addFunction(metaF);\
          }\
     } CONCAT(_mem_, __LINE__);
 

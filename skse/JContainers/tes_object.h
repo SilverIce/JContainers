@@ -5,13 +5,13 @@ namespace collections {
 
 #define ARGS(...)   #__VA_ARGS__
 
-    class tes_object : public tes_binding::class_meta_mixin< tes_object > {
+    class tes_object : public tes_binding::class_meta_mixin_t< tes_object > {
     public:
 
         REGISTER_TES_NAME("JValue");
 
-        static void additionalSetup() {
-            metaInfo().comment = "Each container (JArray, JMap & JFormMap) inherits JValue functionality";
+        void additionalSetup() {
+            metaInfo.comment = "Each container (JArray, JMap & JFormMap) inherits JValue functionality";
         }
 
         static object_base* retain(object_base *obj) {
@@ -164,14 +164,8 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
         REGISTERF(solveSetter<object_base*>, "solveObjSetter", "* path value", NULL);
         REGISTERF(solveSetter<TESForm*>, "solveFormSetter", "* path value", NULL);
 
-
-        static bool registerFuncs(VMClassRegistry* registry) {
-
-
-            bind(registry);
-
-            return true;
-        }
     };
+
+    TES_META_INFO(tes_object);
 
 }

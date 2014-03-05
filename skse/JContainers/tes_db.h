@@ -1,11 +1,11 @@
 namespace collections {
-    class tes_db : public tes_binding::class_meta_mixin<tes_db> {
+    class tes_db : public tes_binding::class_meta_mixin_t<tes_db> {
     public:
 
         REGISTER_TES_NAME("JDB");
 
-        static void additionalSetup() {
-            metaInfo().comment =
+        void additionalSetup() {
+            metaInfo.comment =
 "Global entry point to store mod information. Main intent - replace global variables\n\
 Manages keys and values associations as JMap";
         }
@@ -91,9 +91,7 @@ for ex. JDB.solveFltSetter(\".frostfall.exposureRate\", 1.0) assigns 1.0 to \".f
         REGISTERF(solveSetter<object_base*>, "solveObjSetter", "path value", NULL);
         REGISTERF(solveSetter<TESForm*>, "solveFormSetter", "path value", NULL);
 
-        static bool registerFuncs(VMClassRegistry* registry) {
-            bind(registry);
-            return true;
-        }
     };
+
+    TES_META_INFO(tes_db);
 }
