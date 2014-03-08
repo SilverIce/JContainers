@@ -17,7 +17,7 @@ namespace archive {
 
 namespace collections {
 
-    class collection_registry;
+    class object_registry;
     class autorelease_queue;
 
     struct shared_state_delegate
@@ -44,7 +44,7 @@ namespace collections {
         shared_state();
         ~shared_state();
 
-        collection_registry& registry;
+        object_registry& registry;
         autorelease_queue& aqueue;
 
         shared_state_delegate *delegate;

@@ -2,14 +2,14 @@
 
 namespace collections {
 
-    class collection_registry;
+    class object_registry;
 
     class autorelease_queue {
 
         std::thread _thread;
         bshared_mutex& _mutex;
 
-        collection_registry& _registry;
+        object_registry& _registry;
 
         typedef std::lock_guard<decltype(_mutex)> lock;
         typedef unsigned int time_point;
@@ -32,7 +32,7 @@ namespace collections {
             ar & _queue;
         }
 
-        explicit autorelease_queue(collection_registry& registry, bshared_mutex &mt) 
+        explicit autorelease_queue(object_registry& registry, bshared_mutex &mt) 
             : _thread()
             , _timeNow(0)
             , _run(false)

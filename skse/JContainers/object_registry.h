@@ -1,6 +1,6 @@
 namespace collections
 {
-    class collection_registry
+    class object_registry
     {
     public:
         typedef std::map<HandleT, object_base *> registry_container;
@@ -15,12 +15,12 @@ namespace collections
         id_generator<HandleT> _idGen;
         bshared_mutex& _mutex;
 
-        collection_registry(const collection_registry& );
-        collection_registry& operator = (const collection_registry& );
+        object_registry(const object_registry& );
+        object_registry& operator = (const object_registry& );
 
     public:
 
-        explicit collection_registry(bshared_mutex &mt)
+        explicit object_registry(bshared_mutex &mt)
             : _mutex(mt)
         {
         }
@@ -32,7 +32,7 @@ namespace collections
                 return;
             }
 
-            collection_registry& me = *this;
+            object_registry& me = *this;
             write_lock g(me._mutex);
             auto itr = me._map.find(hdl);
             assert(itr != me._map.end());
@@ -54,7 +54,7 @@ namespace collections
                 return nullptr;
             }
 
-            collection_registry& me = *this;
+            object_registry& me = *this;
             auto itr = me._map.find(hdl);
             if (itr != me._map.end())
                 return itr->second;
@@ -74,7 +74,7 @@ namespace collections
             return (obj && obj->_type == T::TypeId) ? static_cast<T*>(obj) : nullptr;
         }
 
-        static collection_registry& instance();
+        static object_registry& instance();
 
         void u_clear();
 
@@ -89,9 +89,9 @@ namespace collections
         }
     };
 
-    Handle collection_registry::registerObject(object_base *collection)
+    Handle object_registry::registerObject(object_base *collection)
     {
-        collection_registry& me = *this;
+        object_registry& me = *this;
         write_lock g(me._mutex);
         auto newId = me._idGen.newId();
         assert(me._map.find(newId) == me._map.end());
@@ -99,7 +99,7 @@ namespace collections
         return (Handle)newId;
     }
 
-    void collection_registry::u_clear() {
+    void object_registry::u_clear() {
         /*  Not good, but working solution.
 
             issue: deadlock during loading savegame - e.g. cleaning current state.

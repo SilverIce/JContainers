@@ -3,7 +3,7 @@
 namespace collections
 {
     shared_state::shared_state()
-        : registry(* new collection_registry(_mutex) )
+        : registry(* new object_registry(_mutex) )
         , aqueue(* new autorelease_queue(registry, _mutex) )
     {
 

@@ -129,12 +129,13 @@
   <ItemGroup>
     <ClCompile Include="basic_part.cpp" />
     <ClCompile Include="cJSON.cpp" />
-    <ClCompile Include="CodeProducer.cpp" />
+    <ClCompile Include="code_producer.cpp" />
     <ClCompile Include="gtest.cpp" />
     <ClCompile Include="jcontainers_pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='production|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="line_breaker.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="serialization.cpp" />
     <ClInclude Include="tes_context.hpp">
@@ -145,7 +146,7 @@
   <ItemGroup>
     <ClInclude Include="autorelease_queue.h" />
     <ClInclude Include="cJSON.h" />
-    <ClInclude Include="CodeProducer.h" />
+    <ClInclude Include="code_producer.h" />
     <ClInclude Include="collections.h" />
     <ClInclude Include="collections.tests.hpp" />
     <ClInclude Include="object_base.h" />
@@ -168,6 +169,7 @@
     <ClInclude Include="tes_map.h" />
     <ClInclude Include="tes_meta_info.h" />
     <ClInclude Include="tes_object.h" />
+    <ClInclude Include="tes_string.h" />
     <ClInclude Include="typedefs.h" />
   </ItemGroup>
   <ItemGroup>

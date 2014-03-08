@@ -22,6 +22,7 @@
 #include "tes_map.h"
 #include "tes_db.h"
 #include "tes_jcontainers.h"
+#include "tes_string.h"
 
 #include "collections.tests.hpp"
 
