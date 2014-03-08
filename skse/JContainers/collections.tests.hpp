@@ -1,4 +1,5 @@
 #pragma once
+#include <thread>
 
 namespace collections {
 
@@ -47,24 +48,29 @@ namespace collections {
     {
         using namespace std;
 
-        auto& queue = autorelease_queue::instance();
+        auto& context = tes_context::instance();
 
         vector<Handle> identifiers;
-        int countBefore = queue.count();
+        //int countBefore = queue.count();
 
         for (int i = 0; i < 10; ++i) {
-            auto obj = map::create();
+            auto obj = map::object();
 
             identifiers.push_back(obj->id);
-            obj->autorelease();
         }
 
-        EXPECT_TRUE(queue.count() == (countBefore + identifiers.size()));
+        bool allExist = std::all_of(identifiers.begin(), identifiers.end(), [&](Handle id) {
+            return context.getObject(id);
+        });
 
-        std::this_thread::sleep_for(chrono::seconds(autorelease_queue::obj_lifetime * 2 + 1));
+        EXPECT_TRUE(allExist);
+
+        //EXPECT_TRUE(queue.count() == (countBefore + identifiers.size()));
+
+        std::this_thread::sleep_for( std::chrono::seconds(20) );
 
         bool allDeleted = std::all_of(identifiers.begin(), identifiers.end(), [&](Handle id) {
-            return collection_registry::getObject(id) == nullptr;
+            return  context.getObject(id) == nullptr;
         });
 
         EXPECT_TRUE(allDeleted);
@@ -206,7 +212,7 @@ namespace collections {
         auto arr2 = array::create();
         tes_array::add<SInt32>(arr2, 4);
 
-        tes_array::add<Handle>(arr, arr2->id);
+        tes_array::add(arr, arr2);
         EXPECT_TRUE(tes_array::itemAtIndex<Handle>(arr, 2) == arr2->id);
 
         tes_object::release(arr);

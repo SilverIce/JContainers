@@ -10,7 +10,7 @@
 
 namespace collections {
 
-    namespace CodeProducer {
+    namespace code_producer {
 
         using namespace tes_binding;
 

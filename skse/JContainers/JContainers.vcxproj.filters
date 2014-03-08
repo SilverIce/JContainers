@@ -1,9 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="skse">
-      <UniqueIdentifier>{d7ac680b-d707-42ea-8d54-0928ed2871a7}</UniqueIdentifier>
-    </Filter>
     <Filter Include="tests">
       <UniqueIdentifier>{5c78a6c6-cc2b-4ca5-9f66-477fd348017d}</UniqueIdentifier>
     </Filter>
@@ -22,15 +19,15 @@
     <Filter Include="tes_interface\tes_classes">
       <UniqueIdentifier>{a481ff76-9ab2-4bb4-91f6-f5d5e21c603c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="tes_interface\code_producer">
+    <Filter Include="tes_objects\impl">
+      <UniqueIdentifier>{69bd386b-435b-4941-9700-8f1c25f8f6dc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="code_producer">
       <UniqueIdentifier>{d21e5bf5-2f63-4cc1-b1ed-e9500125c58a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="serialization.cpp">
-      <Filter>tes_objects</Filter>
-    </ClCompile>
     <ClCompile Include="gtest.cpp">
       <Filter>gtest</Filter>
     </ClCompile>
@@ -42,7 +39,13 @@
       <Filter>tes_interface</Filter>
     </ClCompile>
     <ClCompile Include="CodeProducer.cpp">
-      <Filter>tes_interface\code_producer</Filter>
+      <Filter>code_producer</Filter>
+    </ClCompile>
+    <ClCompile Include="basic_part.cpp">
+      <Filter>tes_objects\impl</Filter>
+    </ClCompile>
+    <ClCompile Include="serialization.cpp">
+      <Filter>tes_interface</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -50,24 +53,6 @@
       <Filter>tests</Filter>
     </ClInclude>
     <ClInclude Include="tes_binding.h">
-      <Filter>tes_interface</Filter>
-    </ClInclude>
-    <ClInclude Include="autorelease_queue.h">
-      <Filter>tes_objects</Filter>
-    </ClInclude>
-    <ClInclude Include="id_generator.h">
-      <Filter>tes_objects</Filter>
-    </ClInclude>
-    <ClInclude Include="shared_state.h">
-      <Filter>tes_objects</Filter>
-    </ClInclude>
-    <ClInclude Include="shared_state.hpp">
-      <Filter>tes_objects</Filter>
-    </ClInclude>
-    <ClInclude Include="collections.h">
-      <Filter>tes_objects</Filter>
-    </ClInclude>
-    <ClInclude Include="tes_meta_info.h">
       <Filter>tes_interface</Filter>
     </ClInclude>
     <ClInclude Include="spinlock.h">
@@ -103,7 +88,43 @@
       <Filter>tes_interface</Filter>
     </ClInclude>
     <ClInclude Include="CodeProducer.h">
-      <Filter>tes_interface\code_producer</Filter>
+      <Filter>code_producer</Filter>
+    </ClInclude>
+    <ClInclude Include="autorelease_queue.h">
+      <Filter>tes_objects\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="object_registry.h">
+      <Filter>tes_objects\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="id_generator.h">
+      <Filter>tes_objects\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="rw_mutex.h">
+      <Filter>tes_objects\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="object_base.hpp">
+      <Filter>tes_objects\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="shared_state.h">
+      <Filter>tes_objects</Filter>
+    </ClInclude>
+    <ClInclude Include="object_base.h">
+      <Filter>tes_objects</Filter>
+    </ClInclude>
+    <ClInclude Include="collections.h">
+      <Filter>tes_interface</Filter>
+    </ClInclude>
+    <ClInclude Include="tes_meta_info.h">
+      <Filter>code_producer</Filter>
+    </ClInclude>
+    <ClInclude Include="tes_context.h">
+      <Filter>tes_interface</Filter>
+    </ClInclude>
+    <ClInclude Include="tes_context.hpp">
+      <Filter>tes_interface</Filter>
+    </ClInclude>
+    <ClInclude Include="shared_state.hpp">
+      <Filter>tes_objects</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

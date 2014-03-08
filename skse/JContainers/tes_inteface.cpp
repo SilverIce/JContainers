@@ -12,7 +12,6 @@
 #include "tes_error_code.h"
 
 #include "collections.h"
-#include "autorelease_queue.h"
 #include "shared_state.h"
 #include "json_handling.h"
 
@@ -37,18 +36,6 @@ bool registerAllFunctions(VMClassRegistry *registry) {
     tes_binding::foreach_metaInfo_do([=](tes_binding::class_meta_info& info) {
         info.bind(registry);
     });
-/*
-    collections::tes_array::registerFuncs(registry);
-
-    collections::tes_map::registerFuncs(registry);
-    collections::tes_form_map::registerFuncs(registry);
-
-    collections::tes_object::registerFuncs(registry);
-
-    collections::tes_db::registerFuncs(registry);
-
-    collections::tes_jcontainers::bind(registry);
-*/
 
     return true;
 }
@@ -60,15 +47,7 @@ extern "C" {
         using namespace collections;
 
         tes_binding::foreach_metaInfo_do([](tes_binding::class_meta_info& info) {
-            CodeProducer::produceClassToFile(info);
+            code_producer::produceClassToFile(info);
         });
-        /*
-/*
-        collections::tes_array::writeSourceToFile();
-        collections::tes_map::writeSourceToFile();
-        collections::tes_form_map::writeSourceToFile();
-        collections::tes_object::writeSourceToFile();
-        collections::tes_db::writeSourceToFile();
-        collections::tes_jcontainers::writeSourceToFile();*/
     }
 };

@@ -1,5 +1,8 @@
 
 
+#include <boost/serialization/serialization.hpp>
+#include <boost/serialization/export.hpp>
+
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/map.hpp>
 
@@ -9,11 +12,9 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 
-#include <boost/serialization/serialization.hpp>
-
-#include <boost/iostreams/device/array.hpp>
-#include <boost/iostreams/stream.hpp>
-#include <boost/iostreams/device/back_inserter.hpp>
+//#include <boost/iostreams/device/array.hpp>
+//#include <boost/iostreams/stream.hpp>
+//#include <boost/iostreams/device/back_inserter.hpp>
 
 #include <fstream>
 #include <sstream>
@@ -24,14 +25,15 @@
 #include "gtest.h"
 
 #include "collections.h"
-#include "autorelease_queue.h"
-#include "shared_state.h"
+#include "tes_context.h"
 
-#include "shared_state.hpp"
-
-BOOST_CLASS_VERSION(collections::object_base, 1);
+#include "tes_context.hpp"
 
 extern SKSESerializationInterface	* g_serialization;
+
+BOOST_CLASS_EXPORT_GUID(collections::array, "kJArray");
+BOOST_CLASS_EXPORT_GUID(collections::map, "kJMap");
+BOOST_CLASS_EXPORT_GUID(collections::form_map, "kJFormMap");
 
 namespace collections {
 
@@ -44,7 +46,7 @@ namespace collections {
 
         const char *testStr = "hey, babe!";
 
-        auto ar = new array;
+        auto ar = array::create();
         ar->u_push(Item(testStr));
 
         {
@@ -121,6 +123,7 @@ namespace collections {
         EXPECT_TRUE(oldStruct.size() == newStruct.size());
     }
 
+/*
     TEST(autorelease_queue, serialization)
     {
         bshared_mutex mt;
@@ -144,8 +147,9 @@ namespace collections {
 
         EXPECT_TRUE(queue.count() == queue2.count());
         ;
-    }
+    }*/
 
+/*
     TEST_DISABLED(shit, shit)
     {
         {
@@ -161,13 +165,6 @@ namespace collections {
         boost::iostreams::stream< decltype(inserter) > s(inserter);
         boost::archive::binary_oarchive arch(s);
 
-/*
-        vector<char> buffer;
-        boost::iostreams::back_insert_device<decltype(buffer) > device(buffer);
-        boost::iostreams::stream<decltype(device)> stream(device);
-        boost::archive::binary_oarchive arch(stream);*/
-
-
         //s->write("hello", 5);
         //EXPECT_TRUE(s == false);
 
@@ -175,23 +172,9 @@ namespace collections {
         arch << itm;
 
         EXPECT_TRUE(buffer.empty() == false);
-    }
+    }*/
 
 #endif
-
-    template<class T> void registerContainers(T & ar) {
-        ar.register_type(static_cast<array *>(NULL));
-        ar.register_type(static_cast<map *>(NULL));
-        ar.register_type(static_cast<form_map *>(NULL));
-    }
-
-    template<class Archive>
-    void collection_registry::serialize(Archive & ar, const unsigned int version) {
-        registerContainers(ar);
-
-        ar & _map;
-        ar & _idGen;
-    }
 
     static UInt32 convertOldFormIdToNew(UInt32 oldId) {
         UInt64 newId = 0;
@@ -208,8 +191,6 @@ namespace collections {
 
     template<class Archive>
     void Item::save(Archive & ar, const unsigned int version) const {
-        registerContainers(ar);
-
         ar & _type;
         switch (_type)
         {
@@ -238,8 +219,6 @@ namespace collections {
     template<class Archive>
     void Item::load(Archive & ar, const unsigned int version)
     {
-        registerContainers(ar);
-
         ar & _type;
         switch (_type)
         {
@@ -270,15 +249,6 @@ namespace collections {
         default:
             break;
         }
-    }
-
-    template<class Archive>
-    void object_base::serialize(Archive & ar, const unsigned int version) {
-        ar & _refCount;
-        ar & _tes_refCount;
-        
-        ar & _type;
-        ar & _id;
     }
 
     template<class Archive>
@@ -334,13 +304,13 @@ namespace collections {
 
 void Serialization_Revert(SKSESerializationInterface * intfc)
 {
-    collections::shared_state::instance().clearState();
+    collections::tes_context::instance().clearState();
 }
 
 void Serialization_Save(SKSESerializationInterface * intfc)
 {
     if (intfc->OpenRecord(kJStorageChunk, kJSerializationDataVersion)) {
-        auto data = collections::shared_state::instance().saveToArray();
+        auto data = collections::tes_context::instance().saveToArray();
         intfc->WriteRecordData(data.data(), data.size());
     }
 }
@@ -351,15 +321,16 @@ void Serialization_Load(SKSESerializationInterface * intfc)
     UInt32	version;
     UInt32	length;
 
-    collections::shared_state::instance().clearState();
+    std::string data;
 
     while (intfc->GetNextRecordInfo(&type, &version, &length)) {
 
-        if (type == kJStorageChunk && version == kJSerializationDataVersion && length > 0) {
-            std::string data(length, '\0');
+        if (type == kJStorageChunk && length > 0) {
+            data.resize(length, '\0');
             intfc->ReadRecordData((void *)data.data(), data.size());
-            collections::shared_state::instance().loadAll(data);
             break;
         }
     }
+
+    collections::tes_context::instance().loadAll(data, version);
 }

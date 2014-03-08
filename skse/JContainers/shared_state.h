@@ -1,90 +1,70 @@
 #pragma once
 
 #include <atomic>
-#include "collections.h"
-#include "autorelease_queue.h"
+//#include <functional>
+
+#include "rw_mutex.h"
+
 #include "tes_error_code.h"
+#include "object_base.h"
+
+namespace boost {
+namespace archive {
+    class binary_iarchive;
+    class binary_oarchive;
+}
+}
 
 namespace collections {
 
-    class shared_state {
-        bshared_mutex _mutex;
-        HandleT _databaseId;
-        std::atomic_uint_fast16_t _lastError;
+    class collection_registry;
+    class autorelease_queue;
 
-        shared_state()
-            : registry(_mutex)
-            , aqueue(_mutex)
-            , _databaseId(0)
-            , _lastError(0)
-        {
-            clearState();
-        }
+    struct shared_state_delegate
+    {
+        virtual void u_loadAdditional(boost::archive::binary_iarchive & arch) = 0;
+        virtual void u_saveAdditional(boost::archive::binary_oarchive & arch) = 0;
+        virtual void u_cleanup() = 0;
+    };
+
+    class shared_state {
 
         void postLoadMaintenance();
 
-        //static shared_state _sharedInstance;
+    protected:
+        bshared_mutex _mutex;
+    public:
 
         template<class T>
-        void performRead(T& readFunc) {
-             read_lock r(_mutex);
-             readFunc();
-        }
-
-    public:
-        collection_registry registry;
-        autorelease_queue aqueue;
-
-        void setLastError(JErrorCode code) {
-            _lastError = code;
-        }
-
-        JErrorCode lastError() {
-            uint_fast16_t code = _lastError.exchange(0);
-            return (JErrorCode)code;
-        }
-
-        static shared_state& instance() {
-            static shared_state st;
-            return st;
-        }
-
-        HandleT databaseId() {
+        inline void performRead(T& readFunc) {
             read_lock r(_mutex);
-            return _databaseId;
+            readFunc();
         }
 
-        map* database() {
-            return registry.getObjectOfType<map>(databaseId());
+        shared_state();
+        ~shared_state();
+
+        collection_registry& registry;
+        autorelease_queue& aqueue;
+
+        shared_state_delegate *delegate;
+
+        template<class T>
+        T * getObjectOfType(HandleT hdl) {
+            return getObject(hdl)->as<T>();
         }
 
-        void setDataBase(object_base *db) {
-            auto prev = registry.getObject(databaseId());
-            if (prev == db) {
-                return;
-            }
-
-            if (prev) {
-                prev->release(); // may cause deadlock in removeObject
-            }
-
-            if (db) {
-                db->retain();
-            }
-
-            write_lock g(_mutex);
-            _databaseId = db ? db->id : 0;
-        }
+        object_base * getObject(HandleT hdl);
+        object_base * u_getObject(HandleT hdl);
 
         void clearState();
+        void u_clearState();
 
-        void loadAll(const std::string & data);
-
-        void setupForFirstTime() {
-            setDataBase(map::object());
-        }
+        void loadAll(const std::string & data, int version);
 
         std::string saveToArray();
+
+
     };
 
 }

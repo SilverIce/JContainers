@@ -127,6 +127,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="basic_part.cpp" />
     <ClCompile Include="cJSON.cpp" />
     <ClCompile Include="CodeProducer.cpp" />
     <ClCompile Include="gtest.cpp" />
@@ -136,6 +137,9 @@
     </ClCompile>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="serialization.cpp" />
+    <ClInclude Include="tes_context.hpp">
+      <FileType>CppCode</FileType>
+    </ClInclude>
     <ClCompile Include="tes_inteface.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -144,8 +148,12 @@
     <ClInclude Include="CodeProducer.h" />
     <ClInclude Include="collections.h" />
     <ClInclude Include="collections.tests.hpp" />
+    <ClInclude Include="object_base.h" />
+    <ClInclude Include="object_base.hpp" />
+    <ClInclude Include="object_registry.h" />
     <ClInclude Include="gtest.h" />
     <ClInclude Include="jcontainers_pch.h" />
+    <ClInclude Include="rw_mutex.h" />
     <ClInclude Include="spinlock.h" />
     <ClInclude Include="id_generator.h" />
     <ClInclude Include="meta.h" />
@@ -153,6 +161,7 @@
     <ClInclude Include="shared_state.hpp" />
     <ClInclude Include="tes_array.h" />
     <ClInclude Include="tes_binding.h" />
+    <ClInclude Include="tes_context.h" />
     <ClInclude Include="tes_db.h" />
     <ClInclude Include="tes_error_code.h" />
     <ClInclude Include="tes_jcontainers.h" />

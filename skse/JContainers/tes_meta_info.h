@@ -110,7 +110,7 @@ namespace collections {
         typedef class_meta_info (*class_meta_info_creator)();
 
         template<class T>
-        inline void foreach_metaInfo_do(T func) {
+        inline void foreach_metaInfo_do(T& func) {
             auto& list = meta<class_meta_info_creator>::getListConst();
             auto first = list.first;
             while(first) {

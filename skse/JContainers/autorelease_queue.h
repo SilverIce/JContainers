@@ -1,18 +1,15 @@
 #pragma once
 
-#include "collections.h"
-
-#include <thread>
-#include <mutex>
-#include <chrono>
-#include <algorithm>
-
 namespace collections {
+
+    class collection_registry;
 
     class autorelease_queue {
 
         std::thread _thread;
         bshared_mutex& _mutex;
+
+        collection_registry& _registry;
 
         typedef std::lock_guard<decltype(_mutex)> lock;
         typedef unsigned int time_point;
@@ -35,12 +32,13 @@ namespace collections {
             ar & _queue;
         }
 
-        autorelease_queue(bshared_mutex &mt) 
+        explicit autorelease_queue(collection_registry& registry, bshared_mutex &mt) 
             : _thread()
             , _timeNow(0)
             , _run(false)
             , _paused(false)
             , _mutex(mt)
+            , _registry(registry)
         {
             start();
         }
@@ -149,7 +147,7 @@ namespace collections {
                 }
 
                 for(auto& val : toRelease) {
-                    auto obj = collection_registry::getObject(val);
+                    auto obj = self._registry.getObject(val);
                     if (obj) {
                         bool deleted = obj->_deleteOrRelease(nullptr);
                         printf("handle %u %s\n", val, (deleted ? "deleted" : "released"));
@@ -166,12 +164,6 @@ namespace collections {
     };
 
 
-    inline object_base * object_base::autorelease() {
-        autorelease_queue::instance().push(id);
-        return this;
-    }
-
-    inline void object_base::_addToDeleteQueue() {
-        autorelease_queue::instance().push(id);
-    }
 }
+
+//BOOST_CLASS_EXPORT_GUID (collections::autorelease_queue, "kJAutoreleaseQueue")

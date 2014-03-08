@@ -32,7 +32,7 @@ namespace collections {
         REGISTERF2(fileExistsAtPath, "path", "returns true if file at path exists");
 
         static SInt32 lastError() {
-            return shared_state::instance().lastError();
+            return tes_context::instance().lastError();
         }
         REGISTERF2(lastError, NULL, []() {
             std::stringstream comm;
@@ -44,7 +44,7 @@ namespace collections {
         });
 
         static const char* lastErrorString() {
-            return JErrorCodeToString(shared_state::instance().lastError());
+            return JErrorCodeToString(tes_context::instance().lastError());
         }
         REGISTERF2(lastErrorString, NULL, "returns string that describes last error");
     };

@@ -1,31 +1,28 @@
-#include <type_traits>
+//BOOST_CLASS_EXPORT_GUID(collections::shared_state, "kJObjectContext");
 
-namespace collections {
+namespace collections
+{
+    shared_state::shared_state()
+        : registry(* new collection_registry(_mutex) )
+        , aqueue(* new autorelease_queue(registry, _mutex) )
+    {
 
-    //shared_state shared_state::_sharedInstance;
-
-    autorelease_queue& autorelease_queue::instance() {
-        return shared_state::instance().aqueue;
     }
 
-    collection_registry& collection_registry::instance() {
-        return shared_state::instance().registry;
+    shared_state::~shared_state() {
+        delete &registry;
+        delete &aqueue;
     }
 
-    void shared_state::clearState() { 
-        {
-            write_lock g(_mutex);
-
-            registry.u_clear();
-            aqueue.u_clear();
-            _databaseId = 0;
-            _lastError = 0;
-        }
-
-        setupForFirstTime();
+    object_base * shared_state::getObject(HandleT hdl) {
+        return registry.getObject(hdl);
     }
 
-    void shared_state::loadAll(const std::string &data) {
+    object_base * shared_state::u_getObject(HandleT hdl) {
+        return registry.u_getObject(hdl);
+    }
+
+    void shared_state::loadAll(const std::string & data, int version) {
 
         _DMESSAGE("%u bytes loaded", data.size());
 
@@ -37,32 +34,45 @@ namespace collections {
             // i have assumed that Skyrim devs are not idiots to run scripts in process of save game loading
             //write_lock g(_mutex);
 
-            registry.u_clear();
-            aqueue.u_clear();
-            _databaseId = 0;
+            u_clearState();
 
-            archive >> registry;
-            archive >> aqueue;
-            archive >> _databaseId;
+            if (!data.empty() && version == kJSerializationDataVersion) {
+                archive >> registry;
+                archive >> aqueue;
 
-            // post serialization
+                if (delegate) {
+                    delegate->u_loadAdditional(archive);
+                }
+            }
 
             postLoadMaintenance();
         }
         aqueue.setPaused(false);
     }
 
-    void shared_state::postLoadMaintenance() {
-
+    void shared_state::postLoadMaintenance()
+    {
         auto cntCopy = registry.u_container();
         static_assert( std::is_reference<decltype(cntCopy)>::value == false , "");
 
         for (auto& pair : cntCopy) {
-            form_map *fmap = pair.second->as<form_map>();
-            if (fmap) {
-                fmap->u_updateKeys();
-            }
+            pair.second->_context = this;
+            pair.second->u_onLoaded();
         }
+    }
+
+    void shared_state::u_clearState() {
+        registry.u_clear();
+        aqueue.u_clear();
+
+        if (delegate) {
+            delegate->u_cleanup();
+        }
+    }
+
+    void shared_state::clearState() {
+        write_lock w(_mutex);
+        u_clearState();
     }
 
     std::string shared_state::saveToArray() {
@@ -81,7 +91,10 @@ namespace collections {
 
             arch << registry;
             arch << aqueue;
-            arch << _databaseId;
+
+            if (delegate) {
+                delegate->u_saveAdditional(arch);
+            }
 
             for (auto pair : registry._map) {
                 pair.second->_mutex.unlock();

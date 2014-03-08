@@ -23,7 +23,7 @@ namespace collections {
         }
 
         static void onOutOfBoundAccess() {
-            shared_state::instance().setLastError(JError_ArrayOutOfBoundAccess);
+            tes_context::instance().setLastError(JError_ArrayOutOfBoundAccess);
         }
 
         typedef array::Index Index;

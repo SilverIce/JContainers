@@ -12,7 +12,7 @@ Manages keys and values associations as JMap";
 
         template<class T>
         static T solveGetter(const char* path) {
-            return tes_object::resolveGetter<T>(shared_state::instance().database(), path); 
+            return tes_object::resolveGetter<T>(tes_context::instance().database(), path); 
         }
         REGISTERF(solveGetter<Float32>, "solveFlt", "path",
 "attempts to get value assiciated with path.\n\
@@ -32,7 +32,7 @@ JDB.solveObj(\".frostfall.arrayC\") will return array containing [\"stringValue\
         REGISTERF(solveGetter<TESForm*>, "solveForm", "path", NULL);
 
         static void setObj(const char *path, object_base *obj) {
-            object_base *db = shared_state::instance().database();
+            object_base *db = tes_context::instance().database();
             map *dbMap = db ? db->as<map>() : nullptr;
 
             if (!dbMap) {
@@ -52,28 +52,28 @@ for ex. JDB.setObj(\"frostfall\", frostFallInformation) will associate 'frostall
 );
 
         static bool hasPath(const char* path) {
-            return tes_object::hasPath(shared_state::instance().database(), path);
+            return tes_object::hasPath(tes_context::instance().database(), path);
         }
         REGISTERF2(hasPath, "path", "returns true, if DB capable resolve given path, e.g. it able to execute solve* or solver*Setter functions successfully");
 
         static object_base* allKeys() {
-            return tes_map::allKeys( shared_state::instance().database() );
+            return tes_map::allKeys( tes_context::instance().database()->as<map>() );
         }
         REGISTERF2(allKeys, "*", "returns new array containing all JDB keys");
 
         static object_base* allValues() {
-            return tes_map::allValues( shared_state::instance().database() );
+            return tes_map::allValues( tes_context::instance().database()->as<map>() );
         }
         REGISTERF2(allValues, "*", "returns new array containing all containers associated with JDB");
 
         static void writeToFile(const char * path) {
-            tes_object::writeToFile( shared_state::instance().database(), path);
+            tes_object::writeToFile( tes_context::instance().database(), path);
         }
         REGISTERF2(writeToFile, "path", "writes storage data into JSON file at given path");
 
         static void readFromFile(const char *path) {
             auto objNew = json_handling::readJSONFile(path);
-            shared_state::instance().setDataBase(objNew);
+            tes_context::instance().setDataBase(objNew);
         }
         REGISTERF2(readFromFile, "path",
 "reads information from a file at given path and fills storage with it's JSON content\n\
@@ -81,7 +81,7 @@ NOTE: it will replace all existing JDB contents!");
 
         template<class T>
         static bool solveSetter(const char* path, T value) { 
-            return tes_object::solveSetter(shared_state::instance().database(), path, value);
+            return tes_object::solveSetter(tes_context::instance().database(), path, value);
         }
         REGISTERF(solveSetter<Float32>, "solveFltSetter", "path value",
 "attempts to assign value. returns false if no such path\n\
