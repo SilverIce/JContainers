@@ -33,7 +33,8 @@ namespace {
         int charCount() const {
             return std::accumulate(words.begin(), words.end(), 0, [](int val, const string& str) {
                 return val + (int)str.length();
-            });
+            })
+                + (words.size() > 0 ? words.size() - 1 : 0);
         }
 
         void addWord(const string& word) {

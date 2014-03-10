@@ -76,6 +76,10 @@ namespace collections {
 
         object_base * retain() {
             mutex_lock g(_mutex);
+            return u_retain();
+        }
+
+        object_base * u_retain() {
             ++_refCount;
             return this;
         }

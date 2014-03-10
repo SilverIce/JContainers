@@ -29,7 +29,7 @@ namespace collections {
 
     class shared_state {
 
-        void postLoadMaintenance();
+        void u_postLoadMaintenance();
 
     protected:
         bshared_mutex _mutex;

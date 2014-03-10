@@ -45,12 +45,12 @@ namespace collections
                 }
             }
 
-            postLoadMaintenance();
+            u_postLoadMaintenance();
         }
         aqueue.setPaused(false);
     }
 
-    void shared_state::postLoadMaintenance()
+    void shared_state::u_postLoadMaintenance()
     {
         auto cntCopy = registry.u_container();
         static_assert( std::is_reference<decltype(cntCopy)>::value == false , "");
@@ -72,6 +72,7 @@ namespace collections
 
     void shared_state::clearState() {
         write_lock w(_mutex);
+        all_objects_lock l(registry);
         u_clearState();
     }
 
@@ -85,19 +86,13 @@ namespace collections
             // but didn't dare to disable all that locks
             read_lock g(_mutex);
 
-            for (auto pair : registry._map) {
-                pair.second->_mutex.lock();
-            }
+            all_objects_lock l(registry);
 
             arch << registry;
             arch << aqueue;
 
             if (delegate) {
                 delegate->u_saveAdditional(arch);
-            }
-
-            for (auto pair : registry._map) {
-                pair.second->_mutex.unlock();
             }
         }
         aqueue.setPaused(false);
