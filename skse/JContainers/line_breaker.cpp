@@ -1,6 +1,3 @@
-// line_breaker.cpp : Defines the entry point for the console application.
-//
-
 
 #include <iostream>
 #include <string>
@@ -10,7 +7,6 @@
 #include <algorithm>
 #include <sstream>
 #include <conio.h>
-//#include <list>
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -238,31 +234,9 @@ namespace {
     vector<string> substringRange(string::iterator beg, string::iterator end) {
 
         vector<string> strings;
-        boost::split( strings, boost::make_iterator_range(beg, end), boost::is_any_of(" \n") );
+        boost::split( strings, boost::make_iterator_range(beg, end), &isBreak );
 
         return strings;
-
-       /* vector<string> strings;
-
-        auto wb = beg, we = beg;
-        while (we <= end)  {
-
-            while (wb < end && isBreak(*wb) == true) {
-                ++wb;
-            }
-
-            we = wb;
-
-            while (we <= end && isBreak(*we) == false) {
-                ++we;
-            }
-
-            strings.push_back(string(wb, we));
-
-            wb = we = (we + 1);
-        }
-
-        return strings;*/
     }
 
     line_set initialSet(std::string& data, int charsPerLine = 40) {
@@ -313,9 +287,6 @@ namespace {
         return result;
 
     }
-
-
-    #define  STR(...)   #__VA_ARGS__
 
     struct operation {
         line_set *lset;

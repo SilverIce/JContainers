@@ -1,5 +1,7 @@
 #pragma once
 
+#include <atomic>
+
 namespace collections {
 
     class object_registry;
@@ -17,12 +19,20 @@ namespace collections {
         typedef std::vector<std::pair<HandleT, time_point> > queue;
         queue _queue;
         time_point _timeNow;
-        bool _run;
-        bool _paused;
+        
+        std::atomic_int_fast8_t _state;
+        
+        enum queue_state : unsigned char {
+            state_none = 0x0,
+            state_run = 0x1,
+            state_paused = 0x2,
+        };
 
     public:
 
         void u_clear() {
+            u_stop();
+            
             _queue.clear();
         }
 
@@ -35,8 +45,7 @@ namespace collections {
         explicit autorelease_queue(object_registry& registry, bshared_mutex &mt) 
             : _thread()
             , _timeNow(0)
-            , _run(false)
-            , _paused(false)
+            , _state(state_none)
             , _mutex(mt)
             , _registry(registry)
         {
@@ -49,10 +58,10 @@ namespace collections {
         }
 
         void start() {
-            write_lock g(_mutex);
-            if (!_run) {
-                _run = true;
-                _paused = false;
+            if ((_state & state_run) == 0) {
+                _state = state_run;
+                
+                write_lock g(_mutex);
                 _thread = std::thread(&autorelease_queue::run, std::ref(*this));
             }
         }
@@ -63,18 +72,16 @@ namespace collections {
         }
 
         void setPaused(bool paused) {
-            write_lock g(_mutex);
-            _paused = paused;
+            _state |= state_paused;
         }
 
         void stop() {
-            {
-                write_lock g(_mutex);
-                _run = false;
-                _paused = false;
-            }
-
-            //assert(_thread.joinable());
+            u_stop();
+        }
+        
+        void u_stop() {
+            _state = state_none;
+            
             if (_thread.joinable()) {
                 _thread.join();
             }
@@ -83,8 +90,6 @@ namespace collections {
         ~autorelease_queue() {
             stop();
         }
-
-        static autorelease_queue& instance();
 
     private:
         void cycleIncr() {
@@ -124,13 +129,15 @@ namespace collections {
 
             while (true) {
                 {
-                    write_lock g(self._mutex);
-
-                    if (!self._run) {
+                    unsigned char state = self._state;
+                    
+                    if ((state & state_run) == 0) {
                         break;
                     }
 
-                    if (!self._paused) {
+                    if ((state & state_paused) == 0) {
+                        
+                        write_lock g(self._mutex);
                         self._queue.erase(
                             remove_if(self._queue.begin(), self._queue.end(), [&](const queue::value_type& val) {
                                 auto diff = self.lifetimeDiff(val.second);
@@ -150,12 +157,12 @@ namespace collections {
                     auto obj = self._registry.getObject(val);
                     if (obj) {
                         bool deleted = obj->_deleteOrRelease(nullptr);
-                        printf("handle %u %s\n", val, (deleted ? "deleted" : "released"));
+                        //printf("handle %u %s\n", val, (deleted ? "deleted" : "released"));
                     }
                 }
                 toRelease.clear();
 
-                printf("autorelease_queue time - %u\n", self._timeNow);
+                //printf("autorelease_queue time - %u\n", self._timeNow);
                 std::this_thread::sleep_for(sleepTime);
             }
 

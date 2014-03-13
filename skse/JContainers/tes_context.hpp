@@ -15,14 +15,28 @@ namespace collections {
     }
 
     object_base* tes_context::database() {
-        object_base * result = nullptr;
-        performRead([&]() {
-            result = u_getObject(_databaseId);
-        });
+
+        auto getDB = [&]() {
+            object_base * result = nullptr;
+            performRead([&]() {
+                result = u_getObject(_databaseId);
+            });
+
+            return result;
+        };
+
+        object_base * result = getDB();
 
         if (!result) {
-            result = map::object(*this);
-            setDataBase(result);
+            _lazyDBLock.lock();
+
+            result = getDB();
+            if (!result) {
+                result = map::object(*this);
+                setDataBase(result);
+            }
+
+            _lazyDBLock.unlock();
         }
 
         return result;

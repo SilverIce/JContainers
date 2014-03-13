@@ -1,9 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="tests">
-      <UniqueIdentifier>{5c78a6c6-cc2b-4ca5-9f66-477fd348017d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="gtest">
       <UniqueIdentifier>{9fe98443-90a1-4d4a-8155-1f06db3a251b}</UniqueIdentifier>
     </Filter>
@@ -52,9 +49,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="collections.tests.hpp">
-      <Filter>tests</Filter>
-    </ClInclude>
     <ClInclude Include="tes_binding.h">
       <Filter>collections_module</Filter>
     </ClInclude>
@@ -131,6 +125,9 @@
     </ClInclude>
     <ClInclude Include="tes_string.h">
       <Filter>collections_module\tes_classes</Filter>
+    </ClInclude>
+    <ClInclude Include="collections.tests.hpp">
+      <Filter>collections_module</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

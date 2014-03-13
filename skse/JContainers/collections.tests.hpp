@@ -43,8 +43,49 @@ namespace collections {
          autorelease_queue::instance().setPaused(false);
     }*/
 
+    TEST(tes_context, database)
+    {
+        using namespace std;
 
-    TEST_DISABLED(autorelease_queue, high_level)
+        tes_context context;
+
+        auto db = context.database();
+
+        EXPECT_TRUE(db);
+        EXPECT_TRUE(db == context.database());
+
+        context.clearState();
+    }
+
+    TEST(tes_context, serialization)
+    {
+        using namespace std;
+
+        auto& context = tes_context();
+
+        //vector<Handle> identifiers;
+
+        for (int i = 0; i < 10; ++i) {
+            auto obj = map::object(context);
+
+            //identifiers.push_back(obj->id);
+        }
+
+        string data = context.saveToArray();
+
+        EXPECT_FALSE(data.empty());
+
+        context.loadAll(data, kJSerializationDataVersion);
+
+        string newData = context.saveToArray();
+
+        EXPECT_TRUE(data.size() == newData.size());
+
+        context.clearState();
+    }
+
+
+    TEST(autorelease_queue, high_level)
     {
         using namespace std;
 

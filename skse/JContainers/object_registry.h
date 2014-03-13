@@ -101,16 +101,16 @@ namespace collections
 
     void object_registry::u_clear() {
         /*  Not good, but working solution.
-
-            issue: deadlock during loading savegame - e.g. cleaning current state.
-
-            due to: collection release -> dealloc -> collection_registry::removeObject
-                 introduces deadlock ( registry locked during _clear call)
-
-            solution: +1 refCount to all objects & clear & delete them
-
-            all we need is just free the memory but this will require track allocated collection & stl memory blocks 
-        */
+         
+         issue: deadlock during loading savegame - e.g. cleaning current state.
+         
+         due to: collection release -> dealloc -> collection_registry::removeObject
+         introduces deadlock ( registry locked during _clear call)
+         
+         solution: +1 refCount to all objects & clear & delete them
+         
+         all we need is just free the memory but this will require track allocated collection & stl memory blocks
+         */
         for (auto& pair : _map) {
             pair.second->u_retain(); // to guarant that removeObject will not be called during clear method call
         }
@@ -120,8 +120,8 @@ namespace collections
         for (auto& pair : _map) {
             delete pair.second;
         }
+        
         _map.clear();
-
         _idGen.u_clear();
     }
 

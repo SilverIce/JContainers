@@ -3,23 +3,47 @@
 namespace collections
 {
     shared_state::shared_state()
-        : registry(* new object_registry(_mutex) )
-        , aqueue(* new autorelease_queue(registry, _mutex) )
+        : registry(nullptr)
+        , aqueue(nullptr)
     {
-
+        registry = new object_registry(_mutex);
+        aqueue = new autorelease_queue(*registry, _mutex);
     }
 
     shared_state::~shared_state() {
-        delete &registry;
-        delete &aqueue;
+
+        delete registry;
+        delete aqueue;
+    }
+    
+    void shared_state::u_clearState() {
+        registry->u_clear();
+        aqueue->u_clear();
+        
+        if (delegate) {
+            delegate->u_cleanup();
+        }
+    }
+    
+    void shared_state::clearState() {
+        
+        aqueue->stop();
+        
+        {
+            write_lock w(_mutex);
+            all_objects_lock l(*registry);
+            u_clearState();
+        }
+        
+        aqueue->start();
     }
 
     object_base * shared_state::getObject(HandleT hdl) {
-        return registry.getObject(hdl);
+        return registry->getObject(hdl);
     }
 
     object_base * shared_state::u_getObject(HandleT hdl) {
-        return registry.u_getObject(hdl);
+        return registry->u_getObject(hdl);
     }
 
     void shared_state::loadAll(const std::string & data, int version) {
@@ -29,7 +53,7 @@ namespace collections
         std::istringstream stream(data);
         boost::archive::binary_iarchive archive(stream);
 
-        aqueue.setPaused(true);
+        aqueue->stop();
         {
             // i have assumed that Skyrim devs are not idiots to run scripts in process of save game loading
             //write_lock g(_mutex);
@@ -37,22 +61,23 @@ namespace collections
             u_clearState();
 
             if (!data.empty() && version == kJSerializationDataVersion) {
-                archive >> registry;
-                archive >> aqueue;
+                archive >> *registry;
+                archive >> *aqueue;
 
                 if (delegate) {
                     delegate->u_loadAdditional(archive);
                 }
             }
 
+            // deadlock possible
             u_postLoadMaintenance();
         }
-        aqueue.setPaused(false);
+        aqueue->start();
     }
 
     void shared_state::u_postLoadMaintenance()
     {
-        auto cntCopy = registry.u_container();
+        auto cntCopy = registry->u_container();
         static_assert( std::is_reference<decltype(cntCopy)>::value == false , "");
 
         for (auto& pair : cntCopy) {
@@ -61,41 +86,27 @@ namespace collections
         }
     }
 
-    void shared_state::u_clearState() {
-        registry.u_clear();
-        aqueue.u_clear();
-
-        if (delegate) {
-            delegate->u_cleanup();
-        }
-    }
-
-    void shared_state::clearState() {
-        write_lock w(_mutex);
-        all_objects_lock l(registry);
-        u_clearState();
-    }
 
     std::string shared_state::saveToArray() {
         std::ostringstream stream;
         boost::archive::binary_oarchive arch(stream);
 
-        aqueue.setPaused(true);
+        aqueue->stop();
         {
             // i have assumed that Skyrim devs are not idiots to run scripts in process of saving
             // but didn't dare to disable all that locks
             read_lock g(_mutex);
 
-            all_objects_lock l(registry);
+            all_objects_lock l(*registry);
 
-            arch << registry;
-            arch << aqueue;
+            arch << *registry;
+            arch << *aqueue;
 
             if (delegate) {
                 delegate->u_saveAdditional(arch);
             }
         }
-        aqueue.setPaused(false);
+        aqueue->start();
 
         std::string data(stream.str());
 

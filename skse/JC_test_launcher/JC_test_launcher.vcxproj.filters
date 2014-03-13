@@ -10,7 +10,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="PIZDA.cpp">
+    <ClCompile Include="JC_test_launcher.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

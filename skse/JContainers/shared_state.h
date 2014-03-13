@@ -36,7 +36,7 @@ namespace collections {
     public:
 
         template<class T>
-        inline void performRead(T& readFunc) {
+        inline void performRead(T readFunc) {
             read_lock r(_mutex);
             readFunc();
         }
@@ -44,8 +44,8 @@ namespace collections {
         shared_state();
         ~shared_state();
 
-        object_registry& registry;
-        autorelease_queue& aqueue;
+        object_registry* registry;
+        autorelease_queue* aqueue;
 
         shared_state_delegate *delegate;
 

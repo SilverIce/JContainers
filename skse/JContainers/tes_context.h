@@ -3,6 +3,7 @@
 #include "shared_state.h"
 #include "collections.h"
 #include "tes_error_code.h"
+#include "spinlock.h"
 
 namespace collections
 {
@@ -11,6 +12,7 @@ namespace collections
     {
         HandleT _databaseId;
         std::atomic_uint_fast16_t _lastError;
+        spinlock _lazyDBLock;
 
     public:
 

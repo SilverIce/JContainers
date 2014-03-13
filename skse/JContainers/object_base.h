@@ -49,6 +49,7 @@ namespace collections {
             , _tes_refCount(0)
             , id(HandleNull)
             , _type(type)
+            , _context(nullptr)
         {
         }
 
