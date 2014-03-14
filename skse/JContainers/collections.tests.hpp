@@ -51,7 +51,7 @@ namespace collections {
 
         auto db = context.database();
 
-        EXPECT_TRUE(db);
+        EXPECT_TRUE(db != nullptr);
         EXPECT_TRUE(db == context.database());
 
         context.clearState();
