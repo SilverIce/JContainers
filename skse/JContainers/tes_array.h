@@ -1,4 +1,8 @@
+#include <boost/optional.hpp>
+
 namespace collections {
+
+#define NEGATIVE_IDX_COMMENT "negative index accesses items from the end of array counting backwards."
 
     class tes_array : public tes_binding::class_meta_mixin_t< tes_array > {
     public:
@@ -71,7 +75,7 @@ objectWithBooleans converts booleans into integers");
 
             auto obj = array::objectWithInitializer([&](array *me) {
                 
-                me->_array.insert(me->_array.begin(), source->_array.begin() + startIndex, source->_array.begin() + endIndex);
+                me->_array.insert(me->begin(), source->begin() + startIndex, source->begin() + endIndex);
             });
 
             return obj;
@@ -92,55 +96,108 @@ objectWithBooleans converts booleans into integers");
 
             SInt32 whereTo = insertAtIndex >= 0 ? insertAtIndex : obj->u_count();
 
-            obj->_array.insert(obj->_array.begin() + whereTo, another->_array.begin(), another->_array.end());
+            obj->_array.insert(obj->begin() + whereTo, another->begin(), another->end());
         }
         REGISTERF2(addFromArray, "* sourceArray insertAtIndex=-1",
 "adds values from source array into this array. if insertAtIndex is -1 (default behaviour) it adds to the end.\n\
 if insertAtIndex >= 0 it appends values starting from insertAtIndex index");
 
-        template<class T>
-        static T itemAtIndex(array *obj, Index index) {
+        typedef boost::optional<uint32> maybe_index;
+
+        static maybe_index convertReadIndex(array *ar, int pyIndex) {
+            auto count = ar->u_count();
+            uint32 index = (pyIndex >= 0 ? pyIndex : (count + pyIndex) );
+
+            return maybe_index(count > 0 && index < count,
+                                index);
+        }
+
+        static maybe_index convertWriteIndex(array *ar, int pyIndex) {
+            auto count = ar->u_count();
+            uint32 index = (pyIndex >= 0 ? pyIndex : (count + pyIndex + 1) );
+
+            return maybe_index(index <= count,
+                                index);
+        }
+
+
+        template<class Op>
+        static void doReadOp(array *obj, int pyIndex, Op& operation) {
             if (!obj) {
-                return T(0);
+                return;
             }
 
             object_lock g(obj);
-            if (validateReadIndex(obj, index)) {
-                return obj->_array[index].readAs<T>();
+
+            auto idx = convertReadIndex(obj, pyIndex);
+
+            if (idx) {
+                operation(*idx);
             } else {
                 onOutOfBoundAccess();
-                return T(0);
             }
         }
-        REGISTERF(itemAtIndex<SInt32>, "getInt", "* index", "returns item at index. getObj function returns container");
+
+        template<class Op>
+        static void doWriteOp(array *obj, int pyIndex, Op& operation) {
+            if (!obj) {
+                return;
+            }
+
+            object_lock g(obj);
+
+            auto idx = convertWriteIndex(obj, pyIndex);
+
+            if (idx) {
+                operation(*idx);
+            } else {
+                onOutOfBoundAccess();
+            }
+        }
+
+        template<class T>
+        static T itemAtIndex(array *obj, Index index) {
+            T t((T)0);
+            doReadOp(obj, index, [=, &t](uint32 idx) {
+                t = obj->_array[idx].readAs<T>();
+            });
+
+            return t;
+        }
+        REGISTERF(itemAtIndex<SInt32>, "getInt", "* index", "returns item at index. getObj function returns container.\n"
+            NEGATIVE_IDX_COMMENT);
         REGISTERF(itemAtIndex<Float32>, "getFlt", "* index", "");
         REGISTERF(itemAtIndex<const char *>, "getStr", "* index", "");
         REGISTERF(itemAtIndex<Handle>, "getObj", "* index", "");
         REGISTERF(itemAtIndex<TESForm*>, "getForm", "* index", "");
 
         template<class T>
-        static SInt32 findVal(array *obj, T value, SInt32 searchStartIndex = 0) {
-            if (!obj) {
-                return -1;
-            }
+        static SInt32 findVal(array *obj, T value, SInt32 pySearchStartIndex = 0) {
 
-            object_lock g(obj);
+            int result = -1;
 
-            if (validateReadIndex(obj, searchStartIndex) == false) {
-                onOutOfBoundAccess();
-                return -1;
-            }
+            doReadOp(obj, pySearchStartIndex, [=, &result](uint32 idx) {
 
-            auto itr = std::find_if(obj->_array.begin() + searchStartIndex, obj->_array.end(), [=](const Item& item) {
-                return item.isEqual(value);
+                auto pred = [=](const Item& item) {
+                    return item.isEqual(value);
+                };
+
+                if (pySearchStartIndex >= 0) {
+                    auto itr = std::find_if(obj->begin() + idx, obj->end(), pred);
+                    result = itr != obj->end() ? (itr - obj->begin()) : -1;
+                } else {
+                    auto itr = std::find_if(obj->rbegin() + (-pySearchStartIndex - 1), obj->rend(), pred);
+                    result = itr != obj->rend() ? (obj->rend() - itr) : -1;
+                }
             });
 
-            return itr != obj->_array.end() ? (itr - obj->_array.begin()) : -1;
+            return result;
         }
         REGISTERF(findVal<SInt32>, "findInt", "* value searchStartIndex=0",
 "returns index of the first found value/container that equals to given value/container (default behaviour if searchStartIndex is 0).\n\
 if found nothing returns -1.\n\
-searchStartIndex - array index where to start search");
+searchStartIndex - array index where to start search\n"
+NEGATIVE_IDX_COMMENT);
         REGISTERF(findVal<Float32>, "findFlt", "* value searchStartIndex=0", "");
         REGISTERF(findVal<const char *>, "findStr", "* value searchStartIndex=0", "");
         REGISTERF(findVal<object_base*>, "findObj", "* container searchStartIndex=0", "");
@@ -148,73 +205,46 @@ searchStartIndex - array index where to start search");
 
         template<class T>
         static void replaceItemAtIndex(array *obj, Index index, T item) {
-            if (!obj) {
-                return;
-            }
-
-            object_lock g(obj);
-            if (validateReadIndex(obj, index)) {
-                obj->_array[index] = Item(item);
-            } else {
-                onOutOfBoundAccess();
-            }
+            doReadOp(obj, index, [=](uint32 idx) {
+                obj->_array[idx] = Item(item);
+            });
         }
-        REGISTERF(replaceItemAtIndex<SInt32>, "setInt", "* index value", "replaces existing value/container at index with new value");
+        REGISTERF(replaceItemAtIndex<SInt32>, "setInt", "* index value", "replaces existing value/container at index with new value.\n"
+                                                                         NEGATIVE_IDX_COMMENT);
         REGISTERF(replaceItemAtIndex<Float32>, "setFlt", "* index value", "");
         REGISTERF(replaceItemAtIndex<const char *>, "setStr", "* index value", "");
         REGISTERF(replaceItemAtIndex<object_base*>, "setObj", "* index container", "");
         REGISTERF(replaceItemAtIndex<TESForm*>, "setForm", "* index value", "");
 
         template<class T>
-        static void add(array *obj, T item, SInt32 addToIndex = -1) {
-            if (!obj) {
-                return;
-            }
-
-            object_lock g(obj);
-            if (addToIndex >= 0 && validateWriteIndex(obj, addToIndex) == false) {
-                onOutOfBoundAccess();
-                return;
-            }
-
-            SInt32 whereTo = (addToIndex >= 0 ? addToIndex : obj->_array.size());
-            obj->_array.insert(obj->_array.begin() + whereTo, Item(item));
+        static void addItemAt(array *obj, T item, SInt32 addToIndex = -1) {
+            doWriteOp(obj, addToIndex, [&](uint32 idx) {
+                obj->_array.insert(obj->begin() + idx, Item(item));
+            });
         }
-        REGISTERF(add<SInt32>, "addInt", "* value addToIndex=-1", "appends value/container to the end of array (default behaviour when addToIndex is -1)\n\
-if addToIndex >= 0 it inserts value at given index");
-        REGISTERF(add<Float32>, "addFlt", "* value addToIndex=-1", "");
-        REGISTERF(add<const char *>, "addStr", "* value addToIndex=-1", "");
-        REGISTERF(add<object_base*>, "addObj", "* container addToIndex=-1", "");
-        REGISTERF(add<TESForm*>, "addForm", "* value addToIndex=-1", "");
+        REGISTERF(addItemAt<SInt32>, "addInt", "* value addToIndex=-1", "appends value/container to the end of array.\n\
+if addToIndex >= 0 it inserts value at given index. "NEGATIVE_IDX_COMMENT);
+        REGISTERF(addItemAt<Float32>, "addFlt", "* value addToIndex=-1", "");
+        REGISTERF(addItemAt<const char *>, "addStr", "* value addToIndex=-1", "");
+        REGISTERF(addItemAt<object_base*>, "addObj", "* container addToIndex=-1", "");
+        REGISTERF(addItemAt<TESForm*>, "addForm", "* value addToIndex=-1", "");
 
         static Index count(array *obj) {
-            if (obj) {
-                object_lock g(obj);
-                return  obj->_array.size();
-            }
-            return 0;
+            return tes_object::count(obj);
         }
         REGISTERF2(count, "*", "returns number of items in array");
 
         static void clear(array *obj) {
-            if (obj) {
-                mutex_lock g(obj->_mutex);
-                obj->_array.clear();
-            }
+            tes_object::clear(obj);
         }
         REGISTERF2(clear, "*", "removes all items from array");
 
         static void eraseIndex(array *obj, SInt32 index) {
-            if (obj) {
-                object_lock g(obj);
-                if (validateReadIndex(obj, index)) {
-                    obj->_array.erase(obj->_array.begin() + index);
-                } else {
-                    onOutOfBoundAccess();
-                }
-            }
+            doReadOp(obj, index, [=](uint32 idx) {
+                obj->_array.erase(obj->begin() + idx);
+            });
         }
-        REGISTERF2(eraseIndex, "* index", "erases item at index");
+        REGISTERF2(eraseIndex, "* index", "erases item at index. "NEGATIVE_IDX_COMMENT);
     };
 
     TES_META_INFO(tes_array);

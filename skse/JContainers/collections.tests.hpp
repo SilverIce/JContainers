@@ -60,7 +60,7 @@ namespace collections {
     {
         using namespace std;
 
-        auto& context = tes_context();
+        tes_context context;
 
         //vector<Handle> identifiers;
 
@@ -88,7 +88,7 @@ namespace collections {
     {
         using namespace std;
 
-        auto& context = tes_context::instance();
+        tes_context context;
 
         vector<Handle> identifiers;
         //int countBefore = queue.count();
@@ -238,19 +238,19 @@ namespace collections {
         EXPECT_TRUE(tes_array::count(arr) == 0);
 
         auto str = 10;
-        tes_array::add<SInt32>(arr, str);
+        tes_array::addItemAt<SInt32>(arr, str);
         EXPECT_TRUE(tes_array::count(arr) == 1);
         EXPECT_TRUE( tes_array::itemAtIndex<SInt32>(arr, 0) == 10);
 
         str = 30;
-        tes_array::add<SInt32>( arr, str);
+        tes_array::addItemAt<SInt32>( arr, str);
         EXPECT_TRUE(tes_array::count(arr) == 2);
         EXPECT_TRUE(tes_array::itemAtIndex<SInt32>(arr, 1) == 30);
 
         auto arr2 = array::create();
-        tes_array::add<SInt32>(arr2, 4);
+        tes_array::addItemAt<SInt32>(arr2, 4);
 
-        tes_array::add(arr, arr2);
+        tes_array::addItemAt(arr, arr2);
         EXPECT_TRUE(tes_array::itemAtIndex<Handle>(arr, 2) == arr2->id);
 
         tes_object::release(arr);
@@ -258,6 +258,41 @@ namespace collections {
         EXPECT_TRUE(tes_array::itemAtIndex<SInt32>( arr2, 0) == 4);
 
         tes_object::release( arr2);
+    }
+
+    TEST(array,  negative_indices)
+    {
+        auto obj = array::object();
+
+        SInt32 values[] = {1,2,3,4,5,6,7};
+
+        for (auto num : values) {
+            tes_array::addItemAt(obj, num, -1);
+        }
+
+        EXPECT_TRUE( tes_array::itemAtIndex<SInt32>(obj, -1) == 7);
+        EXPECT_TRUE( tes_array::itemAtIndex<SInt32>(obj, -2) == 6);
+
+        EXPECT_TRUE( tes_array::itemAtIndex<SInt32>(obj, 0) == 1);
+        EXPECT_TRUE( tes_array::itemAtIndex<SInt32>(obj, 1) == 2);
+        
+        tes_array::addItemAt(obj, 8, -2);
+        //{1,2,3,4,5,6,8,7}
+        EXPECT_TRUE( tes_array::itemAtIndex<SInt32>(obj, -2) == 8);
+
+        tes_array::addItemAt(obj, 0, 0);
+        //{0,1,2,3,4,5,6,8,7}
+        EXPECT_TRUE( tes_array::itemAtIndex<SInt32>(obj, 0) == 0);
+
+        tes_array::eraseIndex(obj, -1);
+        //{0,1,2,3,4,5,6,8}
+        EXPECT_TRUE( tes_array::itemAtIndex<SInt32>(obj, -1) == 8);
+        EXPECT_TRUE( tes_array::itemAtIndex<SInt32>(obj, 7) == 8);
+
+        tes_array::eraseIndex(obj, -2);
+        //{0,1,2,3,4,5,8}
+        EXPECT_TRUE( tes_array::itemAtIndex<SInt32>(obj, -2) == 5);
+
     }
 
     TEST(tes_jcontainers, tes_jcontainers)

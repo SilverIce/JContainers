@@ -90,7 +90,6 @@ extern "C" {
     }
 
     __declspec(dllexport) void launchShityTest() {
-        printf("0x%x", -1);
         testing::runTests(meta<testing::TestInfo>::getListConst());
     }
 };

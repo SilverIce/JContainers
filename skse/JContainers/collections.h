@@ -452,9 +452,13 @@ namespace collections {
             TypeId = CollectionTypeArray,
         };
 
-        typedef UInt32 Index;
+        typedef SInt32 Index;
 
-        std::vector<Item> _array;
+        typedef std::vector<Item> container_type;
+        typedef container_type::iterator iterator;
+        typedef container_type::reverse_iterator reverse_iterator;
+
+        container_type _array;
 
         void u_push(const Item& item) {
             _array.push_back(item);
@@ -469,6 +473,12 @@ namespace collections {
         }
 
         void u_nullifyObjects() override;
+
+        iterator begin() { return _array.begin();}
+        iterator end() { return _array.end(); }
+
+        reverse_iterator rbegin() { return _array.rbegin();}
+        reverse_iterator rend() { return _array.rend(); }
 
         //////////////////////////////////////////////////////////////////////////
 
