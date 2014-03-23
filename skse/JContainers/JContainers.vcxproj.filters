@@ -129,6 +129,9 @@
     <ClInclude Include="collections.tests.hpp">
       <Filter>collections_module</Filter>
     </ClInclude>
+    <ClInclude Include="plugin_info.h">
+      <Filter>collections_module</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="exports.def" />

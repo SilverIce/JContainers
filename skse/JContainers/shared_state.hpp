@@ -61,12 +61,23 @@ namespace collections
             u_clearState();
 
             if (!data.empty() && version == kJSerializationDataVersion) {
-                archive >> *registry;
-                archive >> *aqueue;
 
-                if (delegate) {
-                    delegate->u_loadAdditional(archive);
+                try {
+                    archive >> *registry;
+                    archive >> *aqueue;
+
+                    if (delegate) {
+                        delegate->u_loadAdditional(archive);
+                    }
                 }
+                catch (const boost::archive::archive_exception& exc) {
+                    _DMESSAGE("caught exception during archive load - '%s'. trying to recover", exc.what());
+
+                    throw exc;
+
+                    //u_clearState();
+                }
+
             }
 
             // deadlock possible

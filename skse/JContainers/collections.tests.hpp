@@ -1,5 +1,4 @@
 #pragma once
-#include <thread>
 
 namespace collections {
 
@@ -100,21 +99,19 @@ namespace collections {
             identifiers.push_back(obj->id);
         }
 
-        bool allExist = std::all_of(identifiers.begin(), identifiers.end(), [&](Handle id) {
-            return context.getObject(id);
-        });
+        auto allExist = [&]() {
+            return std::all_of(identifiers.begin(), identifiers.end(), [&](Handle id) {
+                return context.getObject(id);
+            });
+        };
 
-        EXPECT_TRUE(allExist);
+        EXPECT_TRUE(allExist());
 
         //EXPECT_TRUE(queue.count() == (countBefore + identifiers.size()));
 
         std::this_thread::sleep_for( std::chrono::seconds(20) );
 
-        bool allDeleted = std::all_of(identifiers.begin(), identifiers.end(), [&](Handle id) {
-            return  context.getObject(id) == nullptr;
-        });
-
-        EXPECT_TRUE(allDeleted);
+        EXPECT_TRUE(allExist() == false);
     }
 
 

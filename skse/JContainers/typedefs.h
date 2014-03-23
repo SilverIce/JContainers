@@ -1,15 +1,8 @@
 #pragma once
 
-enum {
-    kJStorageChunk = 'JSTR',
-
-    kJSerializationDataVersion = 2,
-    kJAPIVersion = 1,
-};
-
 #define STR(...) #__VA_ARGS__
 
-namespace Movement
+namespace collections
 {
     typedef signed char     int8;
     typedef unsigned char   uint8;

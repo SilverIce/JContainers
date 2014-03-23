@@ -1,3 +1,4 @@
+
 #include <thread>
 #include <mutex>
 #include <chrono>
@@ -19,15 +20,14 @@
 
 #include "rw_mutex.h"
 
-
+#include "plugin_info.h"
 #include "object_base.h"
-#include "id_generator.h"
+#include "shared_state.h"
 
+#include "id_generator.h"
 #include "object_registry.h"
 #include "autorelease_queue.h"
 
-
-#include "shared_state.h"
 
 #include "object_base.hpp"
 #include "shared_state.hpp"

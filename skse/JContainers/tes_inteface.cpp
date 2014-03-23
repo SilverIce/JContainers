@@ -5,9 +5,13 @@
 #include <errno.h>
 
 #include <set>
+#include <thread>
+
+#include <boost/filesystem.hpp>
 
 #include "cJSON.h"
 #include "gtest.h"
+#include "plugin_info.h"
 
 #include "tes_error_code.h"
 

@@ -138,6 +138,7 @@
     <ClCompile Include="line_breaker.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="serialization.cpp" />
+    <ClInclude Include="plugin_info.h" />
     <ClInclude Include="tes_context.hpp">
       <FileType>CppCode</FileType>
     </ClInclude>

@@ -7,8 +7,7 @@
 #include "skse/PapyrusNativeFunctions.h"
 
 #include "gtest.h"
-
-//#include "skse/SafeWrite.h"
+#include "plugin_info.h"
 
 
 PluginHandle	g_pluginHandle = kPluginHandle_Invalid;
@@ -40,6 +39,8 @@ extern "C" {
 	    // store plugin handle so we can identify ourselves later
 	    g_pluginHandle = skse->GetPluginHandle();
 
+        _MESSAGE("JContainers %u.%u\n", kJVersionMajor, kJVersionMinor);
+
 	    if (skse->isEditor) {
 		    _MESSAGE("loaded in editor, marking as incompatible");
 		    return false;
@@ -64,7 +65,7 @@ extern "C" {
         g_papyrus = (SKSEPapyrusInterface *)skse->QueryInterface(kInterface_Papyrus);
 
         if (!g_papyrus) {
-            _MESSAGE("couldn't get g_papyrus interface");
+            _MESSAGE("couldn't get papyrus interface");
             return false;
         }
 
@@ -73,7 +74,7 @@ extern "C" {
 
     bool SKSEPlugin_Load(const SKSEInterface * skse)
     {
-        _MESSAGE("load");
+        _MESSAGE("plugin loaded");
 
 	    // register callbacks and unique ID for serialization
 	    // ### this must be a UNIQUE ID, change this and email me the ID so I can let you know if someone else has already taken it
@@ -89,6 +90,7 @@ extern "C" {
     }
 
     __declspec(dllexport) void launchShityTest() {
+        printf("0x%x", -1);
         testing::runTests(meta<testing::TestInfo>::getListConst());
     }
 };
