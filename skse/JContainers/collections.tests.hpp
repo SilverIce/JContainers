@@ -94,7 +94,7 @@ namespace collections {
         //int countBefore = queue.count();
 
         for (int i = 0; i < 10; ++i) {
-            auto obj = map::object();
+            auto obj = map::object(context);
 
             identifiers.push_back(obj->id);
         }
@@ -308,7 +308,7 @@ namespace collections {
         map *cnt = map::object();
 
         const char *name = "back in black";
-        cnt->setValueForKey("ACDC", Item(name));
+        cnt->u_setValueForKey("ACDC", Item(name));
 
         EXPECT_TRUE(strcmp(cnt->find("acdc")->strValue(), name) == 0);
     }
@@ -317,7 +317,7 @@ namespace collections {
     TEST(json_handling, recursion)
     {
         map *cnt = map::object();
-        cnt->setValueForKey("cycle", Item(cnt));
+        cnt->u_setValueForKey("cycle", Item(cnt));
 
         char *data = json_handling::createJSONData(*cnt);
 

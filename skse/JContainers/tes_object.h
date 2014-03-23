@@ -82,6 +82,42 @@ An alternative to retain-release is store object in JDB container"
         }
         REGISTERF2(readFromFile, "filePath", ARGS(creates and returns new container (JArray or JMap) containing the contents of JSON file));
 
+        static object_base* readFromDirectory(const char *dirPath, const char *extension = "")
+        {
+            using namespace boost;
+
+            if (!dirPath || !filesystem::exists( dirPath )) {
+                return nullptr;
+            }
+
+            if (!extension) {
+                extension = "";
+            }
+
+            filesystem::directory_iterator end_itr;
+            filesystem::path root(dirPath);
+
+            map *files = map::object(); 
+
+            for ( filesystem::directory_iterator itr( root ); itr != end_itr; ++itr ) {
+
+                if ( filesystem::is_regular_file( *itr ) &&
+                     (!*extension || itr->path().extension().generic_string().compare(extension) == 0) ) {
+                    auto asniString = itr->path().generic_string();
+                    auto jsonObject = tes_object::readFromFile(asniString.c_str());
+
+                    if (jsonObject) {
+                        files->setValueForKey(itr->path().filename().generic_string(), Item(jsonObject));
+                    }  
+                }
+            }
+
+            return files;
+        }
+        REGISTERF2(readFromDirectory, "directoryPath extension=\"\"",
+            "parses files in directory (non recursive) and returns JMap containing filename - json-object pairs.\n"
+            "note: by default it does not filters files by extension and will try to parse everything");
+
         static object_base* objectFromPrototype(const char *prototype) {
             if (!prototype)
                 return nullptr;

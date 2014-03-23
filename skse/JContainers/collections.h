@@ -536,10 +536,14 @@ namespace collections {
             return cnt[key];
         }
 
-        void setValueForKey(const std::string& key, const Item& value) {
+        void u_setValueForKey(const std::string& key, const Item& value) {
             cnt[key] = value;
         }
 
+        void setValueForKey(const std::string& key, const Item& value) {
+            object_lock g(this);
+            cnt[key] = value;
+        }
 /*
         Item& operator[](const std::string& str) {
             mutex_lock g(_mutex);
