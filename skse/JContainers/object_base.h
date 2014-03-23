@@ -108,7 +108,12 @@ namespace collections {
 
         virtual void u_clear() = 0;
         virtual SInt32 u_count() = 0;
+
         virtual void u_onLoaded() {};
+
+        // nillify object cross references to avoid high-level
+        // release calls and resulting deadlock
+        virtual void u_nullifyObjects() = 0;
 
         SInt32 s_count() {
             mutex_lock g(_mutex);

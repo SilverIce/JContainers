@@ -301,6 +301,26 @@ namespace collections {
             }
         }
     }
+
+    //////////////////////////////////////////////////////////////////////////
+
+    void array::u_nullifyObjects() {
+        for (auto& item : _array) {
+            item.u_nullifyObject();
+        }
+    }
+
+    void form_map::u_nullifyObjects() {
+        for (auto& pair : cnt) {
+            pair.second.u_nullifyObject();
+        }
+    }
+
+    void map::u_nullifyObjects() {
+        for (auto& pair : cnt) {
+            pair.second.u_nullifyObject();
+        }
+    }
 }
 
 void Serialization_Revert(SKSESerializationInterface * intfc)

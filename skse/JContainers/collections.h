@@ -229,6 +229,13 @@ namespace collections {
             _replaceObject(obj);
         }
 
+        void u_nullifyObject() {
+            if (object()) {
+                _object = nullptr;
+                _type = ItemTypeNone;
+            }
+        }
+
         bool _freeObject() {
             object_base *prev = object();
             if (prev) {
@@ -461,6 +468,8 @@ namespace collections {
             return _array.size();
         }
 
+        void u_nullifyObjects() override;
+
         //////////////////////////////////////////////////////////////////////////
 
         template<class Archive>
@@ -527,7 +536,7 @@ namespace collections {
             return cnt[str];
         }*/
 
-
+        void u_nullifyObjects() override;
 
         void u_clear() override {
             cnt.clear();
@@ -591,6 +600,8 @@ namespace collections {
         // may call release if key is invalid
         // may also produces retain calls
         void u_updateKeys();
+
+        void u_nullifyObjects() override;
 
         //////////////////////////////////////////////////////////////////////////
 
