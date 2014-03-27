@@ -1,4 +1,3 @@
-//BOOST_CLASS_EXPORT_GUID(collections::shared_state, "kJObjectContext");
 
 namespace collections
 {
@@ -82,6 +81,9 @@ namespace collections
 
             // deadlock possible
             u_postLoadMaintenance();
+
+            _DMESSAGE("%u objects total", registry->u_container().size());
+            _DMESSAGE("%u objects in aqueue", aqueue->u_count());
         }
         aqueue->start();
     }

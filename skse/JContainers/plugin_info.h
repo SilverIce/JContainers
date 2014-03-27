@@ -7,5 +7,5 @@ enum {
     kJAPIVersion = 1,
 
     kJVersionMajor = 0,
-    kJVersionMinor = 62,
+    kJVersionMinor = 63,
 };

@@ -36,6 +36,8 @@ namespace collections {
 
 bool registerAllFunctions(VMClassRegistry *registry) {
 
+    _MESSAGE("registering functions");
+
     using namespace collections;
 
     tes_binding::foreach_metaInfo_do([=](tes_binding::class_meta_info& info) {

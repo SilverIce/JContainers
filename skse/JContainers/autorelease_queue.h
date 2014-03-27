@@ -68,6 +68,10 @@ namespace collections {
 
         size_t count() {
             read_lock hg(_mutex);
+            return u_count();
+        }
+
+        size_t u_count() const {
             return _queue.size();
         }
 
@@ -112,11 +116,14 @@ namespace collections {
 
         enum {
             obj_lifetime = 10, // seconds
-            sleep_duration = 2, // seconds
+            tick_duration = 2, // seconds
+
+            sleep_duration_millis = 100, // milliseconds
         };
 
         enum {
-            obj_lifeInTicks = obj_lifetime / sleep_duration, // ticks
+            tick_duration_millis = 1000 * tick_duration,
+            obj_lifeInTicks = obj_lifetime / tick_duration, // ticks
         };
 
     private:
@@ -124,19 +131,28 @@ namespace collections {
         static void run(autorelease_queue &self) {
             using namespace std;
 
-            chrono::seconds sleepTime(sleep_duration);
+            chrono::milliseconds sleepTime(sleep_duration_millis);
             vector<HandleT> toRelease;
+            uint32 millisecondCounter = 0; // plain & dumb counter
 
             while (true) {
-                {
-                    unsigned char state = self._state;
+                
+                unsigned char state = self._state;
                     
-                    if ((state & state_run) == 0) {
-                        break;
-                    }
+                if ((state & state_run) == 0) {
+                    break;
+                }
+
+                std::this_thread::sleep_for(sleepTime);
+
+                millisecondCounter += sleep_duration_millis;
+
+                if (millisecondCounter >= tick_duration_millis) {
+
+                    millisecondCounter = 0;
 
                     if ((state & state_paused) == 0) {
-                        
+
                         write_lock g(self._mutex);
                         self._queue.erase(
                             remove_if(self._queue.begin(), self._queue.end(), [&](const queue::value_type& val) {
@@ -151,19 +167,17 @@ namespace collections {
 
                         self.cycleIncr();
                     }
-                }
 
-                for(auto& val : toRelease) {
-                    auto obj = self._registry.getObject(val);
-                    if (obj) {
-                        bool deleted = obj->_deleteOrRelease(nullptr);
-                        //printf("handle %u %s\n", val, (deleted ? "deleted" : "released"));
+
+                    for(auto& val : toRelease) {
+                        auto obj = self._registry.getObject(val);
+                        if (obj) {
+                            bool deleted = obj->_deleteOrRelease(nullptr);
+                            //printf("handle %u %s\n", val, (deleted ? "deleted" : "released"));
+                        }
                     }
+                    toRelease.clear();
                 }
-                toRelease.clear();
-
-                //printf("autorelease_queue time - %u\n", self._timeNow);
-                std::this_thread::sleep_for(sleepTime);
             }
 
             printf("autorelease_queue finish\n");
@@ -172,5 +186,3 @@ namespace collections {
 
 
 }
-
-//BOOST_CLASS_EXPORT_GUID (collections::autorelease_queue, "kJAutoreleaseQueue")
