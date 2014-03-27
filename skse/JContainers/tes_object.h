@@ -34,20 +34,39 @@ An alternative to retain-release is store object in JDB container"
             return T::object();
         }
 
-        static void release(object_base *obj) {
+        static object_base* release(object_base *obj) {
             if (obj) {
                 obj->tes_release();
             }
+
+            return nullptr;
         }
-        REGISTERF2(release, "*", "releases the object");
+        REGISTERF2(release, "*", "releases the object and returns zero, so you could release and nullify with one line of code: object = JVlaue.release(object)");
+
+        static object_base* releaseAndRetain(object_base *previousObject, object_base *newObject) {
+            if (previousObject != newObject) {
+                if (previousObject) {
+                    previousObject->tes_release();
+                }
+
+                if (newObject) {
+                    newObject->tes_retain();
+                }
+            }
+
+            return newObject;
+        }
+        REGISTERF2(releaseAndRetain, "previousObject newObject",
+"just a union of retain-release calls. releases previousObject, retains and returns newObject.\n\
+useful for those who use Papyrus properties instead of manual (and more error-prone) release-retain object lifetime management");
 
         static bool isArray(object_base *obj) {
-            return obj && obj->_type == CollectionTypeArray;
+            return obj && obj->as<array>();
         }
         REGISTERF2(isArray, "*", "returns true if object is map, array or formmap container");
 
         static bool isMap(object_base *obj) {
-            return obj && obj->_type == CollectionTypeMap;
+            return obj && obj->as<map>();
         }
         REGISTERF2(isMap, "*", NULL);
 

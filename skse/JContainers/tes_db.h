@@ -31,6 +31,19 @@ JDB.solveObj(\".frostfall.arrayC\") will return array containing [\"stringValue\
         REGISTERF(solveGetter<object_base*>, "solveObj", "path", NULL);
         REGISTERF(solveGetter<TESForm*>, "solveForm", "path", NULL);
 
+        template<class T>
+        static bool solveSetter(const char* path, T value) { 
+            return tes_object::solveSetter(tes_context::instance().database(), path, value);
+        }
+        REGISTERF(solveSetter<Float32>, "solveFltSetter", "path value",
+            "attempts to assign value. returns false if no such path\n\
+            for ex. JDB.solveFltSetter(\".frostfall.exposureRate\", 1.0) assigns 1.0 to \".frostfall.exposureRate\" path");
+        REGISTERF(solveSetter<SInt32>, "solveIntSetter", "path value", NULL);
+        REGISTERF(solveSetter<const char*>, "solveStrSetter", "path value", NULL);
+        REGISTERF(solveSetter<object_base*>, "solveObjSetter", "path value", NULL);
+        REGISTERF(solveSetter<TESForm*>, "solveFormSetter", "path value", NULL);
+
+
         static void setObj(const char *path, object_base *obj) {
             object_base *db = tes_context::instance().database();
             map *dbMap = db ? db->as<map>() : nullptr;
@@ -46,7 +59,7 @@ JDB.solveObj(\".frostfall.arrayC\") will return array containing [\"stringValue\
             }
         }
         REGISTERF(setObj, "setObj", "key object",
-"Associates(and replaces previous association) container object (array or map) with a string key.\n\
+"Associates(and replaces previous association) container object with a string key.\n\
 destroys association if object is zero\n\
 for ex. JDB.setObj(\"frostfall\", frostFallInformation) will associate 'frostall' key and frostFallInformation so you can access it later"
 );
@@ -78,18 +91,6 @@ for ex. JDB.setObj(\"frostfall\", frostFallInformation) will associate 'frostall
         REGISTERF2(readFromFile, "path",
 "reads information from a file at given path and fills storage with it's JSON content\n\
 NOTE: it will replace all existing JDB contents!");
-
-        template<class T>
-        static bool solveSetter(const char* path, T value) { 
-            return tes_object::solveSetter(tes_context::instance().database(), path, value);
-        }
-        REGISTERF(solveSetter<Float32>, "solveFltSetter", "path value",
-"attempts to assign value. returns false if no such path\n\
-for ex. JDB.solveFltSetter(\".frostfall.exposureRate\", 1.0) assigns 1.0 to \".frostfall.exposureRate\" path");
-        REGISTERF(solveSetter<SInt32>, "solveIntSetter", "path value", NULL);
-        REGISTERF(solveSetter<const char*>, "solveStrSetter", "path value", NULL);
-        REGISTERF(solveSetter<object_base*>, "solveObjSetter", "path value", NULL);
-        REGISTERF(solveSetter<TESForm*>, "solveFormSetter", "path value", NULL);
 
     };
 

@@ -299,7 +299,8 @@ namespace collections {
     {
         EXPECT_TRUE(tes_jcontainers::isInstalled());
 
-        EXPECT_TRUE(tes_jcontainers::fileExistsAtPath("SafetyLoad.log"));
+        EXPECT_FALSE(tes_jcontainers::fileExistsAtPath(nullptr));
+        EXPECT_TRUE(tes_jcontainers::fileExistsAtPath("JContainers.dll"));
         EXPECT_TRUE(!tes_jcontainers::fileExistsAtPath("abracadabra"));
     }
 

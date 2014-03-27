@@ -10,8 +10,8 @@ namespace collections {
         REGISTER_TES_NAME("JArray");
 
         void additionalSetup() {
-            metaInfo.comment = "Resizeable, unlimited size array (Skyrim size limit is 128) that may contain any value (value is float, integer, string or another container) in one time.\n"
-                "Inherits all JValue functions";
+            metaInfo.comment = "Ordered collection of values (value is float, integer, string or another container).\n"
+                "Inherits JValue functionality";
         }
 
         static bool validateReadIndex(const array *obj, UInt32 index) {

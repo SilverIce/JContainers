@@ -25,6 +25,10 @@ namespace collections {
         });
 
         static bool fileExistsAtPath(const char *filename) {
+            if (!filename) {
+                return false;
+            }
+
             struct _stat buf;
             int result = _stat(filename, &buf);
             return result == 0;
