@@ -18,7 +18,7 @@ Manages keys and values associations as JMap";
 "attempts to get value assiciated with path.\n\
 for ex. following information associated with 'frosfall' key:\n\
 \n\
-\"frostfall\" = {\n\
+\"frostfall\" : {\n\
     \"exposureRate\" : 0.5,\n\
     \"arrayC\" : [\"stringValue\", 1.5, 10, 1.14]\n\
 }\n\

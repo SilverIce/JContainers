@@ -19,7 +19,7 @@ namespace collections {
         }
         REGISTERF2(APIVersion, NULL, []() {
             std::stringstream comm;
-            comm << "returns API version. Incremented by 1 each time old API is not backward compartible with new one.\n";
+            comm << "returns API version. Incremented by 1 each time old API is not backward compatible with new one.\n";
             comm << "current API version is " << APIVersion();
             return comm.str();
         });
