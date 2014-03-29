@@ -331,12 +331,20 @@ namespace collections {
             return _type == ItemTypeForm ? LookupFormByID(_formId) : nullptr;
         }
 
+        FormId formId() const {
+            return (FormId) (_type == ItemTypeForm ? _formId : 0);
+        }
+
         void setForm(const TESForm *form) {
+            setFormId((FormId)(form ? form->formID : 0));
+        }
+
+        void setFormId(FormId formId) {
             _freeString();
             _freeObject();
 
             _type = ItemTypeForm;
-            _formId = (form ? form->formID : 0);
+            _formId = formId;
         }
 
         bool isEqual(SInt32 value) const {

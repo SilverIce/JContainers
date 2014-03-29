@@ -1,10 +1,16 @@
 #pragma once
 
+#include <boost/algorithm/string.hpp>
+#include "skse/GameData.h"
+
 namespace collections {
 
     inline std::unique_ptr<FILE, decltype(&fclose)> make_unique_file(FILE *file) {
         return std::unique_ptr<FILE, decltype(&fclose)> (file, &fclose);
     }
+
+    static const char * kJSerializedFormData = "__formData";
+    static const char * kJSerializedFormDataSeparator = "|";
 
     class json_handling {
     public:
@@ -191,16 +197,37 @@ namespace collections {
             return ar;
         }
 
-        static map * nmakeObject(cJSON *val) {
-            auto ar = map::object();
+        static object_base * makeObject(cJSON *val) {
 
-            int count = cJSON_GetArraySize(val);
-            for (int i = 0; i < count; ++i) {
-                auto itm = cJSON_GetArrayItem(val, i);
-                (*ar)[itm->string] = makeItem(itm);
+            object_base *object = nullptr;
+            bool isFormMap = cJSON_GetObjectItem(val, kJSerializedFormData) != nullptr;
+
+            if (isFormMap) {
+                auto obj = form_map::object();
+                object = obj;
+
+                int count = cJSON_GetArraySize(val);
+                for (int i = 0; i < count; ++i) {
+                    auto itm = cJSON_GetArrayItem(val, i);
+                    FormId key = formIdFromString(itm->string);
+
+                    if (key) {
+                        (*obj)[key] = makeItem(itm);
+                    }
+                }
+            } else {
+
+                auto obj = map::object();
+                object = obj;
+
+                int count = cJSON_GetArraySize(val);
+                for (int i = 0; i < count; ++i) {
+                    auto itm = cJSON_GetArrayItem(val, i);
+                    (*obj)[itm->string] = makeItem(itm);
+                }
             }
 
-            return ar;
+            return object;
         }
 
         static Item makeItem(cJSON *val) {
@@ -210,10 +237,18 @@ namespace collections {
                 auto ar = makeArray(val);
                 item.setObjectVal(ar);
             } else if (type == cJSON_Object) {
-                auto ar = nmakeObject(val);
+                auto ar = makeObject(val);
                 item.setObjectVal(ar);
             } else if (type == cJSON_String) {
-                item.setStringVal(val->valuestring);
+
+                bool isFormData = strncmp(val->valuestring, kJSerializedFormData, strlen(kJSerializedFormData)) == 0;
+
+                if (!isFormData) {
+                    item.setStringVal(val->valuestring);
+                } else {
+                    item.setFormId(formIdFromString(val->valuestring));
+                }
+
             } else if (type == cJSON_Number) {
                 if (std::floor(val->valuedouble) == val->valuedouble) {
                     item.setInt(val->valueint);
@@ -257,7 +292,7 @@ namespace collections {
 
                 serializedObjects.insert(obj);
 
-                mutex_lock g(obj->_mutex);
+                object_lock g(obj);
 
                 if (obj->as<array>()) {
 
@@ -280,12 +315,33 @@ namespace collections {
                          }
                     }
                 }
+                else if (obj->as<form_map>()) {
+
+                    val = cJSON_CreateObject();
+
+                    cJSON_AddItemToObject(val, kJSerializedFormData, cJSON_CreateNull());
+
+                    for (auto& pair : obj->as<form_map>()->container()) {
+                        auto cnode = createCJSONNode(pair.second, serializedObjects);
+                        if (cnode) {
+                            auto key = formIdToString(pair.first);
+                            if (!key.empty()) {
+                                cJSON_AddItemToObject(val, key.c_str(), cnode);
+                            }
+                        }
+                    }
+                }
             }
             else if (type == ItemTypeCString) {
+
                 val = cJSON_CreateString(item.strValue());
             }
             else if (type == ItemTypeInt32 || type == ItemTypeFloat32) {
                 val = cJSON_CreateNumber(item.fltValue());
+            }
+            else if (type == ItemTypeForm) {
+                auto formString = formIdToString(item.formId());
+                val = cJSON_CreateString( formString.c_str() );
             }
             else {
             createNullNode:
@@ -294,7 +350,62 @@ namespace collections {
 
             return val;
         }
+
+        static std::string formIdToString(FormId formId, bool isTest = false) {
+
+            UInt8 modID = formId >> 24;
+
+            if (modID == 0xFF)
+                return "";
+
+            DataHandler * dhand = DataHandler::GetSingleton();
+            ModInfo * modInfo = dhand->modList.loadedMods[modID];
+
+            std::string string = kJSerializedFormData;
+            string += kJSerializedFormDataSeparator;
+            string += modInfo->name;
+            string += kJSerializedFormDataSeparator;
+
+            char buff[20] = {'\0'};
+            sprintf(buff, "0x%x", formId);
+            string += buff;
+
+            return string;
+        }
+
+        static FormId formIdFromString(const char* source, bool isTest = false) {
+
+            std::vector<std::string> substrings;
+            boost::split(substrings, source, boost::is_any_of(kJSerializedFormDataSeparator));
+
+            if (substrings.size() != 3 || substrings[0].compare(kJSerializedFormData) != 0) {
+                return (FormId)0;
+            }
+
+            auto& pluginName = substrings[1];
+
+            DataHandler * dhand = DataHandler::GetSingleton();
+            UInt8 modIdx = dhand->GetModIndex(pluginName.c_str());
+
+            if (modIdx == (UInt8)-1) {
+                return (FormId)0;
+            }
+
+            auto& formIdString = substrings[2];
+
+            const char *format = formIdString.find("0x") == 0 ? "0x%x" : "%u";
+            UInt32 formId = 0;
+
+            if (sscanf_s(formIdString.c_str(), format, &formId) != 1) {
+                return (FormId)0;
+            }
+
+            formId = (modIdx << 24) | (formId & 0x00FFFFFF);
+
+            return (FormId)formId;
+        }
     };
+
 }
 
 
