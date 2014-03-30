@@ -18,9 +18,6 @@
 
 #include "tes_context.h"
 
-//class VMClassRegistry;
-//struct StaticFunctionTag;
-
 namespace collections {
 
 
