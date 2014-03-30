@@ -64,16 +64,16 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>lib;lib\boost;$(SolutionDir);$(SolutionDir)\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;lib;lib\boost;$(SolutionDir);$(SolutionDir)\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;NDEBUG;_WINDOWS;_USRDLL;PLUGIN_EXAMPLE_EXPORTS;_PPAPI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <ForcedIncludeFiles>jcontainers_pch.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <StringPooling>true</StringPooling>
       <PrecompiledHeaderFile>jcontainers_pch.h</PrecompiledHeaderFile>
+      <ForcedIncludeFiles>jcontainers_pch.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
     </ClCompile>
     <Link>
       <ModuleDefinitionFile>exports.def</ModuleDefinitionFile>
@@ -90,17 +90,17 @@
     <ClCompile>
       <Optimization>Full</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>lib;lib\boost;$(SolutionDir);$(SolutionDir)\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;lib;lib\boost;$(SolutionDir);$(SolutionDir)\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;NDEBUG;_WINDOWS;_USRDLL;PLUGIN_EXAMPLE_EXPORTS;_PPAPI;TEST_COMPILATION_DISABLED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <ForcedIncludeFiles>jcontainers_pch.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <StringPooling>true</StringPooling>
       <BrowseInformation>true</BrowseInformation>
       <PrecompiledHeaderFile>jcontainers_pch.h</PrecompiledHeaderFile>
+      <ForcedIncludeFiles>jcontainers_pch.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
     </ClCompile>
     <Link>
       <ModuleDefinitionFile>exports.def</ModuleDefinitionFile>
@@ -127,54 +127,49 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="basic_part.cpp" />
-    <ClCompile Include="code_producer.cpp" />
-    <ClCompile Include="gtest.cpp" />
-    <ClCompile Include="jcontainers_pch.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='production|Win32'">Create</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="lib\cJSON\cJSON.cpp" />
-    <ClCompile Include="line_breaker.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="serialization.cpp" />
+    <ClCompile Include="src\basic_part.cpp" />
+    <ClCompile Include="src\gtest.cpp" />
+    <ClCompile Include="src\jcontainers_pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='production|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="src\line_breaker.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\serialization.cpp" />
+    <ClCompile Include="src\tes_inteface.cpp" />
     <ClInclude Include="lib\cJSON\cJSON.h" />
-    <ClInclude Include="plugin_info.h" />
-    <ClInclude Include="tes_context.hpp">
-      <FileType>CppCode</FileType>
-    </ClInclude>
-    <ClCompile Include="tes_inteface.cpp" />
+    <ClInclude Include="src\autorelease_queue.h" />
+    <ClInclude Include="src\code_producer.h" />
+    <ClCompile Include="src\code_producer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="autorelease_queue.h" />
-    <ClInclude Include="code_producer.h" />
-    <ClInclude Include="collections.h" />
-    <ClInclude Include="collections.tests.hpp" />
-    <ClInclude Include="object_base.h" />
-    <ClInclude Include="object_base.hpp" />
-    <ClInclude Include="object_registry.h" />
-    <ClInclude Include="gtest.h" />
-    <ClInclude Include="jcontainers_pch.h" />
-    <ClInclude Include="rw_mutex.h" />
-    <ClInclude Include="spinlock.h" />
-    <ClInclude Include="id_generator.h" />
-    <ClInclude Include="meta.h" />
-    <ClInclude Include="shared_state.h" />
-    <ClInclude Include="shared_state.hpp" />
-    <ClInclude Include="tes_array.h" />
-    <ClInclude Include="tes_binding.h" />
-    <ClInclude Include="tes_context.h" />
-    <ClInclude Include="tes_db.h" />
-    <ClInclude Include="tes_error_code.h" />
-    <ClInclude Include="tes_jcontainers.h" />
-    <ClInclude Include="tes_map.h" />
-    <ClInclude Include="tes_meta_info.h" />
-    <ClInclude Include="tes_object.h" />
-    <ClInclude Include="tes_string.h" />
-    <ClInclude Include="typedefs.h" />
+    <ClInclude Include="src\collections.h" />
+    <ClInclude Include="src\collections.tests.hpp" />
+    <ClInclude Include="src\gtest.h" />
+    <ClInclude Include="src\id_generator.h" />
+    <ClInclude Include="src\jcontainers_pch.h" />
+    <ClInclude Include="src\json_handling.h" />
+    <ClInclude Include="src\meta.h" />
+    <ClInclude Include="src\object_base.h" />
+    <ClInclude Include="src\object_base.hpp" />
+    <ClInclude Include="src\object_registry.h" />
+    <ClInclude Include="src\rw_mutex.h" />
+    <ClInclude Include="src\shared_state.h" />
+    <ClInclude Include="src\shared_state.hpp" />
+    <ClInclude Include="src\spinlock.h" />
+    <ClInclude Include="src\tes_array.h" />
+    <ClInclude Include="src\tes_binding.h" />
+    <ClInclude Include="src\tes_context.h" />
+    <ClInclude Include="src\tes_context.hpp" />
+    <ClInclude Include="src\tes_db.h" />
+    <ClInclude Include="src\tes_error_code.h" />
+    <ClInclude Include="src\tes_jcontainers.h" />
+    <ClInclude Include="src\tes_map.h" />
+    <ClInclude Include="src\tes_object.h" />
+    <ClInclude Include="src\tes_string.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="json_handling.h" />
     <None Include="exports.def" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

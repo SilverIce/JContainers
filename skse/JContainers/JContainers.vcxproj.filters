@@ -24,119 +24,114 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="gtest.cpp">
-      <Filter>gtest</Filter>
-    </ClCompile>
-    <ClCompile Include="jcontainers_pch.cpp" />
-    <ClCompile Include="tes_inteface.cpp">
-      <Filter>collections_module</Filter>
-    </ClCompile>
-    <ClCompile Include="basic_part.cpp">
-      <Filter>object_module\impl</Filter>
-    </ClCompile>
-    <ClCompile Include="serialization.cpp">
-      <Filter>collections_module</Filter>
-    </ClCompile>
-    <ClCompile Include="code_producer.cpp">
-      <Filter>code_producer</Filter>
-    </ClCompile>
-    <ClCompile Include="line_breaker.cpp">
-      <Filter>collections_module\tes_classes</Filter>
-    </ClCompile>
     <ClCompile Include="lib\cJSON\cJSON.cpp">
       <Filter>cJSON</Filter>
     </ClCompile>
+    <ClCompile Include="src\code_producer.cpp">
+      <Filter>code_producer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\serialization.cpp">
+      <Filter>collections_module</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tes_inteface.cpp">
+      <Filter>collections_module</Filter>
+    </ClCompile>
+    <ClCompile Include="src\line_breaker.cpp">
+      <Filter>collections_module\tes_classes</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gtest.cpp">
+      <Filter>gtest</Filter>
+    </ClCompile>
+    <ClCompile Include="src\basic_part.cpp">
+      <Filter>object_module\impl</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\jcontainers_pch.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="tes_binding.h">
-      <Filter>collections_module</Filter>
-    </ClInclude>
-    <ClInclude Include="spinlock.h">
-      <Filter>object_module</Filter>
-    </ClInclude>
-    <ClInclude Include="meta.h">
-      <Filter>gtest</Filter>
-    </ClInclude>
-    <ClInclude Include="gtest.h">
-      <Filter>gtest</Filter>
-    </ClInclude>
-    <ClInclude Include="jcontainers_pch.h" />
-    <ClInclude Include="tes_object.h">
-      <Filter>collections_module\tes_classes</Filter>
-    </ClInclude>
-    <ClInclude Include="tes_array.h">
-      <Filter>collections_module\tes_classes</Filter>
-    </ClInclude>
-    <ClInclude Include="tes_map.h">
-      <Filter>collections_module\tes_classes</Filter>
-    </ClInclude>
-    <ClInclude Include="tes_jcontainers.h">
-      <Filter>collections_module\tes_classes</Filter>
-    </ClInclude>
-    <ClInclude Include="tes_db.h">
-      <Filter>collections_module\tes_classes</Filter>
-    </ClInclude>
-    <ClInclude Include="typedefs.h" />
-    <ClInclude Include="tes_error_code.h">
-      <Filter>collections_module</Filter>
-    </ClInclude>
-    <ClInclude Include="autorelease_queue.h">
-      <Filter>object_module\impl</Filter>
-    </ClInclude>
-    <ClInclude Include="object_registry.h">
-      <Filter>object_module\impl</Filter>
-    </ClInclude>
-    <ClInclude Include="id_generator.h">
-      <Filter>object_module\impl</Filter>
-    </ClInclude>
-    <ClInclude Include="rw_mutex.h">
-      <Filter>object_module\impl</Filter>
-    </ClInclude>
-    <ClInclude Include="object_base.hpp">
-      <Filter>object_module\impl</Filter>
-    </ClInclude>
-    <ClInclude Include="shared_state.h">
-      <Filter>object_module</Filter>
-    </ClInclude>
-    <ClInclude Include="object_base.h">
-      <Filter>object_module</Filter>
-    </ClInclude>
-    <ClInclude Include="collections.h">
-      <Filter>collections_module</Filter>
-    </ClInclude>
-    <ClInclude Include="tes_meta_info.h">
-      <Filter>code_producer</Filter>
-    </ClInclude>
-    <ClInclude Include="tes_context.h">
-      <Filter>collections_module</Filter>
-    </ClInclude>
-    <ClInclude Include="tes_context.hpp">
-      <Filter>collections_module</Filter>
-    </ClInclude>
-    <ClInclude Include="shared_state.hpp">
-      <Filter>object_module</Filter>
-    </ClInclude>
-    <ClInclude Include="code_producer.h">
-      <Filter>code_producer</Filter>
-    </ClInclude>
-    <ClInclude Include="tes_string.h">
-      <Filter>collections_module\tes_classes</Filter>
-    </ClInclude>
-    <ClInclude Include="collections.tests.hpp">
-      <Filter>collections_module</Filter>
-    </ClInclude>
-    <ClInclude Include="plugin_info.h">
-      <Filter>collections_module</Filter>
-    </ClInclude>
     <ClInclude Include="lib\cJSON\cJSON.h">
       <Filter>cJSON</Filter>
+    </ClInclude>
+    <ClInclude Include="src\code_producer.h">
+      <Filter>code_producer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\collections.h">
+      <Filter>collections_module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\collections.tests.hpp">
+      <Filter>collections_module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\jcontainers_pch.h">
+      <Filter>collections_module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\json_handling.h">
+      <Filter>collections_module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\tes_error_code.h">
+      <Filter>collections_module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\tes_binding.h">
+      <Filter>collections_module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\tes_context.h">
+      <Filter>collections_module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\tes_context.hpp">
+      <Filter>collections_module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\tes_array.h">
+      <Filter>collections_module\tes_classes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\tes_db.h">
+      <Filter>collections_module\tes_classes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\tes_jcontainers.h">
+      <Filter>collections_module\tes_classes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\tes_map.h">
+      <Filter>collections_module\tes_classes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\tes_object.h">
+      <Filter>collections_module\tes_classes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\tes_string.h">
+      <Filter>collections_module\tes_classes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gtest.h">
+      <Filter>gtest</Filter>
+    </ClInclude>
+    <ClInclude Include="src\meta.h">
+      <Filter>gtest</Filter>
+    </ClInclude>
+    <ClInclude Include="src\autorelease_queue.h">
+      <Filter>object_module\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="src\id_generator.h">
+      <Filter>object_module\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="src\object_base.hpp">
+      <Filter>object_module\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="src\object_registry.h">
+      <Filter>object_module\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rw_mutex.h">
+      <Filter>object_module\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="src\object_base.h">
+      <Filter>object_module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\shared_state.h">
+      <Filter>object_module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\shared_state.hpp">
+      <Filter>object_module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\spinlock.h">
+      <Filter>object_module</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="exports.def" />
-    <None Include="json_handling.h">
-      <Filter>collections_module</Filter>
-    </None>
   </ItemGroup>
 </Project>

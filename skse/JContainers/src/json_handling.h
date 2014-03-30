@@ -361,6 +361,10 @@ namespace collections {
             DataHandler * dhand = DataHandler::GetSingleton();
             ModInfo * modInfo = dhand->modList.loadedMods[modID];
 
+            if (!modInfo) {
+                return "";
+            }
+
             std::string string = kJSerializedFormData;
             string += kJSerializedFormDataSeparator;
             string += modInfo->name;
