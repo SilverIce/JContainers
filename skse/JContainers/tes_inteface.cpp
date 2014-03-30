@@ -9,7 +9,7 @@
 
 #include <boost/filesystem.hpp>
 
-#include "cJSON.h"
+#include "cJSON/cJSON.h"
 #include "gtest.h"
 #include "plugin_info.h"
 

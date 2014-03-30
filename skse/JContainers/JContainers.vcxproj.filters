@@ -28,9 +28,6 @@
     <ClCompile Include="gtest.cpp">
       <Filter>gtest</Filter>
     </ClCompile>
-    <ClCompile Include="cJSON.cpp">
-      <Filter>cJSON</Filter>
-    </ClCompile>
     <ClCompile Include="jcontainers_pch.cpp" />
     <ClCompile Include="tes_inteface.cpp">
       <Filter>collections_module</Filter>
@@ -47,6 +44,9 @@
     <ClCompile Include="line_breaker.cpp">
       <Filter>collections_module\tes_classes</Filter>
     </ClCompile>
+    <ClCompile Include="lib\cJSON\cJSON.cpp">
+      <Filter>cJSON</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tes_binding.h">
@@ -60,9 +60,6 @@
     </ClInclude>
     <ClInclude Include="gtest.h">
       <Filter>gtest</Filter>
-    </ClInclude>
-    <ClInclude Include="cJSON.h">
-      <Filter>cJSON</Filter>
     </ClInclude>
     <ClInclude Include="jcontainers_pch.h" />
     <ClInclude Include="tes_object.h">
@@ -131,6 +128,9 @@
     </ClInclude>
     <ClInclude Include="plugin_info.h">
       <Filter>collections_module</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\cJSON\cJSON.h">
+      <Filter>cJSON</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -64,7 +64,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>lib\boost;$(SolutionDir);$(SolutionDir)\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>lib;lib\boost;$(SolutionDir);$(SolutionDir)\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;NDEBUG;_WINDOWS;_USRDLL;PLUGIN_EXAMPLE_EXPORTS;_PPAPI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -90,7 +90,7 @@
     <ClCompile>
       <Optimization>Full</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>lib\boost;$(SolutionDir);$(SolutionDir)\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>lib;lib\boost;$(SolutionDir);$(SolutionDir)\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;NDEBUG;_WINDOWS;_USRDLL;PLUGIN_EXAMPLE_EXPORTS;_PPAPI;TEST_COMPILATION_DISABLED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -128,16 +128,17 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="basic_part.cpp" />
-    <ClCompile Include="cJSON.cpp" />
     <ClCompile Include="code_producer.cpp" />
     <ClCompile Include="gtest.cpp" />
     <ClCompile Include="jcontainers_pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='production|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="lib\cJSON\cJSON.cpp" />
     <ClCompile Include="line_breaker.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="serialization.cpp" />
+    <ClInclude Include="lib\cJSON\cJSON.h" />
     <ClInclude Include="plugin_info.h" />
     <ClInclude Include="tes_context.hpp">
       <FileType>CppCode</FileType>
@@ -146,7 +147,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="autorelease_queue.h" />
-    <ClInclude Include="cJSON.h" />
     <ClInclude Include="code_producer.h" />
     <ClInclude Include="collections.h" />
     <ClInclude Include="collections.tests.hpp" />
