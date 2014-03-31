@@ -33,6 +33,7 @@ namespace collections {
         void u_clear() {
             u_stop();
             
+            _timeNow = 0;
             _queue.clear();
         }
 
