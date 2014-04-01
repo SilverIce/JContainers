@@ -130,6 +130,7 @@
     <ClInclude Include="src\spinlock.h">
       <Filter>object_module</Filter>
     </ClInclude>
+    <ClInclude Include="src\typedefs.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="exports.def" />

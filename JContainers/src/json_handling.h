@@ -15,124 +15,99 @@ namespace collections {
     class json_handling {
     public:
 
-        class collection_owner {
-            object_base *_collection;
-        public:
-            explicit collection_owner(object_base *coll) : _collection(nullptr) {
-                setCollection(coll);
-            }
-
-            ~collection_owner() {
-                setCollection(nullptr);
-            }
-
-            object_base* operator -> () const {
-                return _collection;
-            }
-
-            object_base* get () const {
-                return _collection;
-            }
-
-            bool operator !() const {
-                return _collection == nullptr;
-            }
-
-            void setCollection(object_base *coll) {
-                if (_collection != coll) {
-                    if (_collection) {
-                        _collection->_mutex.unlock();
-                        _collection->release();
-                    }
-                    _collection = coll;
-                    if (coll) {
-                        coll->retain();
-                        coll->_mutex.lock();
-                    }
-                }
-            }
-        };
-
         template<class F>
         static void resolvePath(object_base *collection, const char *path, F func) {
-            const char *c = path;
+
+            if (!collection || !path) {
+                return;
+            }
+
+            const char *pathItr = path;
 
             Item *itm = nullptr;
+            object_base * object = collection;
 
+            while ( *pathItr ) {
 
+                object_lock lock(object);
 
-            object_base * id = collection;
+                char s = *pathItr;
 
+                if (s == '.' || s != '[' || s != ']') {
 
-            collection_owner owner (nullptr);
-
-            while (*c ) {
-
-                owner.setCollection(id);
-
-                char s = *c++;
-
-                if (s == '.') {
-
-                    if (!id || !id->as<map>()) {
-                        break;
+                    if (!object || !object->as<map>()) {
+                        goto parsing_failed;
                     }
 
-                    char buff[256] = {'\0'};
-                    char *buffPtr = buff;
+                    if (s == '.') {
+                        ++pathItr;
+                    }
 
-                    while (*c && *c != '.' && *c != '[') {
-                        if (*c == ']') {
-                            return;
+                    char keyString[256] = {'\0'};
+                    {
+                        char *buffPtr = keyString;
+                        while (*pathItr && *pathItr != '.' && *pathItr != '[') {
+                            if (*pathItr == ']') {
+                                goto parsing_failed;
+                            }
+                            *buffPtr++ = *pathItr++;
                         }
-                        *buffPtr++ = *c++;
+                        *buffPtr = '\0';
                     }
-                    *buffPtr = '\0';
 
-                    auto item = id->as<map>()->find(buff);
+                    auto item = object->as<map>()->find(keyString);
                     if (item) {
-                        id = item->object();
+                        object = item->object();
                         itm = item;
                     } else {
-                        return;
+                        goto parsing_failed;
                     }
                 }
                 else if (s == '[') {
-                    if (!id || !id->as<array>()) {
-                        return;
+                    if (!object || !object->as<array>()) {
+                        goto parsing_failed;
                     }
 
-                    if (*c == ']') {
-                        return;
+                    ++pathItr;
+
+                    if (*pathItr == ']') {
+                        goto parsing_failed;
                     }
 
                     int num = 0;
-                    while (*c != ']') {
-                        if (!*c || 
-                            !(*c >= '0' && *c <= '9')) {
-                                return;
+                    while (*pathItr != ']') {
+                        if (!*pathItr || 
+                            !(*pathItr >= '0' && *pathItr <= '9')) {
+                                goto parsing_failed;
                         }
-                        num = num * 10 + (*c - '0');
-                        ++c;
+                        num = num * 10 + (*pathItr - '0');
+                        ++pathItr;
                     }
-                    //c is ] now
+                    // pathItr is ] now
 
-                    auto& arr = id->as<array>()->_array;
+                    ++pathItr;
+
+                    auto& arr = object->as<array>()->_array;
                     if (num < arr.size()) {
-                        id = arr[num].object();
+                        object = arr[num].object();
                         itm = &arr[num];
                     } else {
-                        return;
+                        goto parsing_failed;
                     }
                 }
+                else {
+                    goto parsing_failed;
+                }
 
-                if (!*c && itm) {
+                if (!*pathItr) {
                     func(itm);
-                    break;
                 }
             }
 
-            owner.setCollection(nullptr);
+            return;
+
+        parsing_failed:
+            func(nullptr);
         }
 
         static object_base * readJSONFile(const char *path) {

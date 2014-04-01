@@ -25,23 +25,6 @@ namespace collections {
         obj->release();
     }
 
-/*
-    TEST(autorelease_queue, qqq)
-    {
-        auto& queue = autorelease_queue::instance();
-
-        queue.push(map::create());
-        queue.push(array::create());
-
-        EXPECT_TRUE(queue.count() == 2);
-
-        std::this_thread::sleep_for(chrono::seconds(autorelease_queue::obj_lifetime + 10));
-
-        EXPECT_TRUE(queue.count() == 0);
-
-         autorelease_queue::instance().setPaused(false);
-    }*/
-
     TEST(tes_context, database)
     {
         using namespace std;
@@ -151,19 +134,20 @@ namespace collections {
 
     TEST(json_handling, readJSONData)
     {
+        object_base *obj = tes_object::objectFromPrototype(STR(
+        {
+            "glossary": {
+                "GlossDiv": "S"
+            },
+            "array": [["NPC Head [Head]", 0, -0.330000]]
+        }
+        ));
 
+        json_handling::resolvePath(obj, ".glossary.GlossDiv", [&](Item * item) {
+            EXPECT_TRUE(item && strcmp(item->strValue(), "S") == 0 );
+        });
 
-        cJSON *cjson = cJSON_Parse(jsonTestString());
-
-        object_base *obj = json_handling::readCJSON(cjson);
-        cJSON * cjson2 = json_handling::createCJSON(*obj);
-
-        char *data1 = cJSON_Print(cjson);
-        char *data2 = cJSON_Print(cjson2);
-
-        //EXPECT_TRUE(strcmp(data2, data1) == 0);
-
-        json_handling::resolvePath(obj, ".glossary.GlossDiv.title", [&](Item * item) {
+        json_handling::resolvePath(obj, "glossary.GlossDiv", [&](Item * item) {
             EXPECT_TRUE(item && strcmp(item->strValue(), "S") == 0 );
         });
 
@@ -171,21 +155,15 @@ namespace collections {
             EXPECT_TRUE(item && strcmp(item->strValue(), "NPC Head [Head]") == 0 );
         });
 
+        json_handling::resolvePath(obj, ".nonExistingKey", [&](Item * item) {
+            EXPECT_TRUE(!item);
+        });
+
         float floatVal = 10.5;
-        json_handling::resolvePath(obj, ".glossary.GlossDiv.title", [&](Item * item) {
+        json_handling::resolvePath(obj, ".glossary.GlossDiv", [&](Item * item) {
             EXPECT_TRUE(item != nullptr);
             item->setFlt(floatVal);
         });
-
-     //   json_parsing::solv
-
-        free(data1);
-        free(data2);
-        
-        cJSON_Delete(cjson2);
-        cJSON_Delete(cjson);
-        
-
     }
 
     TEST(json_handling, objectFromPrototype)
