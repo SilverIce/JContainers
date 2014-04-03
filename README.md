@@ -1,23 +1,23 @@
+JContainers plugin
+==================
 
-  JContainers plugin
+What is it?
+-----------
 
-  What is it?
-  -----------
+Skyrim plugin that extends Papyrus by adding various data structures.
 
-  Skyrim plugin that extends Papyrus by adding various data structures.
+Documentation
+-------------
 
-  Documentation
-  -------------
+The most up-to-date documentation can be found at
+https://docs.google.com/document/d/1Bzc-X5LezzPtSWi8cNFrzryOBeS5mx63R5eoaAjXAdc/pub.
 
-  The most up-to-date documentation can be found at
-  https://docs.google.com/document/d/1Bzc-X5LezzPtSWi8cNFrzryOBeS5mx63R5eoaAjXAdc/pub.
+Installation
+------------
 
-  Installation
-  ------------
-
-  Please see the file called INSTALL.
+Please see the file called INSTALL.
   
-  Licensing
-  ---------
+Licensing
+---------
 
-  Please see the file called LICENSE.
+Please see the file called LICENSE.
