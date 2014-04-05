@@ -479,6 +479,10 @@ namespace collections {
 
         void u_nullifyObjects() override;
 
+        Item* getItem(size_t index) {
+            return index < _array.size() ? &_array[index] : nullptr;
+        }
+
         iterator begin() { return _array.begin();}
         iterator end() { return _array.end(); }
 

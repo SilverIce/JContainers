@@ -33,7 +33,7 @@ namespace collections {
 
                 char s = *pathItr;
 
-                if (s == '.' || s != '[' || s != ']') {
+                if (s == '.' || (s != '[' && s != ']')) {
 
                     if (!object || !object->as<map>()) {
                         goto parsing_failed;
@@ -64,33 +64,37 @@ namespace collections {
                     }
                 }
                 else if (s == '[') {
-                    if (!object || !object->as<array>()) {
-                        goto parsing_failed;
-                    }
 
                     ++pathItr;
 
-                    if (*pathItr == ']') {
+                    if (!*pathItr || *pathItr == ']') {
                         goto parsing_failed;
                     }
 
-                    int num = 0;
+                    int64 indexOrFormId = 0;
                     while (*pathItr != ']') {
                         if (!*pathItr || 
                             !(*pathItr >= '0' && *pathItr <= '9')) {
                                 goto parsing_failed;
                         }
-                        num = num * 10 + (*pathItr - '0');
+                        indexOrFormId = indexOrFormId * 10 + (*pathItr - '0');
                         ++pathItr;
                     }
                     // pathItr is ] now
 
                     ++pathItr;
 
-                    auto& arr = object->as<array>()->_array;
-                    if (num < arr.size()) {
-                        object = arr[num].object();
-                        itm = &arr[num];
+                    if (object->as<array>()) {
+                        itm = object->as<array>()->getItem(indexOrFormId);
+                    }
+                    else if (object->as<form_map>()) {
+                        itm = object->as<form_map>()->find((FormId)indexOrFormId);
+                    } else {
+                        goto parsing_failed;
+                    }
+
+                    if (itm) {
+                        object = itm->object();
                     } else {
                         goto parsing_failed;
                     }

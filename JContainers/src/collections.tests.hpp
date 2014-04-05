@@ -143,6 +143,12 @@ namespace collections {
         }
         ));
 
+        auto shouldSucceed = [&](const char * path, bool succeed) {
+            json_handling::resolvePath(obj, path, [&](Item * item) {
+                EXPECT_TRUE(succeed == (item != nullptr));
+            });
+        };
+
         json_handling::resolvePath(obj, ".glossary.GlossDiv", [&](Item * item) {
             EXPECT_TRUE(item && strcmp(item->strValue(), "S") == 0 );
         });
@@ -155,9 +161,15 @@ namespace collections {
             EXPECT_TRUE(item && strcmp(item->strValue(), "NPC Head [Head]") == 0 );
         });
 
+        shouldSucceed(".nonExistingKey", false);
+        shouldSucceed(".array[[]", false);
+        shouldSucceed(".array[", false);
+
+/*
         json_handling::resolvePath(obj, ".nonExistingKey", [&](Item * item) {
             EXPECT_TRUE(!item);
-        });
+        });*/
+
 
         float floatVal = 10.5;
         json_handling::resolvePath(obj, ".glossary.GlossDiv", [&](Item * item) {
