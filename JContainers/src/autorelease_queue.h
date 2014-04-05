@@ -8,7 +8,7 @@ namespace collections {
 
     class autorelease_queue {
     public:
-        typedef std::lock_guard<decltype(_mutex)> lock;
+        typedef std::lock_guard<bshared_mutex> lock;
         typedef unsigned int time_point;
         //typedef chrono::time_point<chrono::system_clock> time_point;
         typedef std::vector<std::pair<HandleT, time_point> > queue;

@@ -130,7 +130,7 @@ namespace collections
 
     void shared_state::u_applyUpdates(int saveVersion) {
 
-        if (saveVersion == kJJSerializationVersionPreAQueueFix) {
+        if (saveVersion <= kJJSerializationVersionPreAQueueFix) {
             for (auto& pair : aqueue->u_queue()) {
                 auto obj = u_getObject(pair.first);
                 if (obj && obj->_refCount == 1) {
