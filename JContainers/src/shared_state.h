@@ -29,7 +29,8 @@ namespace collections {
 
     class shared_state {
 
-        void u_postLoadMaintenance();
+        void u_applyUpdates(int saveVersion);
+        void u_postLoadMaintenance(int saveVersion);
 
     protected:
         bshared_mutex _mutex;
@@ -54,6 +55,7 @@ namespace collections {
             return getObject(hdl)->as<T>();
         }
 
+        size_t aqueueSize();
         object_base * getObject(HandleT hdl);
         object_base * u_getObject(HandleT hdl);
 

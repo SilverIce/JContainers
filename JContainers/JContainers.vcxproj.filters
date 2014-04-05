@@ -131,6 +131,7 @@
       <Filter>object_module</Filter>
     </ClInclude>
     <ClInclude Include="src\typedefs.h" />
+    <ClInclude Include="src\plugin_info.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="exports.def" />

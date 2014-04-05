@@ -13,10 +13,6 @@ namespace collections
     bool object_base::_deleteOrRelease(class autorelease_queue*) {
         bool deleteObject = false; {
             mutex_lock g(_mutex);
-            if (_refCount > 0) {
-                --_refCount;
-            }
-
             deleteObject = (_refCount == 0 && _tes_refCount == 0);
         }
 
@@ -29,14 +25,18 @@ namespace collections
         return deleteObject;
     }
 
+    object_base * object_base::autorelease() {
+        this->release();
+        return this;
+    }
+
     void object_base::release() {
         bool deleteObject = false; {
             mutex_lock g(_mutex);
             if (_refCount > 0) {
                 --_refCount;
+                deleteObject = (_refCount == 0 && _tes_refCount == 0);
             }
-
-            deleteObject = (_refCount == 0 && _tes_refCount == 0);
         }
 
         if (deleteObject) {
@@ -49,9 +49,8 @@ namespace collections
             mutex_lock g(_mutex);
             if (_tes_refCount > 0) {
                 --_tes_refCount;
+                deleteObject = (_refCount == 0 && _tes_refCount == 0);
             }
-
-            deleteObject = (_refCount == 0 && _tes_refCount == 0);
         }
 
         if (deleteObject) {

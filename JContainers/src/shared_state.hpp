@@ -45,6 +45,10 @@ namespace collections
         return registry->u_getObject(hdl);
     }
 
+    size_t shared_state::aqueueSize() {
+        return aqueue->count();
+    }
+
     void shared_state::loadAll(const std::string & data, int version) {
 
         _DMESSAGE("%u bytes loaded", data.size());
@@ -59,7 +63,12 @@ namespace collections
 
             u_clearState();
 
-            if (!data.empty() && version == kJSerializationDataVersion) {
+            if (!data.empty()) {
+
+                if (kJSerializationCurrentVersion < version) {
+                     _DMESSAGE("plugin can not be compatible with future save version %u. plugin save vesrion is %u", version, kJSerializationCurrentVersion);
+                     assert(false);
+                }
 
                 try {
                     archive >> *registry;
@@ -79,26 +88,15 @@ namespace collections
 
             }
 
+            u_applyUpdates(version);
             // deadlock possible
-            u_postLoadMaintenance();
+            u_postLoadMaintenance(version);
 
             _DMESSAGE("%u objects total", registry->u_container().size());
             _DMESSAGE("%u objects in aqueue", aqueue->u_count());
         }
         aqueue->start();
     }
-
-    void shared_state::u_postLoadMaintenance()
-    {
-        auto cntCopy = registry->u_container();
-        static_assert( std::is_reference<decltype(cntCopy)>::value == false , "");
-
-        for (auto& pair : cntCopy) {
-            pair.second->_context = this;
-            pair.second->u_onLoaded();
-        }
-    }
-
 
     std::string shared_state::saveToArray() {
         std::ostringstream stream;
@@ -127,4 +125,30 @@ namespace collections
 
         return data;
     }
+
+    //////////////////////////////////////////////////////////////////////////
+
+    void shared_state::u_applyUpdates(int saveVersion) {
+
+        if (saveVersion == kJJSerializationVersionPreAQueueFix) {
+            for (auto& pair : aqueue->u_queue()) {
+                auto obj = u_getObject(pair.first);
+                if (obj && obj->_refCount == 1) {
+                    obj->_refCount = 0;
+                }
+            }
+        }
+    }
+
+    void shared_state::u_postLoadMaintenance(int saveVersion)
+    {
+        auto cntCopy = registry->u_container();
+        static_assert( std::is_reference<decltype(cntCopy)>::value == false , "");
+
+        for (auto& pair : cntCopy) {
+            pair.second->_context = this;
+            pair.second->u_onLoaded();
+        }
+    }
+
 }

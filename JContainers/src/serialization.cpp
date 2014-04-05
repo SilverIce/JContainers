@@ -330,7 +330,7 @@ void Serialization_Revert(SKSESerializationInterface * intfc)
 
 void Serialization_Save(SKSESerializationInterface * intfc)
 {
-    if (intfc->OpenRecord(kJStorageChunk, kJSerializationDataVersion)) {
+    if (intfc->OpenRecord(kJStorageChunk, kJSerializationCurrentVersion)) {
         auto data = collections::tes_context::instance().saveToArray();
         intfc->WriteRecordData(data.data(), data.size());
     }

@@ -3,7 +3,9 @@
 enum {
     kJStorageChunk = 'JSTR',
 
-    kJSerializationDataVersion = 2,
+    kJJSerializationVersionPreAQueueFix = 2,
+
+    kJSerializationCurrentVersion = 3,
     kJAPIVersion = 2,
 
     kJVersionMajor = 0,

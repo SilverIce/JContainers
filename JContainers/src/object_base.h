@@ -27,6 +27,8 @@ namespace collections {
 
     class object_base
     {
+        friend class shared_state;
+
         int32_t _refCount;
         int32_t _tes_refCount;
 
@@ -62,7 +64,7 @@ namespace collections {
         {
         }
 
-        int refCount() {
+        int32_t refCount() {
             mutex_lock g(_mutex);
             return _refCount + _tes_refCount;
         }
@@ -91,10 +93,7 @@ namespace collections {
             return this;
         }
 
-        object_base * autorelease() {
-            _addToDeleteQueue();
-            return this;
-        }
+        object_base * autorelease();
 
         // decreases internal ref counter - _refCount OR deletes if summ refCount is 0
         // if old refCountSumm is 1 - then release, if 0 - delete

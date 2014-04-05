@@ -6,7 +6,9 @@ namespace collections {
 
     TEST(object_base, refCount)
     {
-        auto obj = array::create();
+        tes_context context;
+
+        auto obj = array::create(context);
         EXPECT_TRUE(obj->refCount() == 1);
         obj->retain();
         EXPECT_TRUE(obj->refCount() == 2);
@@ -23,6 +25,8 @@ namespace collections {
         EXPECT_TRUE(obj->refCount() == 1);
 
         obj->release();
+
+        context.clearState();
     }
 
     TEST(tes_context, database)
@@ -57,7 +61,7 @@ namespace collections {
 
         EXPECT_FALSE(data.empty());
 
-        context.loadAll(data, kJSerializationDataVersion);
+        context.loadAll(data, kJSerializationCurrentVersion);
 
         string newData = context.saveToArray();
 
@@ -66,6 +70,37 @@ namespace collections {
         context.clearState();
     }
 
+    TEST(autorelease_queue, over_release)
+    {
+        using namespace std;
+
+        tes_context context;
+
+        vector<Handle> identifiers;
+        //int countBefore = queue.count();
+
+        for (int i = 0; i < 10; ++i) {
+            auto obj = map::create(context);//+1
+
+            obj->release();//-1, rc is 0, add to delete queue
+
+            obj->retain();// +1
+
+            identifiers.push_back(obj->id);
+        }
+
+        auto allExist = [&]() {
+            return std::all_of(identifiers.begin(), identifiers.end(), [&](Handle id) {
+                return context.getObject(id);
+            });
+        };
+
+        std::this_thread::sleep_for( std::chrono::seconds(13) );
+
+        EXPECT_TRUE(allExist());
+
+        context.clearState();
+    }
 
     TEST(autorelease_queue, high_level)
     {
@@ -88,13 +123,15 @@ namespace collections {
             });
         };
 
+        std::this_thread::sleep_for( std::chrono::seconds(11) );
+
         EXPECT_TRUE(allExist());
 
-        //EXPECT_TRUE(queue.count() == (countBefore + identifiers.size()));
-
-        std::this_thread::sleep_for( std::chrono::seconds(20) );
+        std::this_thread::sleep_for( std::chrono::seconds(5) );
 
         EXPECT_TRUE(allExist() == false);
+
+        context.clearState();
     }
 
 
@@ -164,7 +201,8 @@ namespace collections {
         shouldSucceed(".nonExistingKey", false);
         shouldSucceed(".array[[]", false);
         shouldSucceed(".array[", false);
-
+        shouldSucceed("..array[", false);
+        shouldSucceed(".array.[", false);
 /*
         json_handling::resolvePath(obj, ".nonExistingKey", [&](Item * item) {
             EXPECT_TRUE(!item);

@@ -7,16 +7,18 @@ namespace collections {
     class object_registry;
 
     class autorelease_queue {
+    public:
+        typedef std::lock_guard<decltype(_mutex)> lock;
+        typedef unsigned int time_point;
+        //typedef chrono::time_point<chrono::system_clock> time_point;
+        typedef std::vector<std::pair<HandleT, time_point> > queue;
+
+    private:
 
         std::thread _thread;
         bshared_mutex& _mutex;
 
         object_registry& _registry;
-
-        typedef std::lock_guard<decltype(_mutex)> lock;
-        typedef unsigned int time_point;
-        //typedef chrono::time_point<chrono::system_clock> time_point;
-        typedef std::vector<std::pair<HandleT, time_point> > queue;
         queue _queue;
         time_point _timeNow;
         
@@ -70,6 +72,10 @@ namespace collections {
         size_t count() {
             read_lock hg(_mutex);
             return u_count();
+        }
+
+        queue& u_queue() {
+            return _queue;
         }
 
         size_t u_count() const {
