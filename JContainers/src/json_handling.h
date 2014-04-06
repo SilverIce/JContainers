@@ -357,23 +357,38 @@ namespace collections {
             return val;
         }
 
-        static std::string formIdToString(FormId formId, bool isTest = false) {
+        static std::string formIdToString(FormId formId) {
+            return formIdToString(formId, [](UInt8 modId) {
+                DataHandler * dhand = DataHandler::GetSingleton();
+                ModInfo * modInfo = dhand->modList.loadedMods[modId];
+                return modInfo ? modInfo->name : nullptr;
+            });
+        }
+
+        static FormId formIdFromString(const char* source) {
+            return formIdFromString(source, [](const char *modName) {
+                return DataHandler::GetSingleton()->GetModIndex( modName );
+            });
+        }
+
+        template<class T>
+        static std::string formIdToString(FormId formId, T modNameFunc) {
 
             UInt8 modID = formId >> 24;
+            formId = (FormId)(formId & 0x00FFFFFF);
 
             if (modID == 0xFF)
-                return "";
+                return std::string();
 
-            DataHandler * dhand = DataHandler::GetSingleton();
-            ModInfo * modInfo = dhand->modList.loadedMods[modID];
+            const char * modName = modNameFunc(modID);
 
-            if (!modInfo) {
-                return "";
+            if (!modName) {
+                return std::string();
             }
 
             std::string string = kJSerializedFormData;
             string += kJSerializedFormDataSeparator;
-            string += modInfo->name;
+            string += modName;
             string += kJSerializedFormDataSeparator;
 
             char buff[20] = {'\0'};
@@ -383,7 +398,8 @@ namespace collections {
             return string;
         }
 
-        static FormId formIdFromString(const char* source, bool isTest = false) {
+        template<class T>
+        static FormId formIdFromString(const char* source, T modIndexFunc) {
 
             if (!source) {
                 return FormZero;
@@ -407,8 +423,7 @@ namespace collections {
 
             auto& pluginName = substrings[1];
 
-            DataHandler * dhand = DataHandler::GetSingleton();
-            UInt8 modIdx = dhand->GetModIndex( ss::string(pluginName.begin(), pluginName.end()).c_str() );
+            UInt8 modIdx = modIndexFunc( ss::string(pluginName.begin(), pluginName.end()).c_str() );
 
             if (modIdx == (UInt8)-1) {
                 return FormZero;
