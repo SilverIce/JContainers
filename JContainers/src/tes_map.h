@@ -23,7 +23,7 @@ namespace collections {
             }
 
             object_lock g(obj);
-            auto item = obj->find(tes_hash(key));
+            auto item = obj->u_find(tes_hash(key));
             return item ? item->readAs<T>() : T(0);
         }
         REGISTERF(getItem<SInt32>, "getInt", "object key", "returns value associated with key");
@@ -53,7 +53,7 @@ namespace collections {
             }
 
             object_lock g(obj);
-            auto item = obj->find(tes_hash(key));
+            auto item = obj->u_find(tes_hash(key));
             return item != nullptr;
         }
         REGISTERF2(hasKey, "* key", "returns true, if something associated with key");
@@ -96,7 +96,7 @@ namespace collections {
             }
 
             object_lock g(obj);
-            return obj->erase(tes_hash(key));
+            return obj->u_erase(tes_hash(key));
         }
         REGISTERF2(removeKey, "* key", "destroys key-value association");
 

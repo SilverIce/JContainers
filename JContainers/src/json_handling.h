@@ -1,6 +1,10 @@
 #pragma once
 
 #include <boost/algorithm/string.hpp>
+#include <boost/range/iterator_range.hpp>
+#include <boost/range/algorithm/find_if.hpp>
+#include <functional>
+
 #include "skse/GameData.h"
 
 namespace collections {
@@ -16,102 +20,125 @@ namespace collections {
     public:
 
         template<class F>
-        static void resolvePath(object_base *collection, const char *path, F func) {
+        static void resolvePath(object_base *collection, const char *cpath, F itemFunction) {
 
-            if (!collection || !path) {
+            if (!collection || !cpath) {
                 return;
             }
 
-            const char *pathItr = path;
+            namespace bs = boost;
+            namespace ss = std;
 
-            Item *itm = nullptr;
-            object_base * object = collection;
+            auto path = bs::make_iterator_range(cpath, cpath + strnlen_s(cpath, 1024));
 
-            while ( *pathItr ) {
+            typedef decltype(path) path_type;
 
-                object_lock lock(object);
+            struct state {
+                bool succeed;
+                Item *node;
+                path_type path;
 
-                char s = *pathItr;
-
-                if (s == '.' || (s != '[' && s != ']')) {
-
-                    if (!object || !object->as<map>()) {
-                        goto parsing_failed;
-                    }
-
-                    if (s == '.') {
-                        ++pathItr;
-                    }
-
-                    char keyString[256] = {'\0'};
-                    {
-                        char *buffPtr = keyString;
-                        while (*pathItr && *pathItr != '.' && *pathItr != '[') {
-                            if (*pathItr == ']') {
-                                goto parsing_failed;
-                            }
-                            *buffPtr++ = *pathItr++;
-                        }
-                        *buffPtr = '\0';
-                    }
-
-                    auto item = object->as<map>()->find(keyString);
-                    if (item) {
-                        object = item->object();
-                        itm = item;
-                    } else {
-                        goto parsing_failed;
-                    }
+                state(bool _succeed, Item *_node, const path_type& _path) {
+                    succeed = _succeed;
+                    node = _node;
+                    path = _path;
                 }
-                else if (s == '[') {
+            };
 
-                    ++pathItr;
+            auto mapRule = [](const state &st) -> state {
 
-                    if (!*pathItr || *pathItr == ']') {
-                        goto parsing_failed;
-                    }
+                const auto& path = st.path;
 
-                    int64 indexOrFormId = 0;
-                    while (*pathItr != ']') {
-                        if (!*pathItr || 
-                            !(*pathItr >= '0' && *pathItr <= '9')) {
-                                goto parsing_failed;
-                        }
-                        indexOrFormId = indexOrFormId * 10 + (*pathItr - '0');
-                        ++pathItr;
-                    }
-                    // pathItr is ] now
-
-                    ++pathItr;
-
-                    if (object->as<array>()) {
-                        itm = object->as<array>()->getItem(indexOrFormId);
-                    }
-                    else if (object->as<form_map>()) {
-                        itm = object->as<form_map>()->find((FormId)indexOrFormId);
-                    } else {
-                        goto parsing_failed;
-                    }
-
-                    if (itm) {
-                        object = itm->object();
-                    } else {
-                        goto parsing_failed;
-                    }
-                }
-                else {
-                    goto parsing_failed;
+                if (!bs::starts_with(path, ".") || path.size() < 2) {
+                    return state(false, st.node, st.path);
                 }
 
-                if (!*pathItr) {
-                    func(itm);
+                auto begin = path.begin() + 1;
+                auto end = bs::find_if(path_type(begin, path.end()), bs::is_any_of(".["));
+
+                if (begin == end) {
+                    return state(false, st.node, st.path);
+                }
+
+                auto node = st.node->object()->as<map>()->u_find(ss::string(begin, end));
+                if (!node) {
+                    return state(false, st.node, st.path);
+                }
+
+                return state( true, node, path_type(end, path.end()) );
+            };
+
+
+            auto arrayRule = [](const state &st) -> state {
+
+                const auto& path = st.path;
+
+                if (!bs::starts_with(path, "[") || path.size() < 3) {
+                    return state(false, st.node, st.path);
+                }
+
+                auto begin = path.begin() + 1;
+                auto end = bs::find_if(path_type(begin, path.end()), bs::is_any_of("]"));
+                auto indexRange = path_type(begin, end);
+
+                if (indexRange.empty()) {
+                    return state(false, st.node, st.path);
+                }
+
+                int indexOrFormId = 0;
+                try {
+                    indexOrFormId = std::stoi(ss::string(indexRange.begin(), indexRange.end()), nullptr, 0);
+                }
+                catch (const std::invalid_argument& ) {
+                    return state(false, st.node, st.path);
+                }
+                catch (const std::out_of_range& ) {
+                    return state(false, st.node, st.path);
+                }
+
+                auto container = st.node->object();
+                Item *node = nullptr;
+
+                if (container->as<array>()) {
+                    node = container->as<array>()->u_getItem(indexOrFormId);
+                }
+                else if (container->as<form_map>()) {
+                    node = container->as<form_map>()->u_find((FormId)indexOrFormId);
+                } else {
+                    return state(false, st.node, st.path);
+                }
+
+                return state( true, node, path_type(end + 1, path.end()) );
+            };
+
+            const ss::function<state (const state &st) > rules[] = {mapRule, arrayRule};
+
+            Item item(collection);
+            state st(true, &item, path);
+
+            while (true) {
+
+                object_lock lock(st.node->object());
+
+                bool anySucceed = false;
+                for (auto& func : rules) {
+                    st = func(st);
+                    anySucceed = st.succeed;
+                    if (anySucceed) {
+                        break;
+                    }
+                }
+
+                if (st.path.empty() && anySucceed) {
+                    itemFunction(st.node);
+                    break;
+                }
+
+                if (!anySucceed) {
+                    itemFunction(nullptr);
+                    break;
                 }
             }
-
-            return;
-
-        parsing_failed:
-            func(nullptr);
         }
 
         static object_base * readJSONFile(const char *path) {
@@ -358,29 +385,46 @@ namespace collections {
 
         static FormId formIdFromString(const char* source, bool isTest = false) {
 
-            std::vector<std::string> substrings;
-            boost::split(substrings, source, boost::is_any_of(kJSerializedFormDataSeparator));
+            if (!source) {
+                return FormZero;
+            }
 
-            if (substrings.size() != 3 || substrings[0].compare(kJSerializedFormData) != 0) {
-                return (FormId)0;
+            namespace bs = boost;
+            namespace ss = std;
+
+            auto fstring = bs::make_iterator_range(source, source + strnlen_s(source, 1024));
+
+            if (!bs::starts_with(fstring, kJSerializedFormData)) {
+                return FormZero;
+            }
+
+            ss::vector<decltype(fstring)> substrings;
+            bs::split(substrings, source, bs::is_any_of(kJSerializedFormDataSeparator));
+
+            if (substrings.size() != 3) {
+                return FormZero;
             }
 
             auto& pluginName = substrings[1];
 
             DataHandler * dhand = DataHandler::GetSingleton();
-            UInt8 modIdx = dhand->GetModIndex(pluginName.c_str());
+            UInt8 modIdx = dhand->GetModIndex( ss::string(pluginName.begin(), pluginName.end()).c_str() );
 
             if (modIdx == (UInt8)-1) {
-                return (FormId)0;
+                return FormZero;
             }
 
             auto& formIdString = substrings[2];
 
-            const char *format = formIdString.find("0x") == 0 ? "0x%x" : "%u";
             UInt32 formId = 0;
-
-            if (sscanf_s(formIdString.c_str(), format, &formId) != 1) {
-                return (FormId)0;
+            try {
+                formId = std::stoi(ss::string(formIdString.begin(), formIdString.end()), nullptr, 0);
+            }
+            catch (const std::invalid_argument& ) {
+                return FormZero;
+            }
+            catch (const std::out_of_range& ) {
+                return FormZero;
             }
 
             formId = (modIdx << 24) | (formId & 0x00FFFFFF);

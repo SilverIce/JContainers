@@ -190,9 +190,10 @@ namespace collections {
             EXPECT_TRUE(item && strcmp(item->strValue(), "S") == 0 );
         });
 
+/*      feature disabled
         json_handling::resolvePath(obj, "glossary.GlossDiv", [&](Item * item) {
             EXPECT_TRUE(item && strcmp(item->strValue(), "S") == 0 );
-        });
+        });*/
 
         json_handling::resolvePath(obj, ".array[0][0]", [&](Item * item) {
             EXPECT_TRUE(item && strcmp(item->strValue(), "NPC Head [Head]") == 0 );
@@ -339,7 +340,7 @@ namespace collections {
         const char *name = "back in black";
         cnt->u_setValueForKey("ACDC", Item(name));
 
-        EXPECT_TRUE(strcmp(cnt->find("acdc")->strValue(), name) == 0);
+        EXPECT_TRUE(strcmp(cnt->u_find("acdc")->strValue(), name) == 0);
     }
 
 

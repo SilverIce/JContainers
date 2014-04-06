@@ -66,7 +66,10 @@ namespace collections {
         ItemTypeForm = 5,
     };
 
-    enum FormId : UInt32 {};
+    enum FormId : UInt32 {
+        FormZero = 0,
+    };
+
 
     struct StringMem
     {
@@ -479,7 +482,7 @@ namespace collections {
 
         void u_nullifyObjects() override;
 
-        Item* getItem(size_t index) {
+        Item* u_getItem(size_t index) {
             return index < _array.size() ? &_array[index] : nullptr;
         }
 
@@ -531,12 +534,12 @@ namespace collections {
             return cnt.find(key);
         }
 
-        Item* find(const std::string& key) {
+        Item* u_find(const std::string& key) {
             auto itr = findItr(key);
             return itr != cnt.end() ? &(itr->second) : nullptr;
         }
 
-        bool erase(const std::string& key) {
+        bool u_erase(const std::string& key) {
             auto itr = findItr(key);
             return itr != cnt.end() ? (cnt.erase(itr), true) : false;
         }
@@ -598,12 +601,12 @@ namespace collections {
             return cnt[key];
         }
 
-        Item* find(FormId key) {
+        Item* u_find(FormId key) {
             auto itr = cnt.find(key);
             return itr != cnt.end() ? &(itr->second) : nullptr;
         }
 
-        bool erase(FormId key) {
+        bool u_erase(FormId key) {
             auto itr = cnt.find(key);
             return itr != cnt.end() ? (cnt.erase(itr), true) : false;
         }
