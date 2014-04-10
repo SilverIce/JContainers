@@ -19,8 +19,7 @@ namespace collections {
     class json_handling {
     public:
 
-        template<class F>
-        static void resolvePath(object_base *collection, const char *cpath, F itemFunction) {
+        static void resolvePath(object_base *collection, const char *cpath, std::function<void (Item *)>  itemFunction) {
 
             if (!collection || !cpath) {
                 return;
@@ -33,15 +32,26 @@ namespace collections {
 
             typedef decltype(path) path_type;
 
+            typedef ss::function<Item* (object_base*)> NodeFunc;
+
             struct state {
                 bool succeed;
-                Item *node;
                 path_type path;
+                NodeFunc nodeFunc;
+                object_base *object;
 
-                state(bool _succeed, Item *_node, const path_type& _path) {
+                state(bool _succeed, const NodeFunc& _node, object_base *_object, const path_type& _path) {
                     succeed = _succeed;
-                    node = _node;
+                    nodeFunc = _node;
                     path = _path;
+                    object = _object;
+                }
+
+                state(bool _succeed, const state& st) {
+                    succeed = _succeed;
+                    nodeFunc = st.nodeFunc;
+                    path = st.path;
+                    object = st.object;
                 }
             };
 
@@ -50,22 +60,26 @@ namespace collections {
                 const auto& path = st.path;
 
                 if (!bs::starts_with(path, ".") || path.size() < 2) {
-                    return state(false, st.node, st.path);
+                    return state(false, st);
                 }
 
                 auto begin = path.begin() + 1;
                 auto end = bs::find_if(path_type(begin, path.end()), bs::is_any_of(".["));
 
-                if (begin == end) {
-                    return state(false, st.node, st.path);
+                object_lock lock(st.object);
+                auto node = st.nodeFunc(st.object);
+                auto container = node ? node->object() : nullptr;
+
+                if (begin == end || !container) {
+                    return state(false, st);
                 }
 
-                auto node = st.node->object()->as<map>()->u_find(ss::string(begin, end));
-                if (!node) {
-                    return state(false, st.node, st.path);
-                }
-
-                return state( true, node, path_type(end, path.end()) );
+                return state(   true,
+                                [=](object_base *container) {
+                                    return container->as<map>() ? container->as<map>()->u_find(ss::string(begin, end)) : nullptr;
+                                },
+                                container,
+                                path_type(end, path.end()) );
             };
 
 
@@ -74,7 +88,7 @@ namespace collections {
                 const auto& path = st.path;
 
                 if (!bs::starts_with(path, "[") || path.size() < 3) {
-                    return state(false, st.node, st.path);
+                    return state(false, st);
                 }
 
                 auto begin = path.begin() + 1;
@@ -82,7 +96,7 @@ namespace collections {
                 auto indexRange = path_type(begin, end);
 
                 if (indexRange.empty()) {
-                    return state(false, st.node, st.path);
+                    return state(false, st);
                 }
 
                 int indexOrFormId = 0;
@@ -90,35 +104,40 @@ namespace collections {
                     indexOrFormId = std::stoi(ss::string(indexRange.begin(), indexRange.end()), nullptr, 0);
                 }
                 catch (const std::invalid_argument& ) {
-                    return state(false, st.node, st.path);
+                    return state(false, st);
                 }
                 catch (const std::out_of_range& ) {
-                    return state(false, st.node, st.path);
+                    return state(false, st);
                 }
 
-                auto container = st.node->object();
-                Item *node = nullptr;
+                object_lock lock(st.object);
+                auto container = st.nodeFunc(st.object)->object();
 
-                if (container->as<array>()) {
-                    node = container->as<array>()->u_getItem(indexOrFormId);
-                }
-                else if (container->as<form_map>()) {
-                    node = container->as<form_map>()->u_find((FormId)indexOrFormId);
-                } else {
-                    return state(false, st.node, st.path);
+                if (!container) {
+                    return state(false, st);
                 }
 
-                return state( true, node, path_type(end + 1, path.end()) );
+                return state(   true,
+                                [=](object_base* container) {
+                                    if (container->as<array>()) {
+                                        return container->as<array>()->u_getItem(indexOrFormId);
+                                    }
+                                    else if (container->as<form_map>()) {
+                                        return container->as<form_map>()->u_find((FormId)indexOrFormId);
+                                    } else {
+                                        return (Item *)nullptr;
+                                    } 
+                                },
+                                container,
+                                path_type(end + 1, path.end()) );
             };
 
             const ss::function<state (const state &st) > rules[] = {mapRule, arrayRule};
 
-            Item item(collection);
-            state st(true, &item, path);
+            Item root(collection);
+            state st(true, [&](object_base*) { return &root;}, collection, path);
 
             while (true) {
-
-                object_lock lock(st.node->object());
 
                 bool anySucceed = false;
                 for (auto& func : rules) {
@@ -130,7 +149,8 @@ namespace collections {
                 }
 
                 if (st.path.empty() && anySucceed) {
-                    itemFunction(st.node);
+                    object_lock lock(st.object);
+                    itemFunction( st.nodeFunc(st.object));
                     break;
                 }
 

@@ -204,6 +204,9 @@ namespace collections {
         shouldSucceed(".array[", false);
         shouldSucceed("..array[", false);
         shouldSucceed(".array.[", false);
+
+        shouldSucceed(".array.key", false);
+        shouldSucceed("[0].key", false);
 /*
         json_handling::resolvePath(obj, ".nonExistingKey", [&](Item * item) {
             EXPECT_TRUE(!item);
