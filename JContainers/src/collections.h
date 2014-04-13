@@ -394,6 +394,10 @@ namespace collections {
             return _type == ItemTypeNone;
         }
 
+        bool isNumber() const {
+            return _type == ItemTypeFloat32 || _type == ItemTypeInt32;
+        }
+
         object_base *object() const {
             return (_type == ItemTypeObject) ? _object : nullptr;
         }

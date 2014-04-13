@@ -19,10 +19,29 @@ namespace collections {
     class json_handling {
     public:
 
+        static void resolvePath(Item& item, const char *cpath, std::function<void (Item *)>  itemFunction) {
+            if (!cpath) {
+                return;
+            }
+
+            if (item.object()) {
+                resolvePath(item.object(), cpath, itemFunction);
+            }
+            else if (!*cpath) {
+                itemFunction(&item);
+            }
+        }
+
         static void resolvePath(object_base *collection, const char *cpath, std::function<void (Item *)>  itemFunction) {
 
             if (!collection || !cpath) {
                 return;
+            }
+
+            if (collection && !*cpath) {
+                Item itm(collection);
+                itemFunction(&itm);
+                return ;
             }
 
             namespace bs = boost;
@@ -34,25 +53,97 @@ namespace collections {
 
             typedef ss::function<Item* (object_base*)> NodeFunc;
 
+            typedef ss::function<void (const Item& , Item&)> ElementFunc;
+
             struct state {
                 bool succeed;
                 path_type path;
-                NodeFunc nodeFunc;
+                NodeFunc nodeGetter;
                 object_base *object;
 
                 state(bool _succeed, const NodeFunc& _node, object_base *_object, const path_type& _path) {
                     succeed = _succeed;
-                    nodeFunc = _node;
+                    nodeGetter = _node;
                     path = _path;
                     object = _object;
                 }
 
                 state(bool _succeed, const state& st) {
                     succeed = _succeed;
-                    nodeFunc = st.nodeFunc;
+                    nodeGetter = st.nodeGetter;
                     path = st.path;
                     object = st.object;
                 }
+            };
+
+            auto operatorRule = [](const state &st) -> state {
+                const auto& path = st.path;
+
+                if (!bs::starts_with(path, "@") || path.size() < 2) {
+                    return state(false, st);
+                }
+
+                auto begin = path.begin() + 1;
+                auto end = bs::find_if(path_type(begin, path.end()), bs::is_any_of("."));
+                auto operationStr = path_type(begin, end);
+
+                if (operationStr.empty()) {
+                    return state(false, st);
+                }
+
+                auto rightPath = path_type(end, path.end());
+
+                auto collection = st.nodeGetter(st.object)->object();
+
+                if (!collection) {
+                    return state(false, st);
+                }
+
+                ElementFunc func = [](const Item& item, Item& accum) {
+                    accum = Item( (std::max)(item.fltValue(), accum.fltValue()) );
+                };
+
+                Item sharedItem;
+
+                if (collection->as<array>()) {
+                    auto array_copy = collection->as<array>()->_array;
+                    
+                    for (auto &itm : array_copy) {
+                        resolvePath(itm, rightPath.begin(), [&](Item *item) {
+                            if (item) {
+                                func(*item, sharedItem);
+                            }
+                        });
+                    }
+
+                }
+
+                return state(true,
+                    [=](object_base *) -> Item* { return (Item *)&sharedItem;},
+                    nullptr,
+                    path_type());
+
+               /* else if (collection->as<map>() ) {
+
+                    auto map_copy = collection->as<map>()->container();
+
+                    Item sharedItem;
+                    for (auto &pair : map_copy) {
+
+                        resolvePath(collection, rightPath.begin(), [&](Item *item) {
+                            if (item) {
+                                sharedItem = func(*item);
+                            }
+                        });
+
+                    }
+
+                    return collection->as<form_map>();
+
+                } else {
+                    return (Item *)nullptr;
+                } */
+
             };
 
             auto mapRule = [](const state &st) -> state {
@@ -67,7 +158,7 @@ namespace collections {
                 auto end = bs::find_if(path_type(begin, path.end()), bs::is_any_of(".["));
 
                 object_lock lock(st.object);
-                auto node = st.nodeFunc(st.object);
+                auto node = st.nodeGetter(st.object);
                 auto container = node ? node->object() : nullptr;
 
                 if (begin == end || !container) {
@@ -111,7 +202,7 @@ namespace collections {
                 }
 
                 object_lock lock(st.object);
-                auto container = st.nodeFunc(st.object)->object();
+                auto container = st.nodeGetter(st.object)->object();
 
                 if (!container) {
                     return state(false, st);
@@ -132,7 +223,7 @@ namespace collections {
                                 path_type(end + 1, path.end()) );
             };
 
-            const ss::function<state (const state &st) > rules[] = {mapRule, arrayRule};
+            const ss::function<state (const state &st) > rules[] = {operatorRule, mapRule, arrayRule};
 
             Item root(collection);
             state st(true, [&](object_base*) { return &root;}, collection, path);
@@ -149,8 +240,14 @@ namespace collections {
                 }
 
                 if (st.path.empty() && anySucceed) {
-                    object_lock lock(st.object);
-                    itemFunction( st.nodeFunc(st.object));
+
+                    if (st.object) {
+                        object_lock lock(st.object);
+                        itemFunction( st.nodeGetter(st.object));
+                    } else {
+                        itemFunction( st.nodeGetter(nullptr));
+                    }
+
                     break;
                 }
 

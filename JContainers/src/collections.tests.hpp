@@ -1,8 +1,19 @@
 #pragma once
+#include <stdlib.h>
 
 namespace collections {
 
     #ifndef TEST_COMPILATION_DISABLED
+
+    TEST(sscanf, test)
+    {
+        int num3 = strtol("0x111]", nullptr, 0);
+
+        const char *str = "[0xfeedf00d]";
+
+        int num = 0, num2 = 0;
+        sscanf(str, "[%x]", &num);
+    }
 
     TEST(object_base, refCount)
     {
@@ -70,7 +81,7 @@ namespace collections {
         context.clearState();
     }
 
-    TEST(autorelease_queue, over_release)
+    TEST_DISABLED(autorelease_queue, over_release)
     {
         using namespace std;
 
@@ -102,7 +113,7 @@ namespace collections {
         context.clearState();
     }
 
-    TEST(autorelease_queue, high_level)
+    TEST_DISABLED(autorelease_queue, high_level)
     {
         using namespace std;
 
@@ -171,6 +182,14 @@ namespace collections {
 
     TEST(json_handling, readJSONData)
     {
+        object_base *obj2 = tes_object::objectFromPrototype(STR([1,2,3,4,5,6]));
+
+        json_handling::resolvePath(obj2, "@max", [&](Item * item) {
+            item->setFlt(0);
+            ;
+        });
+
+
         object_base *obj = tes_object::objectFromPrototype(STR(
         {
             "glossary": {
