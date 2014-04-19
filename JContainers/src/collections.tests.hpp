@@ -1,19 +1,8 @@
 #pragma once
-#include <stdlib.h>
 
 namespace collections {
 
     #ifndef TEST_COMPILATION_DISABLED
-
-    TEST(sscanf, test)
-    {
-        int num3 = strtol("0x111]", nullptr, 0);
-
-        const char *str = "[0xfeedf00d]";
-
-        int num = 0, num2 = 0;
-        sscanf(str, "[%x]", &num);
-    }
 
     TEST(object_base, refCount)
     {
