@@ -39,10 +39,8 @@ namespace testing
     bool runTests(const meta<TestInfo>::list& list)
     {
         State state;
-        const meta<TestInfo> * first = list.first;
-        while(first) {
-            const TestInfo& test = first->info;
-            first = first->next;
+
+        for (auto& test : list) {
 
             state.currentFailed = false;
             ++state.countTotalTests;

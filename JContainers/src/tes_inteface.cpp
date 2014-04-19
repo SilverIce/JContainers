@@ -40,7 +40,7 @@ bool registerAllFunctions(VMClassRegistry *registry) {
 
     using namespace collections;
 
-    tes_binding::foreach_metaInfo_do([=](tes_binding::class_meta_info& info) {
+    tes_binding::foreach_metaInfo_do([=](const tes_binding::class_meta_info& info) {
         info.bind(registry);
     });
 
@@ -53,7 +53,7 @@ extern "C" {
 
         using namespace collections;
 
-        tes_binding::foreach_metaInfo_do([](tes_binding::class_meta_info& info) {
+        tes_binding::foreach_metaInfo_do([](const tes_binding::class_meta_info& info) {
             code_producer::produceClassToFile(info);
         });
     }

@@ -3,9 +3,13 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/range/iterator_range.hpp>
 #include <boost/range/algorithm/find_if.hpp>
+#include <boost/range/algorithm/find_end.hpp>
+
 #include <functional>
 
 #include "skse/GameData.h"
+
+#include "collection_operators.h"
 
 namespace collections {
 
@@ -32,6 +36,72 @@ namespace collections {
             }
         }
 
+        typedef std::function<Item* (object_base*)> NodeFunc;
+        typedef std::function<void (const Item& , Item&)> ElementFunc;
+        typedef boost::iterator_range<const char*> path_type;
+
+        struct state {
+            bool succeed;
+            path_type path;
+            NodeFunc nodeGetter;
+            object_base *object;
+
+            state(bool _succeed, const NodeFunc& _node, object_base *_object, const path_type& _path) {
+                succeed = _succeed;
+                nodeGetter = _node;
+                path = _path;
+                object = _object;
+            }
+
+            state(bool _succeed, const state& st) {
+                succeed = _succeed;
+                nodeGetter = st.nodeGetter;
+                path = st.path;
+                object = st.object;
+            }
+        };
+
+        template<class T, class V>
+        static bool _map_visit_helper(T *container, path_type path, const V& func)
+        {
+            namespace bs = boost;
+            namespace ss = std;
+
+            if (!container || path.empty()) {
+                return false;
+            }
+
+            bool isKeyVisit = false;
+
+            path_type::iterator rightPath;
+
+            if (bs::istarts_with(path, ".key")) {
+                isKeyVisit = true;
+                rightPath = path.begin() + bs::size(".key") - 1;
+            }
+            else if (bs::istarts_with(path, ".value")) {
+                isKeyVisit = false;
+                rightPath = path.begin() + bs::size(".value") - 1;
+            } else {
+                return false;
+            }
+
+            auto copy = container->container();
+
+            if (isKeyVisit) {
+                for (auto &pair : copy) {
+                    Item itm(pair.first);
+                    resolvePath(itm, rightPath, func);
+                }
+            } else { // is value visit
+                for (auto &pair : copy) {
+                    resolvePath(pair.second, rightPath, func);
+                }
+            }
+
+            return true;
+        }
+
         static void resolvePath(object_base *collection, const char *cpath, std::function<void (Item *)>  itemFunction) {
 
             if (!collection || !cpath) {
@@ -49,33 +119,6 @@ namespace collections {
 
             auto path = bs::make_iterator_range(cpath, cpath + strnlen_s(cpath, 1024));
 
-            typedef decltype(path) path_type;
-
-            typedef ss::function<Item* (object_base*)> NodeFunc;
-
-            typedef ss::function<void (const Item& , Item&)> ElementFunc;
-
-            struct state {
-                bool succeed;
-                path_type path;
-                NodeFunc nodeGetter;
-                object_base *object;
-
-                state(bool _succeed, const NodeFunc& _node, object_base *_object, const path_type& _path) {
-                    succeed = _succeed;
-                    nodeGetter = _node;
-                    path = _path;
-                    object = _object;
-                }
-
-                state(bool _succeed, const state& st) {
-                    succeed = _succeed;
-                    nodeGetter = st.nodeGetter;
-                    path = st.path;
-                    object = st.object;
-                }
-            };
-
             auto operatorRule = [](const state &st) -> state {
                 const auto& path = st.path;
 
@@ -85,7 +128,7 @@ namespace collections {
 
                 auto begin = path.begin() + 1;
                 auto end = bs::find_if(path_type(begin, path.end()), bs::is_any_of("."));
-                auto operationStr = path_type(begin, end);
+                auto operationStr = ss::string(begin, end);
 
                 if (operationStr.empty()) {
                     return state(false, st);
@@ -99,51 +142,40 @@ namespace collections {
                     return state(false, st);
                 }
 
-                ElementFunc func = [](const Item& item, Item& accum) {
-                    accum = Item( (std::max)(item.fltValue(), accum.fltValue()) );
-                };
+                auto opr = collection_operators::get_operator(operationStr);
+
+                if (!opr) {
+                    return state(false, st);
+                }
 
                 Item sharedItem;
 
+                auto itemVisitFunc = [&](Item *item) {
+                    if (item) {
+                        opr->func(*item, sharedItem);
+                    }
+                };
+
                 if (collection->as<array>()) {
+
+                    // have to copy array to prevent it modification during iteration
                     auto array_copy = collection->as<array>()->_array;
                     
                     for (auto &itm : array_copy) {
-                        resolvePath(itm, rightPath.begin(), [&](Item *item) {
-                            if (item) {
-                                func(*item, sharedItem);
-                            }
-                        });
+                        resolvePath(itm, rightPath.begin(), itemVisitFunc);
                     }
-
+                }
+                else if (collection->as<map>()) {
+                    _map_visit_helper(collection->as<map>(), rightPath, itemVisitFunc);
+                }
+                else if (collection->as<form_map>()) {
+                    _map_visit_helper(collection->as<form_map>(), rightPath, itemVisitFunc);
                 }
 
                 return state(true,
-                    [=](object_base *) -> Item* { return (Item *)&sharedItem;},
+                    [=](object_base *) mutable -> Item* { return &sharedItem;},
                     nullptr,
                     path_type());
-
-               /* else if (collection->as<map>() ) {
-
-                    auto map_copy = collection->as<map>()->container();
-
-                    Item sharedItem;
-                    for (auto &pair : map_copy) {
-
-                        resolvePath(collection, rightPath.begin(), [&](Item *item) {
-                            if (item) {
-                                sharedItem = func(*item);
-                            }
-                        });
-
-                    }
-
-                    return collection->as<form_map>();
-
-                } else {
-                    return (Item *)nullptr;
-                } */
-
             };
 
             auto mapRule = [](const state &st) -> state {
@@ -335,7 +367,7 @@ namespace collections {
                     FormId key = formIdFromString(itm->string);
 
                     if (key) {
-                        (*obj)[key] = makeItem(itm);
+                        obj->u_setValueForKey(key, makeItem(itm));
                     }
                 }
             } else {
@@ -346,7 +378,7 @@ namespace collections {
                 int count = cJSON_GetArraySize(val);
                 for (int i = 0; i < count; ++i) {
                     auto itm = cJSON_GetArrayItem(val, i);
-                    (*obj)[itm->string] = makeItem(itm);
+                    obj->u_setValueForKey(itm->string, makeItem(itm));
                 }
             }
 

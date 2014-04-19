@@ -56,8 +56,8 @@ namespace collections {
             arch << Item(testStr);
 
             map obj;
-            obj["tttt"] = Item(testStr);
-            obj["array"] = Item(ar);
+            obj.u_setValueForKey("tttt", Item(testStr));
+            obj.u_setValueForKey("array", Item(ar));
 
             arch << obj;
         }

@@ -111,12 +111,8 @@ namespace collections {
 
         template<class T>
         inline void foreach_metaInfo_do(T& func) {
-            auto& list = meta<class_meta_info_creator>::getListConst();
-            auto first = list.first;
-            while(first) {
-                auto metaInfo = (*first->info)();
-                func(metaInfo);
-                first = first->next;
+            for (auto & item : meta<class_meta_info_creator>::getListConst()) {
+                func(item());
             }
         }
 

@@ -38,8 +38,7 @@ namespace collections {
                 return;
             }
 
-            object_lock g(obj);
-            (*obj)[tes_hash(key)] = Item((T)item);
+            obj->setValueForKey( tes_hash(key), Item((T)item) );
         }
         REGISTERF(setItem<SInt32>, "setInt", "* key value", "creates key-value association. replaces existing value if any");
         REGISTERF(setItem<Float32>, "setFlt", "* key value", "");

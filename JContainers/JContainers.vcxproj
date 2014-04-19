@@ -134,11 +134,11 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\serialization.cpp" />
     <ClCompile Include="src\tes_inteface.cpp" />
-    <ClInclude Include="collection_operators.h" />
     <ClInclude Include="lib\cJSON\cJSON.h" />
     <ClInclude Include="src\autorelease_queue.h" />
     <ClInclude Include="src\code_producer.h" />
     <ClCompile Include="src\code_producer.cpp" />
+    <ClInclude Include="src\collection_operators.h" />
     <ClInclude Include="src\plugin_info.h" />
     <ClInclude Include="src\typedefs.h" />
   </ItemGroup>
