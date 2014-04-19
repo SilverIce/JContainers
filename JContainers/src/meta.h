@@ -8,12 +8,35 @@
 // It's assumed that meta class instance will reside in static memory only!
 template<class T> class meta
 {
-    public: meta * next;    // temporary publicly accessible
-    public: const T info;
+    private: meta * const next;    // temporary publicly accessible
+    public: T info;
+
+    public: class iterator {
+            meta * current;
+        public:
+            iterator() : current(nullptr) {}
+            explicit iterator(meta *elem) : current(elem) {}
+
+            T& operator * () const { return current->info;}
+
+            bool operator != (const iterator& other) const { return current != other.current;}
+
+            iterator& operator ++() {
+                if (current) {
+                    current = current->next;
+                }
+                return *this;
+            }
+    };
 
     public: struct list {
-        meta * first, * last;
-        int count;
+            friend class meta<T>;
+            meta * first, * last;
+        //public:
+            int count;
+
+            iterator begin() const { return iterator(first);}
+            iterator end() const { return iterator(nullptr);}
     };
 
     private: static list& getList() {
@@ -30,7 +53,7 @@ template<class T> class meta
         if (!l.first)
             l.first = this;
         if (l.last)
-            l.last->next = this;
+            const_cast<meta *>(l.last->next) = this;
         l.last = this;
         ++l.count;
     }
@@ -47,5 +70,9 @@ template<class T> class meta
             first = first->next;
         }
     }
+
+
+
+
 };
 

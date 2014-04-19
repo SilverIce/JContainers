@@ -132,6 +132,9 @@
     </ClInclude>
     <ClInclude Include="src\typedefs.h" />
     <ClInclude Include="src\plugin_info.h" />
+    <ClInclude Include="src\collection_operators.h">
+      <Filter>collections_module</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="exports.def" />

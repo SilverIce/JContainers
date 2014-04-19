@@ -138,6 +138,7 @@
     <ClInclude Include="src\autorelease_queue.h" />
     <ClInclude Include="src\code_producer.h" />
     <ClCompile Include="src\code_producer.cpp" />
+    <ClInclude Include="src\collection_operators.h" />
     <ClInclude Include="src\plugin_info.h" />
     <ClInclude Include="src\typedefs.h" />
   </ItemGroup>

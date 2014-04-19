@@ -1,8 +1,19 @@
 #pragma once
+#include <stdlib.h>
 
 namespace collections {
 
     #ifndef TEST_COMPILATION_DISABLED
+
+    TEST(sscanf, test)
+    {
+        int num3 = strtol("0x111]", nullptr, 0);
+
+        const char *str = "[0xfeedf00d]";
+
+        int num = 0, num2 = 0;
+        sscanf(str, "[%x]", &num);
+    }
 
     TEST(object_base, refCount)
     {
@@ -70,7 +81,7 @@ namespace collections {
         context.clearState();
     }
 
-    TEST(autorelease_queue, over_release)
+    TEST_DISABLED(autorelease_queue, over_release)
     {
         using namespace std;
 
@@ -102,7 +113,7 @@ namespace collections {
         context.clearState();
     }
 
-    TEST(autorelease_queue, high_level)
+    TEST_DISABLED(autorelease_queue, high_level)
     {
         using namespace std;
 
@@ -169,8 +180,59 @@ namespace collections {
         return jsonString;
     }
 
+
+    TEST(json_handling, collection_operators)
+    {
+        auto shouldReturnNumber = [&](object_base *obj, const char *path, float value) {
+            json_handling::resolvePath(obj, path, [&](Item * item) {
+                EXPECT_TRUE(item && item->fltValue() == value);
+            });
+        };
+
+        auto shouldReturnInt = [&](object_base *obj, const char *path, int value) {
+            json_handling::resolvePath(obj, path, [&](Item * item) {
+                EXPECT_TRUE(item && item->intValue() == value);
+            });
+        };
+
+        {
+            object_base *obj = tes_object::objectFromPrototype(STR([1,2,3,4,5,6]));
+
+            shouldReturnNumber(obj, "@maxNum", 6);
+            shouldReturnNumber(obj, "@minNum", 1);
+
+            shouldReturnNumber(obj, "@minFlt", 0);
+        }
+        {
+            object_base *obj = tes_object::objectFromPrototype(STR(
+            { "a": 1, "b": 2, "c": 3, "d": 4, "e": 5, "f": 6 }
+            ));
+
+            shouldReturnInt(obj, "@maxNum", 0);
+            shouldReturnInt(obj, "@maxFlt", 0);
+
+            shouldReturnInt(obj, "@maxNum.value", 6);
+            shouldReturnInt(obj, "@minNum.value", 1);
+        }
+        {
+            object_base *obj = tes_object::objectFromPrototype(STR(
+            { "a": [1], "b": {"k": -100}, "c": [3], "d": {"k": 100}, "e": [5], "f": [6] }
+            ));
+
+            shouldReturnInt(obj, "@maxNum", 0);
+            shouldReturnInt(obj, "@maxFlt", 0);
+
+            shouldReturnNumber(obj, "@maxNum.value[0]", 6);
+            shouldReturnNumber(obj, "@minNum.value[0]", 1);
+
+            shouldReturnNumber(obj, "@maxNum.value.k", 100);
+            shouldReturnNumber(obj, "@minNum.value.k", -100);
+        }
+    }
+
     TEST(json_handling, readJSONData)
     {
+
         object_base *obj = tes_object::objectFromPrototype(STR(
         {
             "glossary": {
@@ -204,6 +266,9 @@ namespace collections {
         shouldSucceed(".array[", false);
         shouldSucceed("..array[", false);
         shouldSucceed(".array.[", false);
+
+        shouldSucceed(".array.key", false);
+        shouldSucceed("[0].key", false);
 /*
         json_handling::resolvePath(obj, ".nonExistingKey", [&](Item * item) {
             EXPECT_TRUE(!item);

@@ -394,6 +394,10 @@ namespace collections {
             return _type == ItemTypeNone;
         }
 
+        bool isNumber() const {
+            return _type == ItemTypeFloat32 || _type == ItemTypeInt32;
+        }
+
         object_base *object() const {
             return (_type == ItemTypeObject) ? _object : nullptr;
         }
@@ -544,9 +548,10 @@ namespace collections {
             return itr != cnt.end() ? (cnt.erase(itr), true) : false;
         }
 
+/*
         Item& operator [] (const std::string& key) {
             return cnt[key];
-        }
+        }*/
 
         void u_setValueForKey(const std::string& key, const Item& value) {
             cnt[key] = value;
@@ -556,11 +561,6 @@ namespace collections {
             object_lock g(this);
             cnt[key] = value;
         }
-/*
-        Item& operator[](const std::string& str) {
-            mutex_lock g(_mutex);
-            return cnt[str];
-        }*/
 
         void u_nullifyObjects() override;
 
@@ -613,6 +613,15 @@ namespace collections {
 
         void u_clear() {
             cnt.clear();
+        }
+
+        void u_setValueForKey(FormId key, const Item& value) {
+            cnt[key] = value;
+        }
+
+        void setValueForKey(FormId key, const Item& value) {
+            object_lock g(this);
+            cnt[key] = value;
         }
 
         SInt32 u_count() override {
