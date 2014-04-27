@@ -20,7 +20,7 @@
 
 <h4 id="jvalue">JValue</h4>
 
-<p>Nothing more that just an interface that shows what functionality JArray, JMap and JFormMap share. So each of them can be emptied, serialized and deserialized to/from JSON file and more.</p>
+<p>Nothing more that just an interface that shows what functionality JArray, JMap and JFormMap share. So each of them can be emptied, serialized and deserialized to/from JSON and more.</p>
 
 <h4 id="jdb">JDB</h4>
 
@@ -102,6 +102,8 @@ form actor </span><span class="pun">=</span><span class="pln"> </span><span clas
 Syntax:</p>
 
 <ul>
+<li>@function</li>
+<li>@function.path.to.element</li>
 <li>path.to.container@function</li>
 <li>path.to.container@function.path.to.element</li>
 </ul>
@@ -152,7 +154,7 @@ solveFlt</span><span class="pun">(</span><span class="pln">obj</span><span class
 <li>when you do not need that object you must release it (use <code>JValue.release</code>)</li>
 </ul>
 
-<p>Newly created object (created with object, <code>objectWith*</code> or <code>readFromFile</code> function) owned by no one and destroyed after short amount of time (roughly 10 seconds). Container gets owned(retained) once it gets inserted into another container or JDB(which is also container) and released when removed.</p>
+<p>Newly created object (created with object, <code>objectWith*</code> or <code>readFromFile</code> function) owned by no one and destroyed after short amount of time (roughly 10 seconds). Container gets owned(retained) once it gets inserted into another container or JDB (which is also container) and released when removed.</p>
 
 <p>Illustration shows the idea:</p>
 
@@ -254,11 +256,11 @@ endfunction</span></code></pre>
 </span><span class="kwd">import</span><span class="pln"> </span><span class="typ">JValue</span><span class="pln">
 </span><span class="kwd">import</span><span class="pln"> JDB
 
-</span><span class="kwd">int</span><span class="pln"> config </span><span class="pun">=</span><span class="lit">0</span><span class="pln">
+</span><span class="kwd">int</span><span class="pln"> config </span><span class="pun">=</span><span class="pln"> </span><span class="lit">0</span><span class="pln">
 
 </span><span class="typ">EventOnEffectStart</span><span class="pun">(</span><span class="typ">Actor</span><span class="pln"> akTarget</span><span class="pun">,</span><span class="pln"> </span><span class="typ">Actor</span><span class="pln"> akCaster</span><span class="pun">)</span><span class="pln">
-</span><span class="pun">;</span><span class="pln"> read config file </span><span class="kwd">from</span><span class="pln"> game root folder
-config </span><span class="pun">=</span><span class="pln"> </span><span class="typ">JValue</span><span class="pun">.</span><span class="pln">readFromFile</span><span class="pun">(</span><span class="str">"scale.txt"</span><span class="pun">)</span><span class="pln">
+    </span><span class="pun">;</span><span class="pln"> read config file </span><span class="kwd">from</span><span class="pln"> game root folder
+    config </span><span class="pun">=</span><span class="pln"> </span><span class="typ">JValue</span><span class="pun">.</span><span class="pln">readFromFile</span><span class="pun">(</span><span class="str">"scale.txt"</span><span class="pun">)</span><span class="pln">
 </span><span class="typ">Endevent</span><span class="pln">
 
 </span><span class="kwd">function</span><span class="pln"> setScale</span><span class="pun">(</span><span class="kwd">float</span><span class="pln"> scale</span><span class="pun">)</span><span class="pln">
@@ -266,11 +268,11 @@ config </span><span class="pun">=</span><span class="pln"> </span><span class="t
     </span><span class="pun">;</span><span class="pln"> iterate over array </span><span class="pun">&amp;</span><span class="pln"> calculate bone scale
     </span><span class="kwd">int</span><span class="pln"> i </span><span class="pun">=</span><span class="typ">JArray</span><span class="pun">.</span><span class="pln">count</span><span class="pun">(</span><span class="pln">config</span><span class="pun">)</span><span class="pln">
     </span><span class="kwd">while</span><span class="pun">(</span><span class="pln">i </span><span class="pun">&gt;</span><span class="lit">0</span><span class="pun">)</span><span class="pln">
-     i </span><span class="pun">-=</span><span class="lit">1</span><span class="pln">
-    </span><span class="pun">;</span><span class="pln"> currently </span><span class="pun">|</span><span class="pln">data</span><span class="pun">|</span><span class="pln"> </span><span class="kwd">is</span><span class="pln"> array</span><span class="pun">.</span><span class="pln"> </span><span class="pun">[</span><span class="str">"NPC Head [Head]"</span><span class="pun">,</span><span class="pln"> </span><span class="lit">0</span><span class="pun">,</span><span class="pln"> </span><span class="pun">-</span><span class="lit">0.33</span><span class="pun">]</span><span class="pln"> </span><span class="kwd">for</span><span class="pln"> example
-     </span><span class="kwd">int</span><span class="pln"> data</span><span class="pun">=</span><span class="typ">JArray</span><span class="pun">.</span><span class="pln">getObj</span><span class="pun">(</span><span class="pln">config</span><span class="pun">,</span><span class="pln"> i</span><span class="pun">)</span><span class="pln">
-     </span><span class="kwd">float</span><span class="pln"> nodeScale </span><span class="pun">=</span><span class="lit">1.0</span><span class="pun">+</span><span class="typ">JArray</span><span class="pun">.</span><span class="pln">getFlt</span><span class="pun">(</span><span class="pln">data</span><span class="pun">,</span><span class="lit">1</span><span class="pun">)</span><span class="pln"> </span><span class="pun">+</span><span class="pln"> </span><span class="pun">(</span><span class="typ">JArray</span><span class="pun">.</span><span class="pln">getFlt</span><span class="pun">(</span><span class="pln">data</span><span class="pun">,</span><span class="lit">2</span><span class="pun">)-</span><span class="typ">JArray</span><span class="pun">.</span><span class="pln">getFlt</span><span class="pun">(</span><span class="pln">data</span><span class="pun">,</span><span class="lit">1</span><span class="pun">))</span><span class="pln"> </span><span class="pun">*</span><span class="pln"> scale
-    </span><span class="typ">NetImmerse</span><span class="pun">.</span><span class="typ">SetNodeScale</span><span class="pun">(</span><span class="pln">plr</span><span class="pun">,</span><span class="pln"> </span><span class="typ">JArray</span><span class="pun">.</span><span class="pln">getStr</span><span class="pun">(</span><span class="pln">data</span><span class="pun">,</span><span class="pln"> </span><span class="lit">0</span><span class="pun">),</span><span class="pln"> nodeScale</span><span class="pun">,</span><span class="pln"> </span><span class="kwd">False</span><span class="pun">)</span><span class="pln">
+        i </span><span class="pun">-=</span><span class="lit">1</span><span class="pln">
+        </span><span class="pun">;</span><span class="pln"> currently </span><span class="pun">|</span><span class="pln">data</span><span class="pun">|</span><span class="pln"> </span><span class="kwd">is</span><span class="pln"> array</span><span class="pun">.</span><span class="pln"> </span><span class="pun">[</span><span class="str">"NPC Head [Head]"</span><span class="pun">,</span><span class="pln"> </span><span class="lit">0</span><span class="pun">,</span><span class="pln"> </span><span class="pun">-</span><span class="lit">0.33</span><span class="pun">]</span><span class="pln"> </span><span class="kwd">for</span><span class="pln"> example
+        </span><span class="kwd">int</span><span class="pln"> data </span><span class="pun">=</span><span class="pln"> </span><span class="typ">JArray</span><span class="pun">.</span><span class="pln">getObj</span><span class="pun">(</span><span class="pln">config</span><span class="pun">,</span><span class="pln"> i</span><span class="pun">)</span><span class="pln">
+        </span><span class="kwd">float</span><span class="pln"> nodeScale </span><span class="pun">=</span><span class="lit">1.0</span><span class="pun">+</span><span class="typ">JArray</span><span class="pun">.</span><span class="pln">getFlt</span><span class="pun">(</span><span class="pln">data</span><span class="pun">,</span><span class="lit">1</span><span class="pun">)</span><span class="pln"> </span><span class="pun">+</span><span class="pln"> </span><span class="pun">(</span><span class="typ">JArray</span><span class="pun">.</span><span class="pln">getFlt</span><span class="pun">(</span><span class="pln">data</span><span class="pun">,</span><span class="lit">2</span><span class="pun">)-</span><span class="typ">JArray</span><span class="pun">.</span><span class="pln">getFlt</span><span class="pun">(</span><span class="pln">data</span><span class="pun">,</span><span class="lit">1</span><span class="pun">))</span><span class="pln"> </span><span class="pun">*</span><span class="pln"> scale
+        </span><span class="typ">NetImmerse</span><span class="pun">.</span><span class="typ">SetNodeScale</span><span class="pun">(</span><span class="pln">plr</span><span class="pun">,</span><span class="pln"> </span><span class="typ">JArray</span><span class="pun">.</span><span class="pln">getStr</span><span class="pun">(</span><span class="pln">data</span><span class="pun">,</span><span class="pln"> </span><span class="lit">0</span><span class="pun">),</span><span class="pln"> nodeScale</span><span class="pun">,</span><span class="pln"> </span><span class="kwd">False</span><span class="pun">)</span><span class="pln">
     endWhile
 endfunction</span></code></pre>
 
@@ -325,11 +327,11 @@ endfunction
 
 </span><span class="pun">;</span><span class="pln"> find </span><span class="pun">(</span><span class="kwd">or</span><span class="pln"> create </span><span class="kwd">new</span><span class="pln"> </span><span class="kwd">if</span><span class="pln"> </span><span class="kwd">not</span><span class="pln"> found</span><span class="pun">)</span><span class="pln"> per</span><span class="pun">-</span><span class="pln">actor information containing mood</span><span class="pun">,</span><span class="pln"> anger </span><span class="kwd">and</span><span class="pln"> array of victims
 </span><span class="kwd">int</span><span class="pln"> </span><span class="kwd">function</span><span class="pln"> getActorEntry</span><span class="pun">(</span><span class="pln">form actor</span><span class="pun">)</span><span class="pln">
-    </span><span class="kwd">int</span><span class="pln"> entry </span><span class="pun">=</span><span class="pln"> </span><span class="typ">JFormMap</span><span class="pun">.</span><span class="pln">getObj</span><span class="pun">(</span><span class="kwd">self</span><span class="pun">.</span><span class="pln">followers</span><span class="pun">,</span><span class="pln"> follower</span><span class="pun">)</span><span class="pln">
+    </span><span class="kwd">int</span><span class="pln"> entry </span><span class="pun">=</span><span class="pln"> </span><span class="typ">JFormMap</span><span class="pun">.</span><span class="pln">getObj</span><span class="pun">(</span><span class="kwd">self</span><span class="pun">.</span><span class="pln">followers</span><span class="pun">,</span><span class="pln"> actor</span><span class="pun">)</span><span class="pln">
     </span><span class="pun">;</span><span class="pln"> </span><span class="kwd">if</span><span class="pln"> </span><span class="kwd">no</span><span class="pln"> entry found </span><span class="pun">-</span><span class="pln"> create </span><span class="kwd">new</span><span class="pln"> </span><span class="kwd">from</span><span class="pln"> prototype</span><span class="pun">-</span><span class="kwd">string</span><span class="pln">
     </span><span class="kwd">if</span><span class="pln"> </span><span class="pun">!</span><span class="pln">entry
         </span><span class="kwd">int</span><span class="pln"> entry </span><span class="pun">=</span><span class="pln"> </span><span class="typ">JValue</span><span class="pun">.</span><span class="pln">objectWithPrototype</span><span class="pun">(</span><span class="str">"{ \"mood\": 0, \"anger\": 0, \"victims\": [] }"</span><span class="pun">)</span><span class="pln">
-        </span><span class="typ">JFormMap</span><span class="pun">.</span><span class="pln">setObj</span><span class="pun">(</span><span class="kwd">self</span><span class="pun">.</span><span class="pln">followers</span><span class="pun">,</span><span class="pln"> follower</span><span class="pun">,</span><span class="pln"> entry</span><span class="pun">)</span><span class="pln">
+        </span><span class="typ">JFormMap</span><span class="pun">.</span><span class="pln">setObj</span><span class="pun">(</span><span class="kwd">self</span><span class="pun">.</span><span class="pln">followers</span><span class="pun">,</span><span class="pln"> actor</span><span class="pun">,</span><span class="pln"> entry</span><span class="pun">)</span><span class="pln">
     endif
 
     </span><span class="kwd">return</span><span class="pln"> entry

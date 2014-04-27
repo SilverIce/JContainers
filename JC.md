@@ -1,0 +1,362 @@
+## Overview
+
+This is Skyrim plugin that implements array and associative(map or dictionary) containers: JArray (array container), JMap and JFormMap (associative containers), JDB (database).
+
+#### JArray
+
+Ordered collection (list) of **values**(value is float, integer, string or another container). Dynamicallys resizeable, unlimited size array (Skyrim size limit is 128) that may contain any kind of in one time.
+
+#### JMap and JFormMap
+
+Both are **associative** containers (set of unique keys and values where each key associated with one **value**). They can not contain two or more equal keys. JMap key is a string, JFormMap key is a form (form is any actor, item, quest, spell - almost everything in Skyrim).
+
+#### JValue
+
+Nothing more that just an interface that shows what functionality JArray, JMap and JFormMap share. So each of them can be emptied, serialized and deserialized to/from JSON and more.
+
+#### JDB
+
+Take it as global entry point or database - you put information in it under "yourKey" string key and then you can access to it from any script in the game. There is only one JDB in game, so each time you access it you access that one, single JDB. It is **associative** container as JMap (it is JMap internally), but script interface slight different.
+__
+*There are also some pieces of information in script file comments.*
+
+## Reference
+
+### Object(container) instantiation, identifiers
+
+Object **identifier** is unique number that ranges from 1 to 2^32. It’s the way to distinguish it among other objects. And it’s almost only way to interact with it.
+
+To use any container object (array, map or formmap) you must first create(instantiate) it with `object` function or retrieve it from somewhere:
+```lua
+int array = JArray.object()
+int anotherArray = JDB.solveObj(".myArray")
+```
+Once created, you may put something in it:
+```lua
+JArray.addStr(array, "it’s me")
+JArray.addForm(array, GetTargetActor())
+```
+And read contents:        
+```lua
+string string = JArray.getStr(array, 0)
+form actor = JArray.getForm(array, 1)
+```
+### Notes about JContainers API usage
+
+First and foremost - game will not crash no matter what data you will pass into JContainer functions. The following happens if function gets called with invalid input (state when input cannot be handled properly):
+
+All functions returning new container return zero identifier. For. ex `JValue.readFromFile("")` returns 0 because of invalid file path. Zero identifier means non-existing object. It’s ok to pass it into other functions - in that case function will return default value.
+
+All functions that read container contents (such as getFlt, solveFlt, getStr, count, allKeys and etc) return default value. In case function returns integer or float - default value is 0, string or form - None, container identifier - 0.
+
+### Object persistence
+
+Every container object persists in save file until it (container) gets destroyed. When save performed all objects are saved and all objects are resurrected when save file gets loaded.
+
+### JSON serialization
+
+As said above, it’s possible to serialize/deserialize container data. While numbers and strings serialized in natural way, store form information is slight tricky as JSON knows nothing about Skyrim forms (and also because global form id depends on mod load order). Serialized form is a string prefixed with __formData, plugin file name and local form id (hex or decimal number).
+
+Example of serialized JMap containing player form associated with `"test"` key:
+```json
+{
+    "test" : "__formData|Skyrim.esm|0x14",
+    "name": "Elsa",
+    "level": 2
+}
+```
+
+### Path resolving
+
+This feature simplifies access to deep-located information. There is a group of `solve*` and `solve*Setter` functions. `solve*` retrieves value and `solve*Setter` changes (assigns) value. Suppose there is object info containing following information:
+```json
+{
+    "classicPreset" :  {
+    "campfileLighting" : "Automatic"
+    },
+    "numbers" : [0, 1, 2, 3]
+}
+```
+Access to campfileLighting in standard way would look like:
+```lua
+int preset = JMap.getObj(info, "classicPreset")
+string lightingType = JMap.getStr(preset, "campfileLighting")
+```
+But it’s possible to retrieve or change campfileLighting value, get access to numbers array in more simple way:
+```lua
+string lightingType = JValue.solveStr(info, ".classicPreset.campfileLighting")
+JValue.solveStrSetter(info, ".classicPreset.campfileLighting", "Non-Automatic")
+int firstNumber = JValue.solveInt(info, ".numbers[0]")
+JValue.solveIntSetter(info, ".numbers[0]", 10)
+```
+### Collection operators
+
+Feature allows execute functions on collection elements. It’s accessible via solve* functions.
+Syntax:
+
+* @function
+* @function.path.to.element
+* path.to.container@function
+* path.to.container@function.path.to.element
+
+path.to.container - is the path to retrieve collection
+
+function - is the function that will be applied to each collection item. Currently only few functions implemented:
+
+* minNum, maxNum (search for min or max number, works with any number type (int or float))
+* minFlt, maxFlt - the same as above, accepts float values only
+* minFlt, maxFlt - the same as above, accepts integer values only
+
+path.to.element - is the path to retrieve element.
+Examples:
+```lua
+[1,2,3,4,5,6]
+
+solveFlt(obj, "@maxNum") is 6
+solveFlt(obj, "@minNum") is 1
+
+{ "a": [1], "b": {"k": -100}, "c": [3], "d": {"k": 100}, "e": [5], "f": [6] }
+
+solveFlt(obj, "@maxNum.value[0]") is 6
+solveFlt(obj, "@minNum.value[0]") is 1
+solveFlt(obj, "@maxNum.value.k") is 100
+solveFlt(obj, "@minNum.value.k") is -100
+```
+
+### Value conversion notes
+TODO
+
+### Object lifetime management rules
+
+Q: What the hell is that?
+
+A: You see, each time script creates new string or default papyrus array Skyrim allocates memory and automatically frees it when you do not need that string or array or something else.
+
+Internally all containers are C++ objects, Skyrim knows nothing about them and unable to manage their lifetime and memory.
+
+The lifetime management model is based on object ownership. Any container object may have one or more owners. As long as an object has at least one owner, it continues to exist. If an object has no owners it gets destroyed.
+
+The rules:
+
+- to prevent destruction you must own container (use `JValue.retain` function)
+- when you do not need that object you must release it (use `JValue.release`)
+
+Newly created object (created with object, `objectWith*` or `readFromFile` function) owned by no one and destroyed after short amount of time (roughly 10 seconds). Container gets owned(retained) once it gets inserted into another container or JDB (which is also container) and released when removed.
+
+Illustration shows the idea:
+
+![test][1]
+
+## Tutorial
+
+### Simple example
+
+Suppose you want to store some actor related information (let it be player’s followers and their mood):
+
+```lua
+; initial setup function where you usually do the things once mod gets installed
+function modSetupMethod()
+    ;create JFormMap container and associate it with database for future use
+    JDB.setObj("followers", JFormMap.object())
+endfunction
+
+; method that gets called once user uninstalls your mod
+function modUninstallMethod()
+    ; destroy association to not pollute game save
+    JDB.setObj("followers", 0)
+endfunction
+
+function storeFolloverMood(form follower, float mood)
+    ; fetch followers by resolving path
+    int followers = JDB.solveObj(".followers")
+    ; associate follower and the mood
+    JFormMap.setFlt(followers, follower, mood)
+endfunction
+
+float function followerMood(form follower)
+    ; fetch follower mood
+    return JFormMap.getFlt(JDB.solveObj(".followers"), follower)
+endfunction
+```
+### Config reading
+
+You wish to have all your mod config values to be stored somewhere (for ex. in `"Data/preset.txt"` file) so you could easy adjust them all by editing the file. Or you do not wish to hardcode all these values. File contains following info:
+
+```json
+{
+    "classicPreset" : {
+        "campfileLighting" : "Automatic",
+        "exposureRate" : 1.0,
+        "frigidWaterLethal" : 1,
+        "exposureIsLethal" : 1,
+        "axeDurability" : 1
+    },
+    "winterHorkerPreset" : {
+        "campfileLighting" : "nonAutomatic",
+        "exposureRate" : 0.5,
+        "frigidWaterLethal" : 0,
+        "exposureIsLethal" : 0,
+        "axeDurability" : 0
+    }
+}
+```
+File written in JSON format.
+It contains root map containing two maps - two standard presets your mod provides - classicPreset & winterHorkerPreset. Config file reading may look like:
+
+```lua
+; let it be .classicPreset or .winterHorkerPreset string
+string currentPreset
+
+; use function each time you need re-read preset from a file
+function parseConfig()
+    ; that’s all. presets are already in Skyrim
+    ; readFromFile returns root map container
+    ; it may return zero if file not exist or it can not be parsed (not JSON format or you have accidentally added extra coma)
+    int config = JValue.readFromFile("Data/preset.txt")
+    ; put config into DB - associate key and config
+    JDB.setObj("frostfall", config)
+    currentPreset = ".classicPreset"
+endfunction
+
+bool function axeDurabilityEnabled()
+    ; solveInt like any solve* function tries to find (solve) value for given path
+    ; current path is ".frostfall.classicPreset.axeDurability"
+    return JDB.solveInt(".frostfall" + currentPreset + ".axeDurability") != 0
+endfunction
+
+string function lightingType()
+    return JDB.solveStr(".frostfall" + currentPreset + ".campfileLighting")
+endfunction
+```
+
+### Config reading 2
+
+Let it be a script that modifies model bone scales (interpolates scales between min and max) and needs configuration data to be imported from file:
+```json
+[
+    ["NPC Head [Head]", 0, -0.33],
+    ["NPC Spine [Spn0]", -0.133, -0.3],
+    ["NPC Spine1 [Spn1]", 0, 0.433],
+    ["NPC Spine2 [Spn2]", 0, -0.167]
+]
+```
+What you see here is one array that contains 4 sub-arrays and each sub-array contains model bone name, minimum and maximum scale.Then script would look like:
+
+```lua
+import JArray
+import JMap
+import JValue
+import JDB
+
+int config = 0
+
+EventOnEffectStart(Actor akTarget, Actor akCaster)
+    ; read config file from game root folder
+    config = JValue.readFromFile("scale.txt")
+Endevent
+
+function setScale(float scale)
+    objectreference plr = GetTargetActor()
+    ; iterate over array & calculate bone scale
+    int i =JArray.count(config)
+    while(i >0)
+        i -=1
+        ; currently |data| is array. ["NPC Head [Head]", 0, -0.33] for example
+        int data = JArray.getObj(config, i)
+        float nodeScale =1.0+JArray.getFlt(data,1) + (JArray.getFlt(data,2)-JArray.getFlt(data,1)) * scale
+        NetImmerse.SetNodeScale(plr, JArray.getStr(data, 0), nodeScale, False)
+    endWhile
+endfunction
+```
+
+you could rewrite script to store config data in JDB and not in effect script:
+```lua
+EventOnEffectStart(Actor akTarget, Actor akCaster)
+    JDB.setObj("scaleMod", JValue.readFromFile("scale.txt"))
+Endevent
+
+; access data somewhere later. JDB resolves path:
+int config = JDB.solveObj(".scaleMod")
+int i =JArray.count(config)
+while(i >0)
+…
+```
+### Followers example
+
+The same as first example, but now you need to store one more value - anger and list of victims (both are per-actor data). Also you have decided to not associate followers with JDB database.
+
+We will store all per-actor information in following structure:
+```json
+{
+    "mood": 0,
+    "anger": 0,
+    "victims": []
+}
+```
+Here you can see a map that contains 3 key-value associations: mood & angler(both are zeros initially) and string key ("victims") -> array association.
+```lua
+function storeFollowerMood(form follower, float mood)
+    ; get follower entry to write into it
+    int entry = getActorEntry(follower)
+    ; write mood into follower entry
+    JValue.solveFltSetter(entry, ".mood", mood)
+endfunction
+
+function addFollowerVictim(form follower, form victim)
+    ; get follower entry to write into it AND then get victims array
+    int victims = JValue.solveObj(getActorEntry(follower), ".victims")
+    ; add victim into array
+    JArray.addForm(victims, victim)
+endfunction
+
+float function followerMood(form follower)
+    ; get follower entry AND fetch mood
+    return JValue.solveFlt(getActorEntry(follower), ".mood")
+endfunction
+
+float function followerAnger(form follower)
+    return JValue.solveFlt(getActorEntry(follower), ".anger")
+endfunction
+
+; find (or create new if not found) per-actor information containing mood, anger and array of victims
+int function getActorEntry(form actor)
+    int entry = JFormMap.getObj(self.followers, actor)
+    ; if no entry found - create new from prototype-string
+    if !entry
+        int entry = JValue.objectWithPrototype("{ \"mood\": 0, \"anger\": 0, \"victims\": [] }")
+        JFormMap.setObj(self.followers, actor, entry)
+    endif
+
+    return entry
+endfunction
+
+; that property hides all black magick - retains & releases object
+; see Object lifetime management rules section for more of it
+int property followers hidden
+    int function get()
+        return _followers
+    endFunction
+    function set(int value)
+        ; retainAndRelease releases previous object
+        ; and owns (retains) a new
+        _followers = JValue.releaseAndRetain(_followers, value)
+    endFunction
+endProperty
+
+int _followers = 0
+
+; initial setup function where you usually do the things once mod gets installed
+
+function modSetupMethod()
+    ; create and retain JFormMap container
+    self.followers = JFormMap.object()
+endfunction
+
+; method that gets called once user uninstalls it via MCM
+function modUninstallMethod()
+    ; release followers container to not pollute game save
+    self.followers = 0
+endfunction
+```
+
+  [1]: https://lh4.googleusercontent.com/-1Q7K-3vT6E8/U1KkKXVAeOI/AAAAAAAAACE/Oief-49GKYs/s0/jcontainers%252520-%252520readme%252520-%252520temp.png "jcontainers - readme - temp.png"
