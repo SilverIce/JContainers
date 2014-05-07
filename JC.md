@@ -1,10 +1,16 @@
-## Overview
+##Motivation
 
-This is Skyrim plugin that implements array and associative(map or dictionary) containers: JArray (array container), JMap and JFormMap (associative containers), JDB (database).
+Papyrus lacks of convenient data structures such as dynamic arrays or associative containers. Script language should be simple but not underdeveloped.
+
+This plugin attempts to add missing functionality. Although it is not native functionality and it will never have a nice brackets to access items as default Papyrus Array have i believe it is still better than nothing.
+
+### Overview
+
+Current version implements array and associative(map or dictionary) containers: JArray (array container), JMap and JFormMap (both associative containers) and few convenient wrappers: JDB and JFormDB (databases).
 
 #### JArray
 
-Ordered collection (list) of **values**(value is float, integer, string or another container). Dynamicallys resizeable, unlimited size array (Skyrim size limit is 128) that may contain any kind of in one time.
+Ordered collection (array) of **values**(value is float, integer, string, form or another container). Dynamically resizeable, unlimited size array (default Papyrus Array size limit is 128 items) that may contain value of any kind in one time.
 
 #### JMap and JFormMap
 
@@ -17,14 +23,18 @@ Nothing more that just an interface that shows what functionality JArray, JMap a
 #### JDB
 
 Take it as global entry point or database - you put information in it under "yourKey" string key and then you can access to it from any script in the game. There is only one JDB in game, so each time you access it you access that one, single JDB. It is **associative** container as JMap (it is JMap internally), but script interface slight different.
+
+#### JFormDB
+
+Provides convenient way to store values on form. It's just wrapper that relies on rest of container objects.
 __
 *There are also some pieces of information in script file comments.*
 
 ## Reference
 
-### Object(container) instantiation, identifiers
+### Object (container) instantiation, identifiers
 
-Object **identifier** is unique number that ranges from 1 to 2^32. It’s the way to distinguish it among other objects. And it’s almost only way to interact with it.
+Object's **identifier** is unique number that ranges from 1 to 2^32. It’s the way to distinguish it among other objects. And it’s almost only way to interact with it.
 
 To use any container object (array, map or formmap) you must first create(instantiate) it with `object` function or retrieve it from somewhere:
 ```lua
@@ -47,7 +57,7 @@ First and foremost - game will not crash no matter what data you will pass into 
 
 All functions returning new container return zero identifier. For. ex `JValue.readFromFile("")` returns 0 because of invalid file path. Zero identifier means non-existing object. It’s ok to pass it into other functions - in that case function will return default value.
 
-All functions that read container contents (such as getFlt, solveFlt, getStr, count, allKeys and etc) return default value. In case function returns integer or float - default value is 0, string or form - None, container identifier - 0.
+All functions that read container contents (such as `getFlt`, `solveFlt`, `getStr`, `count`, `allKeys` and etc) return default value. In case function returns integer or float - default value is 0, string or form - `None`, container identifier - 0.
 
 ### Object persistence
 
@@ -55,12 +65,12 @@ Every container object persists in save file until it (container) gets destroyed
 
 ### JSON serialization
 
-As said above, it’s possible to serialize/deserialize container data. While numbers and strings serialized in natural way, store form information is slight tricky as JSON knows nothing about Skyrim forms (and also because global form id depends on mod load order). Serialized form is a string prefixed with __formData, plugin file name and local form id (hex or decimal number).
+As said above, it’s possible to serialize/deserialize container data. While numbers and strings serialized in natural way, store form information is slight tricky as JSON knows nothing about Skyrim forms (and also because global form id depends on mod load order). Serialized form is a string prefixed with `"__formData"`, plugin file name and local or global form id (hex or decimal number).
 
 Example of serialized JMap containing player form associated with `"test"` key:
 ```json
 {
-    "test" : "__formData|Skyrim.esm|0x14",
+    "test": "__formData|Skyrim.esm|0x14",
     "name": "Elsa",
     "level": 2
 }
@@ -72,7 +82,7 @@ This feature simplifies access to deep-located information. There is a group of 
 ```json
 {
     "classicPreset" :  {
-    "campfileLighting" : "Automatic"
+        "campfileLighting" : "Automatic"
     },
     "numbers" : [0, 1, 2, 3]
 }
@@ -91,7 +101,7 @@ JValue.solveIntSetter(info, ".numbers[0]", 10)
 ```
 ### Collection operators
 
-Feature allows execute functions on collection elements. It’s accessible via solve* functions.
+Feature allows execute functions on collection (container) elements. It’s accessible via solve* functions.
 Syntax:
 
 * @function
@@ -99,32 +109,40 @@ Syntax:
 * path.to.container@function
 * path.to.container@function.path.to.element
 
-path.to.container - is the path to retrieve collection
+path.to.container - is the path to retrieve collection.
 
-function - is the function that will be applied to each collection item. Currently only few functions implemented:
+function - is the function that will be applied on each collection element. Currently only few functions implemented:
 
 * minNum, maxNum (search for min or max number, works with any number type (int or float))
 * minFlt, maxFlt - the same as above, accepts float values only
-* minFlt, maxFlt - the same as above, accepts integer values only
+* minInt, maxInt - the same as above, accepts integer values only
 
 path.to.element - is the path to retrieve element.
-Examples:
+
+Examples (pseudo-code):
 ```lua
-[1,2,3,4,5,6]
+obj = [1,2,3,4,5,6]
 
 solveFlt(obj, "@maxNum") is 6
 solveFlt(obj, "@minNum") is 1
 
-{ "a": [1], "b": {"k": -100}, "c": [3], "d": {"k": 100}, "e": [5], "f": [6] }
+obj = { "a": [1], "b": {"k": -100}, "c": [3], "d": {"k": 100}, "e": [5], "f": [6] }
 
 solveFlt(obj, "@maxNum.value[0]") is 6
 solveFlt(obj, "@minNum.value[0]") is 1
 solveFlt(obj, "@maxNum.value.k") is 100
 solveFlt(obj, "@minNum.value.k") is -100
+
+obj = {
+    mapKey: { "a": [1], "b": {"k": -100}, "c": [3], "d": {"k": 100}, "e": [5], "f": [6] }
+}
+
+solveFlt(obj, ".mapKey@maxNum.value.k") is 100
 ```
 
-### Value conversion notes
-TODO
+### Number conversion notes
+
+Not much to say, really. Group of `getFlt`, `solveFlt`, `getInt`, `solveInt` functions capable to access to any kind of number no matter whether number is integer or float value. It returns zero if try to access to string (`getStr`) or object identifier (`getObj`) value.
 
 ### Object lifetime management rules
 
@@ -141,7 +159,9 @@ The rules:
 - to prevent destruction you must own container (use `JValue.retain` function)
 - when you do not need that object you must release it (use `JValue.release`)
 
-Newly created object (created with object, `objectWith*` or `readFromFile` function) owned by no one and destroyed after short amount of time (roughly 10 seconds). Container gets owned(retained) once it gets inserted into another container or JDB (which is also container) and released when removed.
+Newly created object (created with object, `objectWith*` or `readFromFile` function) owned by no one and destroyed after short amount of time (roughly 10 seconds).
+
+**Note** that container gets owned (retained) automatically once it gets inserted into another container or JDB (which is also container) and released when removed. Thus you don't have to care about lifetime of object that owned by JDB.
 
 Illustration shows the idea:
 
@@ -154,28 +174,21 @@ Illustration shows the idea:
 Suppose you want to store some actor related information (let it be player’s followers and their mood):
 
 ```lua
-; initial setup function where you usually do the things once mod gets installed
-function modSetupMethod()
-    ;create JFormMap container and associate it with database for future use
-    JDB.setObj("followers", JFormMap.object())
-endfunction
-
-; method that gets called once user uninstalls your mod
-function modUninstallMethod()
-    ; destroy association to not pollute game save
-    JDB.setObj("followers", 0)
-endfunction
-
 function storeFolloverMood(form follower, float mood)
-    ; fetch followers by resolving path
-    int followers = JDB.solveObj(".followers")
-    ; associate follower and the mood
-    JFormMap.setFlt(followers, follower, mood)
+    ; function creates "followers" storage and then creates
+    ; (follower, entry) associations
+    JFormDB.setFlt(follower, ".followers.mood", mood)
 endfunction
 
 float function followerMood(form follower)
     ; fetch follower mood
-    return JFormMap.getFlt(JDB.solveObj(".followers"), follower)
+    return JFormDB.getFlt(follower, ".followers.mood")
+endfunction
+
+; method that gets called once user uninstalls your mod
+function modUninstallMethod()
+    ; destroy association to not pollute game save and precious RAM
+    JDB.setObj("followers", 0)
 endfunction
 ```
 ### Config reading
@@ -243,44 +256,29 @@ Let it be a script that modifies model bone scales (interpolates scales between 
 What you see here is one array that contains 4 sub-arrays and each sub-array contains model bone name, minimum and maximum scale.Then script would look like:
 
 ```lua
-import JArray
-import JMap
-import JValue
-import JDB
-
-int config = 0
-
 EventOnEffectStart(Actor akTarget, Actor akCaster)
-    ; read config file from game root folder
-    config = JValue.readFromFile("scale.txt")
+    ; read config file from game root folder and associate it with "scaleMod" key
+    JDB.setObj("scaleMod", JValue.readFromFile("scale.txt"))
 Endevent
 
 function setScale(float scale)
     objectreference plr = GetTargetActor()
+    
+    ; retrieve config
+    int config = JDB.solveObj(".scaleMod")
+    
     ; iterate over array & calculate bone scale
-    int i =JArray.count(config)
-    while(i >0)
-        i -=1
-        ; currently |data| is array. ["NPC Head [Head]", 0, -0.33] for example
+    int i = JArray.count(config)
+    while(i > 0)
+        i -= 1
+        ; fetch sub-array. it can be ["NPC Head [Head]", 0, -0.33] for instance
         int data = JArray.getObj(config, i)
-        float nodeScale =1.0+JArray.getFlt(data,1) + (JArray.getFlt(data,2)-JArray.getFlt(data,1)) * scale
+        float nodeScale = 1.0 + JArray.getFlt(data,1) + (JArray.getFlt(data,2) - JArray.getFlt(data,1)) * scale
         NetImmerse.SetNodeScale(plr, JArray.getStr(data, 0), nodeScale, False)
     endWhile
 endfunction
 ```
 
-you could rewrite script to store config data in JDB and not in effect script:
-```lua
-EventOnEffectStart(Actor akTarget, Actor akCaster)
-    JDB.setObj("scaleMod", JValue.readFromFile("scale.txt"))
-Endevent
-
-; access data somewhere later. JDB resolves path:
-int config = JDB.solveObj(".scaleMod")
-int i =JArray.count(config)
-while(i >0)
-…
-```
 ### Followers example
 
 The same as first example, but now you need to store one more value - anger and list of victims (both are per-actor data). Also you have decided to not associate followers with JDB database.
@@ -293,7 +291,7 @@ We will store all per-actor information in following structure:
     "victims": []
 }
 ```
-Here you can see a map that contains 3 key-value associations: mood & angler(both are zeros initially) and string key ("victims") -> array association.
+Here you can see a map that contains 3 key-value associations: mood and angler (both values are zeros initially) and `"victims": []` association (`[]` means empty array).
 ```lua
 function storeFollowerMood(form follower, float mood)
     ; get follower entry to write into it
@@ -320,11 +318,11 @@ endfunction
 
 ; find (or create new if not found) per-actor information containing mood, anger and array of victims
 int function getActorEntry(form actor)
-    int entry = JFormMap.getObj(self.followers, actor)
+    int entry = JFormMap.getObj(self.followers, follower)
     ; if no entry found - create new from prototype-string
     if !entry
         int entry = JValue.objectWithPrototype("{ \"mood\": 0, \"anger\": 0, \"victims\": [] }")
-        JFormMap.setObj(self.followers, actor, entry)
+        JFormMap.setObj(self.followers, follower, entry)
     endif
 
     return entry

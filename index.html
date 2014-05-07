@@ -6,13 +6,19 @@
 <link rel="stylesheet" href="https://stackedit.io/res-min/themes/night.css" />
 <script type="text/javascript" src="https://stackedit.io/libs/MathJax/MathJax.js?config=TeX-AMS_HTML"></script>
 </head>
-<body><div class="container"><h2 id="overview">Overview</h2>
+<body><div class="container"><h2 id="motivation">Motivation</h2>
 
-<p>This is Skyrim plugin that implements array and associative(map or dictionary) containers: JArray (array container), JMap and JFormMap (associative containers), JDB (database).</p>
+<p>Papyrus lacks of convenient data structures such as dynamic arrays or associative containers. Script language should be simple but not underdeveloped.</p>
+
+<p>This plugin attempts to add missing functionality. Although it is not native functionality and it will never have a nice brackets to access items as default Papyrus Array have i believe it is still better than nothing.</p>
+
+<h3 id="overview">Overview</h3>
+
+<p>Current version implements array and associative(map or dictionary) containers: JArray (array container), JMap and JFormMap (both associative containers) and few convenient wrappers: JDB and JFormDB (databases).</p>
 
 <h4 id="jarray">JArray</h4>
 
-<p>Ordered collection (list) of <strong>values</strong>(value is float, integer, string or another container). Dynamicallys resizeable, unlimited size array (Skyrim size limit is 128) that may contain any kind of in one time.</p>
+<p>Ordered collection (array) of <strong>values</strong>(value is float, integer, string, form or another container). Dynamically resizeable, unlimited size array (default Papyrus Array size limit is 128 items) that may contain value of any kind in one time.</p>
 
 <h4 id="jmap-and-jformmap">JMap and JFormMap</h4>
 
@@ -24,15 +30,19 @@
 
 <h4 id="jdb">JDB</h4>
 
-<p>Take it as global entry point or database - you put information in it under “yourKey” string key and then you can access to it from any script in the game. There is only one JDB in game, so each time you access it you access that one, single JDB. It is <strong>associative</strong> container as JMap (it is JMap internally), but script interface slight different. <br>
+<p>Take it as global entry point or database - you put information in it under “yourKey” string key and then you can access to it from any script in the game. There is only one JDB in game, so each time you access it you access that one, single JDB. It is <strong>associative</strong> container as JMap (it is JMap internally), but script interface slight different.</p>
+
+<h4 id="jformdb">JFormDB</h4>
+
+<p>Provides convenient way to store values on form. It’s just wrapper that relies on rest of container objects. <br>
 __ <br>
 <em>There are also some pieces of information in script file comments.</em></p>
 
 <h2 id="reference">Reference</h2>
 
-<h3 id="objectcontainer-instantiation-identifiers">Object(container) instantiation, identifiers</h3>
+<h3 id="object-container-instantiation-identifiers">Object (container) instantiation, identifiers</h3>
 
-<p>Object <strong>identifier</strong> is unique number that ranges from 1 to 2^32. It’s the way to distinguish it among other objects. And it’s almost only way to interact with it.</p>
+<p>Object’s <strong>identifier</strong> is unique number that ranges from 1 to 2^32. It’s the way to distinguish it among other objects. And it’s almost only way to interact with it.</p>
 
 <p>To use any container object (array, map or formmap) you must first create(instantiate) it with <code>object</code> function or retrieve it from somewhere:</p>
 
@@ -55,7 +65,7 @@ form actor </span><span class="pun">=</span><span class="pln"> </span><span clas
 
 <p>All functions returning new container return zero identifier. For. ex <code>JValue.readFromFile("")</code> returns 0 because of invalid file path. Zero identifier means non-existing object. It’s ok to pass it into other functions - in that case function will return default value.</p>
 
-<p>All functions that read container contents (such as getFlt, solveFlt, getStr, count, allKeys and etc) return default value. In case function returns integer or float - default value is 0, string or form - None, container identifier - 0.</p>
+<p>All functions that read container contents (such as <code>getFlt</code>, <code>solveFlt</code>, <code>getStr</code>, <code>count</code>, <code>allKeys</code> and etc) return default value. In case function returns integer or float - default value is 0, string or form - <code>None</code>, container identifier - 0.</p>
 
 <h3 id="object-persistence">Object persistence</h3>
 
@@ -63,12 +73,12 @@ form actor </span><span class="pun">=</span><span class="pln"> </span><span clas
 
 <h3 id="json-serialization">JSON serialization</h3>
 
-<p>As said above, it’s possible to serialize/deserialize container data. While numbers and strings serialized in natural way, store form information is slight tricky as JSON knows nothing about Skyrim forms (and also because global form id depends on mod load order). Serialized form is a string prefixed with __formData, plugin file name and local form id (hex or decimal number).</p>
+<p>As said above, it’s possible to serialize/deserialize container data. While numbers and strings serialized in natural way, store form information is slight tricky as JSON knows nothing about Skyrim forms (and also because global form id depends on mod load order). Serialized form is a string prefixed with <code>"__formData"</code>, plugin file name and local or global form id (hex or decimal number).</p>
 
 <p>Example of serialized JMap containing player form associated with <code>"test"</code> key:</p>
 
 <pre class="prettyprint prettyprinted"><code class="language-json"><span class="pun">{</span><span class="pln">
-    </span><span class="str">"test"</span><span class="pln"> </span><span class="pun">:</span><span class="pln"> </span><span class="str">"__formData|Skyrim.esm|0x14"</span><span class="pun">,</span><span class="pln">
+    </span><span class="str">"test"</span><span class="pun">:</span><span class="pln"> </span><span class="str">"__formData|Skyrim.esm|0x14"</span><span class="pun">,</span><span class="pln">
     </span><span class="str">"name"</span><span class="pun">:</span><span class="pln"> </span><span class="str">"Elsa"</span><span class="pun">,</span><span class="pln">
     </span><span class="str">"level"</span><span class="pun">:</span><span class="pln"> </span><span class="lit">2</span><span class="pln">
 </span><span class="pun">}</span></code></pre>
@@ -79,7 +89,7 @@ form actor </span><span class="pun">=</span><span class="pln"> </span><span clas
 
 <pre class="prettyprint prettyprinted"><code class="language-json"><span class="pun">{</span><span class="pln">
     </span><span class="str">"classicPreset"</span><span class="pln"> </span><span class="pun">:</span><span class="pln">  </span><span class="pun">{</span><span class="pln">
-    </span><span class="str">"campfileLighting"</span><span class="pln"> </span><span class="pun">:</span><span class="pln"> </span><span class="str">"Automatic"</span><span class="pln">
+        </span><span class="str">"campfileLighting"</span><span class="pln"> </span><span class="pun">:</span><span class="pln"> </span><span class="str">"Automatic"</span><span class="pln">
     </span><span class="pun">},</span><span class="pln">
     </span><span class="str">"numbers"</span><span class="pln"> </span><span class="pun">:</span><span class="pln"> </span><span class="pun">[</span><span class="lit">0</span><span class="pun">,</span><span class="pln"> </span><span class="lit">1</span><span class="pun">,</span><span class="pln"> </span><span class="lit">2</span><span class="pun">,</span><span class="pln"> </span><span class="lit">3</span><span class="pun">]</span><span class="pln">
 </span><span class="pun">}</span></code></pre>
@@ -98,7 +108,7 @@ form actor </span><span class="pun">=</span><span class="pln"> </span><span clas
 
 <h3 id="collection-operators">Collection operators</h3>
 
-<p>Feature allows execute functions on collection elements. It’s accessible via solve* functions. <br>
+<p>Feature allows execute functions on collection (container) elements. It’s accessible via solve* functions. <br>
 Syntax:</p>
 
 <ul>
@@ -108,34 +118,41 @@ Syntax:</p>
 <li>path.to.container@function.path.to.element</li>
 </ul>
 
-<p>path.to.container - is the path to retrieve collection</p>
+<p>path.to.container - is the path to retrieve collection.</p>
 
-<p>function - is the function that will be applied to each collection item. Currently only few functions implemented:</p>
+<p>function - is the function that will be applied on each collection element. Currently only few functions implemented:</p>
 
 <ul>
 <li>minNum, maxNum (search for min or max number, works with any number type (int or float))</li>
 <li>minFlt, maxFlt - the same as above, accepts float values only</li>
-<li>minFlt, maxFlt - the same as above, accepts integer values only</li>
+<li>minInt, maxInt - the same as above, accepts integer values only</li>
 </ul>
 
-<p>path.to.element - is the path to retrieve element. <br>
-Examples:</p>
+<p>path.to.element - is the path to retrieve element.</p>
 
-<pre class="prettyprint prettyprinted"><code class="language-lua"><span class="pun">[</span><span class="lit">1</span><span class="pun">,</span><span class="lit">2</span><span class="pun">,</span><span class="lit">3</span><span class="pun">,</span><span class="lit">4</span><span class="pun">,</span><span class="lit">5</span><span class="pun">,</span><span class="lit">6</span><span class="pun">]</span><span class="pln">
+<p>Examples (pseudo-code):</p>
+
+<pre class="prettyprint prettyprinted"><code class="language-lua"><span class="pln">obj </span><span class="pun">=</span><span class="pln"> </span><span class="pun">[</span><span class="lit">1</span><span class="pun">,</span><span class="lit">2</span><span class="pun">,</span><span class="lit">3</span><span class="pun">,</span><span class="lit">4</span><span class="pun">,</span><span class="lit">5</span><span class="pun">,</span><span class="lit">6</span><span class="pun">]</span><span class="pln">
 
 solveFlt</span><span class="pun">(</span><span class="pln">obj</span><span class="pun">,</span><span class="pln"> </span><span class="str">"@maxNum"</span><span class="pun">)</span><span class="pln"> </span><span class="kwd">is</span><span class="pln"> </span><span class="lit">6</span><span class="pln">
 solveFlt</span><span class="pun">(</span><span class="pln">obj</span><span class="pun">,</span><span class="pln"> </span><span class="str">"@minNum"</span><span class="pun">)</span><span class="pln"> </span><span class="kwd">is</span><span class="pln"> </span><span class="lit">1</span><span class="pln">
 
-</span><span class="pun">{</span><span class="pln"> </span><span class="str">"a"</span><span class="pun">:</span><span class="pln"> </span><span class="pun">[</span><span class="lit">1</span><span class="pun">],</span><span class="pln"> </span><span class="str">"b"</span><span class="pun">:</span><span class="pln"> </span><span class="pun">{</span><span class="str">"k"</span><span class="pun">:</span><span class="pln"> </span><span class="pun">-</span><span class="lit">100</span><span class="pun">},</span><span class="pln"> </span><span class="str">"c"</span><span class="pun">:</span><span class="pln"> </span><span class="pun">[</span><span class="lit">3</span><span class="pun">],</span><span class="pln"> </span><span class="str">"d"</span><span class="pun">:</span><span class="pln"> </span><span class="pun">{</span><span class="str">"k"</span><span class="pun">:</span><span class="pln"> </span><span class="lit">100</span><span class="pun">},</span><span class="pln"> </span><span class="str">"e"</span><span class="pun">:</span><span class="pln"> </span><span class="pun">[</span><span class="lit">5</span><span class="pun">],</span><span class="pln"> </span><span class="str">"f"</span><span class="pun">:</span><span class="pln"> </span><span class="pun">[</span><span class="lit">6</span><span class="pun">]</span><span class="pln"> </span><span class="pun">}</span><span class="pln">
+obj </span><span class="pun">=</span><span class="pln"> </span><span class="pun">{</span><span class="pln"> </span><span class="str">"a"</span><span class="pun">:</span><span class="pln"> </span><span class="pun">[</span><span class="lit">1</span><span class="pun">],</span><span class="pln"> </span><span class="str">"b"</span><span class="pun">:</span><span class="pln"> </span><span class="pun">{</span><span class="str">"k"</span><span class="pun">:</span><span class="pln"> </span><span class="pun">-</span><span class="lit">100</span><span class="pun">},</span><span class="pln"> </span><span class="str">"c"</span><span class="pun">:</span><span class="pln"> </span><span class="pun">[</span><span class="lit">3</span><span class="pun">],</span><span class="pln"> </span><span class="str">"d"</span><span class="pun">:</span><span class="pln"> </span><span class="pun">{</span><span class="str">"k"</span><span class="pun">:</span><span class="pln"> </span><span class="lit">100</span><span class="pun">},</span><span class="pln"> </span><span class="str">"e"</span><span class="pun">:</span><span class="pln"> </span><span class="pun">[</span><span class="lit">5</span><span class="pun">],</span><span class="pln"> </span><span class="str">"f"</span><span class="pun">:</span><span class="pln"> </span><span class="pun">[</span><span class="lit">6</span><span class="pun">]</span><span class="pln"> </span><span class="pun">}</span><span class="pln">
 
 solveFlt</span><span class="pun">(</span><span class="pln">obj</span><span class="pun">,</span><span class="pln"> </span><span class="str">"@maxNum.value[0]"</span><span class="pun">)</span><span class="pln"> </span><span class="kwd">is</span><span class="pln"> </span><span class="lit">6</span><span class="pln">
 solveFlt</span><span class="pun">(</span><span class="pln">obj</span><span class="pun">,</span><span class="pln"> </span><span class="str">"@minNum.value[0]"</span><span class="pun">)</span><span class="pln"> </span><span class="kwd">is</span><span class="pln"> </span><span class="lit">1</span><span class="pln">
 solveFlt</span><span class="pun">(</span><span class="pln">obj</span><span class="pun">,</span><span class="pln"> </span><span class="str">"@maxNum.value.k"</span><span class="pun">)</span><span class="pln"> </span><span class="kwd">is</span><span class="pln"> </span><span class="lit">100</span><span class="pln">
-solveFlt</span><span class="pun">(</span><span class="pln">obj</span><span class="pun">,</span><span class="pln"> </span><span class="str">"@minNum.value.k"</span><span class="pun">)</span><span class="pln"> </span><span class="kwd">is</span><span class="pln"> </span><span class="pun">-</span><span class="lit">100</span></code></pre>
+solveFlt</span><span class="pun">(</span><span class="pln">obj</span><span class="pun">,</span><span class="pln"> </span><span class="str">"@minNum.value.k"</span><span class="pun">)</span><span class="pln"> </span><span class="kwd">is</span><span class="pln"> </span><span class="pun">-</span><span class="lit">100</span><span class="pln">
 
-<h3 id="value-conversion-notes">Value conversion notes</h3>
+obj </span><span class="pun">=</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
+    mapKey</span><span class="pun">:</span><span class="pln"> </span><span class="pun">{</span><span class="pln"> </span><span class="str">"a"</span><span class="pun">:</span><span class="pln"> </span><span class="pun">[</span><span class="lit">1</span><span class="pun">],</span><span class="pln"> </span><span class="str">"b"</span><span class="pun">:</span><span class="pln"> </span><span class="pun">{</span><span class="str">"k"</span><span class="pun">:</span><span class="pln"> </span><span class="pun">-</span><span class="lit">100</span><span class="pun">},</span><span class="pln"> </span><span class="str">"c"</span><span class="pun">:</span><span class="pln"> </span><span class="pun">[</span><span class="lit">3</span><span class="pun">],</span><span class="pln"> </span><span class="str">"d"</span><span class="pun">:</span><span class="pln"> </span><span class="pun">{</span><span class="str">"k"</span><span class="pun">:</span><span class="pln"> </span><span class="lit">100</span><span class="pun">},</span><span class="pln"> </span><span class="str">"e"</span><span class="pun">:</span><span class="pln"> </span><span class="pun">[</span><span class="lit">5</span><span class="pun">],</span><span class="pln"> </span><span class="str">"f"</span><span class="pun">:</span><span class="pln"> </span><span class="pun">[</span><span class="lit">6</span><span class="pun">]</span><span class="pln"> </span><span class="pun">}</span><span class="pln">
+</span><span class="pun">}</span><span class="pln">
 
-<p>TODO</p>
+solveFlt</span><span class="pun">(</span><span class="pln">obj</span><span class="pun">,</span><span class="pln"> </span><span class="str">".mapKey@maxNum.value.k"</span><span class="pun">)</span><span class="pln"> </span><span class="kwd">is</span><span class="pln"> </span><span class="lit">100</span></code></pre>
+
+<h3 id="number-conversion-notes">Number conversion notes</h3>
+
+<p>Not much to say, really. Group of <code>getFlt</code>, <code>solveFlt</code>, <code>getInt</code>, <code>solveInt</code> functions capable to access to any kind of number no matter whether number is integer or float value. It returns zero if try to access to string (<code>getStr</code>) or object identifier (<code>getObj</code>) value.</p>
 
 <h3 id="object-lifetime-management-rules">Object lifetime management rules</h3>
 
@@ -154,7 +171,9 @@ solveFlt</span><span class="pun">(</span><span class="pln">obj</span><span class
 <li>when you do not need that object you must release it (use <code>JValue.release</code>)</li>
 </ul>
 
-<p>Newly created object (created with object, <code>objectWith*</code> or <code>readFromFile</code> function) owned by no one and destroyed after short amount of time (roughly 10 seconds). Container gets owned(retained) once it gets inserted into another container or JDB (which is also container) and released when removed.</p>
+<p>Newly created object (created with object, <code>objectWith*</code> or <code>readFromFile</code> function) owned by no one and destroyed after short amount of time (roughly 10 seconds).</p>
+
+<p><strong>Note</strong> that container gets owned (retained) automatically once it gets inserted into another container or JDB (which is also container) and released when removed. Thus you don’t have to care about lifetime of object that owned by JDB.</p>
 
 <p>Illustration shows the idea:</p>
 
@@ -166,28 +185,21 @@ solveFlt</span><span class="pun">(</span><span class="pln">obj</span><span class
 
 <p>Suppose you want to store some actor related information (let it be player’s followers and their mood):</p>
 
-<pre class="prettyprint prettyprinted"><code class="language-lua"><span class="pun">;</span><span class="pln"> initial setup </span><span class="kwd">function</span><span class="pln"> </span><span class="kwd">where</span><span class="pln"> you usually </span><span class="kwd">do</span><span class="pln"> the things once mod gets installed
-</span><span class="kwd">function</span><span class="pln"> modSetupMethod</span><span class="pun">()</span><span class="pln">
-    </span><span class="pun">;</span><span class="pln">create </span><span class="typ">JFormMap</span><span class="pln"> container </span><span class="kwd">and</span><span class="pln"> associate it </span><span class="kwd">with</span><span class="pln"> database </span><span class="kwd">for</span><span class="pln"> future </span><span class="kwd">use</span><span class="pln">
-    JDB</span><span class="pun">.</span><span class="pln">setObj</span><span class="pun">(</span><span class="str">"followers"</span><span class="pun">,</span><span class="pln"> </span><span class="typ">JFormMap</span><span class="pun">.</span><span class="kwd">object</span><span class="pun">())</span><span class="pln">
-endfunction
-
-</span><span class="pun">;</span><span class="pln"> method that gets called once user uninstalls your mod
-</span><span class="kwd">function</span><span class="pln"> modUninstallMethod</span><span class="pun">()</span><span class="pln">
-    </span><span class="pun">;</span><span class="pln"> destroy association to </span><span class="kwd">not</span><span class="pln"> pollute game save
-    JDB</span><span class="pun">.</span><span class="pln">setObj</span><span class="pun">(</span><span class="str">"followers"</span><span class="pun">,</span><span class="pln"> </span><span class="lit">0</span><span class="pun">)</span><span class="pln">
-endfunction
-
-</span><span class="kwd">function</span><span class="pln"> storeFolloverMood</span><span class="pun">(</span><span class="pln">form follower</span><span class="pun">,</span><span class="pln"> </span><span class="kwd">float</span><span class="pln"> mood</span><span class="pun">)</span><span class="pln">
-    </span><span class="pun">;</span><span class="pln"> fetch followers </span><span class="kwd">by</span><span class="pln"> resolving path
-    </span><span class="kwd">int</span><span class="pln"> followers </span><span class="pun">=</span><span class="pln"> JDB</span><span class="pun">.</span><span class="pln">solveObj</span><span class="pun">(</span><span class="str">".followers"</span><span class="pun">)</span><span class="pln">
-    </span><span class="pun">;</span><span class="pln"> associate follower </span><span class="kwd">and</span><span class="pln"> the mood
-    </span><span class="typ">JFormMap</span><span class="pun">.</span><span class="pln">setFlt</span><span class="pun">(</span><span class="pln">followers</span><span class="pun">,</span><span class="pln"> follower</span><span class="pun">,</span><span class="pln"> mood</span><span class="pun">)</span><span class="pln">
+<pre class="prettyprint prettyprinted"><code class="language-lua"><span class="kwd">function</span><span class="pln"> storeFolloverMood</span><span class="pun">(</span><span class="pln">form follower</span><span class="pun">,</span><span class="pln"> </span><span class="kwd">float</span><span class="pln"> mood</span><span class="pun">)</span><span class="pln">
+    </span><span class="pun">;</span><span class="pln"> </span><span class="kwd">function</span><span class="pln"> creates </span><span class="str">"followers"</span><span class="pln"> storage </span><span class="kwd">and</span><span class="pln"> </span><span class="kwd">then</span><span class="pln"> creates
+    </span><span class="pun">;</span><span class="pln"> </span><span class="pun">(</span><span class="pln">follower</span><span class="pun">,</span><span class="pln"> entry</span><span class="pun">)</span><span class="pln"> associations
+    </span><span class="typ">JFormDB</span><span class="pun">.</span><span class="pln">setFlt</span><span class="pun">(</span><span class="pln">follower</span><span class="pun">,</span><span class="pln"> </span><span class="str">".followers.mood"</span><span class="pun">,</span><span class="pln"> mood</span><span class="pun">)</span><span class="pln">
 endfunction
 
 </span><span class="kwd">float</span><span class="pln"> </span><span class="kwd">function</span><span class="pln"> followerMood</span><span class="pun">(</span><span class="pln">form follower</span><span class="pun">)</span><span class="pln">
     </span><span class="pun">;</span><span class="pln"> fetch follower mood
-    </span><span class="kwd">return</span><span class="pln"> </span><span class="typ">JFormMap</span><span class="pun">.</span><span class="pln">getFlt</span><span class="pun">(</span><span class="pln">JDB</span><span class="pun">.</span><span class="pln">solveObj</span><span class="pun">(</span><span class="str">".followers"</span><span class="pun">),</span><span class="pln"> follower</span><span class="pun">)</span><span class="pln">
+    </span><span class="kwd">return</span><span class="pln"> </span><span class="typ">JFormDB</span><span class="pun">.</span><span class="pln">getFlt</span><span class="pun">(</span><span class="pln">follower</span><span class="pun">,</span><span class="pln"> </span><span class="str">".followers.mood"</span><span class="pun">)</span><span class="pln">
+endfunction
+
+</span><span class="pun">;</span><span class="pln"> method that gets called once user uninstalls your mod
+</span><span class="kwd">function</span><span class="pln"> modUninstallMethod</span><span class="pun">()</span><span class="pln">
+    </span><span class="pun">;</span><span class="pln"> destroy association to </span><span class="kwd">not</span><span class="pln"> pollute game save </span><span class="kwd">and</span><span class="pln"> precious RAM
+    JDB</span><span class="pun">.</span><span class="pln">setObj</span><span class="pun">(</span><span class="str">"followers"</span><span class="pun">,</span><span class="pln"> </span><span class="lit">0</span><span class="pun">)</span><span class="pln">
 endfunction</span></code></pre>
 
 <h3 id="config-reading">Config reading</h3>
@@ -251,42 +263,27 @@ endfunction</span></code></pre>
 
 <p>What you see here is one array that contains 4 sub-arrays and each sub-array contains model bone name, minimum and maximum scale.Then script would look like:</p>
 
-<pre class="prettyprint prettyprinted"><code class="language-lua"><span class="kwd">import</span><span class="pln"> </span><span class="typ">JArray</span><span class="pln">
-</span><span class="kwd">import</span><span class="pln"> </span><span class="typ">JMap</span><span class="pln">
-</span><span class="kwd">import</span><span class="pln"> </span><span class="typ">JValue</span><span class="pln">
-</span><span class="kwd">import</span><span class="pln"> JDB
-
-</span><span class="kwd">int</span><span class="pln"> config </span><span class="pun">=</span><span class="pln"> </span><span class="lit">0</span><span class="pln">
-
-</span><span class="typ">EventOnEffectStart</span><span class="pun">(</span><span class="typ">Actor</span><span class="pln"> akTarget</span><span class="pun">,</span><span class="pln"> </span><span class="typ">Actor</span><span class="pln"> akCaster</span><span class="pun">)</span><span class="pln">
-    </span><span class="pun">;</span><span class="pln"> read config file </span><span class="kwd">from</span><span class="pln"> game root folder
-    config </span><span class="pun">=</span><span class="pln"> </span><span class="typ">JValue</span><span class="pun">.</span><span class="pln">readFromFile</span><span class="pun">(</span><span class="str">"scale.txt"</span><span class="pun">)</span><span class="pln">
+<pre class="prettyprint prettyprinted"><code class="language-lua"><span class="typ">EventOnEffectStart</span><span class="pun">(</span><span class="typ">Actor</span><span class="pln"> akTarget</span><span class="pun">,</span><span class="pln"> </span><span class="typ">Actor</span><span class="pln"> akCaster</span><span class="pun">)</span><span class="pln">
+    </span><span class="pun">;</span><span class="pln"> read config file </span><span class="kwd">from</span><span class="pln"> game root folder </span><span class="kwd">and</span><span class="pln"> associate it </span><span class="kwd">with</span><span class="pln"> </span><span class="str">"scaleMod"</span><span class="pln"> key
+    JDB</span><span class="pun">.</span><span class="pln">setObj</span><span class="pun">(</span><span class="str">"scaleMod"</span><span class="pun">,</span><span class="pln"> </span><span class="typ">JValue</span><span class="pun">.</span><span class="pln">readFromFile</span><span class="pun">(</span><span class="str">"scale.txt"</span><span class="pun">))</span><span class="pln">
 </span><span class="typ">Endevent</span><span class="pln">
 
 </span><span class="kwd">function</span><span class="pln"> setScale</span><span class="pun">(</span><span class="kwd">float</span><span class="pln"> scale</span><span class="pun">)</span><span class="pln">
     objectreference plr </span><span class="pun">=</span><span class="pln"> </span><span class="typ">GetTargetActor</span><span class="pun">()</span><span class="pln">
+
+    </span><span class="pun">;</span><span class="pln"> retrieve config
+    </span><span class="kwd">int</span><span class="pln"> config </span><span class="pun">=</span><span class="pln"> JDB</span><span class="pun">.</span><span class="pln">solveObj</span><span class="pun">(</span><span class="str">".scaleMod"</span><span class="pun">)</span><span class="pln">
+
     </span><span class="pun">;</span><span class="pln"> iterate over array </span><span class="pun">&amp;</span><span class="pln"> calculate bone scale
-    </span><span class="kwd">int</span><span class="pln"> i </span><span class="pun">=</span><span class="typ">JArray</span><span class="pun">.</span><span class="pln">count</span><span class="pun">(</span><span class="pln">config</span><span class="pun">)</span><span class="pln">
-    </span><span class="kwd">while</span><span class="pun">(</span><span class="pln">i </span><span class="pun">&gt;</span><span class="lit">0</span><span class="pun">)</span><span class="pln">
-        i </span><span class="pun">-=</span><span class="lit">1</span><span class="pln">
-        </span><span class="pun">;</span><span class="pln"> currently </span><span class="pun">|</span><span class="pln">data</span><span class="pun">|</span><span class="pln"> </span><span class="kwd">is</span><span class="pln"> array</span><span class="pun">.</span><span class="pln"> </span><span class="pun">[</span><span class="str">"NPC Head [Head]"</span><span class="pun">,</span><span class="pln"> </span><span class="lit">0</span><span class="pun">,</span><span class="pln"> </span><span class="pun">-</span><span class="lit">0.33</span><span class="pun">]</span><span class="pln"> </span><span class="kwd">for</span><span class="pln"> example
+    </span><span class="kwd">int</span><span class="pln"> i </span><span class="pun">=</span><span class="pln"> </span><span class="typ">JArray</span><span class="pun">.</span><span class="pln">count</span><span class="pun">(</span><span class="pln">config</span><span class="pun">)</span><span class="pln">
+    </span><span class="kwd">while</span><span class="pun">(</span><span class="pln">i </span><span class="pun">&gt;</span><span class="pln"> </span><span class="lit">0</span><span class="pun">)</span><span class="pln">
+        i </span><span class="pun">-=</span><span class="pln"> </span><span class="lit">1</span><span class="pln">
+        </span><span class="pun">;</span><span class="pln"> fetch </span><span class="kwd">sub</span><span class="pun">-</span><span class="pln">array</span><span class="pun">.</span><span class="pln"> it can be </span><span class="pun">[</span><span class="str">"NPC Head [Head]"</span><span class="pun">,</span><span class="pln"> </span><span class="lit">0</span><span class="pun">,</span><span class="pln"> </span><span class="pun">-</span><span class="lit">0.33</span><span class="pun">]</span><span class="pln"> </span><span class="kwd">for</span><span class="pln"> instance
         </span><span class="kwd">int</span><span class="pln"> data </span><span class="pun">=</span><span class="pln"> </span><span class="typ">JArray</span><span class="pun">.</span><span class="pln">getObj</span><span class="pun">(</span><span class="pln">config</span><span class="pun">,</span><span class="pln"> i</span><span class="pun">)</span><span class="pln">
-        </span><span class="kwd">float</span><span class="pln"> nodeScale </span><span class="pun">=</span><span class="lit">1.0</span><span class="pun">+</span><span class="typ">JArray</span><span class="pun">.</span><span class="pln">getFlt</span><span class="pun">(</span><span class="pln">data</span><span class="pun">,</span><span class="lit">1</span><span class="pun">)</span><span class="pln"> </span><span class="pun">+</span><span class="pln"> </span><span class="pun">(</span><span class="typ">JArray</span><span class="pun">.</span><span class="pln">getFlt</span><span class="pun">(</span><span class="pln">data</span><span class="pun">,</span><span class="lit">2</span><span class="pun">)-</span><span class="typ">JArray</span><span class="pun">.</span><span class="pln">getFlt</span><span class="pun">(</span><span class="pln">data</span><span class="pun">,</span><span class="lit">1</span><span class="pun">))</span><span class="pln"> </span><span class="pun">*</span><span class="pln"> scale
+        </span><span class="kwd">float</span><span class="pln"> nodeScale </span><span class="pun">=</span><span class="pln"> </span><span class="lit">1.0</span><span class="pln"> </span><span class="pun">+</span><span class="pln"> </span><span class="typ">JArray</span><span class="pun">.</span><span class="pln">getFlt</span><span class="pun">(</span><span class="pln">data</span><span class="pun">,</span><span class="lit">1</span><span class="pun">)</span><span class="pln"> </span><span class="pun">+</span><span class="pln"> </span><span class="pun">(</span><span class="typ">JArray</span><span class="pun">.</span><span class="pln">getFlt</span><span class="pun">(</span><span class="pln">data</span><span class="pun">,</span><span class="lit">2</span><span class="pun">)</span><span class="pln"> </span><span class="pun">-</span><span class="pln"> </span><span class="typ">JArray</span><span class="pun">.</span><span class="pln">getFlt</span><span class="pun">(</span><span class="pln">data</span><span class="pun">,</span><span class="lit">1</span><span class="pun">))</span><span class="pln"> </span><span class="pun">*</span><span class="pln"> scale
         </span><span class="typ">NetImmerse</span><span class="pun">.</span><span class="typ">SetNodeScale</span><span class="pun">(</span><span class="pln">plr</span><span class="pun">,</span><span class="pln"> </span><span class="typ">JArray</span><span class="pun">.</span><span class="pln">getStr</span><span class="pun">(</span><span class="pln">data</span><span class="pun">,</span><span class="pln"> </span><span class="lit">0</span><span class="pun">),</span><span class="pln"> nodeScale</span><span class="pun">,</span><span class="pln"> </span><span class="kwd">False</span><span class="pun">)</span><span class="pln">
     endWhile
 endfunction</span></code></pre>
-
-<p>you could rewrite script to store config data in JDB and not in effect script:</p>
-
-<pre class="prettyprint prettyprinted"><code class="language-lua"><span class="typ">EventOnEffectStart</span><span class="pun">(</span><span class="typ">Actor</span><span class="pln"> akTarget</span><span class="pun">,</span><span class="pln"> </span><span class="typ">Actor</span><span class="pln"> akCaster</span><span class="pun">)</span><span class="pln">
-    JDB</span><span class="pun">.</span><span class="pln">setObj</span><span class="pun">(</span><span class="str">"scaleMod"</span><span class="pun">,</span><span class="pln"> </span><span class="typ">JValue</span><span class="pun">.</span><span class="pln">readFromFile</span><span class="pun">(</span><span class="str">"scale.txt"</span><span class="pun">))</span><span class="pln">
-</span><span class="typ">Endevent</span><span class="pln">
-
-</span><span class="pun">;</span><span class="pln"> access data somewhere later</span><span class="pun">.</span><span class="pln"> JDB resolves path</span><span class="pun">:</span><span class="pln">
-</span><span class="kwd">int</span><span class="pln"> config </span><span class="pun">=</span><span class="pln"> JDB</span><span class="pun">.</span><span class="pln">solveObj</span><span class="pun">(</span><span class="str">".scaleMod"</span><span class="pun">)</span><span class="pln">
-</span><span class="kwd">int</span><span class="pln"> i </span><span class="pun">=</span><span class="typ">JArray</span><span class="pun">.</span><span class="pln">count</span><span class="pun">(</span><span class="pln">config</span><span class="pun">)</span><span class="pln">
-</span><span class="kwd">while</span><span class="pun">(</span><span class="pln">i </span><span class="pun">&gt;</span><span class="lit">0</span><span class="pun">)</span><span class="pln">
-</span><span class="pun">…</span></code></pre>
 
 <h3 id="followers-example">Followers example</h3>
 
@@ -300,7 +297,7 @@ endfunction</span></code></pre>
     </span><span class="str">"victims"</span><span class="pun">:</span><span class="pln"> </span><span class="pun">[]</span><span class="pln">
 </span><span class="pun">}</span></code></pre>
 
-<p>Here you can see a map that contains 3 key-value associations: mood &amp; angler(both are zeros initially) and string key (“victims”) -&gt; array association.</p>
+<p>Here you can see a map that contains 3 key-value associations: mood and angler (both values are zeros initially) and <code>"victims": []</code> association (<code>[]</code> means empty array).</p>
 
 <pre class="prettyprint prettyprinted"><code class="language-lua"><span class="kwd">function</span><span class="pln"> storeFollowerMood</span><span class="pun">(</span><span class="pln">form follower</span><span class="pun">,</span><span class="pln"> </span><span class="kwd">float</span><span class="pln"> mood</span><span class="pun">)</span><span class="pln">
     </span><span class="pun">;</span><span class="pln"> </span><span class="kwd">get</span><span class="pln"> follower entry to write </span><span class="kwd">into</span><span class="pln"> it
@@ -327,11 +324,11 @@ endfunction
 
 </span><span class="pun">;</span><span class="pln"> find </span><span class="pun">(</span><span class="kwd">or</span><span class="pln"> create </span><span class="kwd">new</span><span class="pln"> </span><span class="kwd">if</span><span class="pln"> </span><span class="kwd">not</span><span class="pln"> found</span><span class="pun">)</span><span class="pln"> per</span><span class="pun">-</span><span class="pln">actor information containing mood</span><span class="pun">,</span><span class="pln"> anger </span><span class="kwd">and</span><span class="pln"> array of victims
 </span><span class="kwd">int</span><span class="pln"> </span><span class="kwd">function</span><span class="pln"> getActorEntry</span><span class="pun">(</span><span class="pln">form actor</span><span class="pun">)</span><span class="pln">
-    </span><span class="kwd">int</span><span class="pln"> entry </span><span class="pun">=</span><span class="pln"> </span><span class="typ">JFormMap</span><span class="pun">.</span><span class="pln">getObj</span><span class="pun">(</span><span class="kwd">self</span><span class="pun">.</span><span class="pln">followers</span><span class="pun">,</span><span class="pln"> actor</span><span class="pun">)</span><span class="pln">
+    </span><span class="kwd">int</span><span class="pln"> entry </span><span class="pun">=</span><span class="pln"> </span><span class="typ">JFormMap</span><span class="pun">.</span><span class="pln">getObj</span><span class="pun">(</span><span class="kwd">self</span><span class="pun">.</span><span class="pln">followers</span><span class="pun">,</span><span class="pln"> follower</span><span class="pun">)</span><span class="pln">
     </span><span class="pun">;</span><span class="pln"> </span><span class="kwd">if</span><span class="pln"> </span><span class="kwd">no</span><span class="pln"> entry found </span><span class="pun">-</span><span class="pln"> create </span><span class="kwd">new</span><span class="pln"> </span><span class="kwd">from</span><span class="pln"> prototype</span><span class="pun">-</span><span class="kwd">string</span><span class="pln">
     </span><span class="kwd">if</span><span class="pln"> </span><span class="pun">!</span><span class="pln">entry
         </span><span class="kwd">int</span><span class="pln"> entry </span><span class="pun">=</span><span class="pln"> </span><span class="typ">JValue</span><span class="pun">.</span><span class="pln">objectWithPrototype</span><span class="pun">(</span><span class="str">"{ \"mood\": 0, \"anger\": 0, \"victims\": [] }"</span><span class="pun">)</span><span class="pln">
-        </span><span class="typ">JFormMap</span><span class="pun">.</span><span class="pln">setObj</span><span class="pun">(</span><span class="kwd">self</span><span class="pun">.</span><span class="pln">followers</span><span class="pun">,</span><span class="pln"> actor</span><span class="pun">,</span><span class="pln"> entry</span><span class="pun">)</span><span class="pln">
+        </span><span class="typ">JFormMap</span><span class="pun">.</span><span class="pln">setObj</span><span class="pun">(</span><span class="kwd">self</span><span class="pun">.</span><span class="pln">followers</span><span class="pun">,</span><span class="pln"> follower</span><span class="pun">,</span><span class="pln"> entry</span><span class="pun">)</span><span class="pln">
     endif
 
     </span><span class="kwd">return</span><span class="pln"> entry
