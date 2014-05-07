@@ -66,7 +66,7 @@ namespace collections
             if (!data.empty()) {
 
                 if (kJSerializationCurrentVersion < version) {
-                     _DMESSAGE("plugin can not be compatible with future save version %u. plugin save vesrion is %u", version, kJSerializationCurrentVersion);
+                     _FATALERROR("plugin can not be compatible with future save version %u. plugin save vesrion is %u", version, kJSerializationCurrentVersion);
                      assert(false);
                 }
 
@@ -79,7 +79,7 @@ namespace collections
                     }
                 }
                 catch (const boost::archive::archive_exception& exc) {
-                    _DMESSAGE("caught exception during archive load - '%s'. trying to recover", exc.what());
+                    _FATALERROR("caught exception during archive load - '%s'. trying to recover", exc.what());
 
                     throw exc;
 

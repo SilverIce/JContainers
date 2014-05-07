@@ -85,6 +85,7 @@
       <AdditionalLibraryDirectories>lib\boost\boost_lib\lib</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
+      <Version>0.66</Version>
     </Link>
     <PostBuildEvent />
     <Bscmake>
