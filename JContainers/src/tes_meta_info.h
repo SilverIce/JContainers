@@ -61,15 +61,13 @@ namespace collections {
 
         struct class_meta_info {
             std::vector<FunctionMetaInfo> methods;
-            const char *className;
-            const char *extendsClass;
-            const char *comment;
+            std::string className;
+            std::string extendsClass;
+            std::string comment;
             bool initialized;
 
             class_meta_info() {
                 className = "NoClassName";
-                extendsClass = NULL;
-                comment = nullptr;
                 initialized = false;
             }
 
@@ -81,7 +79,7 @@ namespace collections {
                 assert(metaInfo.className);
 
                 for (const auto& itm : methods) {
-                    itm.bind(registry, className);
+                    itm.bind(registry, className.c_str());
                 }
             }
         };

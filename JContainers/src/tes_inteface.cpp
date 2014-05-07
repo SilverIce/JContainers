@@ -27,6 +27,7 @@
 #include "tes_db.h"
 #include "tes_jcontainers.h"
 #include "tes_string.h"
+#include "tes_form_db.h"
 
 #include "collections.tests.hpp"
 

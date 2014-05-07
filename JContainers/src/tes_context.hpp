@@ -14,7 +14,7 @@ namespace collections {
         _lastError = 0;
     }
 
-    object_base* tes_context::database() {
+    map* tes_context::database() {
 
         auto getDB = [&]() {
             object_base * result = nullptr;
@@ -39,6 +39,6 @@ namespace collections {
             _lazyDBLock.unlock();
         }
 
-        return result;
+        return result->as<map>();
     }
 }

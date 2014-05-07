@@ -358,11 +358,11 @@ namespace collections {
         bool isEqual(const char* value) const {
             auto str1 = strValue();
             auto str2 = value;
-            return  _type == ItemTypeCString && (str1 && str2 && strcmp(str1, str2) == 0) || (!str1 && !str2);
+            return  _type == ItemTypeCString && ( (str1 && str2 && strcmp(str1, str2) == 0) || (!str1 && !str2) );
         }
 
         bool isEqual(const object_base *value) const {
-            return _type == ItemTypeObject && _object == value;
+            return _type == ItemTypeObject && ( (_object && value && _object->id == value->id) || _object == value);
         }
 
         bool isEqual(const TESForm *value) const {
@@ -382,7 +382,7 @@ namespace collections {
             case ItemTypeForm:
                 return _formId == other._formId;
             case ItemTypeObject:
-                return _object == other._object;
+                return isEqual(other.object());
             case ItemTypeCString:
                 return isEqual(other.strValue());
             default:

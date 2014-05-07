@@ -15,7 +15,7 @@ Manages keys and values associations as JMap";
             return tes_object::resolveGetter<T>(tes_context::instance().database(), path); 
         }
         REGISTERF(solveGetter<Float32>, "solveFlt", "path",
-"attempts to get value assiciated with path.\n\
+"attempts to get value associated with path.\n\
 for ex. following information associated with 'frosfall' key:\n\
 \n\
 \"frostfall\" : {\n\

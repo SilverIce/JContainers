@@ -74,7 +74,6 @@
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <StringPooling>true</StringPooling>
-      <BrowseInformation>true</BrowseInformation>
       <PrecompiledHeaderFile>jcontainers_pch.h</PrecompiledHeaderFile>
       <ForcedIncludeFiles>jcontainers_pch.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
     </ClCompile>
@@ -102,7 +101,6 @@
       <WarningLevel>Level3</WarningLevel>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
       <StringPooling>true</StringPooling>
-      <BrowseInformation>true</BrowseInformation>
       <PrecompiledHeaderFile>jcontainers_pch.h</PrecompiledHeaderFile>
       <ForcedIncludeFiles>jcontainers_pch.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <WholeProgramOptimization>false</WholeProgramOptimization>
@@ -140,6 +138,7 @@
     <ClCompile Include="src\code_producer.cpp" />
     <ClInclude Include="src\collection_operators.h" />
     <ClInclude Include="src\plugin_info.h" />
+    <ClInclude Include="src\tes_form_db.h" />
     <ClInclude Include="src\typedefs.h" />
   </ItemGroup>
   <ItemGroup>

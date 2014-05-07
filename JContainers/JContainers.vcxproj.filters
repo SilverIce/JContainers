@@ -135,6 +135,9 @@
     <ClInclude Include="src\collection_operators.h">
       <Filter>collections_module</Filter>
     </ClInclude>
+    <ClInclude Include="src\tes_form_db.h">
+      <Filter>collections_module\tes_classes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="exports.def" />

@@ -42,86 +42,37 @@ namespace collections {
 
     TEST(Item, serialization)
     {
-        std::ostringstream str;
-        ::boost::archive::binary_oarchive arch(str);
+        std::ostringstream data;
+        ::boost::archive::binary_oarchive arch(data);
 
-        const char *testStr = "hey, babe!";
 
-        auto ar = array::create();
-        ar->u_push(Item(testStr));
+        Item items[] = {
+            Item(2.0),
+            Item(2),
+            Item("the most fatal mistake"),
+            Item(array::object()),
+            Item(map::object())
+        };
 
-        {
-            arch << Item(3);
-            arch << Item(3.5);
-            arch << Item(testStr);
-
-            map obj;
-            obj.u_setValueForKey("tttt", Item(testStr));
-            obj.u_setValueForKey("array", Item(ar));
-
-            arch << obj;
+        for (auto& itm : items) {
+            arch << itm;
         }
-        ar->release();
 
         // reading
-        std::string string = str.str();
+        std::string string = data.str();
         std::istringstream istr(string);
         boost::archive::binary_iarchive ia(istr);
 
-        Item item;
-        ia >> item;
-        EXPECT_TRUE(item.intValue() == 3);
-        ia >> item;
-        EXPECT_TRUE(item.fltValue() == 3.5);
-
-        ia >> item;
-        EXPECT_TRUE(strcmp(item.strValue(),testStr) == 0);
-
-        map obj;
-        ia >> obj;
-
-        EXPECT_TRUE(obj.u_count() == 2);
-        //EXPECT_TRUE(strcmp(obj["array"].strValue(), testStr) == 0);
-    }
-
-    template<class T>
-    struct Hum {
-        T val;
-
-        explicit Hum(T value) : val(value) {}
-
-        template<class Archive>
-        void serialize(Archive & ar, const unsigned int version) {
-            ar & val;
-        }
-    };
-
-    TEST(Item, serialization2)
-    {
-        std::ostringstream str;
-        ::boost::archive::binary_oarchive arch(str);
-
-        std::map<UInt32, Item> oldStruct;
-        oldStruct[0xbaadc0de] = Item("testt");
-        oldStruct[0xf0f0] = Item("ololo");
-
-        arch << oldStruct;
-       /* arch << Hum<UInt32>(999);*/
-
-        // reading
-        std::string string = str.str();
-        std::istringstream istr(string);
-        boost::archive::binary_iarchive ia(istr);
-
-        std::map<FormId, Item, std::greater<FormId> > newStruct;
-        ia >> newStruct;
 
 /*
-        Hum<UInt64> val(0);
-        ia >> val;
-*/
+        for (const auto& itm : items) {
+            Item tmp;
+            ia >> tmp;
 
-        EXPECT_TRUE(oldStruct.size() == newStruct.size());
+            EXPECT_TRUE( itm.isEqual(tmp) );
+
+
+        }*/
     }
 
 /*
@@ -148,31 +99,6 @@ namespace collections {
 
         EXPECT_TRUE(queue.count() == queue2.count());
         ;
-    }*/
-
-/*
-    TEST_DISABLED(shit, shit)
-    {
-        {
-            std::ostringstream str;
-            ::boost::archive::binary_oarchive arch(str);
-            arch << Item(3);
-        }
-
-
-        std::vector<char> buffer;
-        auto inserter = boost::iostreams::back_inserter(buffer);
-
-        boost::iostreams::stream< decltype(inserter) > s(inserter);
-        boost::archive::binary_oarchive arch(s);
-
-        //s->write("hello", 5);
-        //EXPECT_TRUE(s == false);
-
-        Item itm("empty");
-        arch << itm;
-
-        EXPECT_TRUE(buffer.empty() == false);
     }*/
 
 #endif

@@ -58,7 +58,7 @@ namespace collections {
                 str += ' ';
             }
 
-            str += "Function ";
+            str += "function ";
             str += self.funcName;
             str += '(';
             for (int i = 1; i < types.size(); ++i) {
@@ -85,7 +85,7 @@ namespace collections {
             str += "Scriptname ";
             str += self.className;
 
-            if (self.extendsClass) {
+            if (!self.extendsClass.empty()) {
                 (str += " extends ") += self.extendsClass;
             }
 

@@ -68,6 +68,15 @@ namespace collections {
         template<> inline HandleT convert2Tes(object_base* obj) {
             return obj ? obj->id : 0;
         }
+        template<> inline HandleT convert2Tes(array* obj) {
+            return obj ? obj->id : 0;
+        }
+        template<> inline HandleT convert2Tes(map* obj) {
+            return obj ? obj->id : 0;
+        }
+        template<> inline HandleT convert2Tes(form_map* obj) {
+            return obj ? obj->id : 0;
+        }
 
         template<>
         struct Tes2J<HandleT> {
@@ -192,7 +201,7 @@ namespace collections {
                             typename J2Tes<Arg1>::tes_type > (name, className, &tes_func, registry)
                 );
 
-                registry->SetFunctionFlags(className, name, VMClassRegistry::kFunctionFlag_NoWait); \
+                registry->SetFunctionFlags(className, name, VMClassRegistry::kFunctionFlag_NoWait);
             }
         };
 
@@ -343,8 +352,9 @@ namespace collections {
     struct CONCAT(_struct_, __LINE__) {\
          CONCAT(_struct_, __LINE__)() {\
              tes_binding::FunctionMetaInfo metaF;\
-             metaF.registrator = &tes_binding::proxy<decltype(msvc_identity(&(func))), &(func)>::bind;\
-             metaF.typeStrings = &tes_binding::proxy<decltype(msvc_identity(&(func))), &(func)>::type_strings;\
+             typedef tes_binding::proxy<decltype(msvc_identity(&(func))), &(func)> binder;\
+             metaF.registrator = &binder::bind;\
+             metaF.typeStrings = &binder::type_strings;\
              \
              metaF.args = (_args);\
              metaF.setComment(_comment);\

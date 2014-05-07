@@ -29,7 +29,7 @@ namespace collections {
         REGISTERF(getItem<SInt32>, "getInt", "object key", "returns value associated with key");
         REGISTERF(getItem<Float32>, "getFlt", "object key", "");
         REGISTERF(getItem<const char *>, "getStr", "object key", "");
-        REGISTERF(getItem<Handle>, "getObj", "object key", "");
+        REGISTERF(getItem<object_base *>, "getObj", "object key", "");
         REGISTERF(getItem<TESForm*>, "getForm", "object key", "");
 
         template<class T>

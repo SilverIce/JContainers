@@ -30,7 +30,7 @@ An alternative to retain-release is store object in JDB container"
             );
 
         template<class T>
-        static object_base* object() {
+        static T* object() {
             return T::object();
         }
 
