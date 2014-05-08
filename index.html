@@ -3,53 +3,34 @@
 <head>
 <meta charset="utf-8">
 <title>JC</title>
-<link rel="stylesheet" href="https://stackedit.io/res-min/themes/night.css" />
+<link rel="stylesheet" href="https://stackedit.io/res-min/themes/base.css" />
 <script type="text/javascript" src="https://stackedit.io/libs/MathJax/MathJax.js?config=TeX-AMS_HTML"></script>
 </head>
-<body><div class="container"><h2 id="motivation">Motivation</h2>
+<body><div class="container"><h3 id="motivation-overview">Motivation &amp; Overview</h3>
 
 <p>Papyrus lacks of convenient data structures such as dynamic arrays or associative containers. Script language should be simple but not underdeveloped.</p>
 
 <p>This plugin attempts to add missing functionality. Although it is not native functionality and it will never have a nice brackets to access items as default Papyrus Array have i believe it is still better than nothing.</p>
 
-<h3 id="overview">Overview</h3>
+<p>Current version implements array and associative(map or dictionary) containers: JArray (array container), JMap and JFormMap (both associative containers) and few convenient wrappers: JDB and JFormDB (databases).</p><div class="se-section-delimiter"></div>
 
-<p>Current version implements array and associative(map or dictionary) containers: JArray (array container), JMap and JFormMap (both associative containers) and few convenient wrappers: JDB and JFormDB (databases).</p>
+<h3 id="reference">Reference</h3>
 
-<h4 id="jarray">JArray</h4>
+<h4 id="what-value-is">What value is?</h4>
 
-<p>Ordered collection (array) of <strong>values</strong>(value is float, integer, string, form or another container). Dynamically resizeable, unlimited size array (default Papyrus Array size limit is 128 items) that may contain value of any kind in one time.</p>
+<p>Containers intended to contain values. Value is float, integer, string, form or another container). </p><div class="se-section-delimiter"></div>
 
-<h4 id="jmap-and-jformmap">JMap and JFormMap</h4>
+<h4 id="basics-object-container-instantiation-identifiers">Basics. Object (container) instantiation, identifiers</h4>
 
-<p>Both are <strong>associative</strong> containers (set of unique keys and values where each key associated with one <strong>value</strong>). They can not contain two or more equal keys. JMap key is a string, JFormMap key is a form (form is any actor, item, quest, spell - almost everything in Skyrim).</p>
-
-<h4 id="jvalue">JValue</h4>
-
-<p>Nothing more that just an interface that shows what functionality JArray, JMap and JFormMap share. So each of them can be emptied, serialized and deserialized to/from JSON and more.</p>
-
-<h4 id="jdb">JDB</h4>
-
-<p>Take it as global entry point or database - you put information in it under “yourKey” string key and then you can access to it from any script in the game. There is only one JDB in game, so each time you access it you access that one, single JDB. It is <strong>associative</strong> container as JMap (it is JMap internally), but script interface slight different.</p>
-
-<h4 id="jformdb">JFormDB</h4>
-
-<p>Provides convenient way to store values on form. It’s just wrapper that relies on rest of container objects. <br>
-__ <br>
-<em>There are also some pieces of information in script file comments.</em></p>
-
-<h2 id="reference">Reference</h2>
-
-<h3 id="object-container-instantiation-identifiers">Object (container) instantiation, identifiers</h3>
-
-<p>Object’s <strong>identifier</strong> is unique number that ranges from 1 to 2^32. It’s the way to distinguish it among other objects. And it’s almost only way to interact with it.</p>
-
-<p>To use any container object (array, map or formmap) you must first create(instantiate) it with <code>object</code> function or retrieve it from somewhere:</p>
+<p>To use any container object (array, map or form-map) you must first create (instantiate) it with <code>object</code> function or retrieve it from somewhere:</p>
 
 <pre class="prettyprint prettyprinted"><code class="language-lua"><span class="kwd">int</span><span class="pln"> array </span><span class="pun">=</span><span class="pln"> </span><span class="typ">JArray</span><span class="pun">.</span><span class="kwd">object</span><span class="pun">()</span><span class="pln">
-</span><span class="kwd">int</span><span class="pln"> anotherArray </span><span class="pun">=</span><span class="pln"> JDB</span><span class="pun">.</span><span class="pln">solveObj</span><span class="pun">(</span><span class="str">".myArray"</span><span class="pun">)</span></code></pre>
+</span><span class="kwd">int</span><span class="pln"> anotherArray </span><span class="pun">=</span><span class="pln"> JDB</span><span class="pun">.</span><span class="pln">solveObj</span><span class="pun">(</span><span class="str">".myArray"</span><span class="pun">)</span><span class="pln">
+</span><span class="kwd">int</span><span class="pln"> map </span><span class="pun">=</span><span class="pln"> </span><span class="typ">JMap</span><span class="pun">.</span><span class="kwd">object</span><span class="pun">()</span></code></pre>
 
-<p>Once created, you may put something in it:</p>
+<p>Any function that returns object returns his <strong>identifier</strong> in fact. Identifier is unique number that ranges from 1 to 2^32. It’s the way to distinguish it among other objects and almost only way to interact with it.</p>
+
+<p>Once created, you may put something in array:</p>
 
 <pre class="prettyprint prettyprinted"><code class="language-lua"><span class="typ">JArray</span><span class="pun">.</span><span class="pln">addStr</span><span class="pun">(</span><span class="pln">array</span><span class="pun">,</span><span class="pln"> </span><span class="str">"it’s me"</span><span class="pun">)</span><span class="pln">
 </span><span class="typ">JArray</span><span class="pun">.</span><span class="pln">addForm</span><span class="pun">(</span><span class="pln">array</span><span class="pun">,</span><span class="pln"> </span><span class="typ">GetTargetActor</span><span class="pun">())</span></code></pre>
@@ -59,13 +40,69 @@ __ <br>
 <pre class="prettyprint prettyprinted"><code class="language-lua"><span class="kwd">string</span><span class="pln"> </span><span class="kwd">string</span><span class="pln"> </span><span class="pun">=</span><span class="pln"> </span><span class="typ">JArray</span><span class="pun">.</span><span class="pln">getStr</span><span class="pun">(</span><span class="pln">array</span><span class="pun">,</span><span class="pln"> </span><span class="lit">0</span><span class="pun">)</span><span class="pln">
 form actor </span><span class="pun">=</span><span class="pln"> </span><span class="typ">JArray</span><span class="pun">.</span><span class="pln">getForm</span><span class="pun">(</span><span class="pln">array</span><span class="pun">,</span><span class="pln"> </span><span class="lit">1</span><span class="pun">)</span></code></pre>
 
-<h3 id="notes-about-jcontainers-api-usage">Notes about JContainers API usage</h3>
+<h4 id="jarray">JArray</h4>
+
+<p>Ordered collection (array) of values. Dynamically resizeable, unlimited size array (default Papyrus Array size limit is 128 items) that may contain value of any kind in one time.</p><div class="se-section-delimiter"></div>
+
+<h4 id="jmap-and-jformmap">JMap and JFormMap</h4>
+
+<p>Both are <strong>associative</strong> containers (set of unique keys and values where each key associated with one <strong>value</strong>). They can not contain two or more equal keys. JMap key is a string, JFormMap key is a form (form is any actor, item, quest, spell - almost everything in Skyrim).</p>
+
+<pre class="prettyprint prettyprinted"><code class="language-lua"><span class="kwd">int</span><span class="pln"> map </span><span class="pun">=</span><span class="pln"> </span><span class="typ">JMap</span><span class="pun">.</span><span class="kwd">object</span><span class="pun">()</span><span class="pln">
+</span><span class="typ">JMap</span><span class="pun">.</span><span class="pln">setForm</span><span class="pun">(</span><span class="str">"me"</span><span class="pun">,</span><span class="pln"> </span><span class="typ">GetTargetActor</span><span class="pun">())</span><span class="pln">
+form actor </span><span class="pun">=</span><span class="pln"> </span><span class="typ">JMap</span><span class="pun">.</span><span class="pln">getForm</span><span class="pun">(</span><span class="pln">map</span><span class="pun">,</span><span class="pln"> </span><span class="str">"me"</span><span class="pun">)</span></code></pre><div class="se-section-delimiter"></div>
+
+<h4 id="jvalue">JValue</h4>
+
+<p>Nothing more that just an interface that shows what functionality JArray, JMap and JFormMap share. So each of them can be emptied, serialized and deserialized to/from JSON and more.</p>
+
+<pre class="prettyprint prettyprinted"><code class="language-lua"><span class="kwd">int</span><span class="pln"> array </span><span class="pun">=</span><span class="pln"> </span><span class="typ">JArray</span><span class="pun">.</span><span class="kwd">object</span><span class="pun">()</span><span class="pln">
+</span><span class="kwd">int</span><span class="pln"> map </span><span class="pun">=</span><span class="pln"> </span><span class="typ">JArray</span><span class="pun">.</span><span class="kwd">object</span><span class="pun">()</span><span class="pln">
+</span><span class="pun">;</span><span class="pln"> </span><span class="com">// equivalent ways to do same things.</span><span class="pln">
+</span><span class="pun">;</span><span class="pln"> </span><span class="com">// all count functions return zero as new containers are empty</span><span class="pln">
+</span><span class="typ">JValue</span><span class="pun">.</span><span class="pln">count</span><span class="pun">(</span><span class="pln">array</span><span class="pun">)</span><span class="pln"> </span><span class="pun">==</span><span class="pln"> </span><span class="typ">JArray</span><span class="pun">.</span><span class="pln">count</span><span class="pun">(</span><span class="pln">array</span><span class="pun">)</span><span class="pln"> </span><span class="pun">==</span><span class="pln"> </span><span class="typ">JValue</span><span class="pun">.</span><span class="pln">count</span><span class="pun">(</span><span class="pln">map</span><span class="pun">)</span></code></pre><div class="se-section-delimiter"></div>
+
+<h4 id="jdb">JDB</h4>
+
+<p>Take it as global entry point or database - you put information in it under “yourKey” string key and then you can access to it from any script in the game. There is only one JDB in game, so each time you access it you access that one, single JDB. It is <strong>associative</strong> container as JMap (it is JMap internally), but script interface slight different.</p><div class="se-section-delimiter"></div>
+
+<h4 id="jformdb">JFormDB</h4>
+
+<p>Provides convenient way to store values on form. It’s just wrapper that relies on rest of container objects. Proper path syntax:</p>
+
+<ul>
+<li>.formStorageName.valueKey</li>
+</ul>
+
+<p>formStorageName - is storage that gets created first time value gets stored. That storage is JFormMap container and accessible via <code>JDB.solveObj(".formStorageName")</code>.</p>
+
+<p>valueKey - is key to access value.</p>
+
+<p>How it works internally: <br>
+once value gets assigned via <code>JFormDB.set*(formKey, ".formStorageName.valueKey", value)</code> JFormDB looks for <code>formStorageName</code> in JDB (or creates if not found) and then looks for JMap entry associated with form key (creates entry if nothing found) and then creates  (valueKey, value) pair.</p>
+
+<p>Basic usage:</p><div class="se-section-delimiter"></div>
+
+<pre class="prettyprint prettyprinted"><code class="language-lua"><span class="typ">JFormDB</span><span class="pun">.</span><span class="pln">setFlt</span><span class="pun">(</span><span class="pln">me</span><span class="pun">,</span><span class="pln"> </span><span class="str">".yourModFormStorage.valueKey"</span><span class="pun">,</span><span class="pln"> </span><span class="lit">10</span><span class="pun">)</span><span class="pln">
+</span><span class="typ">JFormDB</span><span class="pun">.</span><span class="pln">setStr</span><span class="pun">(</span><span class="pln">me</span><span class="pun">,</span><span class="pln"> </span><span class="str">".yourModFormStorage.anotherValueKey"</span><span class="pun">,</span><span class="pln"> </span><span class="str">"name"</span><span class="pun">)</span><span class="pln">
+</span><span class="kwd">float</span><span class="pln"> value </span><span class="pun">=</span><span class="pln"> </span><span class="typ">JFormDB</span><span class="pun">.</span><span class="pln">getFlt</span><span class="pun">(</span><span class="pln">me</span><span class="pun">,</span><span class="pln"> </span><span class="str">".yourModFormStorage.valueKey"</span><span class="pun">)</span><span class="pln">
+
+</span><span class="pun">;</span><span class="pln"> </span><span class="com">// Clean storage. Will </span><span class="pln">
+JDB</span><span class="pun">.</span><span class="pln">setObj</span><span class="pun">(</span><span class="str">"yourModFormStorage"</span><span class="pun">,</span><span class="pln"> </span><span class="lit">0</span><span class="pun">)</span><span class="pln">
+
+</span><span class="pun">;</span><span class="pln"> </span><span class="com">// Individual entry cleanup</span><span class="pln">
+</span><span class="typ">JFormDB</span><span class="pun">.</span><span class="pln">setEntry</span><span class="pun">(</span><span class="str">"yourModFormStorage"</span><span class="pun">,</span><span class="pln"> me</span><span class="pun">,</span><span class="pln"> </span><span class="lit">0</span><span class="pun">)</span><span class="pln">
+
+</span><span class="pun">;</span><span class="pln"> </span><span class="com">// Custom entry type</span><span class="pln">
+</span><span class="typ">JFormDB</span><span class="pun">.</span><span class="pln">setEntry</span><span class="pun">(</span><span class="str">"yourModFormStorage"</span><span class="pun">,</span><span class="pln"> me</span><span class="pun">,</span><span class="pln"> </span><span class="typ">JArray</span><span class="pun">.</span><span class="kwd">object</span><span class="pun">())</span></code></pre><div class="se-section-delimiter"></div>
+
+<h3 id="api-usage-notes">API usage notes</h3>
 
 <p>First and foremost - game will not crash no matter what data you will pass into JContainer functions. The following happens if function gets called with invalid input (state when input cannot be handled properly):</p>
 
 <p>All functions returning new container return zero identifier. For. ex <code>JValue.readFromFile("")</code> returns 0 because of invalid file path. Zero identifier means non-existing object. It’s ok to pass it into other functions - in that case function will return default value.</p>
 
-<p>All functions that read container contents (such as <code>getFlt</code>, <code>solveFlt</code>, <code>getStr</code>, <code>count</code>, <code>allKeys</code> and etc) return default value. In case function returns integer or float - default value is 0, string or form - <code>None</code>, container identifier - 0.</p>
+<p>All functions that read container contents (such as <code>getFlt</code>, <code>solveFlt</code>, <code>getStr</code>, <code>count</code>, <code>allKeys</code> and etc) return default value. In case function returns integer or float - default value is 0, string or form - <code>None</code>, container identifier - 0.</p><div class="se-section-delimiter"></div>
 
 <h3 id="object-persistence">Object persistence</h3>
 
@@ -75,7 +112,7 @@ form actor </span><span class="pun">=</span><span class="pln"> </span><span clas
 
 <p>As said above, it’s possible to serialize/deserialize container data. While numbers and strings serialized in natural way, store form information is slight tricky as JSON knows nothing about Skyrim forms (and also because global form id depends on mod load order). Serialized form is a string prefixed with <code>"__formData"</code>, plugin file name and local or global form id (hex or decimal number).</p>
 
-<p>Example of serialized JMap containing player form associated with <code>"test"</code> key:</p>
+<p>Example of serialized JMap containing player’s form associated with <code>"test"</code> key:</p><div class="se-section-delimiter"></div>
 
 <pre class="prettyprint prettyprinted"><code class="language-json"><span class="pun">{</span><span class="pln">
     </span><span class="str">"test"</span><span class="pun">:</span><span class="pln"> </span><span class="str">"__formData|Skyrim.esm|0x14"</span><span class="pun">,</span><span class="pln">
@@ -156,9 +193,7 @@ solveFlt</span><span class="pun">(</span><span class="pln">obj</span><span class
 
 <h3 id="object-lifetime-management-rules">Object lifetime management rules</h3>
 
-<p>Q: What the hell is that?</p>
-
-<p>A: You see, each time script creates new string or default papyrus array Skyrim allocates memory and automatically frees it when you do not need that string or array or something else.</p>
+<p>Each time script creates new string or default papyrus array Skyrim allocates memory and automatically frees it when you do not need that string or array or something else.</p>
 
 <p>Internally all containers are C++ objects, Skyrim knows nothing about them and unable to manage their lifetime and memory.</p>
 
@@ -186,19 +221,19 @@ solveFlt</span><span class="pun">(</span><span class="pln">obj</span><span class
 <p>Suppose you want to store some actor related information (let it be player’s followers and their mood):</p>
 
 <pre class="prettyprint prettyprinted"><code class="language-lua"><span class="kwd">function</span><span class="pln"> storeFolloverMood</span><span class="pun">(</span><span class="pln">form follower</span><span class="pun">,</span><span class="pln"> </span><span class="kwd">float</span><span class="pln"> mood</span><span class="pun">)</span><span class="pln">
-    </span><span class="pun">;</span><span class="pln"> </span><span class="kwd">function</span><span class="pln"> creates </span><span class="str">"followers"</span><span class="pln"> storage </span><span class="kwd">and</span><span class="pln"> </span><span class="kwd">then</span><span class="pln"> creates
-    </span><span class="pun">;</span><span class="pln"> </span><span class="pun">(</span><span class="pln">follower</span><span class="pun">,</span><span class="pln"> entry</span><span class="pun">)</span><span class="pln"> associations
+    </span><span class="pun">;</span><span class="com">// function creates "followers" storage and then creates</span><span class="pln">
+    </span><span class="pun">;</span><span class="com">// (follower, entry) associations</span><span class="pln">
     </span><span class="typ">JFormDB</span><span class="pun">.</span><span class="pln">setFlt</span><span class="pun">(</span><span class="pln">follower</span><span class="pun">,</span><span class="pln"> </span><span class="str">".followers.mood"</span><span class="pun">,</span><span class="pln"> mood</span><span class="pun">)</span><span class="pln">
 endfunction
 
 </span><span class="kwd">float</span><span class="pln"> </span><span class="kwd">function</span><span class="pln"> followerMood</span><span class="pun">(</span><span class="pln">form follower</span><span class="pun">)</span><span class="pln">
-    </span><span class="pun">;</span><span class="pln"> fetch follower mood
+    </span><span class="pun">;</span><span class="com">// fetch follower mood</span><span class="pln">
     </span><span class="kwd">return</span><span class="pln"> </span><span class="typ">JFormDB</span><span class="pun">.</span><span class="pln">getFlt</span><span class="pun">(</span><span class="pln">follower</span><span class="pun">,</span><span class="pln"> </span><span class="str">".followers.mood"</span><span class="pun">)</span><span class="pln">
 endfunction
 
 </span><span class="pun">;</span><span class="pln"> method that gets called once user uninstalls your mod
 </span><span class="kwd">function</span><span class="pln"> modUninstallMethod</span><span class="pun">()</span><span class="pln">
-    </span><span class="pun">;</span><span class="pln"> destroy association to </span><span class="kwd">not</span><span class="pln"> pollute game save </span><span class="kwd">and</span><span class="pln"> precious RAM
+    </span><span class="pun">;</span><span class="com">//  destroy association to not pollute game save and precious RAM</span><span class="pln">
     JDB</span><span class="pun">.</span><span class="pln">setObj</span><span class="pun">(</span><span class="str">"followers"</span><span class="pun">,</span><span class="pln"> </span><span class="lit">0</span><span class="pun">)</span><span class="pln">
 endfunction</span></code></pre>
 
@@ -226,23 +261,23 @@ endfunction</span></code></pre>
 <p>File written in JSON format. <br>
 It contains root map containing two maps - two standard presets your mod provides - classicPreset &amp; winterHorkerPreset. Config file reading may look like:</p>
 
-<pre class="prettyprint prettyprinted"><code class="language-lua"><span class="pun">;</span><span class="pln"> </span><span class="kwd">let</span><span class="pln"> it be </span><span class="pun">.</span><span class="pln">classicPreset </span><span class="kwd">or</span><span class="pln"> </span><span class="pun">.</span><span class="pln">winterHorkerPreset </span><span class="kwd">string</span><span class="pln">
+<pre class="prettyprint prettyprinted"><code class="language-lua"><span class="pun">;</span><span class="com">// let it be .classicPreset or .winterHorkerPreset string</span><span class="pln">
 </span><span class="kwd">string</span><span class="pln"> currentPreset
 
-</span><span class="pun">;</span><span class="pln"> </span><span class="kwd">use</span><span class="pln"> </span><span class="kwd">function</span><span class="pln"> each time you need re</span><span class="pun">-</span><span class="pln">read preset </span><span class="kwd">from</span><span class="pln"> a file
+</span><span class="pun">;</span><span class="com">// use function each time you need re-read preset from a file</span><span class="pln">
 </span><span class="kwd">function</span><span class="pln"> parseConfig</span><span class="pun">()</span><span class="pln">
-    </span><span class="pun">;</span><span class="pln"> that</span><span class="pun">’</span><span class="pln">s all</span><span class="pun">.</span><span class="pln"> presets are already </span><span class="kwd">in</span><span class="pln"> </span><span class="typ">Skyrim</span><span class="pln">
-    </span><span class="pun">;</span><span class="pln"> readFromFile returns root map container
-    </span><span class="pun">;</span><span class="pln"> it may </span><span class="kwd">return</span><span class="pln"> zero </span><span class="kwd">if</span><span class="pln"> file </span><span class="kwd">not</span><span class="pln"> exist </span><span class="kwd">or</span><span class="pln"> it can </span><span class="kwd">not</span><span class="pln"> be parsed </span><span class="pun">(</span><span class="kwd">not</span><span class="pln"> JSON format </span><span class="kwd">or</span><span class="pln"> you have accidentally added extra coma</span><span class="pun">)</span><span class="pln">
+    </span><span class="pun">;</span><span class="com">// that’s all. presets are already in Skyrim</span><span class="pln">
+    </span><span class="pun">;</span><span class="com">// readFromFile returns root map container</span><span class="pln">
+    </span><span class="pun">;</span><span class="com">// it may return zero if file not exist or it can not be parsed (not JSON format or you have accidentally added extra coma)</span><span class="pln">
     </span><span class="kwd">int</span><span class="pln"> config </span><span class="pun">=</span><span class="pln"> </span><span class="typ">JValue</span><span class="pun">.</span><span class="pln">readFromFile</span><span class="pun">(</span><span class="str">"Data/preset.txt"</span><span class="pun">)</span><span class="pln">
-    </span><span class="pun">;</span><span class="pln"> put config </span><span class="kwd">into</span><span class="pln"> DB </span><span class="pun">-</span><span class="pln"> associate key </span><span class="kwd">and</span><span class="pln"> config
+    </span><span class="pun">;</span><span class="com">// put config into DB - associate key and config</span><span class="pln">
     JDB</span><span class="pun">.</span><span class="pln">setObj</span><span class="pun">(</span><span class="str">"frostfall"</span><span class="pun">,</span><span class="pln"> config</span><span class="pun">)</span><span class="pln">
     currentPreset </span><span class="pun">=</span><span class="pln"> </span><span class="str">".classicPreset"</span><span class="pln">
 endfunction
 
 </span><span class="kwd">bool</span><span class="pln"> </span><span class="kwd">function</span><span class="pln"> axeDurabilityEnabled</span><span class="pun">()</span><span class="pln">
-    </span><span class="pun">;</span><span class="pln"> solveInt like any solve</span><span class="pun">*</span><span class="pln"> </span><span class="kwd">function</span><span class="pln"> tries to find </span><span class="pun">(</span><span class="pln">solve</span><span class="pun">)</span><span class="pln"> value </span><span class="kwd">for</span><span class="pln"> given path
-    </span><span class="pun">;</span><span class="pln"> current path </span><span class="kwd">is</span><span class="pln"> </span><span class="str">".frostfall.classicPreset.axeDurability"</span><span class="pln">
+    </span><span class="pun">;</span><span class="com">// solveInt like any solve* function tries to find (solve) value for given path</span><span class="pln">
+    </span><span class="pun">;</span><span class="com">// current path is ".frostfall.classicPreset.axeDurability"</span><span class="pln">
     </span><span class="kwd">return</span><span class="pln"> JDB</span><span class="pun">.</span><span class="pln">solveInt</span><span class="pun">(</span><span class="str">".frostfall"</span><span class="pln"> </span><span class="pun">+</span><span class="pln"> currentPreset </span><span class="pun">+</span><span class="pln"> </span><span class="str">".axeDurability"</span><span class="pun">)</span><span class="pln"> </span><span class="pun">!=</span><span class="pln"> </span><span class="lit">0</span><span class="pln">
 endfunction
 
@@ -271,14 +306,14 @@ endfunction</span></code></pre>
 </span><span class="kwd">function</span><span class="pln"> setScale</span><span class="pun">(</span><span class="kwd">float</span><span class="pln"> scale</span><span class="pun">)</span><span class="pln">
     objectreference plr </span><span class="pun">=</span><span class="pln"> </span><span class="typ">GetTargetActor</span><span class="pun">()</span><span class="pln">
 
-    </span><span class="pun">;</span><span class="pln"> retrieve config
+    </span><span class="pun">;</span><span class="com">// retrieve config</span><span class="pln">
     </span><span class="kwd">int</span><span class="pln"> config </span><span class="pun">=</span><span class="pln"> JDB</span><span class="pun">.</span><span class="pln">solveObj</span><span class="pun">(</span><span class="str">".scaleMod"</span><span class="pun">)</span><span class="pln">
 
-    </span><span class="pun">;</span><span class="pln"> iterate over array </span><span class="pun">&amp;</span><span class="pln"> calculate bone scale
+    </span><span class="pun">;</span><span class="com">// iterate over array &amp; calculate bone scale</span><span class="pln">
     </span><span class="kwd">int</span><span class="pln"> i </span><span class="pun">=</span><span class="pln"> </span><span class="typ">JArray</span><span class="pun">.</span><span class="pln">count</span><span class="pun">(</span><span class="pln">config</span><span class="pun">)</span><span class="pln">
     </span><span class="kwd">while</span><span class="pun">(</span><span class="pln">i </span><span class="pun">&gt;</span><span class="pln"> </span><span class="lit">0</span><span class="pun">)</span><span class="pln">
         i </span><span class="pun">-=</span><span class="pln"> </span><span class="lit">1</span><span class="pln">
-        </span><span class="pun">;</span><span class="pln"> fetch </span><span class="kwd">sub</span><span class="pun">-</span><span class="pln">array</span><span class="pun">.</span><span class="pln"> it can be </span><span class="pun">[</span><span class="str">"NPC Head [Head]"</span><span class="pun">,</span><span class="pln"> </span><span class="lit">0</span><span class="pun">,</span><span class="pln"> </span><span class="pun">-</span><span class="lit">0.33</span><span class="pun">]</span><span class="pln"> </span><span class="kwd">for</span><span class="pln"> instance
+        </span><span class="pun">;</span><span class="com">// fetch sub-array. it can be ["NPC Head [Head]", 0, -0.33] for instance</span><span class="pln">
         </span><span class="kwd">int</span><span class="pln"> data </span><span class="pun">=</span><span class="pln"> </span><span class="typ">JArray</span><span class="pun">.</span><span class="pln">getObj</span><span class="pun">(</span><span class="pln">config</span><span class="pun">,</span><span class="pln"> i</span><span class="pun">)</span><span class="pln">
         </span><span class="kwd">float</span><span class="pln"> nodeScale </span><span class="pun">=</span><span class="pln"> </span><span class="lit">1.0</span><span class="pln"> </span><span class="pun">+</span><span class="pln"> </span><span class="typ">JArray</span><span class="pun">.</span><span class="pln">getFlt</span><span class="pun">(</span><span class="pln">data</span><span class="pun">,</span><span class="lit">1</span><span class="pun">)</span><span class="pln"> </span><span class="pun">+</span><span class="pln"> </span><span class="pun">(</span><span class="typ">JArray</span><span class="pun">.</span><span class="pln">getFlt</span><span class="pun">(</span><span class="pln">data</span><span class="pun">,</span><span class="lit">2</span><span class="pun">)</span><span class="pln"> </span><span class="pun">-</span><span class="pln"> </span><span class="typ">JArray</span><span class="pun">.</span><span class="pln">getFlt</span><span class="pun">(</span><span class="pln">data</span><span class="pun">,</span><span class="lit">1</span><span class="pun">))</span><span class="pln"> </span><span class="pun">*</span><span class="pln"> scale
         </span><span class="typ">NetImmerse</span><span class="pun">.</span><span class="typ">SetNodeScale</span><span class="pun">(</span><span class="pln">plr</span><span class="pun">,</span><span class="pln"> </span><span class="typ">JArray</span><span class="pun">.</span><span class="pln">getStr</span><span class="pun">(</span><span class="pln">data</span><span class="pun">,</span><span class="pln"> </span><span class="lit">0</span><span class="pun">),</span><span class="pln"> nodeScale</span><span class="pun">,</span><span class="pln"> </span><span class="kwd">False</span><span class="pun">)</span><span class="pln">
@@ -300,21 +335,21 @@ endfunction</span></code></pre>
 <p>Here you can see a map that contains 3 key-value associations: mood and angler (both values are zeros initially) and <code>"victims": []</code> association (<code>[]</code> means empty array).</p>
 
 <pre class="prettyprint prettyprinted"><code class="language-lua"><span class="kwd">function</span><span class="pln"> storeFollowerMood</span><span class="pun">(</span><span class="pln">form follower</span><span class="pun">,</span><span class="pln"> </span><span class="kwd">float</span><span class="pln"> mood</span><span class="pun">)</span><span class="pln">
-    </span><span class="pun">;</span><span class="pln"> </span><span class="kwd">get</span><span class="pln"> follower entry to write </span><span class="kwd">into</span><span class="pln"> it
+    </span><span class="pun">;</span><span class="com">// get follower entry to write into it</span><span class="pln">
     </span><span class="kwd">int</span><span class="pln"> entry </span><span class="pun">=</span><span class="pln"> getActorEntry</span><span class="pun">(</span><span class="pln">follower</span><span class="pun">)</span><span class="pln">
-    </span><span class="pun">;</span><span class="pln"> write mood </span><span class="kwd">into</span><span class="pln"> follower entry
+    </span><span class="pun">;</span><span class="com">// write mood into follower entry</span><span class="pln">
     </span><span class="typ">JValue</span><span class="pun">.</span><span class="pln">solveFltSetter</span><span class="pun">(</span><span class="pln">entry</span><span class="pun">,</span><span class="pln"> </span><span class="str">".mood"</span><span class="pun">,</span><span class="pln"> mood</span><span class="pun">)</span><span class="pln">
 endfunction
 
 </span><span class="kwd">function</span><span class="pln"> addFollowerVictim</span><span class="pun">(</span><span class="pln">form follower</span><span class="pun">,</span><span class="pln"> form victim</span><span class="pun">)</span><span class="pln">
-    </span><span class="pun">;</span><span class="pln"> </span><span class="kwd">get</span><span class="pln"> follower entry to write </span><span class="kwd">into</span><span class="pln"> it AND </span><span class="kwd">then</span><span class="pln"> </span><span class="kwd">get</span><span class="pln"> victims array
+    </span><span class="pun">;</span><span class="com">// get follower entry to write into it AND then get victims array</span><span class="pln">
     </span><span class="kwd">int</span><span class="pln"> victims </span><span class="pun">=</span><span class="pln"> </span><span class="typ">JValue</span><span class="pun">.</span><span class="pln">solveObj</span><span class="pun">(</span><span class="pln">getActorEntry</span><span class="pun">(</span><span class="pln">follower</span><span class="pun">),</span><span class="pln"> </span><span class="str">".victims"</span><span class="pun">)</span><span class="pln">
-    </span><span class="pun">;</span><span class="pln"> add victim </span><span class="kwd">into</span><span class="pln"> array
+    </span><span class="pun">;</span><span class="com">// add victim into array</span><span class="pln">
     </span><span class="typ">JArray</span><span class="pun">.</span><span class="pln">addForm</span><span class="pun">(</span><span class="pln">victims</span><span class="pun">,</span><span class="pln"> victim</span><span class="pun">)</span><span class="pln">
 endfunction
 
 </span><span class="kwd">float</span><span class="pln"> </span><span class="kwd">function</span><span class="pln"> followerMood</span><span class="pun">(</span><span class="pln">form follower</span><span class="pun">)</span><span class="pln">
-    </span><span class="pun">;</span><span class="pln"> </span><span class="kwd">get</span><span class="pln"> follower entry AND fetch mood
+    </span><span class="pun">;</span><span class="com">// get follower entry AND fetch mood</span><span class="pln">
     </span><span class="kwd">return</span><span class="pln"> </span><span class="typ">JValue</span><span class="pun">.</span><span class="pln">solveFlt</span><span class="pun">(</span><span class="pln">getActorEntry</span><span class="pun">(</span><span class="pln">follower</span><span class="pun">),</span><span class="pln"> </span><span class="str">".mood"</span><span class="pun">)</span><span class="pln">
 endfunction
 
@@ -322,10 +357,10 @@ endfunction
     </span><span class="kwd">return</span><span class="pln"> </span><span class="typ">JValue</span><span class="pun">.</span><span class="pln">solveFlt</span><span class="pun">(</span><span class="pln">getActorEntry</span><span class="pun">(</span><span class="pln">follower</span><span class="pun">),</span><span class="pln"> </span><span class="str">".anger"</span><span class="pun">)</span><span class="pln">
 endfunction
 
-</span><span class="pun">;</span><span class="pln"> find </span><span class="pun">(</span><span class="kwd">or</span><span class="pln"> create </span><span class="kwd">new</span><span class="pln"> </span><span class="kwd">if</span><span class="pln"> </span><span class="kwd">not</span><span class="pln"> found</span><span class="pun">)</span><span class="pln"> per</span><span class="pun">-</span><span class="pln">actor information containing mood</span><span class="pun">,</span><span class="pln"> anger </span><span class="kwd">and</span><span class="pln"> array of victims
+</span><span class="pun">;</span><span class="com">// find (or create new if not found) per-actor information containing mood, anger and array of victims</span><span class="pln">
 </span><span class="kwd">int</span><span class="pln"> </span><span class="kwd">function</span><span class="pln"> getActorEntry</span><span class="pun">(</span><span class="pln">form actor</span><span class="pun">)</span><span class="pln">
     </span><span class="kwd">int</span><span class="pln"> entry </span><span class="pun">=</span><span class="pln"> </span><span class="typ">JFormMap</span><span class="pun">.</span><span class="pln">getObj</span><span class="pun">(</span><span class="kwd">self</span><span class="pun">.</span><span class="pln">followers</span><span class="pun">,</span><span class="pln"> follower</span><span class="pun">)</span><span class="pln">
-    </span><span class="pun">;</span><span class="pln"> </span><span class="kwd">if</span><span class="pln"> </span><span class="kwd">no</span><span class="pln"> entry found </span><span class="pun">-</span><span class="pln"> create </span><span class="kwd">new</span><span class="pln"> </span><span class="kwd">from</span><span class="pln"> prototype</span><span class="pun">-</span><span class="kwd">string</span><span class="pln">
+    </span><span class="pun">;</span><span class="com">// if no entry found - create new from prototype-string</span><span class="pln">
     </span><span class="kwd">if</span><span class="pln"> </span><span class="pun">!</span><span class="pln">entry
         </span><span class="kwd">int</span><span class="pln"> entry </span><span class="pun">=</span><span class="pln"> </span><span class="typ">JValue</span><span class="pun">.</span><span class="pln">objectWithPrototype</span><span class="pun">(</span><span class="str">"{ \"mood\": 0, \"anger\": 0, \"victims\": [] }"</span><span class="pun">)</span><span class="pln">
         </span><span class="typ">JFormMap</span><span class="pun">.</span><span class="pln">setObj</span><span class="pun">(</span><span class="kwd">self</span><span class="pun">.</span><span class="pln">followers</span><span class="pun">,</span><span class="pln"> follower</span><span class="pun">,</span><span class="pln"> entry</span><span class="pun">)</span><span class="pln">
@@ -334,31 +369,30 @@ endfunction
     </span><span class="kwd">return</span><span class="pln"> entry
 endfunction
 
-</span><span class="pun">;</span><span class="pln"> that property hides all black magick </span><span class="pun">-</span><span class="pln"> retains </span><span class="pun">&amp;</span><span class="pln"> releases </span><span class="kwd">object</span><span class="pln">
-</span><span class="pun">;</span><span class="pln"> see </span><span class="typ">Object</span><span class="pln"> lifetime management rules section </span><span class="kwd">for</span><span class="pln"> more of it
+</span><span class="pun">;</span><span class="com">// property hides all black magick - retains &amp; releases object</span><span class="pln">
+</span><span class="pun">;</span><span class="com">// see Object lifetime management rules section for more of it</span><span class="pln">
 </span><span class="kwd">int</span><span class="pln"> property followers hidden
     </span><span class="kwd">int</span><span class="pln"> </span><span class="kwd">function</span><span class="pln"> </span><span class="kwd">get</span><span class="pun">()</span><span class="pln">
         </span><span class="kwd">return</span><span class="pln"> _followers
     endFunction
     </span><span class="kwd">function</span><span class="pln"> </span><span class="kwd">set</span><span class="pun">(</span><span class="kwd">int</span><span class="pln"> value</span><span class="pun">)</span><span class="pln">
-        </span><span class="pun">;</span><span class="pln"> retainAndRelease releases previous </span><span class="kwd">object</span><span class="pln">
-        </span><span class="pun">;</span><span class="pln"> </span><span class="kwd">and</span><span class="pln"> owns </span><span class="pun">(</span><span class="pln">retains</span><span class="pun">)</span><span class="pln"> a </span><span class="kwd">new</span><span class="pln">
+        </span><span class="pun">;</span><span class="com">// retainAndRelease releases previous object</span><span class="pln">
+        </span><span class="pun">;</span><span class="com">// and owns (retains) a new</span><span class="pln">
         _followers </span><span class="pun">=</span><span class="pln"> </span><span class="typ">JValue</span><span class="pun">.</span><span class="pln">releaseAndRetain</span><span class="pun">(</span><span class="pln">_followers</span><span class="pun">,</span><span class="pln"> value</span><span class="pun">)</span><span class="pln">
     endFunction
 endProperty
 
 </span><span class="kwd">int</span><span class="pln"> _followers </span><span class="pun">=</span><span class="pln"> </span><span class="lit">0</span><span class="pln">
 
-</span><span class="pun">;</span><span class="pln"> initial setup </span><span class="kwd">function</span><span class="pln"> </span><span class="kwd">where</span><span class="pln"> you usually </span><span class="kwd">do</span><span class="pln"> the things once mod gets installed
-
+</span><span class="pun">;</span><span class="com">// initial setup function where you usually do the things once mod gets installed</span><span class="pln">
 </span><span class="kwd">function</span><span class="pln"> modSetupMethod</span><span class="pun">()</span><span class="pln">
-    </span><span class="pun">;</span><span class="pln"> create </span><span class="kwd">and</span><span class="pln"> retain </span><span class="typ">JFormMap</span><span class="pln"> container
+    </span><span class="pun">;</span><span class="com">// create and retain JFormMap container</span><span class="pln">
     </span><span class="kwd">self</span><span class="pun">.</span><span class="pln">followers </span><span class="pun">=</span><span class="pln"> </span><span class="typ">JFormMap</span><span class="pun">.</span><span class="kwd">object</span><span class="pun">()</span><span class="pln">
 endfunction
 
-</span><span class="pun">;</span><span class="pln"> method that gets called once user uninstalls it via MCM
+</span><span class="pun">;</span><span class="com">// method that gets called once user uninstalls it via MCM</span><span class="pln">
 </span><span class="kwd">function</span><span class="pln"> modUninstallMethod</span><span class="pun">()</span><span class="pln">
-    </span><span class="pun">;</span><span class="pln"> release followers container to </span><span class="kwd">not</span><span class="pln"> pollute game save
+    </span><span class="pun">;</span><span class="com">// release followers container to not pollute game save</span><span class="pln">
     </span><span class="kwd">self</span><span class="pun">.</span><span class="pln">followers </span><span class="pun">=</span><span class="pln"> </span><span class="lit">0</span><span class="pln">
 endfunction</span></code></pre></div>
     <!--[if !IE]><script>fixScale(document);</script><![endif]-->
