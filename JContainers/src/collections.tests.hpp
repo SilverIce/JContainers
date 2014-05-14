@@ -2,12 +2,22 @@
 
 namespace collections {
 
-    #ifndef TEST_COMPILATION_DISABLED
+#ifndef TEST_COMPILATION_DISABLED
 
-    TEST(object_base, refCount)
-    {
+    struct JCFixture : testing::Fixture {
         tes_context context;
 
+        ~JCFixture() {
+            context.clearState();
+        }
+
+    };
+
+#   define JC_TEST(name, name2) TEST_F(JCFixture, name, name2)
+#   define JC_TEST_DISABLED(name, name2) TEST_F(JCFixture, name, DISABLED_##name2)
+
+    JC_TEST(object_base, refCount)
+    {
         auto obj = array::create(context);
         EXPECT_TRUE(obj->refCount() == 1);
         obj->retain();
@@ -25,36 +35,24 @@ namespace collections {
         EXPECT_TRUE(obj->refCount() == 1);
 
         obj->release();
-
-        context.clearState();
     }
 
-    TEST(tes_context, database)
+    JC_TEST(tes_context, database)
     {
         using namespace std;
-
-        tes_context context;
 
         auto db = context.database();
 
         EXPECT_TRUE(db != nullptr);
         EXPECT_TRUE(db == context.database());
-
-        context.clearState();
     }
 
-    TEST(tes_context, serialization)
+    JC_TEST(tes_context, serialization)
     {
         using namespace std;
 
-        tes_context context;
-
-        //vector<Handle> identifiers;
-
         for (int i = 0; i < 10; ++i) {
             auto obj = map::object(context);
-
-            //identifiers.push_back(obj->id);
         }
 
         string data = context.saveToArray();
@@ -66,25 +64,21 @@ namespace collections {
         string newData = context.saveToArray();
 
         EXPECT_TRUE(data.size() == newData.size());
-
-        context.clearState();
     }
 
-    TEST_DISABLED(autorelease_queue, over_release)
+    JC_TEST(autorelease_queue, over_release)
     {
         using namespace std;
-
-        tes_context context;
 
         vector<Handle> identifiers;
         //int countBefore = queue.count();
 
         for (int i = 0; i < 10; ++i) {
-            auto obj = map::create(context);//+1
+            auto obj = map::create(context);//+1, rc is 1
 
             obj->release();//-1, rc is 0, add to delete queue
 
-            obj->retain();// +1
+            obj->retain();// +1, rc is 1
 
             identifiers.push_back(obj->id);
         }
@@ -98,15 +92,11 @@ namespace collections {
         std::this_thread::sleep_for( std::chrono::seconds(13) );
 
         EXPECT_TRUE(allExist());
-
-        context.clearState();
     }
 
-    TEST_DISABLED(autorelease_queue, high_level)
+    JC_TEST_DISABLED(autorelease_queue, high_level)
     {
         using namespace std;
-
-        tes_context context;
 
         vector<Handle> identifiers;
         //int countBefore = queue.count();
@@ -130,8 +120,6 @@ namespace collections {
         std::this_thread::sleep_for( std::chrono::seconds(5) );
 
         EXPECT_TRUE(allExist() == false);
-
-        context.clearState();
     }
 
 
@@ -168,7 +156,6 @@ namespace collections {
 
         return jsonString;
     }
-
 
     TEST(json_handling, collection_operators)
     {
@@ -219,7 +206,7 @@ namespace collections {
         }
     }
 
-    TEST(json_handling, readJSONData)
+    TEST(json_handling, path_resolving)
     {
 
         object_base *obj = tes_object::objectFromPrototype(STR(
@@ -314,9 +301,9 @@ namespace collections {
         saveAll();
     }*/
 
-    TEST(array,  test)
+    JC_TEST(array,  test)
     {
-        auto arr = array::create();
+        auto arr = array::create(context);
 
         EXPECT_TRUE(tes_array::count(arr) == 0);
 
@@ -330,7 +317,7 @@ namespace collections {
         EXPECT_TRUE(tes_array::count(arr) == 2);
         EXPECT_TRUE(tes_array::itemAtIndex<SInt32>(arr, 1) == 30);
 
-        auto arr2 = array::create();
+        auto arr2 = array::create(context);
         tes_array::addItemAt<SInt32>(arr2, 4);
 
         tes_array::addItemAt(arr, arr2);
@@ -343,9 +330,9 @@ namespace collections {
         tes_object::release( arr2);
     }
 
-    TEST(array,  negative_indices)
+    JC_TEST(array,  negative_indices)
     {
-        auto obj = array::object();
+        auto obj = array::object(context);
 
         SInt32 values[] = {1,2,3,4,5,6,7};
 
@@ -387,9 +374,9 @@ namespace collections {
         EXPECT_TRUE(!tes_jcontainers::fileExistsAtPath("abracadabra"));
     }
 
-    TEST(map, key_case_insensitivity)
+    JC_TEST(map, key_case_insensitivity)
     {
-        map *cnt = map::object();
+        map *cnt = map::object(context);
 
         const char *name = "back in black";
         cnt->u_setValueForKey("ACDC", Item(name));
@@ -398,9 +385,9 @@ namespace collections {
     }
 
 
-    TEST(json_handling, recursion)
+    JC_TEST(json_handling, recursion)
     {
-        map *cnt = map::object();
+        map *cnt = map::object(context);
         cnt->u_setValueForKey("cycle", Item(cnt));
 
         char *data = json_handling::createJSONData(*cnt);
