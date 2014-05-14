@@ -18,6 +18,7 @@
 #include "collections.h"
 #include "shared_state.h"
 #include "json_handling.h"
+#include "path_resolving.h"
 
 #include "tes_binding.h"
 

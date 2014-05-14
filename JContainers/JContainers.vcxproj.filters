@@ -47,6 +47,9 @@
     </ClCompile>
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\jcontainers_pch.cpp" />
+    <ClCompile Include="src\path_resolving.cpp">
+      <Filter>collections_module</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="lib\cJSON\cJSON.h">
@@ -137,6 +140,9 @@
     </ClInclude>
     <ClInclude Include="src\tes_form_db.h">
       <Filter>collections_module\tes_classes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\path_resolving.h">
+      <Filter>collections_module</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

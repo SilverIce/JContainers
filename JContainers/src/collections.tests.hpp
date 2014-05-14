@@ -68,7 +68,7 @@ namespace collections {
         EXPECT_TRUE(data.size() == newData.size());
     }
 
-    JC_TEST(autorelease_queue, over_release)
+    JC_TEST_DISABLED(autorelease_queue, over_release)
     {
         using namespace std;
 
@@ -162,13 +162,13 @@ namespace collections {
     TEST(json_handling, collection_operators)
     {
         auto shouldReturnNumber = [&](object_base *obj, const char *path, float value) {
-            json_handling::resolvePath(obj, path, [&](Item * item) {
+            path_resolving::resolvePath(obj, path, [&](Item * item) {
                 EXPECT_TRUE(item && item->fltValue() == value);
             });
         };
 
         auto shouldReturnInt = [&](object_base *obj, const char *path, int value) {
-            json_handling::resolvePath(obj, path, [&](Item * item) {
+            path_resolving::resolvePath(obj, path, [&](Item * item) {
                 EXPECT_TRUE(item && item->intValue() == value);
             });
         };
@@ -221,12 +221,12 @@ namespace collections {
         ));
 
         auto shouldSucceed = [&](const char * path, bool succeed) {
-            json_handling::resolvePath(obj, path, [&](Item * item) {
+            path_resolving::resolvePath(obj, path, [&](Item * item) {
                 EXPECT_TRUE(succeed == (item != nullptr));
             });
         };
 
-        json_handling::resolvePath(obj, ".glossary.GlossDiv", [&](Item * item) {
+        path_resolving::resolvePath(obj, ".glossary.GlossDiv", [&](Item * item) {
             EXPECT_TRUE(item && strcmp(item->strValue(), "S") == 0 );
         });
 
@@ -235,7 +235,7 @@ namespace collections {
             EXPECT_TRUE(item && strcmp(item->strValue(), "S") == 0 );
         });*/
 
-        json_handling::resolvePath(obj, ".array[0][0]", [&](Item * item) {
+        path_resolving::resolvePath(obj, ".array[0][0]", [&](Item * item) {
             EXPECT_TRUE(item && strcmp(item->strValue(), "NPC Head [Head]") == 0 );
         });
 
@@ -254,7 +254,7 @@ namespace collections {
 
 
         float floatVal = 10.5;
-        json_handling::resolvePath(obj, ".glossary.GlossDiv", [&](Item * item) {
+        path_resolving::resolvePath(obj, ".glossary.GlossDiv", [&](Item * item) {
             EXPECT_TRUE(item != nullptr);
             item->setFlt(floatVal);
         });
@@ -266,11 +266,11 @@ namespace collections {
 
         EXPECT_TRUE(obj->as<map>() != nullptr);
         
-        json_handling::resolvePath(obj, ".timesTrained", [&](Item * item) {
+        path_resolving::resolvePath(obj, ".timesTrained", [&](Item * item) {
             EXPECT_TRUE(item && item->intValue() == 10 );
         });
 
-        json_handling::resolvePath(obj, ".trainers", [&](Item * item) {
+        path_resolving::resolvePath(obj, ".trainers", [&](Item * item) {
             EXPECT_TRUE(item && item->object()->as<array>() );
         });
     }

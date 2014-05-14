@@ -167,7 +167,7 @@ useful for those who use Papyrus properties instead of manual (and more error-pr
                 return false;
 
             bool succeed = false;
-            json_handling::resolvePath(obj, path, [&](Item* itmPtr) {
+            path_resolving::resolvePath(obj, path, [&](Item* itmPtr) {
                 succeed = (itmPtr != nullptr);
             });
 
@@ -184,7 +184,7 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
                 return 0;
 
             T val((T)0);
-            json_handling::resolvePath(obj, path, [&](Item* itmPtr) {
+            path_resolving::resolvePath(obj, path, [&](Item* itmPtr) {
                 if (itmPtr) {
                     val = itmPtr->readAs<T>();
                 }
@@ -204,7 +204,7 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
                 return false;
 
             bool succeed = false;
-            json_handling::resolvePath(obj, path, [&](Item* itmPtr) {
+            path_resolving::resolvePath(obj, path, [&](Item* itmPtr) {
                 if (itmPtr) {
                     *itmPtr = Item((T)value);
                     succeed = true;
