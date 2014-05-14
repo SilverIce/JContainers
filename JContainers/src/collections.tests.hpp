@@ -1,5 +1,7 @@
 #pragma once
 
+#include <future>
+
 namespace collections {
 
 #ifndef TEST_COMPILATION_DISABLED
@@ -411,6 +413,42 @@ namespace collections {
             json_handling::formIdFromString(formString.c_str(), [=](const char*) { return pluginIdx; }) );
     }
 
+    JC_TEST_DISABLED(deadlock, deadlock)
+    {
+        map *root = map::object(context);
+        map *elsa = map::object(context);
+        map *local = map::object(context);
+
+        root->retain();
+
+        root->setValueForKey("elsa", Item(elsa));
+        elsa->setValueForKey("local", Item(local));
+
+        auto func = [&]() {
+            printf("work started\n");
+
+            auto rootId = root->id;
+            auto elsaId = elsa->id;
+
+            int i = 0;
+            while (i < 5000000) {
+                ++i;
+                auto root = context.getObjectOfType<map>(rootId);
+                auto elsa = tes_object::resolveGetter<object_base *>(root, ".elsa");
+
+                tes_object::hasPath(root, ".elsa.local");
+                tes_map::setItem(root, "elsa", elsa);
+            }
+
+            printf("work complete\n");
+        };
+
+        auto fut1 = std::async(std::launch::async, func);
+        auto fut2 = std::async(std::launch::async, func);
+
+        fut1.wait();
+        fut2.wait();
+    }
  
     #endif
 }
