@@ -10,7 +10,7 @@ Current version implements array and associative(map or dictionary) containers: 
 
 #### What value is?
 
-Containers intended to contain values. Value is float, integer, string, form or another container). 
+Containers intended to contain values. Value is float, integer, string, form or another container. 
 
 #### Basics. Object (container) instantiation, identifiers
 
@@ -57,6 +57,9 @@ int map = JArray.object()
 ; // equivalent ways to do same things.
 ; // all count functions return zero as new containers are empty
 JValue.count(array) == JArray.count(array) == JValue.count(map)
+; // write container content into file:
+JValue.writeToFile(map, "map.txt")
+JValue.writeToFile(array, "array.txt")
 ```
 
 #### JDB
@@ -82,10 +85,10 @@ JFormDB.setFlt(me, ".yourModFormStorage.valueKey", 10)
 JFormDB.setStr(me, ".yourModFormStorage.anotherValueKey", "name")
 float value = JFormDB.getFlt(me, ".yourModFormStorage.valueKey")
  
-; // Clean storage. Will 
+; // Clean storage. 
 JDB.setObj("yourModFormStorage", 0)
  
-; // Individual entry cleanup
+; // Individual entry cleanup. Will destroy 
 JFormDB.setEntry("yourModFormStorage", me, 0)
  
 ; // Custom entry type
@@ -106,7 +109,7 @@ Every container object persists in save file until it (container) gets destroyed
 
 ### JSON serialization
 
-As said above, it’s possible to serialize/deserialize container data. While numbers and strings serialized in natural way, store form information is slight tricky as JSON knows nothing about Skyrim forms (and also because global form id depends on mod load order). Serialized form is a string prefixed with `"__formData"`, plugin file name and local or global form id (hex or decimal number).
+As said above, it’s possible to serialize/deserialize container data (write to or read from an external file). While numbers and strings serialized in natural way, store form information is slight tricky as JSON knows nothing about Skyrim forms (and also because global form id depends on mod load order). Serialized form is a string prefixed with `"__formData"`, plugin file name and local or global form id (hex or decimal number).
 
 Example of serialized JMap containing player's form associated with `"test"` key:
 ```json
@@ -115,6 +118,32 @@ Example of serialized JMap containing player's form associated with `"test"` key
     "name": "Elsa",
     "level": 2
 }
+```
+Serialized array and nested form-map container:
+```json
+[
+    0,
+    1.5,
+    {
+        "__formData": null,
+        "__formData|Skyrim.esm|0xc0ffee" : "coffee",
+        "__formData|Dawnguard.esm|0xc0a1bd" : 2.5,
+    },
+    "just string"
+]
+```
+Serialization:
+```lua
+int playerData = JMap.object()
+JMap.setForm(playerData, playerForm)
+JMap.setInt(playerData, playerForm.GetLevel())
+JValue.writeToFile(playerData, "Data/playerInfo.txt")
+```
+Deserialization:
+```lua
+int data = JValue.readFromFile("Data/playerInfo.txt")
+int level = JValue.solveInt(data, ".level")
+form player = JValue.solveForm(data, ".test")
 ```
 
 ### Path resolving
@@ -175,7 +204,7 @@ solveFlt(obj, "@maxNum.value.k") is 100
 solveFlt(obj, "@minNum.value.k") is -100
 
 obj = {
-    mapKey: { "a": [1], "b": {"k": -100}, "c": [3], "d": {"k": 100}, "e": [5], "f": [6] }
+    "mapKey": { "a": [1], "b": {"k": -100}, "c": [3], "d": {"k": 100}, "e": [5], "f": [6] }
 }
 
 solveFlt(obj, ".mapKey@maxNum.value.k") is 100
@@ -296,7 +325,7 @@ What you see here is one array that contains 4 sub-arrays and each sub-array con
 
 ```lua
 EventOnEffectStart(Actor akTarget, Actor akCaster)
-    ; read config file from game root folder and associate it with "scaleMod" key
+    ;//  read config file from game root folder and associate it with "scaleMod" key
     JDB.setObj("scaleMod", JValue.readFromFile("scale.txt"))
 Endevent
 
@@ -368,13 +397,13 @@ int function getActorEntry(form actor)
 endfunction
 
 ;// property hides all black magick - retains & releases object
-;// see Object lifetime management rules section for more of it
+;// see 'Object lifetime management rules' section for more of it
 int property followers hidden
     int function get()
         return _followers
     endFunction
     function set(int value)
-        ;// retainAndRelease releases previous object
+        ;// retainAndRelease releases previous _followers object
         ;// and owns (retains) a new
         _followers = JValue.releaseAndRetain(_followers, value)
     endFunction
