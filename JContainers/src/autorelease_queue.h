@@ -179,7 +179,7 @@ namespace collections {
                     for(auto& val : toRelease) {
                         auto obj = self._registry.getObject(val);
                         if (obj) {
-                            bool deleted = obj->_deleteOrRelease(nullptr);
+                            bool deleted = obj->_deleteIfNoOwner(nullptr);
                             //printf("handle %u %s\n", val, (deleted ? "deleted" : "released"));
                         }
                     }

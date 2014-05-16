@@ -15,8 +15,11 @@ namespace collections
 {
     namespace path_resolving {
 
-        typedef std::function<Item* (object_base*)> NodeFunc;
-        typedef std::function<void (const Item& , Item&)> ElementFunc;
+        namespace bs = boost;
+        namespace ss = std;
+
+        typedef ss::function<Item* (object_base*)> NodeFunc;
+        typedef ss::function<void (const Item& , Item&)> ElementFunc;
         typedef boost::iterator_range<const char*> path_type;
 
         struct state {
@@ -43,9 +46,6 @@ namespace collections
         template<class T, class V>
         static bool _map_visit_helper(T *container, path_type path, const V& func)
         {
-            namespace bs = boost;
-            namespace ss = std;
-
             if (!container || path.empty()) {
                 return false;
             }

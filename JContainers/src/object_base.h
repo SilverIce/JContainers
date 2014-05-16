@@ -95,10 +95,9 @@ namespace collections {
 
         object_base * autorelease();
 
-        // decreases internal ref counter - _refCount OR deletes if summ refCount is 0
-        // if old refCountSumm is 1 - then release, if 0 - delete
+        // deletes object if no owners
         // true, if object deleted
-        bool _deleteOrRelease(class autorelease_queue*);
+        bool _deleteIfNoOwner(class autorelease_queue*);
 
         void release();
         void tes_release();

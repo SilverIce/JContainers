@@ -10,7 +10,7 @@ namespace collections
     // decreases internal ref counter - _refCount OR deletes if summ refCount is 0
     // if old refCountSumm is 1 - then release, if 0 - delete
     // true, if object deleted
-    bool object_base::_deleteOrRelease(class autorelease_queue*) {
+    bool object_base::_deleteIfNoOwner(class autorelease_queue*) {
         bool deleteObject = false; {
             mutex_lock g(_mutex);
             deleteObject = (_refCount == 0 && _tes_refCount == 0);
