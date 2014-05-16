@@ -29,6 +29,8 @@ namespace collections {
     {
         friend class shared_state;
 
+        Handle _id;
+
         int32_t _refCount;
         int32_t _tes_refCount;
 
@@ -38,10 +40,6 @@ namespace collections {
 
     public:
         object_mutex _mutex;
-        union {
-            Handle id;
-            UInt32 _id;
-        };
 
         CollectionType _type;
         shared_state *_context;
@@ -49,7 +47,7 @@ namespace collections {
         explicit object_base(CollectionType type)
             : _refCount(1)
             , _tes_refCount(0)
-            , id(HandleNull)
+            , _id(HandleNull)
             , _type(type)
             , _context(nullptr)
         {
@@ -58,7 +56,7 @@ namespace collections {
         object_base()
             : _refCount(0)
             , _tes_refCount(0)
-            , _id(0)
+            , _id(HandleNull)
             , _type(CollectionTypeNone)
             , _context(nullptr)
         {
@@ -70,7 +68,11 @@ namespace collections {
         }
 
         bool registered() const {
-            return _id != 0;
+            return _id != HandleNull;
+        }
+
+        Handle uid() const {
+            return _id;
         }
 
         template<class T> T* as() {

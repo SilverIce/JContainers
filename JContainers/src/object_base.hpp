@@ -3,7 +3,7 @@
 namespace collections
 {
     void object_base::_registerSelf() {
-        assert(_id == 0);
+        assert(_id == HandleNull);
         _id = _context->registry->registerObject(this);
     }
 
@@ -18,7 +18,7 @@ namespace collections
 
         if (deleteObject) {
             assert(_context);
-            _context->registry->removeObject(id);
+            _context->registry->removeObject(_id);
             delete this;
         }
 
@@ -60,7 +60,7 @@ namespace collections
 
     void object_base::_addToDeleteQueue() {
         assert(_context);
-        _context->aqueue->push(id);
+        _context->aqueue->push(_id);
     }
 
 }

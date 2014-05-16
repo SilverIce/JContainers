@@ -64,7 +64,7 @@ namespace collections
             }
 
             write_lock g(_mutex);
-            _databaseId = db ? db->id : 0;
+            _databaseId = db ? db->uid() : 0;
         }
 
         void u_loadAdditional(boost::archive::binary_iarchive & arch) override;

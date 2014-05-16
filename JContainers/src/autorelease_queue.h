@@ -11,7 +11,7 @@ namespace collections {
         typedef std::lock_guard<bshared_mutex> lock;
         typedef unsigned int time_point;
         //typedef chrono::time_point<chrono::system_clock> time_point;
-        typedef std::vector<std::pair<HandleT, time_point> > queue;
+        typedef std::vector<std::pair<Handle, time_point> > queue;
 
     private:
 
@@ -55,7 +55,7 @@ namespace collections {
             start();
         }
 
-        void push(HandleT handle) {
+        void push(Handle handle) {
             write_lock g(_mutex);
             _queue.push_back(std::make_pair(handle, _timeNow));
         }
@@ -139,7 +139,7 @@ namespace collections {
             using namespace std;
 
             chrono::milliseconds sleepTime(sleep_duration_millis);
-            vector<HandleT> toRelease;
+            vector<Handle> toRelease;
             uint32 millisecondCounter = 0; // plain & dumb counter
 
             while (true) {

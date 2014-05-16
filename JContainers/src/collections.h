@@ -362,7 +362,7 @@ namespace collections {
         }
 
         bool isEqual(const object_base *value) const {
-            return _type == ItemTypeObject && ( (_object && value && _object->id == value->id) || _object == value);
+            return _type == ItemTypeObject && ( (_object && value && _object->uid() == value->uid()) || _object == value);
         }
 
         bool isEqual(const TESForm *value) const {
@@ -441,7 +441,7 @@ namespace collections {
 
     template<> inline Handle Item::readAs<Handle>() {
         auto obj = object();
-        return obj ? obj->id : HandleNull;
+        return obj ? obj->uid() : HandleNull;
     }
 
     template<> inline TESForm * Item::readAs<TESForm*>() {

@@ -53,18 +53,38 @@ namespace collections {
     {
         using namespace std;
 
+        vector<Handle> identifiers;
+
+        auto allExist = [&]() {
+            return std::all_of(identifiers.begin(), identifiers.end(), [&](Handle id) {
+                return context.getObject(id) != nullptr;
+            });
+        };
+
+        auto allAbsent = [&]() {
+            return std::all_of(identifiers.begin(), identifiers.end(), [&](Handle id) {
+                return context.getObject(id) == nullptr;
+            });
+        };
+
         for (int i = 0; i < 10; ++i) {
             auto obj = map::object(context);
+            identifiers.push_back(obj->uid());
         }
 
-        string data = context.saveToArray();
+        EXPECT_TRUE(allExist());
 
+        string data = context.saveToArray();
+        EXPECT_TRUE(allExist());
         EXPECT_FALSE(data.empty());
 
+        context.clearState();
+        EXPECT_TRUE(allAbsent());
+
         context.loadAll(data, kJSerializationCurrentVersion);
+        EXPECT_TRUE(allExist());
 
         string newData = context.saveToArray();
-
         EXPECT_TRUE(data.size() == newData.size());
     }
 
@@ -82,7 +102,7 @@ namespace collections {
 
             obj->retain();// +1, rc is 1
 
-            identifiers.push_back(obj->id);
+            identifiers.push_back(obj->uid());
         }
 
         auto allExist = [&]() {
@@ -106,7 +126,7 @@ namespace collections {
         for (int i = 0; i < 10; ++i) {
             auto obj = map::object(context);
 
-            identifiers.push_back(obj->id);
+            identifiers.push_back(obj->uid());
         }
 
         auto allExist = [&]() {
@@ -323,7 +343,7 @@ namespace collections {
         tes_array::addItemAt<SInt32>(arr2, 4);
 
         tes_array::addItemAt(arr, arr2);
-        EXPECT_TRUE(tes_array::itemAtIndex<Handle>(arr, 2) == arr2->id);
+        EXPECT_TRUE(tes_array::itemAtIndex<Handle>(arr, 2) == arr2->uid());
 
         tes_object::release(arr);
 
@@ -413,6 +433,13 @@ namespace collections {
             json_handling::formIdFromString(formString.c_str(), [=](const char*) { return pluginIdx; }) );
     }
 
+    JC_TEST_DISABLED(dl, dl)
+    {
+        auto obj = map::object(context);
+        object_lock lock(obj);
+        obj->u_setValueForKey("lol", Item(obj));
+    }
+
     JC_TEST_DISABLED(deadlock, deadlock)
     {
         map *root = map::object(context);
@@ -427,8 +454,8 @@ namespace collections {
         auto func = [&]() {
             printf("work started\n");
 
-            auto rootId = root->id;
-            auto elsaId = elsa->id;
+            auto rootId = root->uid();
+            auto elsaId = elsa->uid();
 
             int i = 0;
             while (i < 5000000) {
