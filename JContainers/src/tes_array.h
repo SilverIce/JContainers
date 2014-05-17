@@ -37,7 +37,8 @@ namespace collections {
         static object_base* objectWithSize(UInt32 size) {
             auto obj = array::objectWithInitializer([&](array *me) {
                 me->_array.resize(size);
-            });
+            },
+                tes_context::instance());
 
             return obj;
         }
@@ -51,7 +52,8 @@ namespace collections {
                     arr.Get(&val, i);
                     me->_array.push_back(Item(val));
                 }
-            });
+            },
+                tes_context::instance());
 
             return obj;
         }
@@ -74,9 +76,9 @@ objectWithBooleans converts booleans into integers");
             }
 
             auto obj = array::objectWithInitializer([&](array *me) {
-                
                 me->_array.insert(me->begin(), source->begin() + startIndex, source->begin() + endIndex);
-            });
+            },
+                tes_context::instance());
 
             return obj;
         }

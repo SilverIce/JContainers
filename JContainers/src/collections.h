@@ -30,7 +30,7 @@ namespace collections {
 
     public:
 
-        static T* create(tes_context& context = tes_context::instance()) {
+        static T* create(tes_context& context /*= tes_context::instance()*/) {
             auto obj = new T();
             obj->_context = &context;
             obj->_registerSelf();
@@ -38,7 +38,7 @@ namespace collections {
         }
 
         template<class Init>
-        static T* _createWithInitializer(Init& init, tes_context& context = tes_context::instance()) {
+        static T* _createWithInitializer(Init& init, tes_context& context /*= tes_context::instance()*/) {
             auto obj = new T();
             obj->_context = &context;
             init(obj);
@@ -46,12 +46,12 @@ namespace collections {
             return obj;
         }
 
-        static T* object(tes_context& context = tes_context::instance()) {
+        static T* object(tes_context& context /*= tes_context::instance()*/) {
             return static_cast<T *> (create(context)->autorelease());
         }
 
         template<class Init>
-        static T* objectWithInitializer(Init& init, tes_context& context = tes_context::instance()) {
+        static T* objectWithInitializer(Init& init, tes_context& context /*= tes_context::instance()*/) {
             return static_cast<T *> (_createWithInitializer(init, context)->autorelease());
         }
     };

@@ -69,7 +69,8 @@ namespace collections {
                 for each(auto& pair in obj->container()) {
                     arr->u_push( Item(pair.first) );
                 }
-            });
+            },
+                tes_context::instance());
         }
         REGISTERF2(allKeys, "*", "returns new array containing all keys");
 
@@ -85,7 +86,8 @@ namespace collections {
                 for each(auto& pair in obj->container()) {
                     arr->_array.push_back( pair.second );
                 }
-            });
+            },
+                tes_context::instance());
         }
         REGISTERF2(allValues, "*", "returns new array containing all values");
 

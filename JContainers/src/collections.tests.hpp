@@ -412,7 +412,7 @@ namespace collections {
         map *cnt = map::object(context);
         cnt->u_setValueForKey("cycle", Item(cnt));
 
-        char *data = json_handling::createJSONData(*cnt);
+        char *data = json_serializer::createJSONData(*cnt);
 
         free(data);
     }
@@ -424,13 +424,13 @@ namespace collections {
 
         FormId form = (FormId)(pluginIdx << 24 | 0x14);
 
-        std::string formString = json_handling::formIdToString(form, [=](int) { return pluginName; });
+        std::string formString = form_parsing::to_string(form, [=](int) { return pluginName; });
 
         EXPECT_TRUE( formString == 
             (std::string(kJSerializedFormData) + kJSerializedFormDataSeparator + pluginName + kJSerializedFormDataSeparator + "0x14"));
 
         EXPECT_TRUE( form == 
-            json_handling::formIdFromString(formString.c_str(), [=](const char*) { return pluginIdx; }) );
+            form_parsing::from_string(formString.c_str(), [=](const char*) { return pluginIdx; }) );
     }
 
     JC_TEST_DISABLED(dl, dl)

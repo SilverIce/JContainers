@@ -31,7 +31,7 @@ An alternative to retain-release is store object in JDB container"
 
         template<class T>
         static T* object() {
-            return T::object();
+            return T::object(tes_context::instance());
         }
 
         static object_base* release(object_base *obj) {
@@ -96,7 +96,7 @@ useful for those who use Papyrus properties instead of manual (and more error-pr
             if (path == nullptr)
                 return 0;
 
-            auto obj = json_handling::readJSONFile(path);
+            auto obj = json_deserializer(tes_context::instance()).readJSONFile(path);
             return  obj;
         }
         REGISTERF2(readFromFile, "filePath", ARGS(creates and returns new container (JArray or JMap) containing the contents of JSON file));
@@ -116,7 +116,7 @@ useful for those who use Papyrus properties instead of manual (and more error-pr
             filesystem::directory_iterator end_itr;
             filesystem::path root(dirPath);
 
-            map *files = map::object(); 
+            map *files = map::object(tes_context::instance()); 
 
             for ( filesystem::directory_iterator itr( root ); itr != end_itr; ++itr ) {
 
@@ -141,7 +141,7 @@ useful for those who use Papyrus properties instead of manual (and more error-pr
             if (!prototype)
                 return nullptr;
 
-            auto obj = json_handling::readJSONData(prototype);
+            auto obj = json_deserializer(tes_context::instance()).readJSONData(prototype);
             return obj;
         }
         REGISTERF2(objectFromPrototype, "prototype", "creates new container object using given JSON string-prototype");
@@ -150,7 +150,7 @@ useful for those who use Papyrus properties instead of manual (and more error-pr
             if (path == nullptr)  return;
             if (!obj)  return;
 
-            std::unique_ptr<char, decltype(&free)> data(json_handling::createJSONData(*obj), &free);
+            std::unique_ptr<char, decltype(&free)> data(json_serializer::createJSONData(*obj), &free);
             if (!data) return;
 
             auto file = make_unique_file(fopen(path, "w"));

@@ -50,8 +50,8 @@ namespace collections {
             Item(2.0),
             Item(2),
             Item("the most fatal mistake"),
-            Item(array::object()),
-            Item(map::object())
+            //Item(array::object()),
+           // Item(map::object())
         };
 
         for (auto& itm : items) {
@@ -63,8 +63,6 @@ namespace collections {
         std::istringstream istr(string);
         boost::archive::binary_iarchive ia(istr);
 
-
-/*
         for (const auto& itm : items) {
             Item tmp;
             ia >> tmp;
@@ -72,7 +70,7 @@ namespace collections {
             EXPECT_TRUE( itm.isEqual(tmp) );
 
 
-        }*/
+        }
     }
 
 /*

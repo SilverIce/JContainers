@@ -24,7 +24,8 @@ namespace collections {
                 for (auto& str : strings) {
                     obj->_array.push_back(Item(str));
                 }
-            });
+            },
+                tes_context::instance());
         }
         REGISTERF2(wrap, "sourceText charactersPerLine=60",
 "breaks source text onto set of lines of almost equal size.\n\
