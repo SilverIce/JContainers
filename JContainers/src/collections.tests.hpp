@@ -116,7 +116,7 @@ namespace collections {
         EXPECT_TRUE(allExist());
     }
 
-    JC_TEST_DISABLED(autorelease_queue, high_level)
+    JC_TEST_DISABLED(autorelease_queue, ensure_destroys)
     {
         using namespace std;
 
@@ -293,6 +293,16 @@ namespace collections {
         path_resolving::resolvePath(obj, ".trainers", [&](Item * item) {
             EXPECT_TRUE(item && item->object()->as<array>() );
         });
+    }
+
+    JC_TEST(json_deserializer, test)
+    {
+        json_deserializer ds(context);
+
+        EXPECT_FALSE( ds.readJSONFile(NULL) );
+        EXPECT_FALSE( ds.readJSONFile("") );
+
+        EXPECT_FALSE( ds.readJSONData(NULL) );
     }
 
     TEST(Item, isEqual)

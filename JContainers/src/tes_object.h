@@ -93,9 +93,6 @@ useful for those who use Papyrus properties instead of manual (and more error-pr
         REGISTERF2(clear, "*", "removes all items from container");
 
         static object_base* readFromFile(const char *path) {
-            if (path == nullptr)
-                return 0;
-
             auto obj = json_deserializer(tes_context::instance()).readJSONFile(path);
             return  obj;
         }
@@ -138,20 +135,20 @@ useful for those who use Papyrus properties instead of manual (and more error-pr
             "note: by default it does not filters files by extension and will try to parse everything");
 
         static object_base* objectFromPrototype(const char *prototype) {
-            if (!prototype)
-                return nullptr;
-
             auto obj = json_deserializer(tes_context::instance()).readJSONData(prototype);
             return obj;
         }
         REGISTERF2(objectFromPrototype, "prototype", "creates new container object using given JSON string-prototype");
 
         static void writeToFile(object_base *obj, const char * path) {
-            if (path == nullptr)  return;
-            if (!obj)  return;
+            if (!path || !obj) {
+                return;
+            }
 
-            std::unique_ptr<char, decltype(&free)> data(json_serializer::createJSONData(*obj), &free);
-            if (!data) return;
+            auto data = make_unique_ptr(json_serializer::createJSONData(*obj), free);
+            if (!data) {
+                return;
+            }
 
             auto file = make_unique_file(fopen(path, "w"));
             if (!file) {

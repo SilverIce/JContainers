@@ -13,6 +13,12 @@ namespace collections {
         return std::unique_ptr<FILE, decltype(&fclose)> (file, &fclose);
     }
 
+    template<class T, class D>
+    inline std::unique_ptr<T, D> make_unique_ptr(T* data, D destr) {
+        return std::unique_ptr<T, D> (data, destr);
+    }
+
+
     static const char * kJSerializedFormData = "__formData";
     static const char * kJSerializedFormDataSeparator = "|";
 
@@ -124,6 +130,9 @@ namespace collections {
         }
 
         object_base * readJSONData(const char *text) {
+            if (!text) {
+                return nullptr;
+            }
             auto cj = cJSON_Parse(text);
             auto res = readCJSON(cj);
             cJSON_Delete(cj);
@@ -145,6 +154,10 @@ namespace collections {
         }
 
         cJSON * cJSONFromFile(const char *path) {
+            if (!path) {
+                return nullptr;
+            }
+
             using namespace std;
 
             auto file = make_unique_file(fopen(path, "r"));
