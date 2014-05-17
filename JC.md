@@ -2,33 +2,33 @@
 
 Papyrus lacks of convenient data structures such as dynamic arrays or associative containers. Script language should be simple but not underdeveloped.
 
-This plugin attempts to add missing functionality. Although it is not native functionality and it will never have a nice brackets to access items as default Papyrus Array have i believe it is still better than nothing.
+This plugin attempts to add missing functionality. Although it is not native functionality and it will never have the nice brackets to access items that the default Papyrus Array has, I believe it is still better than nothing.
 
-Current version implements array and associative(map or dictionary) containers: JArray (array container), JMap and JFormMap (both associative containers) and few convenient wrappers: JDB and JFormDB (databases).
+Current version implements array and associative (map or dictionary) containers: JArray (array container), JMap and JFormMap (both associative containers) and few convenient wrappers: JDB and JFormDB (databases).
 
 ### Reference
 
-#### What value is?
+#### What is a value?
 
-Containers intended to contain values. Value is float, integer, string, form or another container. 
+Containers are intended to contain values. A value is a float, integer, string, form or another container. 
 
 #### Basics. Object (container) instantiation, identifiers
 
-To use any container object (array, map or form-map) you must first create (instantiate) it with `object` function or retrieve it from somewhere:
+To use any container object (array, map or form-map), you must first create (instantiate) it with the `object` function or retrieve it from somewhere:
 
 ```lua
 int array = JArray.object()
 int anotherArray = JDB.solveObj(".myArray")
 int map = JMap.object()
 ```
-Any function that returns object returns his **identifier** in fact. Identifier is unique number that ranges from 1 to 2^32. It’s the way to distinguish it among other objects and almost only way to interact with it.
+Any function that returns an 'object' actually returns its **identifier**. An identifier is a unique number that ranges from 1 to 2^32. It's how it is distinguished from other objects, and almost the only way to interact with it.
 
-Once created, you may put something in array:
+Once created, you may put data in the array:
 ```lua
 JArray.addStr(array, "it’s me")
 JArray.addForm(array, GetTargetActor())
 ```
-And read contents:        
+And read the array's contents:        
 ```lua
 string string = JArray.getStr(array, 0)
 form actor = JArray.getForm(array, 1)
@@ -36,11 +36,11 @@ form actor = JArray.getForm(array, 1)
 
 #### JArray
 
-Ordered collection (array) of values. Dynamically resizeable, unlimited size array (default Papyrus Array size limit is 128 items) that may contain value of any kind in one time.
+Ordered collection (array) of values. It is dynamically resizeable, and can store any number of values of any combination of types (default Papyrus Arrays are limited at 128 items).
 
 #### JMap and JFormMap
 
-Both are **associative** containers (set of unique keys and values where each key associated with one **value**). They can not contain two or more equal keys. JMap key is a string, JFormMap key is a form (form is any actor, item, quest, spell - almost everything in Skyrim).
+Both are **associative** containers (sets of unique keys and values where each key associated with one **value**). Each key must be unique within a given container. In a JMap, a key is a string, while a JFormMap key is a form (a form is any actor, item, quest, spell - almost everything in Skyrim).
 ```lua
 int map = JMap.object()
 JMap.setForm("me", GetTargetActor())
@@ -64,7 +64,7 @@ JValue.writeToFile(array, "array.txt")
 
 #### JDB
 
-Take it as global entry point or database - you put information in it under "yourKey" string key and then you can access to it from any script in the game. There is only one JDB in game, so each time you access it you access that one, single JDB. It is **associative** container as JMap (it is JMap internally), but script interface slight different.
+Take it as a global entry point or database - you put information in it under a string key "yourKey", and then you can access to it from any script in the game. There is only one JDB in game, so each time you access it you access that one, single JDB. It is an **associative** container like JMap (it is, in fact, JMap internally), but the script interface is slightly different.
 
 #### JFormDB
 
