@@ -173,6 +173,12 @@ public:
         rhs.px = tmp;
     }
 
+    // JContainers addition that silently sets pointer to zero without releasing it
+    void jc_nullify()
+    {
+        px = nullptr;
+    }
+
 private:
 
     T * px;

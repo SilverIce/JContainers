@@ -105,9 +105,9 @@ namespace collections
          issue: deadlock during loading savegame - e.g. cleaning current state.
          
          due to: collection release -> dealloc -> collection_registry::removeObject
-         introduces deadlock ( registry locked during _clear call)
+         introduces deadlock ( registry locked during context cleanup )
          
-         solution: +1 refCount to all objects & clear & delete them
+         solution: nullify object cross-references, then delete objects
          
          all we need is just free the memory but this will require track allocated collection & stl memory blocks
          */

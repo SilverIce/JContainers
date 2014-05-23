@@ -52,6 +52,7 @@ namespace collections {
             return string;
         }
 
+        // TODO: rename me!
         template<class T>
         static FormId from_string(const char* source, T modIndexFunc) {
 
@@ -109,6 +110,7 @@ namespace collections {
             });
         }
 
+        // TODO: rename me!
         static FormId from_string(const char* source) {
             return from_string(source, [](const char *modName) {
                 return DataHandler::GetSingleton()->GetModIndex( modName );
@@ -228,26 +230,24 @@ namespace collections {
             Item item;
             int type = val->type;
             if (type == cJSON_Array) {
-                auto ar = makeArray(val);
-                item.setObjectVal(ar);
+                item = makeArray(val);
             } else if (type == cJSON_Object) {
-                auto ar = makeObject(val);
-                item.setObjectVal(ar);
+                item = makeObject(val);
             } else if (type == cJSON_String) {
 
                 bool isFormData = strncmp(val->valuestring, kJSerializedFormData, strlen(kJSerializedFormData)) == 0;
 
                 if (!isFormData) {
-                    item.setStringVal(val->valuestring);
+                    item = val->valuestring;
                 } else {
-                    item.setFormId(form_parsing::from_string(val->valuestring));
+                    item = form_parsing::from_string(val->valuestring);
                 }
 
             } else if (type == cJSON_Number) {
                 if (std::floor(val->valuedouble) == val->valuedouble) {
-                    item.setInt(val->valueint);
+                    item = val->valueint;
                 } else {
-                    item.setFlt(val->valuedouble);
+                    item = val->valuedouble;
                 }
             }
 

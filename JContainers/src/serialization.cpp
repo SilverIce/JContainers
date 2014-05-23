@@ -5,8 +5,11 @@
 
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/map.hpp>
+#include <boost/serialization/variant.hpp>
 
 #include <boost/serialization/split_member.hpp>
+#include <boost/serialization/split_free.hpp>
+
 #include <boost/serialization/version.hpp>
 
 #include <boost/archive/binary_oarchive.hpp>
@@ -32,9 +35,36 @@
 
 extern SKSESerializationInterface	* g_serialization;
 
+//BOOST_CLASS_EXPORT_GUID(collections::object_base, "kJValue");
 BOOST_CLASS_EXPORT_GUID(collections::array, "kJArray");
 BOOST_CLASS_EXPORT_GUID(collections::map, "kJMap");
 BOOST_CLASS_EXPORT_GUID(collections::form_map, "kJFormMap");
+
+BOOST_SERIALIZATION_SPLIT_FREE(collections::object_ref);
+
+BOOST_CLASS_VERSION(collections::Item, 1)
+
+namespace boost {
+    namespace serialization {
+
+        template<class Archive>
+        void serialize(Archive & ar, blank & g, const unsigned int version) {}
+
+        template<class Archive>
+        void save(Archive & ar, const collections::object_ref & ptr, const unsigned int version) {
+            collections::object_base *obj = ptr.get();
+            ar & obj;
+        }
+
+        template<class Archive>
+        void load(Archive & ar, collections::object_ref & ptr, const unsigned int version) {
+            collections::object_base *obj = nullptr;
+            ar & obj;
+            ptr = collections::object_ref(obj, false);
+        }
+
+    } // namespace serialization
+} // namespace boost
 
 namespace collections {
 
@@ -44,6 +74,8 @@ namespace collections {
     {
         std::ostringstream data;
         ::boost::archive::binary_oarchive arch(data);
+
+        Item tst((const char*)nullptr);
 
 
         Item items[] = {
@@ -101,78 +133,71 @@ namespace collections {
 
 #endif
 
-    static UInt32 convertOldFormIdToNew(UInt32 oldId) {
+    static FormId convertOldFormIdToNew(FormId oldId) {
         UInt64 newId = 0;
         g_serialization->ResolveHandle(oldId, &newId);
-        return newId;
+        return (FormId)newId;
     }
 
     template<class Archive>
-    static UInt32 readOldFormIdToNew(Archive& ar) {
+    static FormId readOldFormIdToNew(Archive& ar) {
         UInt32 oldId = 0;
         ar & oldId;
-        return convertOldFormIdToNew(oldId);
+        return convertOldFormIdToNew((FormId)oldId);
     }
 
     template<class Archive>
     void Item::save(Archive & ar, const unsigned int version) const {
-        ar & _type;
-        switch (_type)
-        {
-        case ItemTypeNone:
-            break;
-        case ItemTypeInt32:
-            ar & _intVal;
-            break;
-        case ItemTypeFloat32:
-            ar & _floatVal;
-            break;
-        case ItemTypeCString: 
-            ar & std::string(strValue() ? _stringVal->string : "");
-            break;
-        case ItemTypeObject:
-            ar & _object;
-            break;
-        case ItemTypeForm:
-            ar & _formId;
-            break;
-        default:
-            break;
-        }
+        ar & _var;
     }
 
     template<class Archive>
     void Item::load(Archive & ar, const unsigned int version)
     {
-        ar & _type;
-        switch (_type)
-        {
-        case ItemTypeNone:
-            break;
-        case ItemTypeInt32:
-            ar & _intVal;
-            break;
-        case ItemTypeFloat32:
-            ar & _floatVal;
-            break;
-        case ItemTypeCString:
-            {
-                std::string string;
-                ar & string;
+        if (version >= 1) {
+            ar & _var;
 
-                if (!string.empty()) {
-                    _stringVal = StringMem::allocWithString(string.c_str());
-                }
+            if (type() == ItemTypeForm) {
+                *this = convertOldFormIdToNew(formId());
+            }
+        }
+        else {
+
+            ItemType type = ItemTypeNone;
+            ar & type;
+
+            switch (type)
+            {
+            case ItemTypeInt32: {
+                SInt32 val = 0;
+                ar & val;
+                *this = val;
                 break;
             }
-        case ItemTypeObject:
-            ar & _object;
-            break;
-        case ItemTypeForm:
-            _formId = readOldFormIdToNew(ar);
-            break;
-        default:
-            break;
+            case ItemTypeFloat32: {
+                Float32 val = 0;
+                ar & val;
+                *this = val;
+                break;
+            }
+            case ItemTypeCString: {
+                    std::string string;
+                    ar & string;
+                    *this = string;
+                    break;
+            }
+            case ItemTypeObject: {
+                object_base *object = nullptr;
+                ar & object;
+                _var = collections::object_ref(object, false);
+                break;
+            }
+            case ItemTypeForm:
+                *this = readOldFormIdToNew(ar);
+                break;
+            default:
+                break;
+            }
         }
     }
 

@@ -73,6 +73,9 @@ namespace collections {
             return _id;
         }
 
+        bool operator == (const object_base& other) const { return _id == other._id; }
+        bool operator != (const object_base& other) const { return !(*this == other); }
+
         template<class T> T* as() {
             return (this && T::TypeId == _type) ? static_cast<T*>(this) : nullptr;
         }

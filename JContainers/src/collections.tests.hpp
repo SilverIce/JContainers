@@ -276,7 +276,7 @@ namespace collections {
         float floatVal = 10.5;
         path_resolving::resolvePath(obj, ".glossary.GlossDiv", [&](Item * item) {
             EXPECT_TRUE(item != nullptr);
-            item->setFlt(floatVal);
+            *item = floatVal;
         });
     }
 
@@ -312,18 +312,18 @@ namespace collections {
         EXPECT_TRUE(i1.isEqual(i1));
         EXPECT_TRUE(i1.isEqual(i2));
 
-        i1.setStringVal("me");
-        i2.setStringVal("me");
+        i1 = "me";
+        i2 = "me";
         EXPECT_TRUE(i1.isEqual(i2));
 
-        i2.setStringVal("not me");
+        i2 = "not me";
         EXPECT_FALSE(i1.isEqual(i2));
 
-        i1 = Item(1);
-        i2 = Item(1);
+        i1 = 1u;
+        i2 = 1u;
         EXPECT_TRUE(i1.isEqual(i2));
 
-        i2 = Item(1.5f);
+        i2 = 1.5f;
         EXPECT_FALSE(i1.isEqual(i2));
     }
    
