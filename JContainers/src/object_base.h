@@ -4,9 +4,6 @@
 #include <mutex>
 
 namespace collections {
-    typedef spinlock object_mutex;
-
-    typedef std::lock_guard<object_mutex> mutex_lock;
 
     typedef UInt32 HandleT;
 
@@ -39,7 +36,8 @@ namespace collections {
         virtual ~object_base() {}
 
     public:
-        object_mutex _mutex;
+        typedef std::lock_guard<spinlock> lock;
+        spinlock _mutex;
 
         CollectionType _type;
         shared_state *_context;
@@ -63,7 +61,7 @@ namespace collections {
         }
 
         int32_t refCount() {
-            mutex_lock g(_mutex);
+            lock g(_mutex);
             return _refCount + _tes_refCount;
         }
 
@@ -80,7 +78,7 @@ namespace collections {
         }
 
         object_base * retain() {
-            mutex_lock g(_mutex);
+            lock g(_mutex);
             return u_retain();
         }
 
@@ -90,7 +88,7 @@ namespace collections {
         }
 
         object_base * tes_retain() {
-            mutex_lock g(_mutex);
+            lock g(_mutex);
             ++_tes_refCount;
             return this;
         }
@@ -116,12 +114,12 @@ namespace collections {
         virtual void u_nullifyObjects() = 0;
 
         SInt32 s_count() {
-            mutex_lock g(_mutex);
+            lock g(_mutex);
             return u_count();
         }
 
         void s_clear() {
-            mutex_lock g(_mutex);
+            lock g(_mutex);
             u_clear();
         }
 
@@ -136,7 +134,7 @@ namespace collections {
     };
 
     class object_lock {
-        mutex_lock _lock;
+        object_base::lock _lock;
     public:
         explicit object_lock(object_base *obj) : _lock(obj->_mutex) {}
         explicit object_lock(object_base &obj) : _lock(obj._mutex) {}

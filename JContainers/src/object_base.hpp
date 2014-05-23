@@ -12,7 +12,7 @@ namespace collections
     // true, if object deleted
     bool object_base::_deleteIfNoOwner(class autorelease_queue*) {
         bool deleteObject = false; {
-            mutex_lock g(_mutex);
+            lock g(_mutex);
             deleteObject = (_refCount == 0 && _tes_refCount == 0);
         }
 
@@ -32,7 +32,7 @@ namespace collections
 
     void object_base::release() {
         bool deleteObject = false; {
-            mutex_lock g(_mutex);
+            lock g(_mutex);
             if (_refCount > 0) {
                 --_refCount;
                 deleteObject = (_refCount == 0 && _tes_refCount == 0);
@@ -46,7 +46,7 @@ namespace collections
 
     void object_base::tes_release() {
         bool deleteObject = false; {
-            mutex_lock g(_mutex);
+            lock g(_mutex);
             if (_tes_refCount > 0) {
                 --_tes_refCount;
                 deleteObject = (_refCount == 0 && _tes_refCount == 0);
