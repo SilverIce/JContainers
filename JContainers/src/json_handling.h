@@ -489,7 +489,7 @@ namespace collections {
             }
             else if (type == ItemTypeCString) {
 
-                val = cJSON_CreateString(item.strValue());
+                val = (item.strValue() ? cJSON_CreateString(item.strValue()) : cJSON_CreateNull());
             }
             else if (type == ItemTypeInt32 || type == ItemTypeFloat32) {
                 val = cJSON_CreateNumber(item.fltValue());
