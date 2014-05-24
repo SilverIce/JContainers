@@ -68,16 +68,16 @@ Take it as a global entry point or database - you put information in it under a 
 
 #### JFormDB
 
-Provides convenient way to store values on form. It's just wrapper that relies on rest of container objects. Proper path syntax:
+Provides a convenient way to store values in a form. It's just wrapper that relies on the rest of the container objects. Proper path syntax:
 
 * .formStorageName.valueKey
 
-formStorageName - is storage that gets created first time value gets stored. That storage is JFormMap container and accessible via `JDB.solveObj(".formStorageName")`.
+`formStorageName` is storage that gets created the first time a value gets stored. It's a JFormMap container and can be accessed using `JDB.solveObj(".formStorageName")`.
 
-valueKey - is key to access value.
+`valueKey` is the key used to access a value.
 
 How it works internally:
-once value gets assigned via `JFormDB.set*(formKey, ".formStorageName.valueKey", value)` JFormDB looks for `formStorageName` in JDB (or creates if not found) and then looks for JMap entry associated with form key (creates entry if nothing found) and then creates  (valueKey, value) pair.
+Once a value gets assigned via `JFormDB.set*(formKey, ".formStorageName.valueKey", value)`, JFormDB looks for `formStorageName` in the JDB (or creates it if it isn't found) and then looks for the JMap entry associated with the form key (or it creates an entry if none is found) and then creates a {valueKey, value} pair.
 
 Basic usage:
 ```lua
