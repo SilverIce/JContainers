@@ -134,9 +134,13 @@ namespace collections {
 #endif
 
     static FormId convertOldFormIdToNew(FormId oldId) {
-        UInt64 newId = 0;
-        g_serialization->ResolveHandle(oldId, &newId);
-        return (FormId)newId;
+        if (g_serialization) {
+            UInt64 newId = 0;
+            g_serialization->ResolveHandle(oldId, &newId);
+            return (FormId)newId;
+        } else {
+            return oldId;
+        }
     }
 
     template<class Archive>
@@ -181,10 +185,10 @@ namespace collections {
                 break;
             }
             case ItemTypeCString: {
-                    std::string string;
-                    ar & string;
-                    *this = string;
-                    break;
+                std::string string;
+                ar & string;
+                *this = string;
+                break;
             }
             case ItemTypeObject: {
                 object_base *object = nullptr;

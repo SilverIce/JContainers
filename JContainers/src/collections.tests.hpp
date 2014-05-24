@@ -309,6 +309,9 @@ namespace collections {
     {
         Item i1, i2;
 
+        EXPECT_TRUE(i1.isNull());
+        EXPECT_TRUE(i2.isNull());
+
         EXPECT_TRUE(i1.isEqual(i1));
         EXPECT_TRUE(i1.isEqual(i2));
 
@@ -325,6 +328,13 @@ namespace collections {
 
         i2 = 1.5f;
         EXPECT_FALSE(i1.isEqual(i2));
+
+        i1 = (const char*)nullptr;
+        EXPECT_TRUE(i1.isNull());
+
+        i1 = (TESForm*)nullptr;
+        EXPECT_TRUE(i1.isNull());
+
     }
    
 /*

@@ -65,7 +65,7 @@ namespace collections
                 return false;
             }
 
-            auto copy = container->container();
+            auto copy = container->container_copy();
 
             if (isKeyVisit) {
                 for (auto &pair : copy) {
@@ -151,7 +151,7 @@ namespace collections
                 if (collection->as<array>()) {
 
                     // have to copy array to prevent it modification during iteration
-                    auto array_copy = collection->as<array>()->_array;
+                    auto array_copy = collection->as<array>()->container_copy();
 
                     for (auto &itm : array_copy) {
                         resolvePath(itm, rightPath.begin(), itemVisitFunc);

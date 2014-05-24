@@ -344,6 +344,15 @@ namespace collections {
 
         container_type _array;
 
+        container_type& u_container() {
+            return _array;
+        }
+
+        container_type container_copy() {
+            object_lock g(this);
+            return _array;
+        }
+
         void u_push(const Item& item) {
             _array.push_back(item);
         }
@@ -395,7 +404,12 @@ namespace collections {
 
     public:
 
-        const container_type& container() const {
+        const container_type& u_container() const {
+            return cnt;
+        }
+
+        container_type container_copy() {
+            object_lock g(this);
             return cnt;
         }
 
@@ -465,7 +479,12 @@ namespace collections {
 
     public:
 
-        const container_type& container() const {
+        const container_type& u_container() const {
+            return cnt;
+        }
+
+        container_type container_copy() {
+            object_lock g(this);
             return cnt;
         }
 
