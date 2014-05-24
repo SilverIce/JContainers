@@ -104,9 +104,15 @@ namespace collections {
 #endif
 
     static UInt32 convertOldFormIdToNew(UInt32 oldId) {
-        UInt64 newId = 0;
-        g_serialization->ResolveHandle(oldId, &newId);
-        return newId;
+        UInt8 modId = oldId >> 24;
+        if (modId != FormGlobalPrefix) {
+            UInt64 newId = 0;
+            g_serialization->ResolveHandle(oldId, &newId);
+            return newId;
+        }
+        else {
+            return oldId;
+        }
     }
 
     template<class Archive>

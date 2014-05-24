@@ -222,9 +222,9 @@ namespace collections {
                     return state(false, st);
                 }
 
-                int indexOrFormId = 0;
+                UInt32 indexOrFormId = 0;
                 try {
-                    indexOrFormId = std::stoi(ss::string(indexRange.begin(), indexRange.end()), nullptr, 0);
+                    indexOrFormId = std::stoul(ss::string(indexRange.begin(), indexRange.end()), nullptr, 0);
                 }
                 catch (const std::invalid_argument& ) {
                     return state(false, st);
@@ -524,15 +524,17 @@ namespace collections {
         static std::string formIdToString(FormId formId, T modNameFunc) {
 
             UInt8 modID = formId >> 24;
-            formId = (FormId)(formId & 0x00FFFFFF);
+            FormId formIdClean = formId;
 
-            if (modID == 0xFF)
-                return std::string();
+            const char * modName = nullptr;
 
-            const char * modName = modNameFunc(modID);
-
-            if (!modName) {
-                return std::string();
+            if (modID != FormGlobalPrefix) { // common case
+                modName = modNameFunc(modID);
+                formIdClean = (FormId)(formId & 0x00FFFFFF);
+            }
+            else {
+                // global form is not bound to any plugin
+                modName = "";
             }
 
             std::string string = kJSerializedFormData;
@@ -541,7 +543,7 @@ namespace collections {
             string += kJSerializedFormDataSeparator;
 
             char buff[20] = {'\0'};
-            sprintf(buff, "0x%x", formId);
+            sprintf(buff, "0x%x", formIdClean);
             string += buff;
 
             return string;
@@ -572,17 +574,23 @@ namespace collections {
 
             auto& pluginName = substrings[1];
 
-            UInt8 modIdx = modIndexFunc( ss::string(pluginName.begin(), pluginName.end()).c_str() );
-
-            if (modIdx == (UInt8)-1) {
-                return FormZero;
+            UInt8 modIdx = 0;
+            if (!pluginName.empty()) {
+                modIdx = modIndexFunc( ss::string(pluginName.begin(), pluginName.end()).c_str() );
+                if (modIdx == FormGlobalPrefix) {
+                    return FormZero;
+                }
+            }
+            else {
+                // 
+                modIdx = FormGlobalPrefix;
             }
 
             auto& formIdString = substrings[2];
 
             UInt32 formId = 0;
             try {
-                formId = std::stoi(ss::string(formIdString.begin(), formIdString.end()), nullptr, 0);
+                formId = std::stoul(ss::string(formIdString.begin(), formIdString.end()), nullptr, 0);
             }
             catch (const std::invalid_argument& ) {
                 return FormZero;

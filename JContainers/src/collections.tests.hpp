@@ -424,6 +424,22 @@ namespace collections {
             json_handling::formIdFromString(formString.c_str(), [=](const char*) { return pluginIdx; }) );
     }
 
+    TEST(json_handling, form_serialization_global)
+    {
+        int pluginIdx = 0x9;
+        const char * pluginName = "Skyrim.esm";
+        FormId form = (FormId)(FormGlobalPrefix << 24 | 0x14);
+
+        std::string formString = json_handling::formIdToString(form, [=](int) { return pluginName; });
+
+        EXPECT_TRUE( formString == 
+            (std::string(kJSerializedFormData) + kJSerializedFormDataSeparator + kJSerializedFormDataSeparator + "0xff000014"));
+
+        EXPECT_TRUE( form == 
+            json_handling::formIdFromString(formString.c_str(), [=](const char*) { return pluginIdx; }) );
+    }
+
+
  
     #endif
 }
