@@ -305,7 +305,7 @@ namespace collections {
         EXPECT_FALSE( ds.readJSONData(NULL) );
     }
 
-    TEST(Item, isEqual)
+    JC_TEST(Item, isEqual)
     {
         Item i1, i2;
 
@@ -335,6 +335,10 @@ namespace collections {
         i1 = (TESForm*)nullptr;
         EXPECT_TRUE(i1.isNull());
 
+        auto obj = array::object(context);
+        i1 = obj;
+        i2 = obj;
+        EXPECT_TRUE(i1.isEqual(i2));
     }
    
 /*

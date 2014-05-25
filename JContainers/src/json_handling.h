@@ -307,7 +307,7 @@ namespace collections {
                 else if (obj->as<map>()) {
 
                     val = cJSON_CreateObject();
-                    for (auto& pair : obj->as<map>()->container()) {
+                    for (auto& pair : obj->as<map>()->u_container()) {
                          auto cnode = createCJSONNode(pair.second, serializedObjects);
                          if (cnode) {
                              cJSON_AddItemToObject(val, pair.first.c_str(), cnode);
@@ -320,7 +320,7 @@ namespace collections {
 
                     cJSON_AddItemToObject(val, kJSerializedFormData, cJSON_CreateNull());
 
-                    for (auto& pair : obj->as<form_map>()->container()) {
+                    for (auto& pair : obj->as<form_map>()->u_container()) {
                         auto cnode = createCJSONNode(pair.second, serializedObjects);
                         if (cnode) {
                             auto key = form_parsing::to_string(pair.first);
