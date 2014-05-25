@@ -441,22 +441,6 @@ namespace collections {
         free(data);
     }
 
-    TEST(json_handling, form_serialization)
-    {
-        int pluginIdx = 0x9;
-        const char * pluginName = "Skyrim.esm";
-
-        FormId form = (FormId)(pluginIdx << 24 | 0x14);
-
-        std::string formString = form_parsing::to_string(form, [=](int) { return pluginName; });
-
-        EXPECT_TRUE( formString == 
-            (std::string(kJSerializedFormData) + kJSerializedFormDataSeparator + pluginName + kJSerializedFormDataSeparator + "0x14"));
-
-        EXPECT_TRUE( form == 
-            form_parsing::from_string(formString.c_str(), [=](const char*) { return pluginIdx; }) );
-    }
-
     JC_TEST_DISABLED(dl, dl)
     {
         auto obj = map::object(context);
@@ -500,6 +484,39 @@ namespace collections {
         fut1.wait();
         fut2.wait();
     }
+
+    TEST(json_handling, form_serialization)
+    {
+        int pluginIdx = 0x9;
+        const char * pluginName = "Skyrim.esm";
+
+        FormId form = (FormId)(pluginIdx << 24 | 0x14);
+
+        std::string formString = form_parsing::to_string(form, [=](int) { return pluginName; });
+
+        EXPECT_TRUE( formString == 
+            (std::string(kJSerializedFormData) + kJSerializedFormDataSeparator + pluginName + kJSerializedFormDataSeparator + "0x14"));
+
+        EXPECT_TRUE( form == 
+            form_parsing::from_string(formString.c_str(), [=](const char*) { return pluginIdx; }) );
+    }
+
+    TEST(json_handling, form_serialization_global)
+    {
+        int pluginIdx = 0x9;
+        const char * pluginName = "Skyrim.esm";
+        FormId form = (FormId)(FormGlobalPrefix << 24 | 0x14);
+
+        std::string formString = form_parsing::to_string(form, [=](int) { return pluginName; });
+
+        EXPECT_TRUE( formString == 
+            (std::string(kJSerializedFormData) + kJSerializedFormDataSeparator + kJSerializedFormDataSeparator + "0xff000014"));
+
+        EXPECT_TRUE( form == 
+            form_parsing::from_string(formString.c_str(), [=](const char*) { return pluginIdx; }) );
+    }
+
+
  
     #endif
 }

@@ -60,6 +60,7 @@ namespace collections {
 
     enum FormId : UInt32 {
         FormZero = 0,
+        FormGlobalPrefix = 0xFF,
     };
 
     class array;

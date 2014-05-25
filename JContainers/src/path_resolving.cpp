@@ -214,9 +214,9 @@ namespace collections
                     return state(false, st);
                 }
 
-                int indexOrFormId = 0;
+                UInt32 indexOrFormId = 0;
                 try {
-                    indexOrFormId = std::stoi(ss::string(indexRange.begin(), indexRange.end()), nullptr, 0);
+                    indexOrFormId = std::stoul(ss::string(indexRange.begin(), indexRange.end()), nullptr, 0);
                 }
                 catch (const std::invalid_argument& ) {
                     return state(false, st);

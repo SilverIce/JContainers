@@ -134,11 +134,13 @@ namespace collections {
 #endif
 
     static FormId convertOldFormIdToNew(FormId oldId) {
-        if (g_serialization) {
+        UInt8 modId = oldId >> 24;
+        if (modId != FormGlobalPrefix) {
             UInt64 newId = 0;
             g_serialization->ResolveHandle(oldId, &newId);
             return (FormId)newId;
-        } else {
+        }
+        else {
             return oldId;
         }
     }
