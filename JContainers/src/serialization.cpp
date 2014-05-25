@@ -30,6 +30,7 @@
 
 #include "collections.h"
 #include "tes_context.h"
+#include "form_handling.h"
 
 #include "tes_context.hpp"
 
@@ -134,8 +135,7 @@ namespace collections {
 #endif
 
     static FormId convertOldFormIdToNew(FormId oldId) {
-        UInt8 modId = oldId >> 24;
-        if (modId != FormGlobalPrefix) {
+        if (form_handling::is_static(oldId)) {
             UInt64 newId = 0;
             g_serialization->ResolveHandle(oldId, &newId);
             return (FormId)newId;

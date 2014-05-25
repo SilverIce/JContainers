@@ -144,6 +144,9 @@
     <ClInclude Include="src\path_resolving.h">
       <Filter>collections_module</Filter>
     </ClInclude>
+    <ClInclude Include="src\form_handling.h">
+      <Filter>collections_module</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="exports.def" />
