@@ -68,7 +68,7 @@ Take it as a global entry point or database - you put information in it under a 
 
 #### JFormDB
 
-Provides a convenient way to store values in a form. It's just wrapper that relies on the rest of the container objects. Proper path syntax:
+Provides a convenient way to store values in a form. It's just a wrapper that relies on the rest of the container objects. Proper path syntax:
 
 * .formStorageName.valueKey
 
