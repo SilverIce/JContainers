@@ -53,7 +53,7 @@ Nothing more that just an interface that shows what functionality JArray, JMap a
 
 ```lua
 int array = JArray.object()
-int map = JArray.object()
+int map = JMap.object()
 ; // equivalent ways to do same things.
 ; // all count functions return zero as new containers are empty
 JValue.count(array) == JArray.count(array) == JValue.count(map)
