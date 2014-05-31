@@ -23,138 +23,145 @@ namespace collections {
         return std::unique_ptr<T, std::default_delete<T> > ( data, std::default_delete<T>() );
     }
 
+    typedef struct json_t * json_ref;
+    typedef std::unique_ptr<json_t, decltype(json_decref)> json_unique_ref;
 
     class json_deserializer {
-        tes_context& _context; 
+        tes_context& _context;
+
+        typedef std::vector<std::pair<object_base*, json_ref> > objects_to_fill;
+
+        objects_to_fill _toFill;
+
+        explicit json_deserializer(tes_context& context) : _context(context) {}
+
     public:
 
-        explicit json_deserializer(tes_context & context) : _context(context) {}
-
-        object_base * readJSONFile(const char *path) {
-            auto cj = cJSONFromFile(path);
-            auto res = readCJSON(cj);
-            cJSON_Delete(cj);
-            return res;
+        static auto json_from_file(const char *path) -> decltype( make_unique_ptr((json_ref)nullptr, json_decref)) {
+            json_error_t error; //  TODO: output error
+            json_ref ref = json_load_file(path, 0, &error);
+            return make_unique_ptr(ref, json_decref);
         }
 
-        object_base * readJSONData(const char *text) {
-            if (!text) {
-                return nullptr;
-            }
-            auto cj = cJSON_Parse(text);
-            auto res = readCJSON(cj);
-            cJSON_Delete(cj);
-            return res;
+        static auto json_from_data(const char *data) -> decltype( make_unique_ptr((json_ref)nullptr, json_decref)) {
+            json_error_t error; //  TODO: output error
+            json_ref ref = json_loads(data, 0, &error);
+            return make_unique_ptr(ref, json_decref);
         }
 
-        object_base * readCJSON(cJSON *value) {
-            if (!value) {
-                return nullptr;
-            }
-
-            object_base *obj = nullptr;
-            if (value->type == cJSON_Array || value->type == cJSON_Object) {
-                Item itm = makeItem(value);
-                obj = itm.object();
-            }
-
-            return obj;
+        static object_base* object_from_json_data(tes_context& context, const char *data) {
+            auto json = json_from_data(data);
+            return json_deserializer(context)._object_from_json( json.get() );
         }
 
-        cJSON * cJSONFromFile(const char *path) {
-            if (!path) {
+        static object_base* object_from_json(tes_context& context, json_ref ref) {
+            return json_deserializer(context)._object_from_json( ref );
+        }
+
+        static object_base* object_from_file(tes_context& context, const char *path) {
+            auto json = json_from_file(path);
+            return json_deserializer(context)._object_from_json( json.get() );
+        }
+
+    private:
+
+        object_base* _object_from_json(json_ref ref) {
+            if (!ref) {
                 return nullptr;
             }
 
-            using namespace std;
+            auto& root = make_placeholder(ref);
 
-            auto file = make_unique_file(fopen(path, "r"));
-            if (!file.get())
-                return nullptr;
+            while (_toFill.empty() == false) {
+                objects_to_fill toFill;
+                toFill.swap(_toFill);
 
-            char buffer[1024];
-            std::vector<char> bytes;
-            while (!ferror(file.get()) && !feof(file.get())) {
-                size_t readen = fread(buffer, 1, sizeof(buffer), file.get());
-                if (readen > 0) {
-                    bytes.insert(bytes.end(), buffer, buffer + readen);
-                }
-                else  {
-                    break;
+                for (auto& pair : toFill) {
+                    fill_object(*pair.first, pair.second);
                 }
             }
-            bytes.push_back(0);
 
-            return cJSON_Parse(&bytes[0]);
+            return &root;
         }
 
-        array * makeArray(cJSON *val) {
-            array *ar = array::object(_context);
+        void fill_object(object_base& object, json_ref val) {
+            object_lock lock(object);
 
-            int count = cJSON_GetArraySize(val);
-            for (int i = 0; i < count; ++i) {
-            	ar->u_push(makeItem(cJSON_GetArrayItem(val, i)));
+            if (array *arr = object.as<array>()) {
+                /* array is a JSON array */
+                size_t index = 0;
+                json_t *value = nullptr;
+
+                json_array_foreach(val, index, value) {
+                    arr->u_push(make_item(value));
+                }
             }
+            else if (map *cnt = object.as<map>()) {
+                const char *key;
+                json_t *value;
 
-            return ar;
-        }
+                json_object_foreach(val, key, value) {
+                    cnt->u_setValueForKey(key, make_item(value));
+                }
+            }
+            else if (form_map *cnt = object.as<form_map>()) {
+                const char *key;
+                json_t *value;
 
-        object_base * makeObject(cJSON *val) {
-
-            object_base *object = nullptr;
-            bool isFormMap = cJSON_GetObjectItem(val, form_handling::kFormData) != nullptr;
-
-            if (isFormMap) {
-                auto obj = form_map::object(_context);
-                object = obj;
-
-                int count = cJSON_GetArraySize(val);
-                for (int i = 0; i < count; ++i) {
-                    auto itm = cJSON_GetArrayItem(val, i);
-                    auto key = form_handling::from_string(itm->string);
-
-                    if (key) {
-                        obj->u_setValueForKey(*key, makeItem(itm));
+                json_object_foreach(val, key, value) {
+                    auto fkey = form_handling::from_string(key);
+                    if (fkey) {
+                        cnt->u_setValueForKey(*fkey, make_item(value));
                     }
                 }
-            } else {
+            }
+        }
 
-                auto obj = map::object(_context);
-                object = obj;
+        object_base& make_placeholder(json_ref val) {
+            object_base *object = nullptr;
+            auto type = json_typeof(val);
 
-                int count = cJSON_GetArraySize(val);
-                for (int i = 0; i < count; ++i) {
-                    auto itm = cJSON_GetArrayItem(val, i);
-                    obj->u_setValueForKey(itm->string, makeItem(itm));
+            if (type == JSON_ARRAY) {
+                object = array::object(_context);
+            }
+            else if (type == JSON_OBJECT) {
+                if (!json_object_get(val, form_handling::kFormData)) {
+                    object = map::object(_context);
+                } else {
+                    object = form_map::object(_context);
                 }
             }
 
-            return object;
+            assert(object);
+            _toFill.push_back(std::make_pair(object, val));
+            return *object;
         }
 
-        Item makeItem(cJSON *val) {
+        Item make_item(json_ref val) {
             Item item;
-            int type = val->type;
-            if (type == cJSON_Array) {
-                item = makeArray(val);
-            } else if (type == cJSON_Object) {
-                item = makeObject(val);
-            } else if (type == cJSON_String) {
 
-                bool isFormData = strncmp(val->valuestring, form_handling::kFormData, strlen(form_handling::kFormData)) == 0;
+            auto type = json_typeof(val);
 
-                if (!isFormData) {
-                    item = val->valuestring;
+            if (type == JSON_ARRAY || type == JSON_OBJECT) {
+                item = &make_placeholder(val);
+            }
+            else if (type == JSON_STRING) {
+
+                auto string = json_string_value(val);
+                if (!form_handling::is_form_string(string)) {
+                    item = string;
                 } else {
-                    item = *form_handling::from_string(val->valuestring);
+                    item = *form_handling::from_string(string);
                 }
-
-            } else if (type == cJSON_Number) {
-                if (std::floor(val->valuedouble) == val->valuedouble) {
-                    item = val->valueint;
-                } else {
-                    item = val->valuedouble;
-                }
+            }
+            else if (type == JSON_INTEGER) {
+                item = (int)json_integer_value(val);
+            }
+            else if (type == JSON_REAL) {
+                item = json_real_value(val);
+            }
+            else if (type == JSON_TRUE || type || JSON_FALSE) {
+                item = json_boolean_value(val);
             }
 
             return item;
@@ -162,7 +169,6 @@ namespace collections {
     };
 
     
-    typedef struct json_t * json_ref;
 
 /*
     class item_serializer : public boost::static_visitor<json_ref>

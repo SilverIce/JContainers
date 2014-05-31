@@ -86,7 +86,7 @@ for ex. JDB.setObj(\"frostfall\", frostFallInformation) will associate 'frostall
 
         static void readFromFile(const char *path) {
             auto& context = tes_context::instance();
-            auto objNew = json_deserializer(context).readJSONFile(path);
+            auto objNew = json_deserializer::object_from_file(context, path);
             context.setDataBase(objNew);
         }
         REGISTERF2(readFromFile, "path",

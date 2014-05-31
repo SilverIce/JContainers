@@ -66,11 +66,15 @@ namespace collections {
             return string;
         }
 
+        inline bool is_form_string(const char *string) {
+            return string && strncmp(string, kFormData, strlen(kFormData)) == 0;
+        }
+
         // TODO: rename me!
         template<class T>
         inline boost::optional<FormId> from_string(const char* source, T modIndexFunc) {
 
-            if (!source) {
+            if (!is_form_string(source)) {
                 return boost::optional<FormId>(false, FormZero);
             }
 
@@ -78,10 +82,6 @@ namespace collections {
             namespace ss = std;
 
             auto fstring = bs::make_iterator_range(source, source + strnlen_s(source, 1024));
-
-            if (!bs::starts_with(fstring, kFormData)) {
-                return boost::optional<FormId>(false, FormZero);
-            }
 
             ss::vector<decltype(fstring)> substrings;
             bs::split(substrings, source, bs::is_any_of(kFormDataSeparator));
