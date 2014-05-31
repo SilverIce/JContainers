@@ -145,17 +145,10 @@ useful for those who use Papyrus properties instead of manual (and more error-pr
                 return;
             }
 
-            auto data = make_unique_ptr(json_serializer::createJSONData(*obj), free);
-            if (!data) {
-                return;
+            auto json = json_serializer::create_json_value(*obj);
+            if (json) {
+                json_dump_file(json.get(), path, JSON_INDENT(2));
             }
-
-            auto file = make_unique_file(fopen(path, "w"));
-            if (!file) {
-                return;
-            }
-
-            fwrite(data.get(), 1, strlen(data.get()), file.get());
         }
         REGISTERF2(writeToFile, "* filePath", "writes object into JSON file");
 

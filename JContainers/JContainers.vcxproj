@@ -66,8 +66,8 @@
     <ClCompile>
       <Optimization>Full</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>src;lib;lib\boost;$(SolutionDir)\dep;$(SolutionDir)\dep\skse;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;NDEBUG;_WINDOWS;_USRDLL;PLUGIN_EXAMPLE_EXPORTS;_PPAPI;TEST_COMPILATION_DISABLED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>src;lib;lib\boost;$(SolutionDir)\dep;$(SolutionDir)\dep\skse;$(SolutionDir)\dep\jansson\jansson\src;$(SolutionDir)\dep\jansson;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;NDEBUG;_WINDOWS;_PPAPI;TEST_COMPILATION_DISABLED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
@@ -76,6 +76,7 @@
       <StringPooling>true</StringPooling>
       <PrecompiledHeaderFile>jcontainers_pch.h</PrecompiledHeaderFile>
       <ForcedIncludeFiles>jcontainers_pch.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <SDLCheck>false</SDLCheck>
     </ClCompile>
     <Link>
       <ModuleDefinitionFile>exports.def</ModuleDefinitionFile>
@@ -95,8 +96,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>src;lib;lib\boost;$(SolutionDir)\dep;$(SolutionDir)\dep\skse;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;NDEBUG;_WINDOWS;_USRDLL;PLUGIN_EXAMPLE_EXPORTS;_PPAPI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>src;lib;lib\boost;$(SolutionDir)\dep;$(SolutionDir)\dep\skse;$(SolutionDir)\dep\jansson\jansson\src;$(SolutionDir)\dep\jansson;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;NDEBUG;_WINDOWS;_PPAPI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
@@ -105,6 +106,7 @@
       <PrecompiledHeaderFile>jcontainers_pch.h</PrecompiledHeaderFile>
       <ForcedIncludeFiles>jcontainers_pch.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <WholeProgramOptimization>false</WholeProgramOptimization>
+      <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Link>
       <ModuleDefinitionFile>exports.def</ModuleDefinitionFile>
@@ -177,6 +179,9 @@
   <ItemGroup>
     <ProjectReference Include="..\dep\common\common.vcxproj">
       <Project>{20c6411c-596f-4b85-be4e-8bc91f59d8a6}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\dep\jansson\jansson.vcxproj">
+      <Project>{f9ef3ca7-06a8-4bb2-9232-c4251e65829b}</Project>
     </ProjectReference>
     <ProjectReference Include="..\dep\skse\skse\skse.vcxproj">
       <Project>{aa0365ec-47ea-45aa-bb1f-ebbcccc466f2}</Project>

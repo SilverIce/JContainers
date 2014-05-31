@@ -1,5 +1,10 @@
 #pragma once
 
+#include <set>
+#include <vector>
+#include <jansson.h>
+
+#include "collections.h"
 #include "form_handling.h"
 
 namespace collections {
@@ -12,6 +17,12 @@ namespace collections {
     inline std::unique_ptr<T, D> make_unique_ptr(T* data, D destr) {
         return std::unique_ptr<T, D> (data, destr);
     }
+
+    template<class T>
+    inline std::unique_ptr<T, std::default_delete<T> > make_unique_ptr(T* data) {
+        return std::unique_ptr<T, std::default_delete<T> > ( data, std::default_delete<T>() );
+    }
+
 
     class json_deserializer {
         tes_context& _context; 
@@ -100,10 +111,10 @@ namespace collections {
                 int count = cJSON_GetArraySize(val);
                 for (int i = 0; i < count; ++i) {
                     auto itm = cJSON_GetArrayItem(val, i);
-                    FormId key = form_handling::from_string(itm->string);
+                    auto key = form_handling::from_string(itm->string);
 
                     if (key) {
-                        obj->u_setValueForKey(key, makeItem(itm));
+                        obj->u_setValueForKey(*key, makeItem(itm));
                     }
                 }
             } else {
@@ -135,7 +146,7 @@ namespace collections {
                 if (!isFormData) {
                     item = val->valuestring;
                 } else {
-                    item = form_handling::from_string(val->valuestring);
+                    item = *form_handling::from_string(val->valuestring);
                 }
 
             } else if (type == cJSON_Number) {
@@ -150,98 +161,197 @@ namespace collections {
         }
     };
 
-    class json_serializer {
+    
+    typedef struct json_t * json_ref;
+
+/*
+    class item_serializer : public boost::static_visitor<json_ref>
+    {
+    public:
+
+        json_ref null() const {
+            return * new js_value();
+        }
+
+        json_ref operator()(const std::string & val) {
+            return * new js_value(val);
+        }
+
+        json_ref operator()(boost::blank ) {
+            return null();
+        }
+
+        // SInt32, Float32, std::string, object_ref, FormId
+
+        json_ref operator()(const SInt32 & val) {
+            return * new js_value(val);
+        }
+
+        json_ref operator()(const Float32 & val) {
+            return * new js_value(val);
+        }
+
+        json_ref operator()(const FormId&  val) {
+            auto formStr = form_handling::to_string(val);
+            if (formStr) {
+                return * new js_value(*formStr);
+            } else {
+                return null();
+            }
+        }
+
+        json_ref operator()(const object_ref & val) {
+            return null();
+        }
+
+    };
+*/
+
+
+    class json_serializer : public boost::static_visitor<json_ref> {
+
+        typedef std::set<object_base*> collection_set;
+        typedef std::vector<std::pair<object_base*, json_ref> > objects_to_fill;
+
+        collection_set _serializedObjects;
+        objects_to_fill _toFill;
+
+        json_serializer() {}
 
     public:
 
-        typedef std::set<object_base*> collection_set;
-
-        static cJSON * createCJSON(object_base & collection) {
-            collection_set serialized;
-            return createCJSONNode(Item(&collection), serialized);
+        static auto create_json_value(object_base &root) -> decltype(make_unique_ptr((json_ref)nullptr, json_decref)) {
+            return make_unique_ptr( json_serializer()._write_json(root), &json_decref);
         }
 
-        static char * createJSONData(object_base & collection) {
-            collection_set serialized;
-            auto node = createCJSONNode(Item(&collection), serialized);
-            char *data = cJSON_Print(node);
-            cJSON_Delete(node);
-            return data;
+        static auto create_json_data(object_base &root) -> decltype(make_unique_ptr((char*)nullptr, free)) {
+
+            auto jvalue = create_json_value(root);
+
+            return make_unique_ptr(
+                jvalue ? json_dumps(jvalue.get(), JSON_INDENT(2)) : nullptr,
+                free
+                );
         }
 
-        static cJSON * createCJSONNode(const Item& item, collection_set& serializedObjects) {
+    private:
 
-            cJSON *val = nullptr;
+        // writes to json
+        json_ref _write_json(object_base &root) {
 
-            ItemType type = item.type();
+            auto root_value = create_placeholder(root);
 
-            if (type == ItemTypeObject && item.object()) {
+            while (_toFill.empty() == false) {
 
-                auto obj = item.object();
+                objects_to_fill toFill;
+                toFill.swap(_toFill);
 
-                if (serializedObjects.find(obj) != serializedObjects.end()) {
-                    return cJSON_CreateString("<cyclic references in JSON are not supported yet>");
-                    // do not serialize object twice
+                for (auto& pair : toFill) {
+                    fill_json_object(*pair.first, pair.second);
                 }
+            }
 
-                serializedObjects.insert(obj);
+            return root_value;
+        }
 
-                object_lock g(obj);
+        json_ref create_placeholder(object_base& object) {
 
-                if (obj->as<array>()) {
+            json_ref placeholder = nullptr;
 
-                    val = cJSON_CreateArray();
-                    array *ar = obj->as<array>();
-                    for (auto& itm : ar->_array) {
-                        auto cnode = createCJSONNode(itm, serializedObjects);
-                        if (cnode) {
-                            cJSON_AddItemToArray(val, cnode);
-                        }
+            if (object.as<array>()) {
+                placeholder = json_array();
+            }
+            else if (object.as<map>() || object.as<form_map>()) {
+                placeholder = json_object();
+            }
+            assert(placeholder);
+
+            _toFill.push_back( objects_to_fill::value_type(&object, placeholder) );
+            return placeholder;
+        }
+
+        void fill_json_object(object_base& cnt, json_ref object) {
+
+            object_lock lock(cnt);
+
+            if (cnt.as<array>()) {
+                for (auto& itm : cnt.as<array>()->u_container()) {
+                    json_array_append_new(object, create_value(itm));
+                }
+            }
+            else if (cnt.as<map>()) {
+                for (auto& pair : cnt.as<map>()->u_container()) {
+                    json_object_set_new(object, pair.first.c_str(), create_value(pair.second));
+                }
+            }
+            else if (cnt.as<form_map>()) {
+                // mark object as form_map container
+                json_object_set_new(object, form_handling::kFormData, json_null());
+
+                for (auto& pair : cnt.as<form_map>()->u_container()) {
+                    auto key = form_handling::to_string(pair.first);
+                    if (key) {
+                        json_object_set_new(object, (*key).c_str(), create_value(pair.second));
                     }
                 }
-                else if (obj->as<map>()) {
-
-                    val = cJSON_CreateObject();
-                    for (auto& pair : obj->as<map>()->u_container()) {
-                         auto cnode = createCJSONNode(pair.second, serializedObjects);
-                         if (cnode) {
-                             cJSON_AddItemToObject(val, pair.first.c_str(), cnode);
-                         }
-                    }
-                }
-                else if (obj->as<form_map>()) {
-
-                    val = cJSON_CreateObject();
-
-                    cJSON_AddItemToObject(val, form_handling::kFormData, cJSON_CreateNull());
-
-                    for (auto& pair : obj->as<form_map>()->u_container()) {
-                        auto cnode = createCJSONNode(pair.second, serializedObjects);
-                        if (cnode) {
-                            auto key = form_handling::to_string(pair.first);
-                            if (!key.empty()) {
-                                cJSON_AddItemToObject(val, key.c_str(), cnode);
-                            }
-                        }
-                    }
-                }
             }
-            else if (type == ItemTypeCString) {
+        }
 
-                val = (item.strValue() ? cJSON_CreateString(item.strValue()) : cJSON_CreateNull());
-            }
-            else if (type == ItemTypeInt32 || type == ItemTypeFloat32) {
-                val = cJSON_CreateNumber(item.fltValue());
-            }
-            else if (type == ItemTypeForm) {
-                auto formString = form_handling::to_string(item.formId());
-                val = cJSON_CreateString( formString.c_str() );
-            }
-            else {
-                val = cJSON_CreateNull();
-            }
-
+        json_ref create_value(const Item& item) {
+            json_ref val = item.var().apply_visitor( *this );
             return val;
+        }
+
+    public:
+
+        // part of visitor functionality
+
+        static json_ref null() {
+            return json_null();
+        }
+
+        json_ref operator()(const std::string & val) const {
+            return json_string(val.c_str());
+        }
+
+        json_ref operator()(const boost::blank& ) const {
+            return null();
+        }
+
+        // SInt32, Float32, std::string, object_ref, FormId
+
+        json_ref operator()(const SInt32 & val) const {
+            return json_integer(val);
+        }
+
+        json_ref operator()(const Float32 & val) const {
+            return json_real(val);
+        }
+
+        json_ref operator()(const FormId&  val) const {
+            auto formStr = form_handling::to_string(val);
+            if (formStr) {
+                return (*this)(*formStr);
+            } else {
+                return null();
+            }
+        }
+
+        json_ref operator()(const object_ref & val) {
+            object_base *obj = val.get();
+
+            if (!obj) {
+                return null();
+            }
+
+            if (_serializedObjects.find(obj) != _serializedObjects.end()) {
+                return json_string("<can not serialize object twice>");
+            }
+
+            _serializedObjects.insert(obj);
+
+            json_ref node = create_placeholder(*obj);
+            return node;
         }
     };
 

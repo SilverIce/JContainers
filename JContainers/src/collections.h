@@ -77,20 +77,10 @@ namespace collections {
         p->release();
     }
 
-    enum ItemType : unsigned char
-    {
-        ItemTypeNone = 0,
-        ItemTypeInt32 = 1,
-        ItemTypeFloat32 = 2,
-        ItemTypeCString = 3,
-        ItemTypeObject = 4,
-        ItemTypeForm = 5,
-    };
-
     class Item
     {
         typedef boost::blank blank;
-        typedef boost::variant<boost::blank, SInt32, Float32, std::string, object_ref, FormId> variant;
+        typedef boost::variant<boost::blank, SInt32, Float32, FormId, object_ref, std::string> variant;
         variant _var;
 
     public:
@@ -115,7 +105,13 @@ namespace collections {
             return *this;
         }
 
-        ItemType type() const { return (ItemType)_var.which();}
+        const variant& var() const {
+            return _var;
+        }
+
+        template<class T> bool is_type() const {
+            return boost::get<T>(&_var) != nullptr;
+        }
 
         //////////////////////////////////////////////////////////////////////////
 
@@ -129,9 +125,6 @@ namespace collections {
 
         //////////////////////////////////////////////////////////////////////////
 
-        template<class T> static T cast_in(T& t) { return t;}
-
-        //static T cast_in(T t) { return t;}
 
         explicit Item(Float32 val) : _var(val) {}
         explicit Item(double val) : _var((Float32)val) {}
@@ -169,7 +162,11 @@ namespace collections {
 
         // prevent form id be saved like integral number
         Item& operator = (FormId formId) {
-            _var = formId;
+            if (formId) {
+                _var = formId;
+            } else {
+                _var = blank();
+            }
             return *this;
         }
 
@@ -234,6 +231,10 @@ namespace collections {
             return nullptr;
         }
 
+        std::string * stringValue() {
+            return boost::get<std::string>(&_var);
+        }
+
         TESForm * form() const {
             auto frmId = formId();
             return frmId != FormZero ? LookupFormByID(frmId) : nullptr;
@@ -261,39 +262,45 @@ namespace collections {
         };
 
         bool isEqual(SInt32 value) const {
-            return type() == ItemTypeInt32 && intValue() == value;
+            return is_type<SInt32>() && intValue() == value;
         }
 
         bool isEqual(Float32 value) const {
-            return type() == ItemTypeFloat32 && fltValue() == value;
+            return is_type<Float32>() && fltValue() == value;
         }
 
         bool isEqual(const char* value) const {
             auto str1 = strValue();
             auto str2 = value;
-            return type() == ItemTypeCString && ( (str1 && str2 && strcmp(str1, str2) == 0) || (!str1 && !str2) );
+            return is_type<std::string>() && ( (str1 && str2 && strcmp(str1, str2) == 0) || (!str1 && !str2) );
         }
 
         bool isEqual(const object_base *value) const {
-            auto obj = object();
-            return type() == ItemTypeObject && ( (obj && value && *obj == *value) || obj == value);
+            return is_type<object_ref>() && object() == value;
         }
 
         bool isEqual(const TESForm *value) const {
-            return type() == ItemTypeForm && formId() == (value ? value->formID : 0);
+            return is_type<FormId>() && formId() == (value ? value->formID : 0);
         }
 
         bool isEqual(const Item& other) const {
             return boost::apply_visitor(are_strict_equals(), _var, other._var);
         }
 
+        bool operator == (const Item& other) const {
+            return isEqual(other);
+        }
+
+        bool operator != (const Item& other) const {
+            return !isEqual(other);
+        }
+
         bool isNull() const {
-            return type() == ItemTypeNone;
+            return is_type<boost::blank>();
         }
 
         bool isNumber() const {
-            auto kind = type();
-            return kind == ItemTypeFloat32 || kind == ItemTypeInt32;
+            return is_type<SInt32>() || is_type<Float32>();
         }
 
         template<class T> T readAs();

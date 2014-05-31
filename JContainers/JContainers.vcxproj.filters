@@ -4,9 +4,6 @@
     <Filter Include="gtest">
       <UniqueIdentifier>{9fe98443-90a1-4d4a-8155-1f06db3a251b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="cJSON">
-      <UniqueIdentifier>{1cc8956e-8c00-468c-9d3d-d9efe751cfa9}</UniqueIdentifier>
-    </Filter>
     <Filter Include="code_producer">
       <UniqueIdentifier>{d21e5bf5-2f63-4cc1-b1ed-e9500125c58a}</UniqueIdentifier>
     </Filter>
@@ -22,11 +19,11 @@
     <Filter Include="collections_module\tes_classes">
       <UniqueIdentifier>{a481ff76-9ab2-4bb4-91f6-f5d5e21c603c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="cJSON">
+      <UniqueIdentifier>{77c8418e-6b13-4765-80f4-727ea5c14546}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="lib\cJSON\cJSON.cpp">
-      <Filter>cJSON</Filter>
-    </ClCompile>
     <ClCompile Include="src\code_producer.cpp">
       <Filter>code_producer</Filter>
     </ClCompile>
@@ -50,11 +47,11 @@
     <ClCompile Include="src\path_resolving.cpp">
       <Filter>collections_module</Filter>
     </ClCompile>
+    <ClCompile Include="lib\cJSON\cJSON.cpp">
+      <Filter>cJSON</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="lib\cJSON\cJSON.h">
-      <Filter>cJSON</Filter>
-    </ClInclude>
     <ClInclude Include="src\code_producer.h">
       <Filter>code_producer</Filter>
     </ClInclude>
@@ -146,6 +143,9 @@
     </ClInclude>
     <ClInclude Include="src\form_handling.h">
       <Filter>collections_module</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\cJSON\cJSON.h">
+      <Filter>cJSON</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
