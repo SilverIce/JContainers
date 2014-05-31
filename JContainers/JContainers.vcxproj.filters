@@ -4,9 +4,6 @@
     <Filter Include="gtest">
       <UniqueIdentifier>{9fe98443-90a1-4d4a-8155-1f06db3a251b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="cJSON">
-      <UniqueIdentifier>{1cc8956e-8c00-468c-9d3d-d9efe751cfa9}</UniqueIdentifier>
-    </Filter>
     <Filter Include="code_producer">
       <UniqueIdentifier>{d21e5bf5-2f63-4cc1-b1ed-e9500125c58a}</UniqueIdentifier>
     </Filter>
@@ -19,14 +16,14 @@
     <Filter Include="collections_module">
       <UniqueIdentifier>{2c083f8d-8546-477b-851e-5eb515359766}</UniqueIdentifier>
     </Filter>
-    <Filter Include="collections_module\tes_classes">
+    <Filter Include="collections_module\path_resolving">
+      <UniqueIdentifier>{3411d9ab-af92-4e3d-bc27-14589afe0710}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="collections_module\tes_api">
       <UniqueIdentifier>{a481ff76-9ab2-4bb4-91f6-f5d5e21c603c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="lib\cJSON\cJSON.cpp">
-      <Filter>cJSON</Filter>
-    </ClCompile>
     <ClCompile Include="src\code_producer.cpp">
       <Filter>code_producer</Filter>
     </ClCompile>
@@ -37,7 +34,7 @@
       <Filter>collections_module</Filter>
     </ClCompile>
     <ClCompile Include="src\line_breaker.cpp">
-      <Filter>collections_module\tes_classes</Filter>
+      <Filter>collections_module\tes_api</Filter>
     </ClCompile>
     <ClCompile Include="src\gtest.cpp">
       <Filter>gtest</Filter>
@@ -48,13 +45,10 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\jcontainers_pch.cpp" />
     <ClCompile Include="src\path_resolving.cpp">
-      <Filter>collections_module</Filter>
+      <Filter>collections_module\path_resolving</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="lib\cJSON\cJSON.h">
-      <Filter>cJSON</Filter>
-    </ClInclude>
     <ClInclude Include="src\code_producer.h">
       <Filter>code_producer</Filter>
     </ClInclude>
@@ -83,22 +77,22 @@
       <Filter>collections_module</Filter>
     </ClInclude>
     <ClInclude Include="src\tes_array.h">
-      <Filter>collections_module\tes_classes</Filter>
+      <Filter>collections_module\tes_api</Filter>
     </ClInclude>
     <ClInclude Include="src\tes_db.h">
-      <Filter>collections_module\tes_classes</Filter>
+      <Filter>collections_module\tes_api</Filter>
     </ClInclude>
     <ClInclude Include="src\tes_jcontainers.h">
-      <Filter>collections_module\tes_classes</Filter>
+      <Filter>collections_module\tes_api</Filter>
     </ClInclude>
     <ClInclude Include="src\tes_map.h">
-      <Filter>collections_module\tes_classes</Filter>
+      <Filter>collections_module\tes_api</Filter>
     </ClInclude>
     <ClInclude Include="src\tes_object.h">
-      <Filter>collections_module\tes_classes</Filter>
+      <Filter>collections_module\tes_api</Filter>
     </ClInclude>
     <ClInclude Include="src\tes_string.h">
-      <Filter>collections_module\tes_classes</Filter>
+      <Filter>collections_module\tes_api</Filter>
     </ClInclude>
     <ClInclude Include="src\gtest.h">
       <Filter>gtest</Filter>
@@ -135,17 +129,17 @@
     </ClInclude>
     <ClInclude Include="src\typedefs.h" />
     <ClInclude Include="src\plugin_info.h" />
-    <ClInclude Include="src\collection_operators.h">
-      <Filter>collections_module</Filter>
-    </ClInclude>
     <ClInclude Include="src\tes_form_db.h">
-      <Filter>collections_module\tes_classes</Filter>
-    </ClInclude>
-    <ClInclude Include="src\path_resolving.h">
-      <Filter>collections_module</Filter>
+      <Filter>collections_module\tes_api</Filter>
     </ClInclude>
     <ClInclude Include="src\form_handling.h">
       <Filter>collections_module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\collection_operators.h">
+      <Filter>collections_module\path_resolving</Filter>
+    </ClInclude>
+    <ClInclude Include="src\path_resolving.h">
+      <Filter>collections_module\path_resolving</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

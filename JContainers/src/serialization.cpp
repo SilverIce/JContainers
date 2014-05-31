@@ -157,13 +157,24 @@ namespace collections {
         ar & _var;
     }
 
+    // deprecate:
+    enum ItemType : unsigned char
+    {
+        ItemTypeNone = 0,
+        ItemTypeInt32 = 1,
+        ItemTypeFloat32 = 2,
+        ItemTypeCString = 3,
+        ItemTypeObject = 4,
+        ItemTypeForm = 5,
+    };
+
     template<class Archive>
     void Item::load(Archive & ar, const unsigned int version)
     {
         if (version >= 1) {
             ar & _var;
 
-            if (type() == ItemTypeForm) {
+            if (is_type<FormId>()) {
                 *this = convertOldFormIdToNew(formId());
             }
         }

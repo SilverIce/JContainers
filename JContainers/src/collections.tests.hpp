@@ -228,7 +228,7 @@ namespace collections {
         }
     }
 
-    TEST(json_handling, path_resolving)
+    TEST(path_resolving, path_resolving)
     {
 
         object_base *obj = tes_object::objectFromPrototype(STR(
@@ -247,7 +247,7 @@ namespace collections {
         };
 
         path_resolving::resolvePath(obj, ".glossary.GlossDiv", [&](Item * item) {
-            EXPECT_TRUE(item && strcmp(item->strValue(), "S") == 0 );
+            EXPECT_TRUE(item && item->strValue() && strcmp(item->strValue(), "S") == 0 );
         });
 
 /*      feature disabled
@@ -282,9 +282,9 @@ namespace collections {
 
     TEST(json_handling, objectFromPrototype)
     {
-        object_base *obj = tes_object::objectFromPrototype("{ \"timesTrained\" : 10, \"trainers\" : [] }");
+        auto obj = tes_object::objectFromPrototype("{ \"timesTrained\" : 10, \"trainers\" : [] }")->as<map>();
 
-        EXPECT_TRUE(obj->as<map>() != nullptr);
+        EXPECT_TRUE(obj != nullptr);
         
         path_resolving::resolvePath(obj, ".timesTrained", [&](Item * item) {
             EXPECT_TRUE(item && item->intValue() == 10 );
@@ -297,15 +297,23 @@ namespace collections {
 
     JC_TEST(json_deserializer, test)
     {
-        json_deserializer ds(context);
+        EXPECT_FALSE( json_deserializer::object_from_file(context, "") );
+        EXPECT_FALSE( json_deserializer::object_from_file(context, nullptr) );
 
-        EXPECT_FALSE( ds.readJSONFile(NULL) );
-        EXPECT_FALSE( ds.readJSONFile("") );
-
-        EXPECT_FALSE( ds.readJSONData(NULL) );
+        EXPECT_FALSE( json_deserializer::object_from_json_data(context, "") );
+        EXPECT_FALSE( json_deserializer::object_from_json_data(context, nullptr) );
     }
 
-    JC_TEST(Item, isEqual)
+    JC_TEST(json_serializer, test)
+    {
+        auto obj = json_deserializer::object_from_json_data(context, jsonTestString());
+        EXPECT_TRUE(obj != nullptr);
+
+        auto data = json_serializer::create_json_data(*obj);
+        printf("%s", data.get());
+    }
+
+    JC_TEST(Item, equality)
     {
         Item i1, i2;
 
@@ -334,6 +342,10 @@ namespace collections {
 
         i1 = (TESForm*)nullptr;
         EXPECT_TRUE(i1.isNull());
+
+        i1 = FormZero;
+        EXPECT_TRUE(i1.isNull());
+
 
         auto obj = array::object(context);
         i1 = obj;
@@ -424,21 +436,19 @@ namespace collections {
     {
         map *cnt = map::object(context);
 
-        const char *name = "back in black";
+        std::string name = "back in black";
         cnt->u_setValueForKey("ACDC", Item(name));
 
-        EXPECT_TRUE(strcmp(cnt->u_find("acdc")->strValue(), name) == 0);
+        EXPECT_TRUE(*cnt->u_find("acdc")->stringValue() == name);
     }
 
 
-    JC_TEST(json_handling, recursion)
+    JC_TEST(json_handling, no_infinite_recursion)
     {
         map *cnt = map::object(context);
         cnt->u_setValueForKey("cycle", Item(cnt));
 
-        char *data = json_serializer::createJSONData(*cnt);
-
-        free(data);
+        json_serializer::create_json_data(*cnt);
     }
 
     JC_TEST_DISABLED(dl, dl)
@@ -488,18 +498,22 @@ namespace collections {
     TEST(json_handling, form_serialization)
     {
         namespace fh = form_handling;
+
+        EXPECT_TRUE( fh::is_form_string("__formData|Skyrim.esm|0x1" ));
+        EXPECT_FALSE( fh::is_form_string("__formDatttt" ));
+        EXPECT_FALSE( fh::is_form_string(nullptr));
+
         int pluginIdx = 0x9;
         const char * pluginName = "Skyrim.esm";
 
         FormId form = (FormId)(pluginIdx << 24 | 0x14);
 
-        std::string formString = fh::to_string(form, [=](int) { return pluginName; });
-
+        std::string formString = *fh::to_string(form, [=](int) { return pluginName; });
         EXPECT_TRUE( formString == 
             (std::string(fh::kFormData) + fh::kFormDataSeparator + pluginName + fh::kFormDataSeparator + "0x14"));
 
         EXPECT_TRUE( form == 
-            fh::from_string(formString.c_str(), [=](const char*) { return pluginIdx; }) );
+            *fh::from_string(formString.c_str(), [=](const char*) { return pluginIdx; }) );
     }
 
     TEST(json_handling, form_serialization_global)
@@ -510,13 +524,13 @@ namespace collections {
         const char * pluginName = "Skyrim.esm";
         FormId form = (FormId)(FormGlobalPrefix << 24 | 0x14);
 
-        std::string formString = fh::to_string(form, [=](int) { return pluginName; });
+        std::string formString = *fh::to_string(form, [=](int) { return pluginName; });
 
         EXPECT_TRUE( formString == 
             (std::string(fh::kFormData) + fh::kFormDataSeparator + fh::kFormDataSeparator + "0xff000014"));
 
         EXPECT_TRUE( form == 
-            fh::from_string(formString.c_str(), [=](const char*) { return pluginIdx; }) );
+            *fh::from_string(formString.c_str(), [=](const char*) { return pluginIdx; }) );
     }
 
 

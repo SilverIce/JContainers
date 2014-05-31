@@ -74,7 +74,7 @@ namespace collections {
         COLLECTION_OPERATOR(minNum, "returns minimum number (int or float) in collection");
 
         void maxFlt(const Item& item, Item& state) {
-            if (item.type() == ItemTypeFloat32) {
+            if (item.is_type<Float32>()) {
                 state = state.isNull() ? item : Item(
                     (std::max)(item.intValue(), state.intValue())
                     );
@@ -83,7 +83,7 @@ namespace collections {
         COLLECTION_OPERATOR(maxFlt, "returns maximum float number in collection");
 
         void minFlt(const Item& item, Item& state) {
-            if (item.type() == ItemTypeFloat32) {
+            if (item.is_type<Float32>()) {
                 state = state.isNull() ? item : Item(
                     (std::min)(item.intValue(), state.intValue())
                     );
@@ -92,7 +92,7 @@ namespace collections {
         COLLECTION_OPERATOR(minFlt, "returns minimum float number collection");
 
         void maxInt(const Item& item, Item& state) {
-            if (item.type() == ItemTypeInt32) {
+            if (item.is_type<SInt32>()) {
                 state = state.isNull() ? item : Item(
                     (std::max)(item.intValue(), state.intValue())
                     );
@@ -101,7 +101,7 @@ namespace collections {
         COLLECTION_OPERATOR(maxInt, "returns maximum int number in collection");
 
         void minInt(const Item& item, Item& state) {
-            if (item.type() == ItemTypeInt32) {
+            if (item.is_type<SInt32>()) {
                 state = state.isNull() ? item : Item(
                     (std::min)(item.intValue(), state.intValue())
                     );

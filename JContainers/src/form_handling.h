@@ -5,6 +5,7 @@
 #include <boost/range/iterator_range.hpp>
 #include <boost/range/algorithm/find_if.hpp>
 #include <boost/range/algorithm/find_end.hpp>
+#include <boost/optional.hpp>
 
 #include "skse/GameData.h"
 #include "collections.h"
@@ -33,7 +34,7 @@ namespace collections {
         }
 
         template<class T>
-        inline std::string to_string(FormId formId, T modNameFunc) {
+        inline boost::optional<std::string> to_string(FormId formId, T modNameFunc) {
 
             auto modID = mod_index(formId);
             uint32_t formIdClean = formId;
@@ -42,6 +43,10 @@ namespace collections {
 
             if (is_static(formId)) { // common case
                 modName = modNameFunc(modID);
+                if (!modName) {
+                    return boost::make_optional(false, std::string("invalid form id"));
+                }
+
                 formIdClean = local_id(formId);
             }
             else {
@@ -61,12 +66,16 @@ namespace collections {
             return string;
         }
 
+        inline bool is_form_string(const char *string) {
+            return string && strncmp(string, kFormData, strlen(kFormData)) == 0;
+        }
+
         // TODO: rename me!
         template<class T>
-        inline FormId from_string(const char* source, T modIndexFunc) {
+        inline boost::optional<FormId> from_string(const char* source, T modIndexFunc) {
 
-            if (!source) {
-                return FormZero;
+            if (!is_form_string(source)) {
+                return boost::optional<FormId>(false, FormZero);
             }
 
             namespace bs = boost;
@@ -74,15 +83,11 @@ namespace collections {
 
             auto fstring = bs::make_iterator_range(source, source + strnlen_s(source, 1024));
 
-            if (!bs::starts_with(fstring, kFormData)) {
-                return FormZero;
-            }
-
             ss::vector<decltype(fstring)> substrings;
             bs::split(substrings, source, bs::is_any_of(kFormDataSeparator));
 
             if (substrings.size() != 3) {
-                return FormZero;
+                return boost::optional<FormId>(false, FormZero);
             }
 
             auto& pluginName = substrings[1];
@@ -91,7 +96,7 @@ namespace collections {
             if (!pluginName.empty()) {
                 modIdx = modIndexFunc( ss::string(pluginName.begin(), pluginName.end()).c_str() );
                 if (modIdx == FormGlobalPrefix) {
-                    return FormZero;
+                    return boost::optional<FormId>(false, FormZero);
                 }
             }
             else {
@@ -106,17 +111,17 @@ namespace collections {
                 formId = std::stoul(ss::string(formIdString.begin(), formIdString.end()), nullptr, 0);
             }
             catch (const std::invalid_argument& ) {
-                return FormZero;
+                return boost::optional<FormId>(false, FormZero);
             }
             catch (const std::out_of_range& ) {
-                return FormZero;
+                return boost::optional<FormId>(false, FormZero);
             }
 
             formId = construct(modIdx, formId);
             return (FormId)formId;
         }
 
-        inline std::string to_string(FormId formId) {
+        inline boost::optional<std::string> to_string(FormId formId) {
             return to_string(formId, [](UInt8 modId) {
                 DataHandler * dhand = DataHandler::GetSingleton();
                 ModInfo * modInfo = dhand->modList.loadedMods[modId];
@@ -125,7 +130,7 @@ namespace collections {
         }
 
         // TODO: rename me!
-        inline FormId from_string(const char* source) {
+        inline boost::optional<FormId> from_string(const char* source) {
             return from_string(source, [](const char *modName) {
                 return DataHandler::GetSingleton()->GetModIndex( modName );
             });
