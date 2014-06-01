@@ -68,27 +68,34 @@ Take it as global entry point or database - you put information in it under "you
 
 #### JFormDB
 
-Provides convenient way to store values on form. It's just wrapper that relies on rest of container objects. Proper path syntax:
+Provides a convenient way to associate values with form. You may find it looking like a mix of JMap and JDB - like JDB, there is only one JFormDB in game, and it's associative cotainer, like JMap. Also it supports path resolving.
+To store or retrieve value form-key and string path must be passed:
 
-* .formStorageName.valueKey
-
-formStorageName - is storage that gets created first time value gets stored. That storage is JFormMap container and accessible via `JDB.solveObj(".formStorageName")`.
-
-valueKey - is key to access value.
-
-How it works internally:
-once value gets assigned via `JFormDB.set*(formKey, ".formStorageName.valueKey", value)` JFormDB looks for `formStorageName` in JDB (or creates if not found) and then looks for JMap entry associated with form key (creates entry if nothing found) and then creates  (valueKey, value) pair.
-
-Basic usage:
 ```lua
+; // store...
+form me
 JFormDB.setFlt(me, ".yourModFormStorage.valueKey", 10)
 JFormDB.setStr(me, ".yourModFormStorage.anotherValueKey", "name")
+; // and retrieve values
 float value = JFormDB.getFlt(me, ".yourModFormStorage.valueKey")
- 
-; // Clean storage. 
-JDB.setObj("yourModFormStorage", 0)
- 
-; // Individual entry cleanup. Will destroy 
+```
+
+String path must always consist of two parts: `formStorageName` and `valueKey`
+
+The `valueKey` is a key to retrieve value or create {valueKey, value} association for specific form.
+
+The `formStorageName` is JFormMap containing {formKey, {valueKey, value}} associations.
+It was added to avoid possible collisions: one mod may ocassionaly override value written by another mod if'd allowed simple paths without storage name part. Internally form storage is JFormMap. Also having separate storage makes it possible to access that storage, delete it:
+
+```
+// ; Will destroy everything "yourModFormStorage" contains
+JDB.setObj("formStorageName", 0)
+```
+
+Slightly more advanced usage:
+```lua
+
+; // Will destroy everything associated with 'me' form in "yourModFormStorage" storage
 JFormDB.setEntry("yourModFormStorage", me, 0)
  
 ; // Custom entry type
@@ -129,7 +136,7 @@ Serialized array and nested form-map container:
         "__formData|Skyrim.esm|0xc0ffee" : "coffee",
         "__formData|Dawnguard.esm|0xc0a1bd" : 2.5,
     },
-    "just string"
+    "just a string"
 ]
 ```
 Serialization:
