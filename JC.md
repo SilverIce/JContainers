@@ -179,6 +179,7 @@ JValue.solveStrSetter(info, ".classicPreset.campfileLighting", "Non-Automatic")
 int firstNumber = JValue.solveInt(info, ".numbers[0]")
 JValue.solveIntSetter(info, ".numbers[0]", 10)
 ```
+
 ### Collection operators
 
 Feature allows execute functions on collection (container) elements. It’s accessible via solve* functions.
@@ -220,9 +221,22 @@ obj = {
 solveFlt(obj, ".mapKey@maxNum.value.k") is 100
 ```
 
+### JMap key naming conventions
+
+In order to make path resolving and collection operators features function properly JMap keys should not contain point, square brackets or `@` characters. For instance, the following code will fail to work:
+```lua
+obj = { "invalid.key" : {"k": 10} }
+
+solveInt(map, ".invalid.key.k") is 0
+
+// although it's still possible to access value in another way:
+getObj(map, "invalid.key") is {"k": 10}
+```
+
 ### Number conversion notes
 
-Not much to say, really. Group of `getFlt`, `solveFlt`, `getInt`, `solveInt` functions capable to access to any kind of number no matter whether number is integer or float value. It returns zero if try to access to string (`getStr`) or object identifier (`getObj`) value.
+Functions accessing number (`getFlt`, `solveFlt`, `getInt`, `solveInt`) may convert it e.g. able to read any kind of number no matter whether stored number is integer or real value. While the rest of `get*` and `solve*` functions may fail to perform conversion and return default value.
+
 
 ### Object lifetime management rules
 
