@@ -1,10 +1,7 @@
-JContainers plugin
+JContainers
 ==================
 
-What is it?
------------
-
-Skyrim plugin that extends Papyrus by adding various data structures.
+JContainers is a Skyrim plugin that extends Papyrus by adding various data structures. Also it is simple NoSQL in-memory database
 
 Documentation
 -------------
@@ -19,4 +16,4 @@ Please see the file called INSTALL.
 Licensing
 ---------
 
-Please see the file called LICENSE.
+JContainers is licensed under the MIT license. Please see the file called LICENSE for details.
