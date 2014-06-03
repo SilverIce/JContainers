@@ -221,9 +221,9 @@ obj = {
 solveFlt(obj, ".mapKey@maxNum.value.k") is 100
 ```
 
-### JMap key naming conventions
+### Key naming convention
 
-In order to make path resolving and collection operators features function properly JMap keys should not contain point, square brackets or `@` characters. For instance, the following code will fail to work:
+In order to make path resolving and collection operators features function properly sting-keys should not contain point, square brackets or `@` characters. For instance, the following code will fail to work:
 ```lua
 obj = { "invalid.key" : {"k": 10} }
 
@@ -232,6 +232,7 @@ solveInt(map, ".invalid.key.k") is 0
 // although it's still possible to access value in another way:
 getObj(map, "invalid.key") is {"k": 10}
 ```
+This convention applies to every key-string, not just JMap key - it affects JFormDB storage name and keys, JDB.setObj key.
 
 ### Number conversion notes
 
