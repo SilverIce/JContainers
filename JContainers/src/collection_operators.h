@@ -76,7 +76,7 @@ namespace collections {
         void maxFlt(const Item& item, Item& state) {
             if (item.is_type<Float32>()) {
                 state = state.isNull() ? item : Item(
-                    (std::max)(item.intValue(), state.intValue())
+                    (std::max)(item.fltValue(), state.fltValue())
                     );
             }
         }
@@ -85,7 +85,7 @@ namespace collections {
         void minFlt(const Item& item, Item& state) {
             if (item.is_type<Float32>()) {
                 state = state.isNull() ? item : Item(
-                    (std::min)(item.intValue(), state.intValue())
+                    (std::min)(item.fltValue(), state.fltValue())
                     );
             }
         }
