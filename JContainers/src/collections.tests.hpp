@@ -181,13 +181,13 @@ namespace collections {
 
     JC_TEST(json_deserializer, test)
     {
-        EXPECT_FALSE( json_deserializer::object_from_file(context, "") );
-        EXPECT_FALSE( json_deserializer::object_from_file(context, nullptr) );
+        EXPECT_NIL( json_deserializer::object_from_file(context, "") );
+        EXPECT_NIL( json_deserializer::object_from_file(context, nullptr) );
 
-        EXPECT_FALSE( json_deserializer::object_from_json_data(context, "") );
-        EXPECT_FALSE( json_deserializer::object_from_json_data(context, nullptr) );
+        EXPECT_NIL( json_deserializer::object_from_json_data(context, "") );
+        EXPECT_NIL( json_deserializer::object_from_json_data(context, nullptr) );
 
-        EXPECT_TRUE( json_deserializer::object_from_json_data(context, jsonTestString()) );
+        EXPECT_NOT_NIL( json_deserializer::object_from_json_data(context, jsonTestString()) );
     }
 
     JC_TEST(json_serializer, test)
@@ -199,7 +199,7 @@ namespace collections {
 
         auto obj = json_deserializer::object_from_json_data(context, jsonTestString());
 
-        EXPECT_TRUE(obj != nullptr);
+        EXPECT_NOT_NIL(obj);
 
         auto data = json_serializer::create_json_data(*obj);
         auto jvalueOrigin = json_deserializer::json_from_data(jsonTestString());
@@ -362,8 +362,8 @@ namespace collections {
         using namespace std;
 
         auto root = json_deserializer::object_from_json_data(context, jsonTestString());
+        EXPECT_NOT_NIL(root);
         auto rootId = root->uid();
-        EXPECT_TRUE(root);
 
         string data = context.saveToArray();
         EXPECT_FALSE(data.empty());

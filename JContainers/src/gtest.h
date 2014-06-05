@@ -74,6 +74,9 @@ namespace testing
 #   define EXPECT_FALSE(expression)  ::testing::check(testState, !(expression), __FUNCTION__, #expression " is true");
 #   define EXPECT_EQ(a, b) ::testing::check(testState, (a) == (b), __FUNCTION__, #a " != " #b);
 
+#   define EXPECT_NOT_NIL(expression) ::testing::check(testState, (expression) != nullptr, __FUNCTION__, #expression " is null ");
+#   define EXPECT_NIL(expression) ::testing::check(testState, (expression) == nullptr, __FUNCTION__, #expression " is not null ");
+
 #   define EXPECT_THROW(expression, exception) \
         try { \
             expression; \
