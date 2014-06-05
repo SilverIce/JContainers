@@ -66,10 +66,11 @@ namespace collections {
                 object_lock g(obj);
 
                 arr->_array.reserve( obj->u_count() );
-                for each(auto& pair in obj->container()) {
+                for each(auto& pair in obj->u_container()) {
                     arr->u_push( Item(pair.first) );
                 }
-            });
+            },
+                tes_context::instance());
         }
         REGISTERF2(allKeys, "*", "returns new array containing all keys");
 
@@ -82,10 +83,11 @@ namespace collections {
                 object_lock g(obj);
 
                 arr->_array.reserve( obj->u_count() );
-                for each(auto& pair in obj->container()) {
+                for each(auto& pair in obj->u_container()) {
                     arr->_array.push_back( pair.second );
                 }
-            });
+            },
+                tes_context::instance());
         }
         REGISTERF2(allValues, "*", "returns new array containing all values");
 

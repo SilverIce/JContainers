@@ -5,8 +5,11 @@
 
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/map.hpp>
+#include <boost/serialization/variant.hpp>
 
 #include <boost/serialization/split_member.hpp>
+#include <boost/serialization/split_free.hpp>
+
 #include <boost/serialization/version.hpp>
 
 #include <boost/archive/binary_oarchive.hpp>
@@ -27,14 +30,42 @@
 
 #include "collections.h"
 #include "tes_context.h"
+#include "form_handling.h"
 
 #include "tes_context.hpp"
 
 extern SKSESerializationInterface	* g_serialization;
 
+//BOOST_CLASS_EXPORT_GUID(collections::object_base, "kJValue");
 BOOST_CLASS_EXPORT_GUID(collections::array, "kJArray");
 BOOST_CLASS_EXPORT_GUID(collections::map, "kJMap");
 BOOST_CLASS_EXPORT_GUID(collections::form_map, "kJFormMap");
+
+BOOST_SERIALIZATION_SPLIT_FREE(collections::object_ref);
+
+BOOST_CLASS_VERSION(collections::Item, 1)
+
+namespace boost {
+    namespace serialization {
+
+        template<class Archive>
+        void serialize(Archive & ar, blank & g, const unsigned int version) {}
+
+        template<class Archive>
+        void save(Archive & ar, const collections::object_ref & ptr, const unsigned int version) {
+            collections::object_base *obj = ptr.get();
+            ar & obj;
+        }
+
+        template<class Archive>
+        void load(Archive & ar, collections::object_ref & ptr, const unsigned int version) {
+            collections::object_base *obj = nullptr;
+            ar & obj;
+            ptr = collections::object_ref(obj, false);
+        }
+
+    } // namespace serialization
+} // namespace boost
 
 namespace collections {
 
@@ -45,13 +76,15 @@ namespace collections {
         std::ostringstream data;
         ::boost::archive::binary_oarchive arch(data);
 
+        Item tst((const char*)nullptr);
+
 
         Item items[] = {
             Item(2.0),
             Item(2),
             Item("the most fatal mistake"),
-            Item(array::object()),
-            Item(map::object())
+            //Item(array::object()),
+           // Item(map::object())
         };
 
         for (auto& itm : items) {
@@ -63,8 +96,6 @@ namespace collections {
         std::istringstream istr(string);
         boost::archive::binary_iarchive ia(istr);
 
-
-/*
         for (const auto& itm : items) {
             Item tmp;
             ia >> tmp;
@@ -72,7 +103,7 @@ namespace collections {
             EXPECT_TRUE( itm.isEqual(tmp) );
 
 
-        }*/
+        }
     }
 
 /*
@@ -103,12 +134,11 @@ namespace collections {
 
 #endif
 
-    static UInt32 convertOldFormIdToNew(UInt32 oldId) {
-        UInt8 modId = oldId >> 24;
-        if (modId != FormGlobalPrefix) {
+    static FormId convertOldFormIdToNew(FormId oldId) {
+        if (form_handling::is_static(oldId)) {
             UInt64 newId = 0;
             g_serialization->ResolveHandle(oldId, &newId);
-            return newId;
+            return (FormId)newId;
         }
         else {
             return oldId;
@@ -116,71 +146,75 @@ namespace collections {
     }
 
     template<class Archive>
-    static UInt32 readOldFormIdToNew(Archive& ar) {
+    static FormId readOldFormIdToNew(Archive& ar) {
         UInt32 oldId = 0;
         ar & oldId;
-        return convertOldFormIdToNew(oldId);
+        return convertOldFormIdToNew((FormId)oldId);
     }
 
     template<class Archive>
     void Item::save(Archive & ar, const unsigned int version) const {
-        ar & _type;
-        switch (_type)
-        {
-        case ItemTypeNone:
-            break;
-        case ItemTypeInt32:
-            ar & _intVal;
-            break;
-        case ItemTypeFloat32:
-            ar & _floatVal;
-            break;
-        case ItemTypeCString: 
-            ar & std::string(strValue() ? _stringVal->string : "");
-            break;
-        case ItemTypeObject:
-            ar & _object;
-            break;
-        case ItemTypeForm:
-            ar & _formId;
-            break;
-        default:
-            break;
-        }
+        ar & _var;
     }
+
+    // deprecate:
+    enum ItemType : unsigned char
+    {
+        ItemTypeNone = 0,
+        ItemTypeInt32 = 1,
+        ItemTypeFloat32 = 2,
+        ItemTypeCString = 3,
+        ItemTypeObject = 4,
+        ItemTypeForm = 5,
+    };
 
     template<class Archive>
     void Item::load(Archive & ar, const unsigned int version)
     {
-        ar & _type;
-        switch (_type)
-        {
-        case ItemTypeNone:
-            break;
-        case ItemTypeInt32:
-            ar & _intVal;
-            break;
-        case ItemTypeFloat32:
-            ar & _floatVal;
-            break;
-        case ItemTypeCString:
-            {
-                std::string string;
-                ar & string;
+        if (version >= 1) {
+            ar & _var;
 
-                if (!string.empty()) {
-                    _stringVal = StringMem::allocWithString(string.c_str());
-                }
+            if (is_type<FormId>()) {
+                *this = convertOldFormIdToNew(formId());
+            }
+        }
+        else {
+
+            ItemType type = ItemTypeNone;
+            ar & type;
+
+            switch (type)
+            {
+            case ItemTypeInt32: {
+                SInt32 val = 0;
+                ar & val;
+                *this = val;
                 break;
             }
-        case ItemTypeObject:
-            ar & _object;
-            break;
-        case ItemTypeForm:
-            _formId = readOldFormIdToNew(ar);
-            break;
-        default:
-            break;
+            case ItemTypeFloat32: {
+                Float32 val = 0;
+                ar & val;
+                *this = val;
+                break;
+            }
+            case ItemTypeCString: {
+                std::string string;
+                ar & string;
+                *this = string;
+                break;
+            }
+            case ItemTypeObject: {
+                object_base *object = nullptr;
+                ar & object;
+                _var = collections::object_ref(object, false);
+                break;
+            }
+            case ItemTypeForm:
+                *this = readOldFormIdToNew(ar);
+                break;
+            default:
+                break;
+            }
         }
     }
 

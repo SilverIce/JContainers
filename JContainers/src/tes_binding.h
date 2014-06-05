@@ -66,16 +66,16 @@ namespace collections {
             typedef HandleT tes_type;
         };
         template<> inline HandleT convert2Tes(object_base* obj) {
-            return obj ? obj->id : 0;
+            return obj ? obj->uid() : 0;
         }
         template<> inline HandleT convert2Tes(array* obj) {
-            return obj ? obj->id : 0;
+            return obj ? obj->uid() : 0;
         }
         template<> inline HandleT convert2Tes(map* obj) {
-            return obj ? obj->id : 0;
+            return obj ? obj->uid() : 0;
         }
         template<> inline HandleT convert2Tes(form_map* obj) {
-            return obj ? obj->id : 0;
+            return obj ? obj->uid() : 0;
         }
 
         template<>

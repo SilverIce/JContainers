@@ -4,9 +4,6 @@
 #include <mutex>
 
 namespace collections {
-    typedef spinlock object_mutex;
-
-    typedef std::lock_guard<object_mutex> mutex_lock;
 
     typedef UInt32 HandleT;
 
@@ -29,6 +26,8 @@ namespace collections {
     {
         friend class shared_state;
 
+        Handle _id;
+
         int32_t _refCount;
         int32_t _tes_refCount;
 
@@ -37,11 +36,8 @@ namespace collections {
         virtual ~object_base() {}
 
     public:
-        object_mutex _mutex;
-        union {
-            Handle id;
-            UInt32 _id;
-        };
+        typedef std::lock_guard<spinlock> lock;
+        spinlock _mutex;
 
         CollectionType _type;
         shared_state *_context;
@@ -49,7 +45,7 @@ namespace collections {
         explicit object_base(CollectionType type)
             : _refCount(1)
             , _tes_refCount(0)
-            , id(HandleNull)
+            , _id(HandleNull)
             , _type(type)
             , _context(nullptr)
         {
@@ -58,27 +54,34 @@ namespace collections {
         object_base()
             : _refCount(0)
             , _tes_refCount(0)
-            , _id(0)
+            , _id(HandleNull)
             , _type(CollectionTypeNone)
             , _context(nullptr)
         {
         }
 
         int32_t refCount() {
-            mutex_lock g(_mutex);
+            lock g(_mutex);
             return _refCount + _tes_refCount;
         }
 
         bool registered() const {
-            return _id != 0;
+            return _id != HandleNull;
         }
 
-        template<class T> T* as() {
+        Handle uid() const {
+            return _id;
+        }
+
+        bool operator == (const object_base& other) const { return _id == other._id; }
+        bool operator != (const object_base& other) const { return !(*this == other); }
+
+        template<class T> T * as() {
             return (this && T::TypeId == _type) ? static_cast<T*>(this) : nullptr;
         }
 
         object_base * retain() {
-            mutex_lock g(_mutex);
+            lock g(_mutex);
             return u_retain();
         }
 
@@ -88,17 +91,16 @@ namespace collections {
         }
 
         object_base * tes_retain() {
-            mutex_lock g(_mutex);
+            lock g(_mutex);
             ++_tes_refCount;
             return this;
         }
 
         object_base * autorelease();
 
-        // decreases internal ref counter - _refCount OR deletes if summ refCount is 0
-        // if old refCountSumm is 1 - then release, if 0 - delete
+        // deletes object if no owners
         // true, if object deleted
-        bool _deleteOrRelease(class autorelease_queue*);
+        bool _deleteIfNoOwner(class autorelease_queue*);
 
         void release();
         void tes_release();
@@ -115,12 +117,12 @@ namespace collections {
         virtual void u_nullifyObjects() = 0;
 
         SInt32 s_count() {
-            mutex_lock g(_mutex);
+            lock g(_mutex);
             return u_count();
         }
 
         void s_clear() {
-            mutex_lock g(_mutex);
+            lock g(_mutex);
             u_clear();
         }
 
@@ -135,7 +137,7 @@ namespace collections {
     };
 
     class object_lock {
-        mutex_lock _lock;
+        object_base::lock _lock;
     public:
         explicit object_lock(object_base *obj) : _lock(obj->_mutex) {}
         explicit object_lock(object_base &obj) : _lock(obj._mutex) {}

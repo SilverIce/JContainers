@@ -1,15 +1,11 @@
 #pragma once
 
-#include <boost/algorithm/string.hpp>
-#include <boost/range/iterator_range.hpp>
-#include <boost/range/algorithm/find_if.hpp>
-#include <boost/range/algorithm/find_end.hpp>
+#include <set>
+#include <vector>
+#include <jansson.h>
 
-#include <functional>
-
-#include "skse/GameData.h"
-
-#include "collection_operators.h"
+#include "collections.h"
+#include "form_handling.h"
 
 namespace collections {
 
@@ -17,591 +13,351 @@ namespace collections {
         return std::unique_ptr<FILE, decltype(&fclose)> (file, &fclose);
     }
 
-    static const char * kJSerializedFormData = "__formData";
-    static const char * kJSerializedFormDataSeparator = "|";
+    template<class T, class D>
+    inline std::unique_ptr<T, D> make_unique_ptr(T* data, D destr) {
+        return std::unique_ptr<T, D> (data, destr);
+    }
 
-    class json_handling {
+    template<class T>
+    inline std::unique_ptr<T, std::default_delete<T> > make_unique_ptr(T* data) {
+        return std::unique_ptr<T, std::default_delete<T> > ( data, std::default_delete<T>() );
+    }
+
+    typedef struct json_t * json_ref;
+    typedef std::unique_ptr<json_t, decltype(json_decref)> json_unique_ref;
+
+    class json_deserializer {
+        tes_context& _context;
+
+        typedef std::vector<std::pair<object_base*, json_ref> > objects_to_fill;
+
+        objects_to_fill _toFill;
+
+        explicit json_deserializer(tes_context& context) : _context(context) {}
+
     public:
 
-        static void resolvePath(Item& item, const char *cpath, std::function<void (Item *)>  itemFunction) {
-            if (!cpath) {
-                return;
-            }
-
-            if (item.object()) {
-                resolvePath(item.object(), cpath, itemFunction);
-            }
-            else if (!*cpath) {
-                itemFunction(&item);
-            }
+        static auto json_from_file(const char *path) -> decltype( make_unique_ptr((json_ref)nullptr, json_decref)) {
+            json_error_t error; //  TODO: output error
+            json_ref ref = json_load_file(path, 0, &error);
+            return make_unique_ptr(ref, json_decref);
         }
 
-        typedef std::function<Item* (object_base*)> NodeFunc;
-        typedef std::function<void (const Item& , Item&)> ElementFunc;
-        typedef boost::iterator_range<const char*> path_type;
-
-        struct state {
-            bool succeed;
-            path_type path;
-            NodeFunc nodeGetter;
-            object_base *object;
-
-            state(bool _succeed, const NodeFunc& _node, object_base *_object, const path_type& _path) {
-                succeed = _succeed;
-                nodeGetter = _node;
-                path = _path;
-                object = _object;
-            }
-
-            state(bool _succeed, const state& st) {
-                succeed = _succeed;
-                nodeGetter = st.nodeGetter;
-                path = st.path;
-                object = st.object;
-            }
-        };
-
-        template<class T, class V>
-        static bool _map_visit_helper(T *container, path_type path, const V& func)
-        {
-            namespace bs = boost;
-            namespace ss = std;
-
-            if (!container || path.empty()) {
-                return false;
-            }
-
-            bool isKeyVisit = false;
-
-            path_type::iterator rightPath;
-
-            if (bs::istarts_with(path, ".key")) {
-                isKeyVisit = true;
-                rightPath = path.begin() + bs::size(".key") - 1;
-            }
-            else if (bs::istarts_with(path, ".value")) {
-                isKeyVisit = false;
-                rightPath = path.begin() + bs::size(".value") - 1;
-            } else {
-                return false;
-            }
-
-            auto copy = container->container();
-
-            if (isKeyVisit) {
-                for (auto &pair : copy) {
-                    Item itm(pair.first);
-                    resolvePath(itm, rightPath, func);
-                }
-            } else { // is value visit
-                for (auto &pair : copy) {
-                    resolvePath(pair.second, rightPath, func);
-                }
-            }
-
-            return true;
+        static auto json_from_data(const char *data) -> decltype( make_unique_ptr((json_ref)nullptr, json_decref)) {
+            json_error_t error; //  TODO: output error
+            json_ref ref = json_loads(data, 0, &error);
+            return make_unique_ptr(ref, json_decref);
         }
 
-        static void resolvePath(object_base *collection, const char *cpath, std::function<void (Item *)>  itemFunction) {
-
-            if (!collection || !cpath) {
-                return;
-            }
-
-            if (collection && !*cpath) {
-                Item itm(collection);
-                itemFunction(&itm);
-                return ;
-            }
-
-            namespace bs = boost;
-            namespace ss = std;
-
-            auto path = bs::make_iterator_range(cpath, cpath + strnlen_s(cpath, 1024));
-
-            auto operatorRule = [](const state &st) -> state {
-                const auto& path = st.path;
-
-                if (!bs::starts_with(path, "@") || path.size() < 2) {
-                    return state(false, st);
-                }
-
-                auto begin = path.begin() + 1;
-                auto end = bs::find_if(path_type(begin, path.end()), bs::is_any_of("."));
-                auto operationStr = ss::string(begin, end);
-
-                if (operationStr.empty()) {
-                    return state(false, st);
-                }
-
-                auto rightPath = path_type(end, path.end());
-
-                auto collection = st.nodeGetter(st.object)->object();
-
-                if (!collection) {
-                    return state(false, st);
-                }
-
-                auto opr = collection_operators::get_operator(operationStr);
-
-                if (!opr) {
-                    return state(false, st);
-                }
-
-                Item sharedItem;
-
-                auto itemVisitFunc = [&](Item *item) {
-                    if (item) {
-                        opr->func(*item, sharedItem);
-                    }
-                };
-
-                if (collection->as<array>()) {
-
-                    // have to copy array to prevent it modification during iteration
-                    auto array_copy = collection->as<array>()->_array;
-                    
-                    for (auto &itm : array_copy) {
-                        resolvePath(itm, rightPath.begin(), itemVisitFunc);
-                    }
-                }
-                else if (collection->as<map>()) {
-                    _map_visit_helper(collection->as<map>(), rightPath, itemVisitFunc);
-                }
-                else if (collection->as<form_map>()) {
-                    _map_visit_helper(collection->as<form_map>(), rightPath, itemVisitFunc);
-                }
-
-                return state(true,
-                    [=](object_base *) mutable -> Item* { return &sharedItem;},
-                    nullptr,
-                    path_type());
-            };
-
-            auto mapRule = [](const state &st) -> state {
-
-                const auto& path = st.path;
-
-                if (!bs::starts_with(path, ".") || path.size() < 2) {
-                    return state(false, st);
-                }
-
-                auto begin = path.begin() + 1;
-                auto end = bs::find_if(path_type(begin, path.end()), bs::is_any_of(".["));
-
-                object_lock lock(st.object);
-                auto node = st.nodeGetter(st.object);
-                auto container = node ? node->object() : nullptr;
-
-                if (begin == end || !container) {
-                    return state(false, st);
-                }
-
-                return state(   true,
-                                [=](object_base *container) {
-                                    return container->as<map>() ? container->as<map>()->u_find(ss::string(begin, end)) : nullptr;
-                                },
-                                container,
-                                path_type(end, path.end()) );
-            };
-
-
-            auto arrayRule = [](const state &st) -> state {
-
-                const auto& path = st.path;
-
-                if (!bs::starts_with(path, "[") || path.size() < 3) {
-                    return state(false, st);
-                }
-
-                auto begin = path.begin() + 1;
-                auto end = bs::find_if(path_type(begin, path.end()), bs::is_any_of("]"));
-                auto indexRange = path_type(begin, end);
-
-                if (indexRange.empty()) {
-                    return state(false, st);
-                }
-
-                UInt32 indexOrFormId = 0;
-                try {
-                    indexOrFormId = std::stoul(ss::string(indexRange.begin(), indexRange.end()), nullptr, 0);
-                }
-                catch (const std::invalid_argument& ) {
-                    return state(false, st);
-                }
-                catch (const std::out_of_range& ) {
-                    return state(false, st);
-                }
-
-                object_lock lock(st.object);
-                auto container = st.nodeGetter(st.object)->object();
-
-                if (!container) {
-                    return state(false, st);
-                }
-
-                return state(   true,
-                                [=](object_base* container) {
-                                    if (container->as<array>()) {
-                                        return container->as<array>()->u_getItem(indexOrFormId);
-                                    }
-                                    else if (container->as<form_map>()) {
-                                        return container->as<form_map>()->u_find((FormId)indexOrFormId);
-                                    } else {
-                                        return (Item *)nullptr;
-                                    } 
-                                },
-                                container,
-                                path_type(end + 1, path.end()) );
-            };
-
-            const ss::function<state (const state &st) > rules[] = {operatorRule, mapRule, arrayRule};
-
-            Item root(collection);
-            state st(true, [&](object_base*) { return &root;}, collection, path);
-
-            while (true) {
-
-                bool anySucceed = false;
-                for (auto& func : rules) {
-                    st = func(st);
-                    anySucceed = st.succeed;
-                    if (anySucceed) {
-                        break;
-                    }
-                }
-
-                if (st.path.empty() && anySucceed) {
-
-                    if (st.object) {
-                        object_lock lock(st.object);
-                        itemFunction( st.nodeGetter(st.object));
-                    } else {
-                        itemFunction( st.nodeGetter(nullptr));
-                    }
-
-                    break;
-                }
-
-                if (!anySucceed) {
-                    itemFunction(nullptr);
-                    break;
-                }
-            }
+        static object_base* object_from_json_data(tes_context& context, const char *data) {
+            auto json = json_from_data(data);
+            return json_deserializer(context)._object_from_json( json.get() );
         }
 
-        static object_base * readJSONFile(const char *path) {
-            auto cj = cJSONFromFile(path);
-            auto res = readCJSON(cj);
-            cJSON_Delete(cj);
-            return res;
+        static object_base* object_from_json(tes_context& context, json_ref ref) {
+            return json_deserializer(context)._object_from_json( ref );
         }
 
-        static object_base * readJSONData(const char *text) {
-            auto cj = cJSON_Parse(text);
-            auto res = readCJSON(cj);
-            cJSON_Delete(cj);
-            return res;
+        static object_base* object_from_file(tes_context& context, const char *path) {
+            auto json = json_from_file(path);
+            return json_deserializer(context)._object_from_json( json.get() );
         }
 
-        static object_base * readCJSON(cJSON *value) {
-            if (!value) {
+    private:
+
+        object_base* _object_from_json(json_ref ref) {
+            if (!ref) {
                 return nullptr;
             }
 
-            object_base *obj = nullptr;
-            if (value->type == cJSON_Array || value->type == cJSON_Object) {
-                Item itm = makeItem(value);
-                obj = itm.object();
-            }
+            auto& root = make_placeholder(ref);
 
-            return obj;
-        }
+            while (_toFill.empty() == false) {
+                objects_to_fill toFill;
+                toFill.swap(_toFill);
 
-        static cJSON * cJSONFromFile(const char *path) {
-            using namespace std;
-
-            auto file = make_unique_file(fopen(path, "r"));
-            if (!file.get())
-                return 0;
-
-            char buffer[1024];
-            std::vector<char> bytes;
-            while (!ferror(file.get()) && !feof(file.get())) {
-                size_t readen = fread(buffer, 1, sizeof(buffer), file.get());
-                if (readen > 0) {
-                    bytes.insert(bytes.end(), buffer, buffer + readen);
-                }
-                else  {
-                    break;
+                for (auto& pair : toFill) {
+                    fill_object(*pair.first, pair.second);
                 }
             }
-            bytes.push_back(0);
 
-            return cJSON_Parse(&bytes[0]);
+            return &root;
         }
 
-        static  array * makeArray(cJSON *val) {
-            array *ar = array::object();
+        void fill_object(object_base& object, json_ref val) {
+            object_lock lock(object);
 
-            int count = cJSON_GetArraySize(val);
-            for (int i = 0; i < count; ++i) {
-            	ar->u_push(makeItem(cJSON_GetArrayItem(val, i)));
+            if (array *arr = object.as<array>()) {
+                /* array is a JSON array */
+                size_t index = 0;
+                json_t *value = nullptr;
+
+                json_array_foreach(val, index, value) {
+                    arr->u_push(make_item(value));
+                }
             }
+            else if (map *cnt = object.as<map>()) {
+                const char *key;
+                json_t *value;
 
-            return ar;
-        }
+                json_object_foreach(val, key, value) {
+                    cnt->u_setValueForKey(key, make_item(value));
+                }
+            }
+            else if (form_map *cnt = object.as<form_map>()) {
+                const char *key;
+                json_t *value;
 
-        static object_base * makeObject(cJSON *val) {
-
-            object_base *object = nullptr;
-            bool isFormMap = cJSON_GetObjectItem(val, kJSerializedFormData) != nullptr;
-
-            if (isFormMap) {
-                auto obj = form_map::object();
-                object = obj;
-
-                int count = cJSON_GetArraySize(val);
-                for (int i = 0; i < count; ++i) {
-                    auto itm = cJSON_GetArrayItem(val, i);
-                    FormId key = formIdFromString(itm->string);
-
-                    if (key) {
-                        obj->u_setValueForKey(key, makeItem(itm));
+                json_object_foreach(val, key, value) {
+                    auto fkey = form_handling::from_string(key);
+                    if (fkey) {
+                        cnt->u_setValueForKey(*fkey, make_item(value));
                     }
                 }
-            } else {
+            }
+        }
 
-                auto obj = map::object();
-                object = obj;
+        object_base& make_placeholder(json_ref val) {
+            object_base *object = nullptr;
+            auto type = json_typeof(val);
 
-                int count = cJSON_GetArraySize(val);
-                for (int i = 0; i < count; ++i) {
-                    auto itm = cJSON_GetArrayItem(val, i);
-                    obj->u_setValueForKey(itm->string, makeItem(itm));
+            if (type == JSON_ARRAY) {
+                object = array::object(_context);
+            }
+            else if (type == JSON_OBJECT) {
+                if (!json_object_get(val, form_handling::kFormData)) {
+                    object = map::object(_context);
+                } else {
+                    object = form_map::object(_context);
                 }
             }
 
-            return object;
+            assert(object);
+            _toFill.push_back(std::make_pair(object, val));
+            return *object;
         }
 
-        static Item makeItem(cJSON *val) {
+        Item make_item(json_ref val) {
             Item item;
-            int type = val->type;
-            if (type == cJSON_Array) {
-                auto ar = makeArray(val);
-                item.setObjectVal(ar);
-            } else if (type == cJSON_Object) {
-                auto ar = makeObject(val);
-                item.setObjectVal(ar);
-            } else if (type == cJSON_String) {
 
-                bool isFormData = strncmp(val->valuestring, kJSerializedFormData, strlen(kJSerializedFormData)) == 0;
+            auto type = json_typeof(val);
 
-                if (!isFormData) {
-                    item.setStringVal(val->valuestring);
+            if (type == JSON_ARRAY || type == JSON_OBJECT) {
+                item = &make_placeholder(val);
+            }
+            else if (type == JSON_STRING) {
+
+                auto string = json_string_value(val);
+                if (!form_handling::is_form_string(string)) {
+                    item = string;
                 } else {
-                    item.setFormId(formIdFromString(val->valuestring));
+                    item = *form_handling::from_string(string);
                 }
-
-            } else if (type == cJSON_Number) {
-                if (std::floor(val->valuedouble) == val->valuedouble) {
-                    item.setInt(val->valueint);
-                } else {
-                    item.setFlt(val->valuedouble);
-                }
+            }
+            else if (type == JSON_INTEGER) {
+                item = (int)json_integer_value(val);
+            }
+            else if (type == JSON_REAL) {
+                item = json_real_value(val);
+            }
+            else if (type == JSON_TRUE || type || JSON_FALSE) {
+                item = json_boolean_value(val);
             }
 
             return item;
         }
+    };
+
+    
+
+/*
+    class item_serializer : public boost::static_visitor<json_ref>
+    {
+    public:
+
+        json_ref null() const {
+            return * new js_value();
+        }
+
+        json_ref operator()(const std::string & val) {
+            return * new js_value(val);
+        }
+
+        json_ref operator()(boost::blank ) {
+            return null();
+        }
+
+        // SInt32, Float32, std::string, object_ref, FormId
+
+        json_ref operator()(const SInt32 & val) {
+            return * new js_value(val);
+        }
+
+        json_ref operator()(const Float32 & val) {
+            return * new js_value(val);
+        }
+
+        json_ref operator()(const FormId&  val) {
+            auto formStr = form_handling::to_string(val);
+            if (formStr) {
+                return * new js_value(*formStr);
+            } else {
+                return null();
+            }
+        }
+
+        json_ref operator()(const object_ref & val) {
+            return null();
+        }
+
+    };
+*/
+
+
+    class json_serializer : public boost::static_visitor<json_ref> {
 
         typedef std::set<object_base*> collection_set;
+        typedef std::vector<std::pair<object_base*, json_ref> > objects_to_fill;
 
-        static cJSON * createCJSON(object_base & collection) {
-            collection_set serialized;
-            return createCJSONNode(Item(&collection), serialized);
+        collection_set _serializedObjects;
+        objects_to_fill _toFill;
+
+        json_serializer() {}
+
+    public:
+
+        static auto create_json_value(object_base &root) -> decltype(make_unique_ptr((json_ref)nullptr, json_decref)) {
+            return make_unique_ptr( json_serializer()._write_json(root), &json_decref);
         }
 
-        static char * createJSONData(object_base & collection) {
-            collection_set serialized;
-            auto node = createCJSONNode(Item(&collection), serialized);
-            char *data = cJSON_Print(node);
-            cJSON_Delete(node);
-            return data;
+        static auto create_json_data(object_base &root) -> decltype(make_unique_ptr((char*)nullptr, free)) {
+
+            auto jvalue = create_json_value(root);
+
+            return make_unique_ptr(
+                jvalue ? json_dumps(jvalue.get(), JSON_INDENT(2)) : nullptr,
+                free
+                );
         }
 
-        static cJSON * createCJSONNode(const Item& item, collection_set& serializedObjects) {
+    private:
 
-            cJSON *val = nullptr;
+        // writes to json
+        json_ref _write_json(object_base &root) {
 
-            ItemType type = item.type();
+            auto root_value = create_placeholder(root);
 
-            if (type == ItemTypeObject && item.object()) {
+            while (_toFill.empty() == false) {
 
-                auto obj = item.object();
+                objects_to_fill toFill;
+                toFill.swap(_toFill);
 
-                if (serializedObjects.find(obj) != serializedObjects.end()) {
-                    goto createNullNode;
-                    // do not serialize object twice
+                for (auto& pair : toFill) {
+                    fill_json_object(*pair.first, pair.second);
                 }
+            }
 
-                serializedObjects.insert(obj);
+            return root_value;
+        }
 
-                object_lock g(obj);
+        json_ref create_placeholder(object_base& object) {
 
-                if (obj->as<array>()) {
+            json_ref placeholder = nullptr;
 
-                    val = cJSON_CreateArray();
-                    array *ar = obj->as<array>();
-                    for (auto& itm : ar->_array) {
-                        auto cnode = createCJSONNode(itm, serializedObjects);
-                        if (cnode) {
-                            cJSON_AddItemToArray(val, cnode);
-                        }
+            if (object.as<array>()) {
+                placeholder = json_array();
+            }
+            else if (object.as<map>() || object.as<form_map>()) {
+                placeholder = json_object();
+            }
+            assert(placeholder);
+
+            _toFill.push_back( objects_to_fill::value_type(&object, placeholder) );
+            return placeholder;
+        }
+
+        void fill_json_object(object_base& cnt, json_ref object) {
+
+            object_lock lock(cnt);
+
+            if (cnt.as<array>()) {
+                for (auto& itm : cnt.as<array>()->u_container()) {
+                    json_array_append_new(object, create_value(itm));
+                }
+            }
+            else if (cnt.as<map>()) {
+                for (auto& pair : cnt.as<map>()->u_container()) {
+                    json_object_set_new(object, pair.first.c_str(), create_value(pair.second));
+                }
+            }
+            else if (cnt.as<form_map>()) {
+                // mark object as form_map container
+                json_object_set_new(object, form_handling::kFormData, json_null());
+
+                for (auto& pair : cnt.as<form_map>()->u_container()) {
+                    auto key = form_handling::to_string(pair.first);
+                    if (key) {
+                        json_object_set_new(object, (*key).c_str(), create_value(pair.second));
                     }
                 }
-                else if (obj->as<map>()) {
-
-                    val = cJSON_CreateObject();
-                    for (auto& pair : obj->as<map>()->container()) {
-                         auto cnode = createCJSONNode(pair.second, serializedObjects);
-                         if (cnode) {
-                             cJSON_AddItemToObject(val, pair.first.c_str(), cnode);
-                         }
-                    }
-                }
-                else if (obj->as<form_map>()) {
-
-                    val = cJSON_CreateObject();
-
-                    cJSON_AddItemToObject(val, kJSerializedFormData, cJSON_CreateNull());
-
-                    for (auto& pair : obj->as<form_map>()->container()) {
-                        auto cnode = createCJSONNode(pair.second, serializedObjects);
-                        if (cnode) {
-                            auto key = formIdToString(pair.first);
-                            if (!key.empty()) {
-                                cJSON_AddItemToObject(val, key.c_str(), cnode);
-                            }
-                        }
-                    }
-                }
             }
-            else if (type == ItemTypeCString) {
+        }
 
-                val = (item.strValue() ? cJSON_CreateString(item.strValue()) : cJSON_CreateNull());
-            }
-            else if (type == ItemTypeInt32 || type == ItemTypeFloat32) {
-                val = cJSON_CreateNumber(item.fltValue());
-            }
-            else if (type == ItemTypeForm) {
-                auto formString = formIdToString(item.formId());
-                val = cJSON_CreateString( formString.c_str() );
-            }
-            else {
-            createNullNode:
-                val = cJSON_CreateNull();
-            }
-
+        json_ref create_value(const Item& item) {
+            json_ref val = item.var().apply_visitor( *this );
             return val;
         }
 
-        static std::string formIdToString(FormId formId) {
-            return formIdToString(formId, [](UInt8 modId) {
-                DataHandler * dhand = DataHandler::GetSingleton();
-                ModInfo * modInfo = dhand->modList.loadedMods[modId];
-                return modInfo ? modInfo->name : nullptr;
-            });
+    public:
+
+        // part of visitor functionality
+
+        static json_ref null() {
+            return json_null();
         }
 
-        static FormId formIdFromString(const char* source) {
-            return formIdFromString(source, [](const char *modName) {
-                return DataHandler::GetSingleton()->GetModIndex( modName );
-            });
+        json_ref operator()(const std::string & val) const {
+            return json_string(val.c_str());
         }
 
-        template<class T>
-        static std::string formIdToString(FormId formId, T modNameFunc) {
-
-            UInt8 modID = formId >> 24;
-            FormId formIdClean = formId;
-
-            const char * modName = nullptr;
-
-            if (modID != FormGlobalPrefix) { // common case
-                modName = modNameFunc(modID);
-                formIdClean = (FormId)(formId & 0x00FFFFFF);
-            }
-            else {
-                // global form is not bound to any plugin
-                modName = "";
-            }
-
-            std::string string = kJSerializedFormData;
-            string += kJSerializedFormDataSeparator;
-            string += modName;
-            string += kJSerializedFormDataSeparator;
-
-            char buff[20] = {'\0'};
-            sprintf(buff, "0x%x", formIdClean);
-            string += buff;
-
-            return string;
+        json_ref operator()(const boost::blank& ) const {
+            return null();
         }
 
-        template<class T>
-        static FormId formIdFromString(const char* source, T modIndexFunc) {
+        // SInt32, Float32, std::string, object_ref, FormId
 
-            if (!source) {
-                return FormZero;
+        json_ref operator()(const SInt32 & val) const {
+            return json_integer(val);
+        }
+
+        json_ref operator()(const Float32 & val) const {
+            return json_real(val);
+        }
+
+        json_ref operator()(const FormId&  val) const {
+            auto formStr = form_handling::to_string(val);
+            if (formStr) {
+                return (*this)(*formStr);
+            } else {
+                return null();
+            }
+        }
+
+        json_ref operator()(const object_ref & val) {
+            object_base *obj = val.get();
+
+            if (!obj) {
+                return null();
             }
 
-            namespace bs = boost;
-            namespace ss = std;
-
-            auto fstring = bs::make_iterator_range(source, source + strnlen_s(source, 1024));
-
-            if (!bs::starts_with(fstring, kJSerializedFormData)) {
-                return FormZero;
+            if (_serializedObjects.find(obj) != _serializedObjects.end()) {
+                return json_string("<can not serialize object twice>");
             }
 
-            ss::vector<decltype(fstring)> substrings;
-            bs::split(substrings, source, bs::is_any_of(kJSerializedFormDataSeparator));
+            _serializedObjects.insert(obj);
 
-            if (substrings.size() != 3) {
-                return FormZero;
-            }
-
-            auto& pluginName = substrings[1];
-
-            UInt8 modIdx = 0;
-            if (!pluginName.empty()) {
-                modIdx = modIndexFunc( ss::string(pluginName.begin(), pluginName.end()).c_str() );
-                if (modIdx == FormGlobalPrefix) {
-                    return FormZero;
-                }
-            }
-            else {
-                // 
-                modIdx = FormGlobalPrefix;
-            }
-
-            auto& formIdString = substrings[2];
-
-            UInt32 formId = 0;
-            try {
-                formId = std::stoul(ss::string(formIdString.begin(), formIdString.end()), nullptr, 0);
-            }
-            catch (const std::invalid_argument& ) {
-                return FormZero;
-            }
-            catch (const std::out_of_range& ) {
-                return FormZero;
-            }
-
-            formId = (modIdx << 24) | (formId & 0x00FFFFFF);
-
-            return (FormId)formId;
+            json_ref node = create_placeholder(*obj);
+            return node;
         }
     };
 

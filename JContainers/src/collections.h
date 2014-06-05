@@ -11,6 +11,8 @@
 //#include <mutex>
 
 #include <boost/serialization/split_member.hpp>
+#include <boost/smart_ptr/intrusive_ptr.hpp>
+#include <boost/variant.hpp>
 
 #include "skse/GameForms.h"
 
@@ -30,7 +32,7 @@ namespace collections {
 
     public:
 
-        static T* create(tes_context& context = tes_context::instance()) {
+        static T* create(tes_context& context /*= tes_context::instance()*/) {
             auto obj = new T();
             obj->_context = &context;
             obj->_registerSelf();
@@ -38,7 +40,7 @@ namespace collections {
         }
 
         template<class Init>
-        static T* _createWithInitializer(Init& init, tes_context& context = tes_context::instance()) {
+        static T* _createWithInitializer(Init& init, tes_context& context /*= tes_context::instance()*/) {
             auto obj = new T();
             obj->_context = &context;
             init(obj);
@@ -46,24 +48,14 @@ namespace collections {
             return obj;
         }
 
-        static T* object(tes_context& context = tes_context::instance()) {
+        static T* object(tes_context& context /*= tes_context::instance()*/) {
             return static_cast<T *> (create(context)->autorelease());
         }
 
         template<class Init>
-        static T* objectWithInitializer(Init& init, tes_context& context = tes_context::instance()) {
+        static T* objectWithInitializer(Init& init, tes_context& context /*= tes_context::instance()*/) {
             return static_cast<T *> (_createWithInitializer(init, context)->autorelease());
         }
-    };
-
-    enum ItemType : unsigned char
-    {
-        ItemTypeNone = 0,
-        ItemTypeInt32 = 1,
-        ItemTypeFloat32 = 2,
-        ItemTypeCString = 3,
-        ItemTypeObject = 4,
-        ItemTypeForm = 5,
     };
 
     enum FormId : UInt32 {
@@ -71,106 +63,57 @@ namespace collections {
         FormGlobalPrefix = 0xFF,
     };
 
-
-    struct StringMem
-    {
-        UInt32 bufferSize;
-        char string[1];
-
-        static StringMem* allocWithSize(UInt32 aBufferSize) {
-            UInt32 memSize = (aBufferSize + 1) + sizeof(StringMem) - 1;
-            StringMem *me = (StringMem *)operator new(memSize);
-            me->bufferSize = aBufferSize + 1;
-            me->string[0] = '\0';
-            return me;
-        }
-
-        static StringMem* allocWithString(const char* string) {
-            StringMem *me = allocWithSize(string ? strlen(string) : 0);
-            if (string)
-                strcpy_s(me->string, me->bufferSize, string);
-            return me;
-        }
-
-        /*static StringMem* null() {
-            static StringMem nullObj = {1, '\0'};
-            return &nullObj;
-        }*/
-
-        void setEmpty() {
-            string[0] = '\0';
-        }
-
-        UInt32 length () const {
-            return strlen(string);
-        }
-    };
-
     class array;
     class map;
     class object_base;
 
+    typedef boost::intrusive_ptr<object_base> object_ref;
+
+    inline void intrusive_ptr_add_ref(object_base * p) {
+        p->retain();
+    }
+
+    inline void intrusive_ptr_release(object_base * p) {
+        p->release();
+    }
+
     class Item
     {
-        union {
-            UInt32 _formId;
-            SInt32 _intVal;
-            Float32 _floatVal;
-            StringMem *_stringVal;
-            object_base *_object;
-        };
-
-        ItemType _type;
+        typedef boost::blank blank;
+        typedef boost::variant<boost::blank, SInt32, Float32, FormId, object_ref, std::string> variant;
+        variant _var;
 
     public:
 
-        Item() : _stringVal(nullptr), _type(ItemTypeNone) {}
-
-        explicit Item(Float32 val) : _floatVal(val), _type(ItemTypeFloat32) {}
-        explicit Item(double val) : _floatVal(val), _type(ItemTypeFloat32) {}
-        explicit Item(SInt32 val) : _intVal(val), _type(ItemTypeInt32) {}
-        explicit Item(int val) : _intVal(val), _type(ItemTypeInt32) {}
-        explicit Item(bool val) : _intVal(val), _type(ItemTypeInt32) {}
-
-        explicit Item(const TESForm *form) : _formId(form ? form->formID : 0), _type(ItemTypeForm) {}
-        explicit Item(FormId id) : _formId(id), _type(ItemTypeForm) {}
-
-        explicit Item(const char * val) : _stringVal(NULL), _type(ItemTypeNone) {
-            setStringVal(val);
+        void u_nullifyObject() {
+            if (auto ref = boost::get<object_ref>(&_var)) {
+                ref->jc_nullify();
+            }
         }
 
-        explicit Item(const std::string& val) : _stringVal(NULL), _type(ItemTypeNone) {
-            setStringVal(val.c_str());
+        Item() : _var(boost::blank()) {}
+        Item(Item&& other) : _var(std::move(other._var)) {}
+        Item(const Item& other) : _var(other._var) {}
+
+        Item& operator = (Item&& other) {
+            _var = std::move(other._var);
+            return *this;
         }
 
-        explicit Item(const BSFixedString& str) : _stringVal(NULL), _type(ItemTypeNone) {
-            setStringVal(str.data);
+        Item& operator = (const Item& other) {
+            _var = other._var;
+            return *this;
         }
 
-        explicit Item(object_base *collection) : _stringVal(NULL), _type(ItemTypeNone) {
-            setObjectVal(collection);
+        const variant& var() const {
+            return _var;
         }
 
-        /*explicit Item(Handle hdl) : _stringVal(NULL), _type(ItemTypeNone) {
-            auto obj = collection_registry::getObject(hdl);
-            if (obj)
-                setObjectVal(obj);
-        }*/
-
-/*
-        explicit Item(HandleT hdl) : _stringVal(NULL), _type(ItemTypeNone) {
-            auto obj = collection_registry::getObject(hdl);
-            if (obj)
-                setObjectVal(obj);
-        }*/
-
-        bool operator == (const Item& other) const {
-            return _type == other._type && _object == other._object;
+        template<class T> bool is_type() const {
+            return boost::get<T>(&_var) != nullptr;
         }
 
-        bool operator != (const Item& other) const {
-            return !(*this == other);
-        }
+        //////////////////////////////////////////////////////////////////////////
 
         friend class boost::serialization::access;
         BOOST_SERIALIZATION_SPLIT_MEMBER();
@@ -180,259 +123,199 @@ namespace collections {
         template<class Archive>
         void load(Archive & ar, const unsigned int version);
 
-        void setFlt(float val) {
-            _freeObject();
-            _freeString();
+        //////////////////////////////////////////////////////////////////////////
 
-            _type = ItemTypeFloat32;
-            _floatVal = val;
+
+        explicit Item(Float32 val) : _var(val) {}
+        explicit Item(double val) : _var((Float32)val) {}
+        explicit Item(SInt32 val) : _var(val) {}
+        explicit Item(int val) : _var((SInt32)val) {}
+        explicit Item(bool val) : _var((SInt32)val) {}
+        explicit Item(FormId id) : _var(id) {}
+
+        explicit Item(const std::string& val) : _var(val) {}
+        explicit Item(std::string&& val) : _var(val) {}
+
+        // these are none if data pointers zero
+        explicit Item(const TESForm *val) : _var(boost::blank()) {
+            *this = val;
+        }
+        explicit Item(const char * val) : _var(boost::blank()) {
+            *this = val;
+        }
+        explicit Item(object_base *val) : _var(boost::blank()) {
+            *this = val;
+        }
+        explicit Item(const BSFixedString& val) : _var(boost::blank()) {
+            *this = val.data;
         }
 
-        void setInt(SInt32 val) {
-            _freeObject();
-            _freeString();
+        Item& operator = (unsigned int val) { _var = (SInt32)val; return *this;}
+        Item& operator = (int val) { _var = (SInt32)val; return *this;}
+        //Item& operator = (bool val) { _var = (SInt32)val; return *this;}
+        Item& operator = (SInt32 val) { _var = val; return *this;}
+        Item& operator = (Float32 val) { _var = val; return *this;}
+        Item& operator = (double val) { _var = (Float32)val; return *this;}
+        Item& operator = (const std::string& val) { _var = val; return *this;}
+        Item& operator = (std::string&& val) { _var = val; return *this;}
 
-            _type = ItemTypeInt32;
-            _intVal = val;
-        }
 
-        ItemType type() const { return _type;}
-
-        void setStringVal(const char *val) {
-
-            _freeObject();
-
-            StringMem *block = (_type == ItemTypeCString ? _stringVal : 0);
-            _type = ItemTypeCString;
-
-            if (!val) {
-                if (block) {
-                    block->setEmpty();
-                } else {
-                    _stringVal = nullptr;
-                }
+        // prevent form id be saved like integral number
+        Item& operator = (FormId formId) {
+            if (formId) {
+                _var = formId;
             } else {
-                int lenPlusEnd = strlen(val);
-
-                if (block && block->bufferSize >= lenPlusEnd) {
-                    strcpy_s(block->string, block->bufferSize, val);
-                } else {
-                    delete block;
-                    _stringVal = StringMem::allocWithString(val);
-                }
+                _var = blank();
             }
-        }
-
-        void setObjectVal(object_base *obj) {
-            if (object() == obj)
-                return;
-
-            _replaceObject(obj);
-        }
-
-        void u_nullifyObject() {
-            if (object()) {
-                _object = nullptr;
-                _type = ItemTypeNone;
-            }
-        }
-
-        bool _freeObject() {
-            object_base *prev = object();
-            if (prev) {
-                prev->release();
-                _object = nullptr;
-                return true;
-            }
-
-            return false;
-        }
-
-        bool _freeString() {
-            if (_type == ItemTypeCString) {
-                delete _stringVal;
-                _stringVal = nullptr;
-                return true;
-            }
-
-            return false;
-        }
-
-        void _replaceObject(object_base *obj) {
-            if (!_freeObject())
-                _freeString();
-
-            _type = ItemTypeObject;
-            _object = obj;
-
-            if (obj)
-                obj->retain();
-        }
-
-        ~Item() {
-            if (_freeString()) {
-                ;
-            }
-            else if (_freeObject()) {
-                ;
-            }
-        }
-
-        Item(Item&& other) : _stringVal(other._stringVal), _type(other._type) {
-            other._stringVal = nullptr;
-            other._type = ItemTypeNone;
-        }
-
-        Item& operator=(Item&& other) {
-            _freeString();
-            _freeObject();
-
-            _type = other._type;
-            _stringVal = other._stringVal;
-
-            other._stringVal = nullptr;
-            other._type = ItemTypeNone;
-
             return *this;
         }
 
-        Item(const Item& other) : _stringVal(nullptr), _type(ItemTypeNone) {
-            _copy(other);
-        }
-
-        Item& operator=(const Item& other) {
-            _copy(other);
+        template<class T>
+        Item& _assignToPtr(T *ptr) {
+            if (ptr) {
+                _var = ptr;
+            } else {
+                _var = blank();
+            }
             return *this;
         }
 
-        void _copy(const Item &other) {
-            if (other._type == ItemTypeCString) {
-                setStringVal(other.strValue());
-            } else if (other.object()){
-                setObjectVal(other.object());
+        Item& operator = (const char *val) {
+            return _assignToPtr(val);
+        }
+
+        Item& operator = (object_base *val) {
+            return _assignToPtr(val);
+        }
+
+        Item& operator = (const TESForm *val) {
+            if (val) {
+                _var = (FormId)val->formID;
             } else {
-                _type = other._type;
-                _stringVal = other._stringVal;
+                _var = blank();
             }
+            return *this;
+        }
+
+        object_base *object() const {
+            if (auto ref = boost::get<object_ref>(&_var)) {
+                return ref->get();
+            }
+            return nullptr;
         }
 
         Float32 fltValue() const {
-            return _type == ItemTypeFloat32 ? _floatVal : (_type == ItemTypeInt32 ? _intVal : 0);
+            if (auto val = boost::get<Float32>(&_var)) {
+                return *val;
+            }
+            else if (auto val = boost::get<SInt32>(&_var)) {
+                return *val;
+            }
+            return 0;
         }
 
         SInt32 intValue() const {
-            return _type == ItemTypeInt32 ? _intVal : (_type == ItemTypeFloat32 ? _floatVal : 0);
+            if (auto val = boost::get<SInt32>(&_var)) {
+                return *val;
+            }
+            else if (auto val = boost::get<Float32>(&_var)) {
+                return *val;
+            }
+            return 0;
         }
 
         const char * strValue() const {
-            return (_type == ItemTypeCString && _stringVal) ? _stringVal->string : 0;
+            if (auto val = boost::get<std::string>(&_var)) {
+                return val->c_str();
+            }
+            return nullptr;
+        }
+
+        std::string * stringValue() {
+            return boost::get<std::string>(&_var);
         }
 
         TESForm * form() const {
-            return _type == ItemTypeForm ? LookupFormByID(_formId) : nullptr;
+            auto frmId = formId();
+            return frmId != FormZero ? LookupFormByID(frmId) : nullptr;
         }
 
         FormId formId() const {
-            return (FormId) (_type == ItemTypeForm ? _formId : 0);
+            if (auto val = boost::get<FormId>(&_var)) {
+                return *val;
+            }
+            return FormZero;
         }
 
-        void setForm(const TESForm *form) {
-            setFormId((FormId)(form ? form->formID : 0));
-        }
+        class are_strict_equals : public boost::static_visitor<bool> {
+        public:
 
-        void setFormId(FormId formId) {
-            _freeString();
-            _freeObject();
+            template <typename T, typename U>
+            bool operator()( const T &, const U & ) const {
+                return false; // cannot compare different types
+            }
 
-            _type = ItemTypeForm;
-            _formId = formId;
-        }
+            template <typename T>
+            bool operator()( const T & lhs, const T & rhs ) const {
+                return lhs == rhs;
+            }
+        };
 
         bool isEqual(SInt32 value) const {
-            return _type == ItemTypeInt32 && _intVal == value;
+            return is_type<SInt32>() && intValue() == value;
         }
 
         bool isEqual(Float32 value) const {
-            return _type == ItemTypeFloat32 && _floatVal == value;
+            return is_type<Float32>() && fltValue() == value;
         }
 
         bool isEqual(const char* value) const {
             auto str1 = strValue();
             auto str2 = value;
-            return  _type == ItemTypeCString && ( (str1 && str2 && strcmp(str1, str2) == 0) || (!str1 && !str2) );
+            return is_type<std::string>() && ( (str1 && str2 && strcmp(str1, str2) == 0) || (!str1 && !str2) );
         }
 
         bool isEqual(const object_base *value) const {
-            return _type == ItemTypeObject && ( (_object && value && _object->id == value->id) || _object == value);
+            return is_type<object_ref>() && object() == value;
         }
 
         bool isEqual(const TESForm *value) const {
-            return _type == ItemTypeForm && _formId == (value ? value->formID : 0);
+            return is_type<FormId>() && formId() == (value ? value->formID : 0);
         }
 
         bool isEqual(const Item& other) const {
-            if (type() != other.type()) {
-                return false;
-            }
+            return boost::apply_visitor(are_strict_equals(), _var, other._var);
+        }
 
-            switch(type()) {
-            case ItemTypeInt32:
-                return _intVal == other._intVal;
-            case ItemTypeFloat32:
-                return _floatVal == other._floatVal;
-            case ItemTypeForm:
-                return _formId == other._formId;
-            case ItemTypeObject:
-                return isEqual(other.object());
-            case ItemTypeCString:
-                return isEqual(other.strValue());
-            default:
-                return true;
-            }
+        bool operator == (const Item& other) const {
+            return isEqual(other);
+        }
+
+        bool operator != (const Item& other) const {
+            return !isEqual(other);
         }
 
         bool isNull() const {
-            return _type == ItemTypeNone;
+            return is_type<boost::blank>();
         }
 
         bool isNumber() const {
-            return _type == ItemTypeFloat32 || _type == ItemTypeInt32;
-        }
-
-        object_base *object() const {
-            return (_type == ItemTypeObject) ? _object : nullptr;
+            return is_type<SInt32>() || is_type<Float32>();
         }
 
         template<class T> T readAs();
-        template<class T> void writeAs(T val);
     };
 
     template<> inline float Item::readAs<Float32>() {
         return fltValue();
     }
 
-    template<> inline void Item::writeAs(Float32 val) {
-        setFlt(val);
-    }
-
     template<> inline SInt32 Item::readAs<SInt32>() {
         return intValue();
     }
 
-    template<> inline void Item::writeAs(SInt32 val) {
-        setInt(val);
-    }
-
     template<> inline const char * Item::readAs<const char *>() {
         return strValue();
-    }
-
-    template<> inline void Item::writeAs(const char * val) {
-        setStringVal(val);
-    }
-
-    template<> inline void Item::writeAs(BSFixedString val) {
-        setStringVal(val.data);
     }
 
     template<> inline BSFixedString Item::readAs<BSFixedString>() {
@@ -442,15 +325,11 @@ namespace collections {
 
     template<> inline Handle Item::readAs<Handle>() {
         auto obj = object();
-        return obj ? obj->id : HandleNull;
+        return obj ? obj->uid() : HandleNull;
     }
 
     template<> inline TESForm * Item::readAs<TESForm*>() {
         return form();
-    }
-
-    template<> inline void Item::writeAs(TESForm *form) {
-        return setForm(form);
     }
 
     template<> inline object_base * Item::readAs<object_base*>() {
@@ -472,6 +351,15 @@ namespace collections {
         typedef container_type::reverse_iterator reverse_iterator;
 
         container_type _array;
+
+        container_type& u_container() {
+            return _array;
+        }
+
+        container_type container_copy() {
+            object_lock g(this);
+            return _array;
+        }
 
         void u_push(const Item& item) {
             _array.push_back(item);
@@ -524,7 +412,12 @@ namespace collections {
 
     public:
 
-        const container_type& container() const {
+        const container_type& u_container() const {
+            return cnt;
+        }
+
+        container_type container_copy() {
+            object_lock g(this);
             return cnt;
         }
 
@@ -594,7 +487,12 @@ namespace collections {
 
     public:
 
-        const container_type& container() const {
+        const container_type& u_container() const {
+            return cnt;
+        }
+
+        container_type container_copy() {
+            object_lock g(this);
             return cnt;
         }
 

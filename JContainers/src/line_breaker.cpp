@@ -10,11 +10,15 @@
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/split.hpp>
-#include "boost/algorithm/string/classification.hpp"
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/range/iterator_range.hpp>
 
 using namespace std;
+namespace bs = boost;
 
 namespace {
+
+    typedef bs::iterator_range<const char *> cstring;
 
     float charactersPerLine(int total, int maxCharsPerLine) {
         assert(maxCharsPerLine > 0);
@@ -24,40 +28,34 @@ namespace {
 
     struct line
     {
-        vector<string> words;
+        vector<cstring> words;
 
         int charCount() const {
-            return std::accumulate(words.begin(), words.end(), 0, [](int val, const string& str) {
-                return val + (int)str.length();
+            return std::accumulate(words.begin(), words.end(), 0, [](int val, const cstring& str) {
+                return val + (int)str.size();
             })
                 + (words.size() > 0 ? words.size() - 1 : 0);
         }
 
-        void addWord(const string& word) {
+        void addWord(const cstring& word) {
             words.push_back(word);
-        }
-
-        static line lineFromString(const string& source) {
-            line ln;
-            string into;
-            stringstream ssin(source);
-            while (ssin.good()) {
-                ssin >> into;
-                ln.words.push_back(into);
-            }
-
-            return ln;
         }
 
         void print() const {
             cout << charCount() << ' ';
-            for (auto&str : words) {
+            for (const auto& str : words) {
                 cout << str << ' ';
             }
         }
 
         string wholeString() const {
-            return boost::algorithm::join(words, " ");
+            std::string result;
+            for (const auto& str : words) {
+                result.append(str.begin(), str.size());
+                result += ' ';
+            }
+
+            return result;
         }
     };
 
@@ -217,33 +215,22 @@ namespace {
     };
 
 
-
-
     bool isBreak(char c) {
         return
             c == ' ' || 
             c == '\n'
-            //||
-            // c == '.' ||
-           // c == '(' || c == ')' ||
-           // c == ','
             ;
     }
 
-
-    vector<string> substringRange(string::iterator beg, string::iterator end) {
-
-        vector<string> strings;
+    vector<cstring> substringRange(cstring::iterator beg, cstring::iterator end) {
+        vector<cstring> strings;
         boost::split( strings, boost::make_iterator_range(beg, end), &isBreak );
-
-        return strings;
+        return boost::split( strings, boost::make_iterator_range(beg, end), &isBreak );
     }
 
-    line_set initialSet(std::string& data, int charsPerLine = 40) {
+    line_set initialSet(const cstring& data, int charsPerLine = 40) {
 
-
-
-        float cpl = charactersPerLine(data.length(), charsPerLine);
+        float cpl = charactersPerLine(data.size(), charsPerLine);
 
         line_set result;
 
@@ -293,6 +280,12 @@ namespace {
         int lineIdx;
         bool increase;
 
+        operation() {
+            lset = nullptr;
+            lineIdx = 0;
+            increase = false;
+        }
+
         void doIncr(bool incr, int lnIdx, line_set& set) {
             lineIdx = lnIdx;
             increase = incr;
@@ -314,22 +307,7 @@ namespace {
 
 vector<string> StringUtil_wrapString(const char *csource, int charsPerLine)
 {
-
-    string source = csource;
-
-
-/*
-    string source = STR(is a 2005 American documentary film by Steve Anderson, which argues the titular word is key
-        to discussions on freedom of speech and censorship. It provides perspectives from art,
-        linguistics and society. Oxford English Dictionary editor Jesse Sheidlower, journalism analyst David Shaw,
-        and linguists Reinhold Aman and Geoffrey Nunberg explain the terms evolution. Comedian Billy Connolly states it can
-        be understood regardless of ones background, and musician Alanis Morissette says its taboo nature gives it power.
-        The film contains the last interview of author Hunter S. Thompson before his suicide. It features animated sequences by Bill Plympton.
-        The documentary was first screened at the AFI Film Festival at ArcLight Hollywood. The New York Times critic A. O. Scott called
-        the film a battle between advocates of morality and supporters of freedom of expression; a review by the American Film Institute said
-        this freedom must extend to words that offend. Other reviewers criticized the films length and repetitiveness. Its DVD
-        was released in the US and the UK and used in university cour);*/
-
+    cstring source = cstring(csource, csource + strlen(csource));
 
     line_set set = initialSet(source, charsPerLine);
 
