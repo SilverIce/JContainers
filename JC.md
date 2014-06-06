@@ -43,7 +43,7 @@ Ordered collection (array) of values. It is dynamically resizeable, and can stor
 Both are **associative** containers (sets of unique keys and values where each key associated with one **value**). Each key must be unique within a given container. In a JMap, a key is a string, while a JFormMap key is a form (a form is any actor, item, quest, spell - almost everything in Skyrim).
 ```lua
 int map = JMap.object()
-JMap.setForm("me", GetTargetActor())
+JMap.setForm(map, "me", GetTargetActor())
 form actor = JMap.getForm(map, "me")
 ```
 
@@ -414,7 +414,7 @@ int function getActorEntry(form actor)
     int entry = JFormMap.getObj(self.followers, follower)
     ;// if no entry found - create new from prototype-string
     if !entry
-        int entry = JValue.objectWithPrototype("{ \"mood\": 0, \"anger\": 0, \"victims\": [] }")
+        entry = JValue.objectWithPrototype("{ \"mood\": 0, \"anger\": 0, \"victims\": [] }")
         JFormMap.setObj(self.followers, follower, entry)
     endif
 
