@@ -141,6 +141,9 @@
     <ClInclude Include="src\path_resolving.h">
       <Filter>collections_module\path_resolving</Filter>
     </ClInclude>
+    <ClInclude Include="src\boost_extras.h">
+      <Filter>collections_module</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="exports.def" />

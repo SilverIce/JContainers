@@ -100,7 +100,8 @@ namespace collections
                 return;
             }
 
-            if (collection && !*cpath) {
+            // path is empty -> just visit collection
+            if (!*cpath) {
                 Item itm(collection);
                 itemFunction(&itm);
                 return ;

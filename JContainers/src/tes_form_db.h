@@ -1,3 +1,5 @@
+#include "boost_extras.h"
+
 namespace collections {
 
     class tes_form_db : public tes_binding::class_meta_mixin_t<tes_form_db> {
@@ -9,6 +11,11 @@ namespace collections {
             metaInfo.comment = "Manages form related information (entry).\n";
         }
 
+        enum path_type {
+            is_key = 0,
+            is_path = 1,
+        };
+
         class subpath_extractor {
             enum { bytesCount = 0xff };
 
@@ -16,23 +23,33 @@ namespace collections {
             char _storageName[bytesCount];
         public:
 
-            explicit subpath_extractor(const char * const path) {
+            explicit subpath_extractor(const char * const path, path_type type = is_key) {
                 _storageName[0] = '\0';
                 _rest = nullptr;
 
-                if (path && *path == '.' && *(path + 1)) {
-                    const char *pathPtr = path;
-                    ++pathPtr;
+                if (!path) {
+                    return;
+                }
 
-                    int itr = 0;
-                    while (*pathPtr && *pathPtr != '.' && *pathPtr != '[' && *pathPtr != ']' && itr < bytesCount) {
-                        _storageName[itr++] = *pathPtr++;
-                    }
+                namespace bs = boost;
 
-                    if (itr > 0 && itr < (bytesCount - 1)) { // something was written into _storageName
-                        _storageName[itr] = '\0';
-                        _rest = pathPtr;
-                    }
+                auto pathRange = bs::make_iterator_range(path, path + strlen(path));
+
+                auto pair1 = bs::half_split(pathRange, ".");
+
+                if (!pair1.first.empty() || pair1.second.empty()) {
+                    return;
+                }
+
+                auto pair2 = bs::half_split_if(pair1.second, bs::is_any_of(".["));
+
+                if (!pair2.first.empty() && !pair2.second.empty()) {
+                    auto strorageNameLen = (std::min)(bytesCount-1,  pair2.first.size());
+                    std::copy_n(pair2.first.begin(), strorageNameLen, _storageName);
+                    _storageName[strorageNameLen] = '\0';
+
+                    _rest = (type == is_key ?
+                        pair2.second.begin() : pair2.second.begin() - 1);
                 }
             }
 
@@ -108,7 +125,7 @@ namespace collections {
 
         template<class T>
         static T solveGetter(TESForm *form, const char* path) {
-            subpath_extractor sub(path);
+            subpath_extractor sub(path, is_path);
             return tes_object::resolveGetter<T>(findEntry(sub.storageName(), form), sub.rest()); 
         }
         REGISTERF(solveGetter<Float32>, "solveFlt", "fKey path", "attempts to get value associated with path.");
@@ -119,7 +136,7 @@ namespace collections {
 
         template<class T>
         static bool solveSetter(TESForm *form, const char* path, T value) { 
-            subpath_extractor sub(path);
+            subpath_extractor sub(path, is_path);
             return tes_object::solveSetter(findEntry(sub.storageName(), form), sub.rest(), value);
         }
         REGISTERF(solveSetter<Float32>, "solveFltSetter", "fKey path value",
@@ -179,20 +196,41 @@ namespace collections {
 
     TEST(tes_form_db, subpath_extractor)
     {
-        auto expectEq = [&](const char *path, const char *storageName, const char *rest) {
+        auto expectKeyEq = [&](const char *path, const char *storageName, const char *asKey, const char *asPath) {
             auto extr = tes_form_db::subpath_extractor(path);
             EXPECT_TRUE((!storageName && !extr.storageName()) || strcmp(extr.storageName(), storageName) == 0 );
-            EXPECT_TRUE((!rest && !extr.rest()) || strcmp(extr.rest(), rest) == 0 );
+            EXPECT_TRUE((!asKey && !extr.rest()) || strcmp(extr.rest(), asKey) == 0 );
+
+            auto pathExtr = tes_form_db::subpath_extractor(path, tes_form_db::is_path);
+            EXPECT_TRUE((!storageName && !pathExtr.storageName()) || strcmp(pathExtr.storageName(), storageName) == 0 );
+            EXPECT_TRUE((!asPath && !pathExtr.rest()) || strcmp(pathExtr.rest(), asPath) == 0 );
         };
 
-        expectEq(".strg.key", "strg", ".key");
-        expectEq(".strg[0]", "strg", "[0]");
-        expectEq(".strg[0].key.key2", "strg", "[0].key.key2");
+        auto expectFail = [&](const char *path) {
+            expectKeyEq(path, nullptr, nullptr, nullptr);
+        };
 
-        expectEq("strg[0]", nullptr, nullptr);
-        expectEq("[", nullptr, nullptr);
-        expectEq(nullptr, nullptr, nullptr);
-        expectEq("", nullptr, nullptr);
-        expectEq("...", nullptr, nullptr);
+        expectKeyEq(".strg.key", "strg", "key", ".key");
+        expectKeyEq(".strg[0]", "strg", "0]", "[0]");
+        expectKeyEq(".strg[0].key.key2", "strg", "0].key.key2", "[0].key.key2");
+
+        expectFail("strg[0]");
+        expectFail("[");
+        expectFail(nullptr);
+        expectFail("");
+        expectFail("...");
+    }
+
+    TEST(tes_form_db, test)
+    {
+        char formData[sizeof TESForm];
+        TESForm *fakeForm = (TESForm *)&formData;
+        fakeForm->formID = 0x14;
+
+        const char *path = ".forms.object";
+        tes_form_db::setItem(fakeForm, path, tes_array::objectWithSize(0));
+
+        EXPECT_NOT_NIL( tes_form_db::getItem<object_base*>(fakeForm, path) );
+        EXPECT_NOT_NIL( tes_form_db::solveGetter<object_base*>(fakeForm, path) );
     }
 }

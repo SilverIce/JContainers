@@ -1,0 +1,41 @@
+#pragma once
+
+#include <boost/range/algorithm/find_if.hpp>
+#include <boost/algorithm/string/find.hpp>
+#include <utility>
+
+namespace boost {
+
+    template< typename RangeT, typename Range2T >
+    inline std::pair<RangeT,RangeT> half_split(
+        const RangeT& Input,
+        const Range2T& Search)
+    {
+        RangeT substr = boost::find_first(Input, Search);
+        if (!substr.empty()) {
+            return std::make_pair(
+                RangeT (Input.begin(), substr.begin()),
+                RangeT (substr.end(), Input.end())
+                );
+        }
+
+        return std::make_pair(RangeT(), RangeT());
+    }
+
+    template< typename RangeT, typename Predicate >
+    inline std::pair<RangeT,RangeT> half_split_if(
+        const RangeT& Input,
+        Predicate Cond)
+    {
+        auto location = boost::find_if(Input, Cond);
+        if (location != Input.end()) {
+            return std::make_pair(
+                RangeT (Input.begin(), location),
+                RangeT (location + 1, Input.end())
+                );
+        }
+
+        return std::make_pair(RangeT(), RangeT());
+    }
+
+}
