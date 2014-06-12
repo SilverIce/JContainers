@@ -149,11 +149,11 @@ namespace collections {
 
         // test static form ids
         {
-			const int pluginIdx = skse::fake_plugin_index;
+            const int pluginIdx = skse::fake_plugin_index;
             const FormId form = (FormId)(pluginIdx << 24 | 0x14);
 
             EXPECT_TRUE( fh::is_static(form) );
-			EXPECT_EQ(form, fh::construct(pluginIdx, 0x14));
+            EXPECT_EQ(form, fh::construct(pluginIdx, 0x14));
 
             std::string formString = *fh::to_string(form);
             EXPECT_TRUE( formString == 
@@ -169,7 +169,7 @@ namespace collections {
             const FormId form = (FormId)(FormGlobalPrefix << 24 | 0x14);
 
             EXPECT_TRUE( !fh::is_static(form) );
-			EXPECT_EQ(form, fh::construct(FormGlobalPrefix, 0x14));
+            EXPECT_EQ(form, fh::construct(FormGlobalPrefix, 0x14));
 
             std::string formString = *fh::to_string(form);
 

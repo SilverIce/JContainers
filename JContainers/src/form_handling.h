@@ -35,14 +35,14 @@ namespace collections {
             return (FormId) ((mod_id << 24) | local_id((FormId)local_identifier));
         }
 
-		inline FormId resolve_handle(FormId handle) {
-			if (is_static(handle)) {
-				return (FormId)skse::resolve_handle((uint32_t)handle);
-			}
-			else {
-				return handle;
-			}
-		}
+        inline FormId resolve_handle(FormId handle) {
+            if (is_static(handle)) {
+                return (FormId)skse::resolve_handle((uint32_t)handle);
+            }
+            else {
+                return handle;
+            }
+        }
 
         inline boost::optional<std::string> to_string(FormId formId) {
 
@@ -90,13 +90,13 @@ namespace collections {
 
             auto pair1 = bs::half_split(fstring, "|");
 
-			if (pair1.second.empty() || !std::equal(pair1.first.begin(), pair1.first.end(), kFormData)) {
-				return boost::optional<FormId>(false, FormZero);
-			}
+            if (pair1.second.empty() || !std::equal(pair1.first.begin(), pair1.first.end(), kFormData)) {
+                return boost::optional<FormId>(false, FormZero);
+            }
 
             auto pair2 = bs::half_split(pair1.second, "|");
-			// pair2.first - modname part can be empty
-			if (/*pair2.first.empty() || */pair2.second.empty()) {
+            // pair2.first - modname part can be empty
+            if (/*pair2.first.empty() || */pair2.second.empty()) {
                 return boost::optional<FormId>(false, FormZero);
             }
             
