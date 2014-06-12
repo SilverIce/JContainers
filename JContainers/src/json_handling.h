@@ -3,6 +3,7 @@
 #include <set>
 #include <vector>
 #include <jansson.h>
+#include <memory>
 
 #include "collections.h"
 #include "form_handling.h"
@@ -160,7 +161,7 @@ namespace collections {
             else if (type == JSON_REAL) {
                 item = json_real_value(val);
             }
-            else if (type == JSON_TRUE || type || JSON_FALSE) {
+            else if (type == JSON_TRUE || type == JSON_FALSE) {
                 item = json_boolean_value(val);
             }
 

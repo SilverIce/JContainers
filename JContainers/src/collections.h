@@ -1,27 +1,24 @@
 #pragma once
 
-#include "common/ITypes.h"
-#include "common/IDebugLog.h"
-
-#include "skse/PapyrusVM.h"
-
 #include <vector>
 #include <string>
 #include <assert.h>
-//#include <mutex>
 
 #include <boost/serialization/split_member.hpp>
 #include <boost/smart_ptr/intrusive_ptr.hpp>
 #include <boost/variant.hpp>
 
+#include "common/ITypes.h"
+#include "common/IDebugLog.h"
 #include "skse/GameForms.h"
 
 #include "object_base.h"
-
 #include "tes_context.h"
+#include "skse.h"
 
 namespace collections {
 
+	class tes_context;
 
     template<class T>
     class collection_base_T : public object_base
@@ -237,7 +234,7 @@ namespace collections {
 
         TESForm * form() const {
             auto frmId = formId();
-            return frmId != FormZero ? LookupFormByID(frmId) : nullptr;
+            return frmId != FormZero ? skse::lookup_form(frmId) : nullptr;
         }
 
         FormId formId() const {

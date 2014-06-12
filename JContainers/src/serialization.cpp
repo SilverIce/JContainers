@@ -34,8 +34,6 @@
 
 #include "tes_context.hpp"
 
-extern SKSESerializationInterface	* g_serialization;
-
 //BOOST_CLASS_EXPORT_GUID(collections::object_base, "kJValue");
 BOOST_CLASS_EXPORT_GUID(collections::array, "kJArray");
 BOOST_CLASS_EXPORT_GUID(collections::map, "kJMap");
@@ -134,22 +132,11 @@ namespace collections {
 
 #endif
 
-    static FormId convertOldFormIdToNew(FormId oldId) {
-        if (form_handling::is_static(oldId)) {
-            UInt64 newId = 0;
-            g_serialization->ResolveHandle(oldId, &newId);
-            return (FormId)newId;
-        }
-        else {
-            return oldId;
-        }
-    }
-
     template<class Archive>
     static FormId readOldFormIdToNew(Archive& ar) {
         UInt32 oldId = 0;
         ar & oldId;
-        return convertOldFormIdToNew((FormId)oldId);
+        return form_handling::resolve_handle ((FormId)oldId);
     }
 
     template<class Archive>
@@ -175,7 +162,7 @@ namespace collections {
             ar & _var;
 
             if (is_type<FormId>()) {
-                *this = convertOldFormIdToNew(formId());
+                *this = form_handling::resolve_handle(formId());
             }
         }
         else {
@@ -253,7 +240,7 @@ namespace collections {
         }
 
         for(auto& oldKey : keys) {
-            FormId newKey = static_cast<FormId>(convertOldFormIdToNew(oldKey));
+			FormId newKey = form_handling::resolve_handle(oldKey);
 
             if (oldKey == newKey) {
                 ;
@@ -287,37 +274,4 @@ namespace collections {
             pair.second.u_nullifyObject();
         }
     }
-}
-
-void Serialization_Revert(SKSESerializationInterface * intfc)
-{
-    collections::tes_context::instance().clearState();
-}
-
-void Serialization_Save(SKSESerializationInterface * intfc)
-{
-    if (intfc->OpenRecord(kJStorageChunk, kJSerializationCurrentVersion)) {
-        auto data = collections::tes_context::instance().saveToArray();
-        intfc->WriteRecordData(data.data(), data.size());
-    }
-}
-
-void Serialization_Load(SKSESerializationInterface * intfc)
-{
-    UInt32	type;
-    UInt32	version;
-    UInt32	length;
-
-    std::string data;
-
-    while (intfc->GetNextRecordInfo(&type, &version, &length)) {
-
-        if (type == kJStorageChunk && length > 0) {
-            data.resize(length, '\0');
-            intfc->ReadRecordData((void *)data.data(), data.size());
-            break;
-        }
-    }
-
-    collections::tes_context::instance().loadAll(data, version);
 }

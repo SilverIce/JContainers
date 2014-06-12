@@ -18,7 +18,10 @@ namespace collections
 
         if (deleteObject) {
             assert(_context);
+
+			// it's still possible to get an access at this point?
             _context->registry->removeObject(_id);
+
             delete this;
         }
 

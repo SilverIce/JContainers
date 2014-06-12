@@ -22,6 +22,9 @@
     <Filter Include="collections_module\tes_api">
       <UniqueIdentifier>{a481ff76-9ab2-4bb4-91f6-f5d5e21c603c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="skse">
+      <UniqueIdentifier>{ca106175-46ec-41d4-a025-c06319331cdf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\code_producer.cpp">
@@ -42,10 +45,12 @@
     <ClCompile Include="src\basic_part.cpp">
       <Filter>object_module\impl</Filter>
     </ClCompile>
-    <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\jcontainers_pch.cpp" />
     <ClCompile Include="src\path_resolving.cpp">
       <Filter>collections_module\path_resolving</Filter>
+    </ClCompile>
+    <ClCompile Include="src\skse.cpp">
+      <Filter>skse</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -143,6 +148,9 @@
     </ClInclude>
     <ClInclude Include="src\boost_extras.h">
       <Filter>collections_module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\skse.h">
+      <Filter>skse</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

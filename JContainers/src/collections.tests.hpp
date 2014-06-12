@@ -147,35 +147,37 @@ namespace collections {
         EXPECT_FALSE( fh::is_form_string("__formDatttt" ));
         EXPECT_FALSE( fh::is_form_string(nullptr));
 
-        int pluginIdx = 0x9;
-        const char * pluginName = "Skyrim.esm";
-
         // test static form ids
         {
-            FormId form = (FormId)(pluginIdx << 24 | 0x14);
-            EXPECT_TRUE( fh::is_static(form) );
+			const int pluginIdx = skse::fake_plugin_index;
+            const FormId form = (FormId)(pluginIdx << 24 | 0x14);
 
-            std::string formString = *fh::to_string(form, [=](int) { return pluginName; });
+            EXPECT_TRUE( fh::is_static(form) );
+			EXPECT_EQ(form, fh::construct(pluginIdx, 0x14));
+
+            std::string formString = *fh::to_string(form);
             EXPECT_TRUE( formString == 
-                (std::string(fh::kFormData) + fh::kFormDataSeparator + pluginName + fh::kFormDataSeparator + "0x14"));
+                (std::string(fh::kFormData) + fh::kFormDataSeparator + skse::fake_plugin_name + fh::kFormDataSeparator + "0x14"));
 
             EXPECT_TRUE( form == 
-                *fh::from_string(formString.c_str(), [=](const char*) { return pluginIdx; }) );
+                *fh::from_string(formString.c_str()) );
 
         }
 
         // test global (0xFF*) form ids
         {
-            FormId form = (FormId)(FormGlobalPrefix << 24 | 0x14);
-            EXPECT_TRUE( !fh::is_static(form) );
+            const FormId form = (FormId)(FormGlobalPrefix << 24 | 0x14);
 
-            std::string formString = *fh::to_string(form, [=](int) { return pluginName; });
+            EXPECT_TRUE( !fh::is_static(form) );
+			EXPECT_EQ(form, fh::construct(FormGlobalPrefix, 0x14));
+
+            std::string formString = *fh::to_string(form);
 
             EXPECT_TRUE( formString == 
                 (std::string(fh::kFormData) + fh::kFormDataSeparator + fh::kFormDataSeparator + "0xff000014"));
 
             EXPECT_TRUE( form == 
-                *fh::from_string(formString.c_str(), [=](const char*) { return pluginIdx; }) );
+                *fh::from_string(formString.c_str()) );
         }
     }
 
