@@ -129,6 +129,50 @@ namespace skse { namespace {
 
 namespace skse {
 
+    namespace {
+
+        enum {
+            char_count = 'Z' - 'A' + 1,
+
+        };
+
+        static char fakePluginNames[char_count * 2];
+
+        uint8_t wrap_index(int idx) {
+            int rel = (int)idx - (int)'A';
+            int wrapped = rel >= 0 ? rel % char_count : (-rel) % char_count;
+            assert(wrapped >= 0 && wrapped < char_count);
+            return wrapped;
+        }
+
+        const char * _modname_from_index(uint8_t idx) {
+
+            int wrapped = wrap_index(idx);
+
+            fakePluginNames[wrapped*2] = (char)('A' + wrapped);
+            fakePluginNames[wrapped*2 + 1] = '\0';
+
+            return &fakePluginNames[wrapped * 2];
+        }
+
+        uint8_t _modindex_from_name(const char * name) {
+            assert(name);
+            int wrapped = wrap_index(*name) + 'A';
+            return wrapped;
+        }
+
+        TEST(_modname_from_index, test)
+        {
+            auto res = _modname_from_index('Z');
+            EXPECT_TRUE( strcmp(res, "Z") == 0 );
+
+            EXPECT_TRUE(_modindex_from_name("Action") == 'A');
+
+            const char * name2 = _modname_from_index('|');
+            EXPECT_TRUE( strcmp(name2, "|") != 0);
+        }
+    }
+
     uint32_t resolve_handle(uint32_t handle) {
         if (g_serialization) {
             UInt64 newId = handle;
@@ -139,8 +183,6 @@ namespace skse {
         return handle;
     }
 
-    const char * fake_plugin_name = "Fake.esm";
-
     const char * modname_from_index(uint8_t idx) {
         if (g_serialization) {
             DataHandler * dhand = DataHandler::GetSingleton();
@@ -148,12 +190,12 @@ namespace skse {
             return modInfo ? modInfo->name : nullptr;
         }
         else {
-            return fake_plugin_name;
+            return _modname_from_index(idx);
         }
     }
 
     uint8_t modindex_from_name(const char * name) {
-        return g_serialization ? DataHandler::GetSingleton()->GetModIndex(name) : fake_plugin_index;
+        return g_serialization ? DataHandler::GetSingleton()->GetModIndex(name) : _modindex_from_name(name);
     }
 
     TESForm* lookup_form(uint32_t handle) {
