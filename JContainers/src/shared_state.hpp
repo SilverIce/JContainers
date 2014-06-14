@@ -78,12 +78,18 @@ namespace collections
                         delegate->u_loadAdditional(archive);
                     }
                 }
-                catch (const boost::archive::archive_exception& exc) {
-                    _FATALERROR("caught exception during archive load - '%s'. trying to recover", exc.what());
-
-                    throw exc;
-
+                catch (const std::exception& exc) {
+                    _FATALERROR("caught exception (%s) during archive load - '%s'. forcing application to crash",
+                        typeid(exc).name, exc.what());
                     //u_clearState();
+
+                    // force whole app to crash
+                    assert(false);
+                }
+                catch (...) {
+                    _FATALERROR("caught unknown (non std::*) exception. forcing application to crash");
+                    // force whole app to crash
+                    assert(false);
                 }
 
             }

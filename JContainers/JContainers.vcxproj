@@ -67,7 +67,7 @@
       <Optimization>Full</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <AdditionalIncludeDirectories>src;lib;lib\boost;$(SolutionDir)\dep;$(SolutionDir)\dep\skse;$(SolutionDir)\dep\jansson\jansson\src;$(SolutionDir)\dep\jansson;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;NDEBUG;_WINDOWS;_PPAPI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;_WINDOWS;_PPAPI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
@@ -97,7 +97,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>src;lib;lib\boost;$(SolutionDir)\dep;$(SolutionDir)\dep\skse;$(SolutionDir)\dep\jansson\jansson\src;$(SolutionDir)\dep\jansson;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;NDEBUG;_WINDOWS;_PPAPI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;_WINDOWS;_PPAPI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
@@ -133,9 +133,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\line_breaker.cpp" />
+    <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\path_resolving.cpp" />
     <ClCompile Include="src\serialization.cpp" />
-    <ClCompile Include="src\skse.cpp" />
     <ClCompile Include="src\tes_inteface.cpp" />
     <ClInclude Include="src\autorelease_queue.h" />
     <ClInclude Include="src\boost_extras.h" />
@@ -145,7 +145,6 @@
     <ClInclude Include="src\form_handling.h" />
     <ClInclude Include="src\path_resolving.h" />
     <ClInclude Include="src\plugin_info.h" />
-    <ClInclude Include="src\skse.h" />
     <ClInclude Include="src\tes_form_db.h" />
     <ClInclude Include="src\typedefs.h" />
   </ItemGroup>
