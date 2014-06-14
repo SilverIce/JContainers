@@ -76,7 +76,7 @@ namespace collections {
             }
 
             void bind(VMClassRegistry* registry) const {
-                assert(metaInfo.className);
+                assert(!className.empty());
 
                 for (const auto& itm : methods) {
                     itm.bind(registry, className.c_str());

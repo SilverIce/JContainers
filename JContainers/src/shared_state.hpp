@@ -80,7 +80,7 @@ namespace collections
                 }
                 catch (const std::exception& exc) {
                     _FATALERROR("caught exception (%s) during archive load - '%s'. forcing application to crash",
-                        typeid(exc).name, exc.what());
+                        typeid(exc).name(), exc.what());
                     //u_clearState();
 
                     // force whole app to crash

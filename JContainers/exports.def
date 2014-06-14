@@ -1,4 +1,0 @@
-LIBRARY	"JContainers"
-EXPORTS
-SKSEPlugin_Query
-SKSEPlugin_Load

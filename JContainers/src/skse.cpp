@@ -56,7 +56,7 @@ namespace skse { namespace {
 
     extern "C" {
 
-        bool SKSEPlugin_Query(const SKSEInterface * skse, PluginInfo * info)
+        __declspec(dllexport) bool SKSEPlugin_Query(const SKSEInterface * skse, PluginInfo * info)
         {
             gLog.OpenRelative(CSIDL_MYDOCUMENTS, "\\My Games\\Skyrim\\SKSE\\JContainers.log");
             gLog.SetPrintLevel(IDebugLog::kLevel_Error);
@@ -103,7 +103,7 @@ namespace skse { namespace {
             return true;
         }
 
-        bool SKSEPlugin_Load(const SKSEInterface * skse)
+        __declspec(dllexport) bool SKSEPlugin_Load(const SKSEInterface * skse)
         {
             _MESSAGE("plugin loaded");
 

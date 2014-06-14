@@ -79,7 +79,8 @@
       <SDLCheck>false</SDLCheck>
     </ClCompile>
     <Link>
-      <ModuleDefinitionFile>exports.def</ModuleDefinitionFile>
+      <ModuleDefinitionFile>
+      </ModuleDefinitionFile>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <TargetMachine>MachineX86</TargetMachine>
@@ -111,7 +112,8 @@
       <AdditionalOptions> -D_SCL_SECURE_NO_WARNINGS</AdditionalOptions>
     </ClCompile>
     <Link>
-      <ModuleDefinitionFile>exports.def</ModuleDefinitionFile>
+      <ModuleDefinitionFile>
+      </ModuleDefinitionFile>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <TargetMachine>MachineX86</TargetMachine>
@@ -133,9 +135,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\line_breaker.cpp" />
-    <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\path_resolving.cpp" />
     <ClCompile Include="src\serialization.cpp" />
+    <ClCompile Include="src\skse.cpp" />
     <ClCompile Include="src\tes_inteface.cpp" />
     <ClInclude Include="src\autorelease_queue.h" />
     <ClInclude Include="src\boost_extras.h" />
@@ -145,6 +147,7 @@
     <ClInclude Include="src\form_handling.h" />
     <ClInclude Include="src\path_resolving.h" />
     <ClInclude Include="src\plugin_info.h" />
+    <ClInclude Include="src\skse.h" />
     <ClInclude Include="src\tes_form_db.h" />
     <ClInclude Include="src\typedefs.h" />
   </ItemGroup>
@@ -173,9 +176,6 @@
     <ClInclude Include="src\tes_map.h" />
     <ClInclude Include="src\tes_object.h" />
     <ClInclude Include="src\tes_string.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="exports.def" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\dep\common\common.vcxproj">

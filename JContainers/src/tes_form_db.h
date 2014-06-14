@@ -63,7 +63,7 @@ namespace collections {
         };
 
         static form_map *makeFormStorage(const char *storageName) {
-            if (!storageName) {
+            if (!validate_storage_name(storageName)) {
                 return nullptr;
             }
 
@@ -78,8 +78,12 @@ namespace collections {
             return fmap;
         }
 
+        static bool validate_storage_name(const char *name) {
+            return name && *name;
+        }
+
         static void setEntry(const char *storageName, TESForm *formKey, object_base *entry) {
-            if (!storageName || !formKey) {
+            if (!validate_storage_name(storageName) || !formKey) {
                 return;
             }
 
@@ -95,7 +99,7 @@ namespace collections {
         REGISTERF2(setEntry, "storageName fKey entry", "associates given form key and entry (container). set entry to zero to destroy association");
 
         static map *makeMapEntry(const char *storageName, TESForm *form) {
-            if (!form || !storageName) {
+            if (!form || !validate_storage_name(storageName)) {
                 return nullptr;
             }
 
@@ -221,16 +225,37 @@ namespace collections {
         expectFail("...");
     }
 
-    TEST(tes_form_db, test)
+    TEST(tes_form_db, storage_and_entry)
+    {
+        const char *storageName = "forms";
+
+        auto formStorage = tes_form_db::makeFormStorage(storageName);
+        EXPECT_NOT_NIL(formStorage);
+        EXPECT_EQ( formStorage, tes_form_db::makeFormStorage(storageName));
+
+        char formData[sizeof TESForm];
+        TESForm *fakeForm = (TESForm *)&formData;
+        fakeForm->formID = 0x14;
+
+        auto entry = tes_form_db::makeMapEntry(storageName, fakeForm);
+        EXPECT_NOT_NIL(entry);
+        EXPECT_EQ(entry, tes_form_db::makeMapEntry(storageName, fakeForm));
+    }
+
+
+    TEST(tes_form_db, get_set)
     {
         char formData[sizeof TESForm];
         TESForm *fakeForm = (TESForm *)&formData;
         fakeForm->formID = 0x14;
 
         const char *path = ".forms.object";
+
         tes_form_db::setItem(fakeForm, path, tes_array::objectWithSize(0));
 
         EXPECT_NOT_NIL( tes_form_db::getItem<object_base*>(fakeForm, path) );
         EXPECT_NOT_NIL( tes_form_db::solveGetter<object_base*>(fakeForm, path) );
     }
+
+
 }
