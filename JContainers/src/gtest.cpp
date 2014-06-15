@@ -54,8 +54,13 @@ namespace testing
             try {
                 test.function(state);
             } catch(const std::exception& exception) {
-                ::testing::check(state, false, __FUNCTION__, "test throws exception"); \
-                printf("   of type '%s' message '%s'\n", typeid(exception).name(), exception.what());
+                char text[1024] = {'\0'};
+
+                sprintf_s(text, "test throws exception\n"
+                    "   of type '%s' message '%s'\n", typeid(exception).name(), exception.what()
+                    );
+
+                ::testing::check(state, false, __FUNCTION__, text); \
             } catch(...) {
                 ::testing::check(state, false, __FUNCTION__, "test throws exception"); \
             }

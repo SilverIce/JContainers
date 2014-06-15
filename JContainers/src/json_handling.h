@@ -25,7 +25,7 @@ namespace collections {
     }
 
     typedef struct json_t * json_ref;
-    typedef std::unique_ptr<json_t, decltype(json_decref)> json_unique_ref;
+    typedef decltype(make_unique_ptr((json_t*)nullptr, json_decref)) json_unique_ref;
 
     class json_deserializer {
         tes_context& _context;
@@ -38,13 +38,13 @@ namespace collections {
 
     public:
 
-        static auto json_from_file(const char *path) -> decltype( make_unique_ptr((json_ref)nullptr, json_decref)) {
+        static json_unique_ref json_from_file(const char *path) {
             json_error_t error; //  TODO: output error
             json_ref ref = json_load_file(path, 0, &error);
             return make_unique_ptr(ref, json_decref);
         }
 
-        static auto json_from_data(const char *data) -> decltype( make_unique_ptr((json_ref)nullptr, json_decref)) {
+        static json_unique_ref json_from_data(const char *data) {
             json_error_t error; //  TODO: output error
             json_ref ref = json_loads(data, 0, &error);
             return make_unique_ptr(ref, json_decref);
@@ -227,7 +227,7 @@ namespace collections {
 
     public:
 
-        static auto create_json_value(object_base &root) -> decltype(make_unique_ptr((json_ref)nullptr, json_decref)) {
+        static json_unique_ref create_json_value(object_base &root) {
             return make_unique_ptr( json_serializer()._write_json(root), &json_decref);
         }
 
