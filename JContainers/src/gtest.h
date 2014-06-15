@@ -37,6 +37,10 @@ namespace testing
         fixt.test();
     }
 
+#   define TEST_F_CUSTOM_CLASS(FixtureClass, name2) \
+        static const meta<::testing::TestInfo> testInfo_##FixtureClass##_##name2( \
+            ::testing::createInfo(&::testing::FixtureTest<FixtureClass >, #FixtureClass, #name2));
+
 #   define TEST_F(FixtureBase, name, name2) \
         struct Fixture_##name##_##name2 : public FixtureBase { \
             void test(); \

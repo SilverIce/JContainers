@@ -128,6 +128,7 @@
     </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\backward.compatibility.test.cpp" />
     <ClCompile Include="src\basic_part.cpp" />
     <ClCompile Include="src\gtest.cpp" />
     <ClCompile Include="src\jcontainers_pch.cpp">

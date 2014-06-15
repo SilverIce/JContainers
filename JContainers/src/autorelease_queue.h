@@ -186,8 +186,6 @@ namespace collections {
                     toRelease.clear();
                 }
             }
-
-            printf("autorelease_queue finish\n");
         }
     };
 
