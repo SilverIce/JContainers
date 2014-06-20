@@ -148,11 +148,17 @@ namespace collections {
             }
             else if (type == JSON_STRING) {
 
+                /*  having dilemma here:
+                    if string looks likes form-string and plugin name can't be resolved:
+                    a. lost info and convert it to FormZero
+                    b. save info and convert it to string
+                */
+
                 auto string = json_string_value(val);
                 if (!form_handling::is_form_string(string)) {
                     item = string;
                 } else {
-                    item = *form_handling::from_string(string);
+                    item = form_handling::from_string(string).get_value_or(FormZero);
                 }
             }
             else if (type == JSON_INTEGER) {
