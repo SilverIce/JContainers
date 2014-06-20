@@ -96,7 +96,7 @@ useful for those who use Papyrus properties instead of manual (and more error-pr
             auto obj = json_deserializer::object_from_file(tes_context::instance(), path);
             return  obj;
         }
-        REGISTERF2(readFromFile, "filePath", ARGS(creates and returns new container (JArray or JMap) containing the contents of JSON file));
+        REGISTERF2(readFromFile, "filePath", "creates and returns new container object containing the contents of JSON file");
 
         static object_base* readFromDirectory(const char *dirPath, const char *extension = "")
         {
@@ -131,7 +131,7 @@ useful for those who use Papyrus properties instead of manual (and more error-pr
             return files;
         }
         REGISTERF2(readFromDirectory, "directoryPath extension=\"\"",
-            "parses files in directory (non recursive) and returns JMap containing filename - json-object pairs.\n"
+            "parses JSON files in directory (non recursive) and returns JMap containing {filename, container-object} pairs.\n"
             "note: by default it does not filters files by extension and will try to parse everything");
 
         static object_base* objectFromPrototype(const char *prototype) {
@@ -140,17 +140,22 @@ useful for those who use Papyrus properties instead of manual (and more error-pr
         }
         REGISTERF2(objectFromPrototype, "prototype", "creates new container object using given JSON string-prototype");
 
-        static void writeToFile(object_base *obj, const char * path) {
-            if (!path || !obj) {
+        static void writeToFile(object_base *obj, const char * path, UInt32 indent = 2) {
+            enum {jansson_max_indent = 31};
+
+            if (!path || !obj || indent > jansson_max_indent) {
                 return;
             }
 
             auto json = json_serializer::create_json_value(*obj);
             if (json) {
-                json_dump_file(json.get(), path, JSON_INDENT(2));
+                json_dump_file(json.get(), path, JSON_INDENT(indent));
             }
         }
-        REGISTERF2(writeToFile, "* filePath", "writes object into JSON file");
+        REGISTERF2(writeToFile, "* filePath indent=2",
+            "Writes JSON repsresentation of object to the file.\n"
+            "With indent > 0 it pretty-prints the result, using newlines between array and object items, and indenting with n spaces.\n"
+            "The valid range for n is between 0 and 31 (inclusive)");
 
         static bool hasPath(object_base *obj, const char *path) {
             if (!obj || !path)

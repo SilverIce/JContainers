@@ -129,7 +129,6 @@ namespace collections {
         metaInfo.className = "JMap";
         metaInfo.comment = "Associative key-value container.\n"
             "Inherits JValue functionality";
-        //metaInfo().extendsClass = "JValue";
     }
 
     void tes_form_map::additionalSetup() {
