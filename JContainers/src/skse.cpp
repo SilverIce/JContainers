@@ -138,6 +138,10 @@ namespace skse {
 
         static char fakePluginNames[char_count * 2];
 
+        static bool index_in_range(int idx) {
+            return idx >= 'A' && idx <= 'Z';
+        }
+
         uint8_t wrap_index(int idx) {
             int rel = (int)idx - (int)'A';
             int wrapped = rel >= 0 ? rel % char_count : (-rel) % char_count;
@@ -147,18 +151,20 @@ namespace skse {
 
         const char * _modname_from_index(uint8_t idx) {
 
-            int wrapped = wrap_index(idx);
-
-            fakePluginNames[wrapped*2] = (char)('A' + wrapped);
-            fakePluginNames[wrapped*2 + 1] = '\0';
-
-            return &fakePluginNames[wrapped * 2];
-        }
+            if (index_in_range(idx)) {
+                int wrapped = wrap_index(idx);
+                fakePluginNames[wrapped*2] = (char)('A' + wrapped);
+                fakePluginNames[wrapped*2 + 1] = '\0';
+                return &fakePluginNames[wrapped * 2];
+            }
+            else {
+                return nullptr;
+            }
+         }
 
         uint8_t _modindex_from_name(const char * name) {
             assert(name);
-            int wrapped = wrap_index(*name) + 'A';
-            return wrapped;
+            return index_in_range(*name) ? *name : 0xFF;
         }
 
         TEST(_modname_from_index, test)
@@ -168,8 +174,8 @@ namespace skse {
 
             EXPECT_TRUE(_modindex_from_name("Action") == 'A');
 
-            const char * name2 = _modname_from_index('|');
-            EXPECT_TRUE( strcmp(name2, "|") != 0);
+            EXPECT_NIL( _modname_from_index('|') );
+            EXPECT_NIL( _modname_from_index('a') );
         }
     }
 
