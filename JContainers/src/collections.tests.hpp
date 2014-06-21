@@ -202,6 +202,47 @@ namespace collections {
         EXPECT_NOT_NIL( json_deserializer::object_from_json_data(context, jsonTestString()) );
     }
 
+
+    // load json file into tes_context -> serialize into json again -> compare with original json
+    struct json_loading_test : testing::Fixture {
+
+        void test() {
+
+            namespace fs = boost::filesystem;
+
+            fs::path dir("test_data/json_loading_test");
+            fs::directory_iterator end;
+            bool atLeastOneTested = false;
+
+            for (fs::directory_iterator itr(dir); itr != end; ++itr) {
+                if (fs::is_regular_file(*itr)) {
+                    atLeastOneTested = true;
+                    do_comparison(itr->path().generic_string().c_str());
+                }
+            }
+
+            EXPECT_TRUE( atLeastOneTested );
+        }
+        
+        void do_comparison(const char *file_path) {
+            EXPECT_NOT_NIL( file_path );
+
+            tes_context ctx;
+
+            auto root = json_deserializer::object_from_file(ctx, file_path);
+            EXPECT_NOT_NIL( root );
+            auto jsonOut = json_serializer::create_json_value(*root);
+            ctx.clearState();
+
+            auto originJson = json_deserializer::json_from_file(file_path);
+            EXPECT_NOT_NIL( originJson );
+
+            EXPECT_TRUE( json_equal(originJson.get(), jsonOut.get()) == 1 ); 
+        }
+    };
+
+    TEST_F_CUSTOM_CLASS(json_loading_test, t);
+
     JC_TEST(json_serializer, test)
     {
 /*
