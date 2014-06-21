@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "jansson", "dep\jansson\jans
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "json_validator", "json_validator\json_validator.vcxproj", "{CAA7D417-1B58-48AB-A226-C7E69141772C}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HaskellLike", "HaskellLike\HaskellLike.vcxproj", "{812094FA-A7D9-40BC-B4BD-CB0C10C22CFE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -43,6 +45,10 @@ Global
 		{CAA7D417-1B58-48AB-A226-C7E69141772C}.Debug|Win32.Build.0 = Debug|Win32
 		{CAA7D417-1B58-48AB-A226-C7E69141772C}.Release|Win32.ActiveCfg = Release|Win32
 		{CAA7D417-1B58-48AB-A226-C7E69141772C}.Release|Win32.Build.0 = Release|Win32
+		{812094FA-A7D9-40BC-B4BD-CB0C10C22CFE}.Debug|Win32.ActiveCfg = Debug|Win32
+		{812094FA-A7D9-40BC-B4BD-CB0C10C22CFE}.Debug|Win32.Build.0 = Debug|Win32
+		{812094FA-A7D9-40BC-B4BD-CB0C10C22CFE}.Release|Win32.ActiveCfg = Release|Win32
+		{812094FA-A7D9-40BC-B4BD-CB0C10C22CFE}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

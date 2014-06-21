@@ -4,6 +4,7 @@
 #include <boost/range/iterator_range.hpp>
 #include <boost/range/algorithm/find_if.hpp>
 #include <boost/range/algorithm/find_end.hpp>
+#include "boost_extras.h"
 
 #include <functional>
 
@@ -21,6 +22,8 @@ namespace collections
         typedef ss::function<Item* (object_base*)> NodeFunc;
         typedef ss::function<void (const Item& , Item&)> ElementFunc;
         typedef boost::iterator_range<const char*> path_type;
+
+        typedef ss::function<void (const Item& , Item&)> unary_operator;
 
         struct state {
             bool succeed;
@@ -106,9 +109,6 @@ namespace collections
                 itemFunction(&itm);
                 return ;
             }
-
-            namespace bs = boost;
-            namespace ss = std;
 
             auto path = bs::make_iterator_range(cpath, cpath + strnlen_s(cpath, 1024));
 

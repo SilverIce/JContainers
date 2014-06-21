@@ -7,6 +7,54 @@
 
 namespace collections {
 
+    template<typename operator_func>
+    class collection_operators_t
+    {
+    public:
+
+        struct case_insensitive { 
+            bool operator() (const std::string& lhs, const std::string& rhs) const {
+                return _stricmp(lhs.c_str(), rhs.c_str()) < 0;
+            }
+        };
+
+        struct coll_operator {
+            operator_func func;
+            const char *func_name;
+            const char *description;
+
+            static coll_operator make(const operator_func& _func, const char *_func_name, const char *_description) {
+                coll_operator op = {_func, _func_name, _description};
+                return op;
+            }
+        };
+
+        typedef std::map<std::string, coll_operator*, case_insensitive> operator_map;
+
+        template<class Key>
+        static coll_operator* get_operator(const Key& key) {
+            const auto& omap = operators();
+            auto itr = omap.find(key);
+            return itr != omap.end() ? itr->second : nullptr;
+        }
+
+        static operator_map& operators() {
+
+            auto makeOperatorMap = []() -> operator_map {
+                operator_map omap;
+                for (coll_operator& info : meta<coll_operator>::getListConst()) {
+                    omap[info.func_name] = &info;
+                }
+
+                return omap;
+            };
+
+            static operator_map op_map = makeOperatorMap();
+            return op_map;
+        }
+    };
+
+
     namespace collection_operators
     {
         typedef void (*operator_func)(const Item& item, Item& state);
