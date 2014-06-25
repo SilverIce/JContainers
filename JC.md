@@ -145,15 +145,15 @@ Serialized array and nested form-map container:
 Serialization:
 ```lua
 int playerData = JMap.object()
-JMap.setForm(playerData, playerForm)
-JMap.setInt(playerData, playerForm.GetLevel())
+JMap.setForm(playerData, "actor", playerForm)
+JMap.setInt(playerData, "level", playerForm.GetLevel())
 JValue.writeToFile(playerData, "Data/playerInfo.txt")
 ```
 Deserialization:
 ```lua
 int data = JValue.readFromFile("Data/playerInfo.txt")
 int level = JValue.solveInt(data, ".level")
-form player = JValue.solveForm(data, ".test")
+form player = JValue.solveForm(data, ".actor")
 ```
 
 ### Path resolving
