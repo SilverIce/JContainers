@@ -189,10 +189,6 @@ namespace collections {
             }
 
             static void bind(VMClassRegistry *registry, const char *name, const char *className) {
-                 //printf("%s %s\n", name, typeid(decltype(tes_func)).name());
-
-                if (!registry) return;
-
                 registry->RegisterFunction(
                     new NativeFunction2 <
                             StaticFunctionTag,
@@ -200,8 +196,6 @@ namespace collections {
                             typename J2Tes<Arg0>::tes_type,
                             typename J2Tes<Arg1>::tes_type > (name, className, &tes_func, registry)
                 );
-
-                registry->SetFunctionFlags(className, name, VMClassRegistry::kFunctionFlag_NoWait);
             }
         };
 
@@ -227,9 +221,6 @@ namespace collections {
 
             static void bind(VMClassRegistry *registry, const char *name, const char *className) {
 
-
-                if (!registry) return;
-
                 registry->RegisterFunction(
                     new NativeFunction2 <
                     StaticFunctionTag,
@@ -237,8 +228,6 @@ namespace collections {
                     typename J2Tes<Arg0>::tes_type,
                     typename J2Tes<Arg1>::tes_type > (name, className, &tes_func, registry)
                     );
-
-                registry->SetFunctionFlags(className, name, VMClassRegistry::kFunctionFlag_NoWait); \
             }
         };
 
@@ -279,12 +268,10 @@ namespace collections {
             }     \
                  \
             static void bind(VMClassRegistry *registry, const char *name, const char *className) {     \
-                if (!registry) return;\
                 registry->RegisterFunction(     \
                     new NativeFunction##N <StaticFunctionTag, typename J2Tes<R>::tes_type   \
                         DO_##N(TESTYPE_NTH, COMA, COMA, NOTHING)  > (name, className, &tes_func, registry)   \
                 );     \
-                registry->SetFunctionFlags(className, name, VMClassRegistry::kFunctionFlag_NoWait); \
             }     \
         };  \
             \
@@ -307,12 +294,10 @@ namespace collections {
             }     \
                  \
             static void bind(VMClassRegistry *registry, const char *name, const char *className) {     \
-                if (!registry) return;\
                 registry->RegisterFunction(     \
                     new NativeFunction##N <StaticFunctionTag, void   \
                         DO_##N(TESTYPE_NTH, COMA, COMA, NOTHING)  > (name, className, tes_func, registry)   \
                 );     \
-                registry->SetFunctionFlags(className, name, VMClassRegistry::kFunctionFlag_NoWait); \
             }     \
         };
 

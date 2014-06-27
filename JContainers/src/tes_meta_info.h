@@ -5,6 +5,7 @@
 #include <functional>
 
 #include "meta.h"
+#include "skse\PapyrusVM.h"
 
 class VMClassRegistry;
 
@@ -55,6 +56,7 @@ namespace collections {
 
             void bind(VMClassRegistry *registry, const char *className) const {
                 registrator(registry, funcName, className);
+                registry->SetFunctionFlags(className, funcName, VMClassRegistry::kFunctionFlag_NoWait);
             }
         };
 
