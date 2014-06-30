@@ -132,7 +132,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="src\line_breaker.cpp" />
+    <ClCompile Include="src\string_wrapper.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\path_resolving.cpp" />
     <ClCompile Include="src\serialization.cpp" />

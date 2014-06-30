@@ -33,9 +33,6 @@
     <ClCompile Include="src\tes_inteface.cpp">
       <Filter>collections_module</Filter>
     </ClCompile>
-    <ClCompile Include="src\line_breaker.cpp">
-      <Filter>collections_module\tes_api</Filter>
-    </ClCompile>
     <ClCompile Include="src\gtest.cpp">
       <Filter>gtest</Filter>
     </ClCompile>
@@ -46,6 +43,9 @@
     <ClCompile Include="src\jcontainers_pch.cpp" />
     <ClCompile Include="src\path_resolving.cpp">
       <Filter>collections_module\path_resolving</Filter>
+    </ClCompile>
+    <ClCompile Include="src\string_wrapper.cpp">
+      <Filter>collections_module\tes_api</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
