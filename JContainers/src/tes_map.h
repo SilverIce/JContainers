@@ -12,8 +12,6 @@ namespace collections {
     class tes_map_t : public tes_binding::class_meta_mixin_t< tes_map_t<Key, Cnt> > {
     public:
 
-        REGISTER_TES_NAME("tt");
-
         REGISTERF(tes_object::object<Cnt>, "object", "", kCommentObject);
 
         template<class T>
@@ -38,7 +36,7 @@ namespace collections {
                 return;
             }
 
-            obj->setValueForKey( tes_hash(key), Item((T)item) );
+            obj->setValueForKey( tes_hash(key), Item(item) );
         }
         REGISTERF(setItem<SInt32>, "setInt", "* key value", "creates key-value association. replaces existing value if any");
         REGISTERF(setItem<Float32>, "setFlt", "* key value", "");

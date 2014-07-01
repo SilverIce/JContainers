@@ -243,26 +243,6 @@ namespace collections {
 
     TEST_F_CUSTOM_CLASS(json_loading_test, t);
 
-    JC_TEST(json_serializer, test)
-    {
-/*
-        EXPECT_FALSE( json_serializer::create_json_value(context, nullptr) );
-        EXPECT_FALSE( json_serializer::create_json_data(context, "") );
-*/
-
-        auto obj = json_deserializer::object_from_json_data(context, jsonTestString());
-
-        EXPECT_NOT_NIL(obj);
-
-        auto data = json_serializer::create_json_data(*obj);
-        auto jvalueOrigin = json_deserializer::json_from_data(jsonTestString());
-
-        auto jvalue2 = json_serializer::create_json_value(*obj);
-
-        EXPECT_TRUE( json_equal(jvalueOrigin.get(), jvalue2.get()) == 0 );
-        //printf("%s", data.get());
-    }
-
     JC_TEST(json_serializer, no_infinite_recursion)
     {
         map *cnt = map::object(context);
@@ -405,31 +385,6 @@ namespace collections {
 
         context.loadAll(data, kJSerializationCurrentVersion);
         EXPECT_TRUE(allExist());
-
-        string newData = context.saveToArray();
-        EXPECT_TRUE(data.size() == newData.size());
-    }
-
-    JC_TEST(tes_context, serialization_complex)
-    {
-        using namespace std;
-
-        auto root = json_deserializer::object_from_json_data(context, jsonTestString());
-        EXPECT_NOT_NIL(root);
-        auto rootId = root->uid();
-
-        string data = context.saveToArray();
-        EXPECT_FALSE(data.empty());
-
-        context.clearState();
-        EXPECT_TRUE( context.getObject(rootId) == nullptr );
-
-        context.loadAll(data, kJSerializationCurrentVersion);
-        EXPECT_TRUE( context.getObject(rootId) != nullptr );
-
-        auto jsonValue = json_serializer::create_json_value(*context.getObject(rootId));
-        auto jsonValueOrigin = json_deserializer::json_from_data(jsonTestString());
-        EXPECT_TRUE( json_equal(jsonValue.get(), jsonValueOrigin.get()) == 0 );
 
         string newData = context.saveToArray();
         EXPECT_TRUE(data.size() == newData.size());

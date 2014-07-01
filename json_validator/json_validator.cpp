@@ -13,8 +13,9 @@ int filesTotal = 0;
 
 void validate_file(const _TCHAR *path) {
 
-    FILE *file = _wfopen(path, L"r");
-    if (!file) {
+    FILE *file = nullptr;
+    errno_t openError = _wfopen_s(&file, path, L"r");
+    if (openError || !file) {
         return ;
     }
 
@@ -88,7 +89,7 @@ int _tmain(int argc, _TCHAR* argv[])
     printf("%u errors found. %u files validated\n", errorCounter, filesTotal);
     printf("press any key to close\n");
 
-    getch();
+    _getch();
 	return 0;
 }
 
