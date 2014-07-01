@@ -1,17 +1,17 @@
 
-#include <iostream>
 #include <string>
 #include <assert.h>
 #include <vector>
 #include <numeric>
 #include <algorithm>
-#include <sstream>
-#include <conio.h>
+#include <cctype>
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/range/iterator_range.hpp>
+
+namespace collections {
 
 using namespace std;
 namespace bs = boost;
@@ -39,13 +39,6 @@ namespace {
 
         void addWord(const cstring& word) {
             words.push_back(word);
-        }
-
-        void print() const {
-            cout << charCount() << ' ';
-            for (const auto& str : words) {
-                cout << str << ' ';
-            }
         }
 
         string wholeString() const {
@@ -196,13 +189,6 @@ namespace {
                 - lines.begin();
         }*/
 
-        void print() const {
-            for (auto& line : lines) {
-                line.print();
-                cout << endl;
-            }
-        }
-
         vector<string> strings() const {
             vector<string> result;
 
@@ -215,17 +201,13 @@ namespace {
     };
 
 
-    bool isBreak(char c) {
-        return
-            c == ' ' || 
-            c == '\n'
-            ;
+    bool is_blank_or_space(char c) {
+		return std::isblank(c) || std::isspace(c);
     }
 
-    vector<cstring> substringRange(cstring::iterator beg, cstring::iterator end) {
+    vector<cstring> split_range(cstring::iterator beg, cstring::iterator end) {
         vector<cstring> strings;
-        boost::split( strings, boost::make_iterator_range(beg, end), &isBreak );
-        return boost::split( strings, boost::make_iterator_range(beg, end), &isBreak );
+		return boost::split(strings, boost::make_iterator_range(beg, end), &is_blank_or_space);
     }
 
     line_set initialSet(const cstring& data, int charsPerLine = 40) {
@@ -245,27 +227,28 @@ namespace {
 
             if ((data.end() - first) >= cpl ) {
 
-                auto middle = first + (int)cpl;
-                auto left = middle, right = middle;
+				auto nearestBreak = [first, cpl, &data]() {
+					auto middle = first + (int)cpl;
+					auto left = middle, right = middle;
 
-                while (left > first && isBreak(*left) == false) {
-                    //printf("last is '%c'\n", *left);
-                    --left;
-                }
+					while (left > first && is_blank_or_space(*left) == false) {
+						--left;
+					}
 
-                while (right < data.end() && isBreak(*right) == false) {
-                    //printf("last is '%c'\n", *right);
-                    ++right;
-                }
+					while (right < data.end() && is_blank_or_space(*right) == false) {
+						++right;
+					}
 
-                auto selected = (middle - left < (right - middle) * 1.2) ? left : right;
+					return (left != first && middle - left < (right - middle) * 1.2) ? left : right;
+				};
 
-                line.words = substringRange(first, selected);
+				auto selected = nearestBreak();
+				line.words = split_range(first, selected);
 
                 first = selected;
             }
             else {
-                line.words = substringRange(first, data.end());
+				line.words = split_range(first, data.end());
 
                 first = data.end();
             }
@@ -305,8 +288,10 @@ namespace {
 
 }
 
-vector<string> StringUtil_wrapString(const char *csource, int charsPerLine)
+vector<string> wrap_string(const char *csource, int charsPerLine)
 {
+	assert(csource);
+
     cstring source = cstring(csource, csource + strlen(csource));
 
     line_set set = initialSet(source, charsPerLine);
@@ -359,4 +344,4 @@ vector<string> StringUtil_wrapString(const char *csource, int charsPerLine)
 
     return set.strings();
 }
-
+}

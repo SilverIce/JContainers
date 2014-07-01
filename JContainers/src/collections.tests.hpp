@@ -382,6 +382,7 @@ namespace collections {
         EXPECT_TRUE(data.size() == newData.size());
     }
 
+	// Ensures survival of objects that released, so threir RC is 0 and that retained again (RC +1)
     JC_TEST_DISABLED(autorelease_queue, over_release)
     {
         using namespace std;
@@ -417,6 +418,7 @@ namespace collections {
         EXPECT_TRUE(allExist());
     }
 
+	// Ensures that objects with RC 0 gets destroyed after some amount of time 
     JC_TEST_DISABLED(autorelease_queue, ensure_destroys)
     {
         using namespace std;
