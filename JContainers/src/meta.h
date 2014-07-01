@@ -6,7 +6,7 @@
 // Class that contains meta-info
 // Meta-info gets gathered during dynamic initialization and gets pushed into list
 // It's assumed that meta class instance will reside in static memory only!
-template<class T> class meta
+template<class T, class Tag = void> class meta
 {
     private: meta * const next;    // temporary publicly accessible
     public: T info;

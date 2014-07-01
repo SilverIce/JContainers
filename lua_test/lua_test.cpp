@@ -6,6 +6,8 @@
 
 #include <vector>
 #include <assert.h>
+#include <chrono>
+#include <iostream>
 
 enum item_type {
     item_none,
@@ -25,6 +27,16 @@ struct item {
         object *object;
         const char *string;
     };
+
+    explicit item(double num) : type(item_number), number(num) {}
+    explicit item(int num) : type(item_number), number(num) {}
+
+    explicit item(std::vector<item> *obj) : type(item_object), object(obj) {}
+
+    explicit item(const char *str) : type(item_string), string(str) {}
+
+    item() : type(item_none) {}
+
 };
 
 static const char __jrootObject;
@@ -37,7 +49,7 @@ void push_jobject(lua_State *L, object *obj) {
 
     lua_pushlightuserdata(L, obj);
     luaL_getmetatable(L, kJContainersObject);
-    int res = lua_setmetatable(L, -2); // also pops metatable, so obj is on top
+    lua_setmetatable(L, -2); // also pops metatable, so obj is on top
     stackDump(L);
 
 }
@@ -63,9 +75,9 @@ void push_item(lua_State *L, const item& itm) {
     }
 }
 
-object* check_jobject(lua_State *L) {
+object* check_jobject(lua_State *L, int idx) {
     stackDump(L);
-    void *usr = luaL_checkudata(L, -1, kJContainersObject);
+    void *usr = luaL_checkudata(L, idx, kJContainersObject);
     luaL_argcheck(L, usr != NULL, 1, "JC object expected");
     stackDump(L);
     return (object *)usr;
@@ -82,9 +94,9 @@ void set_root_jobject(lua_State *L, object *obj) {
 }
 
 object* get_root_jobject(lua_State *L) {
-    lua_pushlightuserdata(L, (void *)&__jrootObject);  /* push address */
+    lua_pushlightuserdata(L, (void *)&__jrootObject);  /* push key */
     lua_gettable(L, LUA_REGISTRYINDEX);  /* retrieve value */
-    object *obj = check_jobject(L);
+    object *obj = check_jobject(L, -1);
     lua_pop(L, 1);
     stackDump(L);
     return obj;
@@ -94,38 +106,33 @@ object* get_root_jobject(lua_State *L) {
 int lua_apply(lua_State *l) {
 
     enum  {
-        func = 1,
+        none,
+        path,
         lambda,
-        state,
-
     };
 
+
     // path, functor
-    const char *path = luaL_checkstring(l, 1); // 1
+    //const char *path = luaL_checkstring(l, 1); // 1
    // auto func = lua_tocfunction(l, 2); // 2
 
     auto root = get_root_jobject(l);
-
-    lua_pushnil(l); // 3. state
 
     stackDump(l);
 
     for (const auto& itm : *root) {
 
-        lua_pushvalue(l, lambda);//4 func
-        push_item(l, itm);//5 x
-        lua_pushvalue(l, state);//6 state
+        lua_pushvalue(l, lambda);//3 func
+        push_item(l, itm);//4 x
 
-        if (lua_pcall(l, 2, 2, 0) != 0) {
-           ;// error(L, "error running function `f': %s", lua_tostring(L, -1));
+        if (lua_pcall(l, 1, 1, 0) != 0) {
+            luaL_error(l, "error running function `f': %s", lua_tostring(l, -1));
         }
-        //-1 - state
-        //-2 - shouldstop
+        //-1 - shouldstop
 
-        int shouldStop = lua_toboolean(l, -2);
+        int shouldStop = lua_toboolean(l, -1);
 
-        lua_insert(l, state); // move top into state.3
-        lua_settop(l, state);
+        lua_settop(l, lambda);
 
         stackDump(l);
 
@@ -134,17 +141,47 @@ int lua_apply(lua_State *l) {
         }
     }
 
-    lua_insert(l, 1);
-    lua_settop(l, 1);
+   // lua_insert(l, 1);
+   // lua_settop(l, 1);
 
     stackDump(l);
 
-    //lua_pushstring(l, "wow what a magick!");
+    return 0;
+}
+
+int jobject_get_value_for_key(lua_State *l) {
+    object *obj = check_jobject(l, 1);// 1st
+
+    luaL_argcheck(l, obj != nullptr, 1, "jobject is nil");
+
+    int keyType = lua_type(l, 2);
+
+    const char *keyString = nullptr;
+    int intKey = 0;
+
+    switch (keyType) {
+    case LUA_TSTRING:  /* strings */
+        assert(false);
+        keyString = lua_tostring(l, 2);
+        break;
+
+    case LUA_TNUMBER:  /* numbers */
+        intKey = lua_tointeger(l, 2);
+        break;
+
+    default:
+        luaL_argcheck(l, false, 2, "invalid key");
+        return 1;
+
+    }
+
+    push_item(l, (*obj)[intKey]);
 
     return 1;
 }
 
 static void stackDump (lua_State *L) {
+    return ;
     int i;
     int top = lua_gettop(L);
     for (i = 1; i <= top; i++) {  /* repeat for each level */
@@ -179,48 +216,116 @@ void apply_call(object *obj, lua_State *l, const char *lua_string) {
     set_root_jobject(l, obj);
     stackDump(l);
 
-    int res = luaL_dostring(l, STR(
-        return apply(
-            '.path',
-            function(x, state)
-                if x == 4 then return true,x else return false,nil end
-            end
-        )
-            
-        ));
+   // printf("lua string: %s\n", lua_string); 
+
+    int res = luaL_dostring(l, lua_string);
+    //assert(res == 0);
 
     stackDump(l);
+}
+
+void setup_lua(lua_State *l) {
+    lua_settop(l, 0);
+   // luaopen_io(l);
+
+    luaL_newmetatable(l, kJContainersObject);
+    assert(lua_istable(l, 1));
+
+    /* now the stack has the metatable at index 1 and
+    `array' at index 2 */
+    lua_pushstring(l, "__index");
+    lua_pushcfunction(l, jobject_get_value_for_key);
+    lua_settable(l, 1);  /* metatable.__index = array.get */
+
+    lua_pushcfunction(l, lua_apply);
+    lua_setglobal(l, "apply");
+
 }
 
 int _tmain(int argc, _TCHAR* argv[])
 {
     auto l = luaL_newstate();
 
-    luaL_newmetatable(l, kJContainersObject);
-    lua_pop(l, 1);
+    luaopen_base(l);
 
-    lua_pushcfunction(l, lua_apply);
-    lua_setglobal(l, "apply");
-    stackDump(l);
+    setup_lua(l);
+
+    luaL_dostring(l, STR(
+        function filter(path, predicate)
+            local state = {}
+
+            apply(path,
+                function(x)
+                    if predicate(x) then state[#state + 1] = x end
+                    return false
+                end
+            )
+
+            return state
+        end
+        ));
+
+    luaL_dostring(l, STR(
+        function find(path, predicate)
+            local foundValue
+
+            apply(path,
+                function(x)
+                    if predicate(x) then
+                        foundValue = x
+                        return true
+                    else
+                        return false
+                    end
+                end
+            )
+
+            return foundValue
+        end
+        ));
+
 
 
     object ar;
+
+    object ar2;
+    ar2.push_back(item(3));
+    ar2.push_back(item(2));
+
     item itms[] = {
-        item_number, 0,
-        item_number, 1,
-        item_number, 2,
-        item_number, 3,
-        item_number, 4,
-        item_number, 5,
+/*
+        item(0),
+        item(1),
+        item(4),
+*/
+        item(&ar2),
+        item(&ar2),
     };
 
     for (auto& it : itms) {
         ar.push_back(it);
     }
+
+    auto start = std::chrono::system_clock::now();
+
+    for (int i = 2000 - 1; i >= 0 ; i--)
+    {
+        apply_call(&ar, l, STR(
+            return find(
+                '.path',
+                function(x)
+                    return x[1] < 4
+                end
+                )
+            ));
+
+    }
     
-    apply_call(&ar, l, "");
+
+    auto end = std::chrono::system_clock::now();
 
 
+    std::cout << "diff " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << std::endl;
     //int res = luaL_dostring(l, "return apply( '.path', function(x) return 10 end )");
 
     stackDump(l);

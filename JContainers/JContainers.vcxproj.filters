@@ -55,6 +55,9 @@
     <ClCompile Include="src\backward.compatibility.test.cpp">
       <Filter>collections_module</Filter>
     </ClCompile>
+    <ClCompile Include="src\lua_stuff.cpp">
+      <Filter>collections_module\path_resolving</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\code_producer.h">

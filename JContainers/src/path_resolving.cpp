@@ -151,7 +151,7 @@ namespace collections
 
                 if (collection->as<array>()) {
 
-                    // have to copy array to prevent it modification during iteration
+                    // have to copy array to prevent its modification during iteration
                     auto array_copy = collection->as<array>()->container_copy();
 
                     for (auto &itm : array_copy) {

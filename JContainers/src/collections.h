@@ -358,6 +358,11 @@ namespace collections {
             return _array;
         }
 
+        void push(const Item& item) {
+            object_lock l(this);
+            u_push(item);
+        }
+
         void u_push(const Item& item) {
             _array.push_back(item);
         }
@@ -374,6 +379,11 @@ namespace collections {
 
         Item* u_getItem(size_t index) {
             return index < _array.size() ? &_array[index] : nullptr;
+        }
+
+        Item getItem(size_t index) {
+            object_lock lock(this);
+            return index < _array.size() ? _array[index] : Item();
         }
 
         iterator begin() { return _array.begin();}
@@ -424,6 +434,12 @@ namespace collections {
             std::transform(lowerKey.begin(), lowerKey.end(), lowerKey.begin(), ::tolower);
             return lowerKey;
         }*/
+
+        Item find(const std::string& key) {
+            object_lock g(this);
+            auto result = u_find(key);
+            return result ? *result : Item();
+        }
 
         container_type::iterator findItr(const std::string& key) {
             return cnt.find(key);
@@ -495,6 +511,12 @@ namespace collections {
 
         Item& operator [] (FormId key) {
             return cnt[key];
+        }
+
+        Item find(FormId key) {
+            object_lock g(this);
+            auto itr = cnt.find(key);
+            return itr != cnt.end() ? (itr->second) : Item();
         }
 
         Item* u_find(FormId key) {
