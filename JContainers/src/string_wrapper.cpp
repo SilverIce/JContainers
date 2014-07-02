@@ -228,13 +228,13 @@ namespace {
         case 0x2008:
         case 0x2009:
         case 0x200a:
-        //case 0x200b:
+        case 0x200b:
 
         case 0x202f:
         case 0x205f:
 
         case 0x3000:
-        //case 0xfeff:
+        case 0xfeff:
             return true;
         default:
             return false;
