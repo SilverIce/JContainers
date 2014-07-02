@@ -112,9 +112,11 @@ namespace collections
         {
             // i have assumed that Skyrim devs are not idiots to run scripts in process of saving
             // but didn't dare to disable all that locks
-            read_lock g(_mutex);
 
-            all_objects_lock l(*registry);
+            // do not lock as test shows that skyrim waits for completion of any native function running.
+            // this _probably_ means that there is no any thread inside my code during save
+            //read_lock g(_mutex);
+            //all_objects_lock l(*registry);
 
             arch << *registry;
             arch << *aqueue;

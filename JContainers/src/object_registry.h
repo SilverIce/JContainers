@@ -13,15 +13,15 @@ namespace collections
 
         registry_container _map;
         id_generator<HandleT> _idGen;
-        bshared_mutex& _mutex;
+        bshared_mutex _mutex;
 
         object_registry(const object_registry& );
         object_registry& operator = (const object_registry& );
 
     public:
 
-        explicit object_registry(bshared_mutex &mt)
-            : _mutex(mt)
+        explicit object_registry()
+            : _mutex()
         {
         }
 
@@ -32,12 +32,11 @@ namespace collections
                 return;
             }
 
-            object_registry& me = *this;
-            write_lock g(me._mutex);
-            auto itr = me._map.find(hdl);
-            assert(itr != me._map.end());
-            me._map.erase(itr);
-            me._idGen.reuseId(hdl);
+            write_lock g(_mutex);
+            auto itr = _map.find(hdl);
+            assert(itr != _map.end());
+            _map.erase(itr);
+            _idGen.reuseId(hdl);
         }
 
         object_base *getObject(HandleT hdl) {
@@ -54,9 +53,8 @@ namespace collections
                 return nullptr;
             }
 
-            object_registry& me = *this;
-            auto itr = me._map.find(hdl);
-            if (itr != me._map.end())
+            auto itr = _map.find(hdl);
+            if (itr != _map.end())
                 return itr->second;
 
             return nullptr;
@@ -65,16 +63,14 @@ namespace collections
         template<class T>
         T *getObjectOfType(HandleT hdl) {
             auto obj = getObject(hdl);
-            return (obj && obj->_type == T::TypeId) ? static_cast<T*>(obj) : nullptr;
+            return obj->as<T>();
         }
 
         template<class T>
         T *u_getObjectOfType(HandleT hdl) {
             auto obj = u_getObject(hdl);
-            return (obj && obj->_type == T::TypeId) ? static_cast<T*>(obj) : nullptr;
+            return obj->as<T>();
         }
-
-        static object_registry& instance();
 
         void u_clear();
 
@@ -91,11 +87,10 @@ namespace collections
 
     Handle object_registry::registerObject(object_base *collection)
     {
-        object_registry& me = *this;
-        write_lock g(me._mutex);
-        auto newId = me._idGen.newId();
-        assert(me._map.find(newId) == me._map.end());
-        me._map[newId] = collection;
+        write_lock g(_mutex);
+        auto newId = _idGen.newId();
+        assert(_map.find(newId) == _map.end());
+        _map[newId] = collection;
         return (Handle)newId;
     }
 

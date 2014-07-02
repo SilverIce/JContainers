@@ -16,7 +16,7 @@ namespace collections {
     private:
 
         std::thread _thread;
-        bshared_mutex& _mutex;
+        bshared_mutex _mutex;
 
         object_registry& _registry;
         queue _queue;
@@ -27,7 +27,7 @@ namespace collections {
         enum queue_state : unsigned char {
             state_none = 0x0,
             state_run = 0x1,
-            state_paused = 0x2,
+            //state_paused = 0x2,
         };
 
     public:
@@ -45,11 +45,11 @@ namespace collections {
             ar & _queue;
         }
 
-        explicit autorelease_queue(object_registry& registry, bshared_mutex &mt) 
+        explicit autorelease_queue(object_registry& registry) 
             : _thread()
             , _timeNow(0)
             , _state(state_none)
-            , _mutex(mt)
+            , _mutex()
             , _registry(registry)
         {
             start();
@@ -80,10 +80,6 @@ namespace collections {
 
         size_t u_count() const {
             return _queue.size();
-        }
-
-        void setPaused(bool paused) {
-            _state |= state_paused;
         }
 
         void stop() {
@@ -144,9 +140,7 @@ namespace collections {
 
             while (true) {
                 
-                unsigned char state = self._state;
-                    
-                if ((state & state_run) == 0) {
+                if ((self._state & state_run) == 0) {
                     break;
                 }
 
@@ -158,8 +152,7 @@ namespace collections {
 
                     millisecondCounter = 0;
 
-                    if ((state & state_paused) == 0) {
-
+                    {
                         write_lock g(self._mutex);
                         self._queue.erase(
                             remove_if(self._queue.begin(), self._queue.end(), [&](const queue::value_type& val) {
