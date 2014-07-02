@@ -1,4 +1,4 @@
-
+﻿
 namespace collections {
 
 	extern std::vector<std::string> wrap_string(const char *csource, int charsPerLine);
@@ -40,8 +40,8 @@ returns JArray object containing lines");
 
     TEST(tes_string, test)
     {
-		auto testWrap = [&](const char *string, int linesCount) {
-			auto obj = tes_string::wrap(string, 40);
+		auto testWrap = [&](const char *string, int linesCount, int charsPerLine) {
+            auto obj = tes_string::wrap(string, charsPerLine);
 			if (linesCount == -1) {
 				EXPECT_NIL(obj);
 			}
@@ -62,11 +62,13 @@ returns JArray object containing lines");
 			this freedom must extend to words that offend. Other reviewers criticized the films length and repetitiveness. Its DVD
 			was released in the US and the UK and used in university cour);
 
-		testWrap(source, 20);
-		testWrap("nospacesherenospacesherenospacesherenospaceshere", 1);
-		testWrap("", 0);
+		testWrap(source, 20, 40);
+		testWrap("nospacesherenospacesherenospacesherenospaceshere", 1, 40);
+        testWrap(" test ", 1, 40);
+        // testWrap("スタァァァップ!　首長の命により止まれ！", 2, 15);
+		testWrap("", 0, 40);
 
-		testWrap(nullptr, -1);
+		testWrap(nullptr, -1, 40);
     }
 
 #endif

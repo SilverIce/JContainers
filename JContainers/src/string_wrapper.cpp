@@ -1,10 +1,12 @@
-
+﻿
 #include <string>
 #include <assert.h>
 #include <vector>
 #include <numeric>
 #include <algorithm>
 #include <cctype>
+#include <locale>
+#include <codecvt>
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -18,7 +20,11 @@ namespace bs = boost;
 
 namespace {
 
-    typedef bs::iterator_range<const char *> cstring;
+    typedef basic_string<char32_t, char_traits<char32_t>, allocator<char32_t>> wide_string;
+    //typedef std::codecvt<char32_t, char, std::mbstate_t> wide_string_codec;
+    typedef std::codecvt_utf8 < char32_t > wide_string_codec;
+    typedef std::wstring_convert<wide_string_codec, char32_t > wide_string_converter;
+    typedef bs::iterator_range<const char32_t *> wstring_range;
 
     float charactersPerLine(int total, int maxCharsPerLine) {
         assert(maxCharsPerLine > 0);
@@ -28,23 +34,23 @@ namespace {
 
     struct line
     {
-        vector<cstring> words;
+        vector<wstring_range> words;
 
         int charCount() const {
-            return std::accumulate(words.begin(), words.end(), 0, [](int val, const cstring& str) {
+            return std::accumulate(words.begin(), words.end(), 0, [](int val, const wstring_range& str) {
                 return val + (int)str.size();
             })
                 + (words.size() > 0 ? words.size() - 1 : 0);
         }
 
-        void addWord(const cstring& word) {
+        void addWord(const wstring_range& word) {
             words.push_back(word);
         }
 
-        string wholeString() const {
+        string toUTF8String(wide_string_converter& conv) const {
             std::string result;
             for (const auto& str : words) {
-                result.append(str.begin(), str.size());
+                result.append(conv.to_bytes(str.begin(), str.end()));
                 result += ' ';
             }
 
@@ -189,28 +195,58 @@ namespace {
                 - lines.begin();
         }*/
 
-        vector<string> strings() const {
+        vector<string> utf8Strings(wide_string_converter& conv) const {
             vector<string> result;
 
             std::transform(lines.begin(), lines.end(), std::back_inserter(result), [&](const line& ln) {
-                return ln.wholeString();
+                return ln.toUTF8String(conv);
             });
 
             return result;
         }
     };
 
+    bool is_blank_or_space(char32_t c) {
+        // from https://www.cs.tut.fi/~jkorpela/chars/spaces.html
+        switch (c)
+        {
+        case 0x20:
+        case 0xa0:
+        case '\n':
+        case '\r':
+        case '\t':
+        case '\b':
+        case '\f':
 
-    bool is_blank_or_space(char c) {
-		return std::isblank(c) || std::isspace(c);
+        case 0x2000:
+        case 0x2001:
+        case 0x2003:
+        case 0x2004:
+        case 0x2005:
+        case 0x2006:
+        case 0x2007:
+        case 0x2008:
+        case 0x2009:
+        case 0x200a:
+        //case 0x200b:
+
+        case 0x202f:
+        case 0x205f:
+
+        case 0x3000:
+        //case 0xfeff:
+            return true;
+        default:
+            return false;
+        }
     }
 
-    vector<cstring> split_range(cstring::iterator beg, cstring::iterator end) {
-        vector<cstring> strings;
+    vector<wstring_range> split_range(wstring_range::iterator beg, wstring_range::iterator end) {
+        vector<wstring_range> strings;
 		return boost::split(strings, boost::make_iterator_range(beg, end), &is_blank_or_space);
     }
 
-    line_set initialSet(const cstring& data, int charsPerLine = 40) {
+    line_set initialSet(const wstring_range& data, int charsPerLine = 40) {
 
         float cpl = charactersPerLine(data.size(), charsPerLine);
 
@@ -292,23 +328,23 @@ vector<string> wrap_string(const char *csource, int charsPerLine)
 {
 	assert(csource);
 
-    cstring source = cstring(csource, csource + strlen(csource));
+    wide_string_converter converter;
+    auto wstr = converter.from_bytes(csource);
 
-    line_set set = initialSet(source, charsPerLine);
+    if (wstr.empty()) {
+        return vector<string>();
+    }
 
-    //cout << "ideal " << set.idealCpl << endl;
+    wstring_range range(&wstr.front(), &wstr.back() + 1);
+
+    line_set set = initialSet(range, charsPerLine);
 
     operation setOpr;
 
     float delta = set.meanSquare();
 
-    //auto sorted = set.sortedIndices();
-
-    //set.print();
-
     int loop = 0;
-    while (loop < 40)
-    {
+    while (loop < 40) {
         ++loop;
 
         float oldDelta = set.meanSquare();
@@ -336,12 +372,6 @@ vector<string> wrap_string(const char *csource, int charsPerLine)
         }
     }
 
-    //cout << endl;
-
-    //set.print();
-
-   // getch();
-
-    return set.strings();
+    return set.utf8Strings(converter);
 }
 }
