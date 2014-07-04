@@ -4,38 +4,35 @@
 
 #include "skse/PluginAPI.h"
 #include "skse/skse_version.h"
-#include "skse/PapyrusVM.h"
-#include "skse/PapyrusNativeFunctions.h"
-#include "skse/GameForms.h"
+#include "skse/GameData.h"
 
 #include "gtest.h"
+#include "jcontainers_constants.h"
 #include "tes_context.h"
-#include "form_handling.h"
-#include "plugin_info.h"
 
 class VMClassRegistry;
 
 extern bool registerAllFunctions(VMClassRegistry *registry);
 
-namespace skse { namespace {
+namespace collections { namespace {
 
     static PluginHandle					g_pluginHandle = kPluginHandle_Invalid;
 
     static SKSESerializationInterface	* g_serialization = NULL;
     static SKSEPapyrusInterface			* g_papyrus = NULL;
 
-    void Serialization_Revert(SKSESerializationInterface * intfc) {
-        collections::tes_context::instance().clearState();
+    void revert(SKSESerializationInterface * intfc) {
+        tes_context::instance().clearState();
     }
 
-    void Serialization_Save(SKSESerializationInterface * intfc) {
+    void save(SKSESerializationInterface * intfc) {
         if (intfc->OpenRecord(kJStorageChunk, kJSerializationCurrentVersion)) {
-            auto data = collections::tes_context::instance().saveToArray();
+            auto data = tes_context::instance().saveToArray();
             intfc->WriteRecordData(data.data(), data.size());
         }
     }
 
-    void Serialization_Load(SKSESerializationInterface * intfc) {
+    void load(SKSESerializationInterface * intfc) {
         UInt32	type;
         UInt32	version;
         UInt32	length;
@@ -51,7 +48,7 @@ namespace skse { namespace {
             }
         }
 
-        collections::tes_context::instance().loadAll(data, version);
+        tes_context::instance().loadAll(data, version);
     }
 
     extern "C" {
@@ -70,7 +67,7 @@ namespace skse { namespace {
             // store plugin handle so we can identify ourselves later
             g_pluginHandle = skse->GetPluginHandle();
 
-            _MESSAGE("JContainers %u.%u\n", kJVersionMajor, kJVersionMinor);
+            _MESSAGE("JContainers %u.%u.%u\n", kJVersionMajor, kJVersionMinor, kJVersionPatch);
 
             if (skse->isEditor) {
                 _MESSAGE("loaded in editor, marking as incompatible");
@@ -109,9 +106,9 @@ namespace skse { namespace {
 
             g_serialization->SetUniqueID(g_pluginHandle, kJStorageChunk);
 
-            g_serialization->SetRevertCallback(g_pluginHandle, Serialization_Revert);
-            g_serialization->SetSaveCallback(g_pluginHandle, Serialization_Save);
-            g_serialization->SetLoadCallback(g_pluginHandle, Serialization_Load);
+            g_serialization->SetRevertCallback(g_pluginHandle, revert);
+            g_serialization->SetSaveCallback(g_pluginHandle, save);
+            g_serialization->SetLoadCallback(g_pluginHandle, load);
 
             g_papyrus->Register(registerAllFunctions);
 
@@ -127,9 +124,9 @@ namespace skse { namespace {
 
 }
 
-namespace skse {
+namespace collections { namespace skse {
 
-    namespace {
+    namespace aux {
 
         enum {
             char_count = 'Z' - 'A' + 1,
@@ -149,7 +146,7 @@ namespace skse {
             return wrapped;
         }
 
-        const char * _modname_from_index(uint8_t idx) {
+        const char * modname_from_index(uint8_t idx) {
 
             if (index_in_range(idx)) {
                 int wrapped = wrap_index(idx);
@@ -162,20 +159,20 @@ namespace skse {
             }
          }
 
-        uint8_t _modindex_from_name(const char * name) {
+        uint8_t modindex_from_name(const char * name) {
             assert(name);
             return index_in_range(*name) ? *name : 0xFF;
         }
 
-        TEST(_modname_from_index, test)
+        TEST(modname_from_index, test)
         {
-            auto res = _modname_from_index('Z');
+            auto res = modname_from_index('Z');
             EXPECT_TRUE( strcmp(res, "Z") == 0 );
 
-            EXPECT_TRUE(_modindex_from_name("Action") == 'A');
+            EXPECT_TRUE(modindex_from_name("Action") == 'A');
 
-            EXPECT_NIL( _modname_from_index('|') );
-            EXPECT_NIL( _modname_from_index('a') );
+            EXPECT_NIL(modname_from_index('|'));
+            EXPECT_NIL(modname_from_index('a'));
         }
     }
 
@@ -196,15 +193,16 @@ namespace skse {
             return modInfo ? modInfo->name : nullptr;
         }
         else {
-            return _modname_from_index(idx);
+            return aux::modname_from_index(idx);
         }
     }
 
     uint8_t modindex_from_name(const char * name) {
-        return g_serialization ? DataHandler::GetSingleton()->GetModIndex(name) : _modindex_from_name(name);
+        return g_serialization ? DataHandler::GetSingleton()->GetModIndex(name) : aux::modindex_from_name(name);
     }
 
     TESForm* lookup_form(uint32_t handle) {
         return g_serialization ? LookupFormByID(handle) : nullptr;
     }
+}
 }

@@ -153,7 +153,7 @@
     <ClInclude Include="src\collection_operators.h" />
     <ClInclude Include="src\form_handling.h" />
     <ClInclude Include="src\path_resolving.h" />
-    <ClInclude Include="src\plugin_info.h" />
+    <ClInclude Include="src\jcontainers_constants.h" />
     <ClInclude Include="src\skse.h" />
     <ClInclude Include="src\tes_form_db.h" />
     <ClInclude Include="src\typedefs.h" />

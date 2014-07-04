@@ -26,7 +26,6 @@
 #include "skse/PluginAPI.h"
 
 #include "gtest.h"
-#include "plugin_info.h"
 
 #include "collections.h"
 #include "tes_context.h"

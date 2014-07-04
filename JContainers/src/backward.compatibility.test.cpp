@@ -1,7 +1,7 @@
 #include <fstream>
 #include "gtest.h"
 
-#include "plugin_info.h"
+#include "jcontainers_constants.h"
 #include "tes_context.h"
 #include "json_handling.h"
 

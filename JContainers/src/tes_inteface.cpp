@@ -10,7 +10,7 @@
 #include <boost/filesystem.hpp>
 
 #include "gtest.h"
-#include "plugin_info.h"
+#include "jcontainers_constants.h"
 
 #include "tes_error_code.h"
 

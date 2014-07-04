@@ -20,7 +20,7 @@
 
 #include "rw_mutex.h"
 
-#include "plugin_info.h"
+#include "jcontainers_constants.h"
 #include "object_base.h"
 #include "shared_state.h"
 
