@@ -19,7 +19,7 @@
 #include "json_handling.h"
 #include "path_resolving.h"
 
-#include "tes_binding.h"
+#include "collection_bind_traits.h"
 
 #include "tes_object.h"
 #include "tes_array.h"
@@ -34,28 +34,3 @@
 namespace collections {
 
 }
-
-bool registerAllFunctions(VMClassRegistry *registry) {
-
-    _MESSAGE("registering functions");
-
-    using namespace collections;
-
-    tes_binding::foreach_metaInfo_do([=](const tes_binding::class_meta_info& info) {
-        info.bind(registry);
-    });
-
-    return true;
-}
-
-extern "C" {
-
-    __declspec(dllexport) void produceCode() {
-
-        using namespace collections;
-
-        tes_binding::foreach_metaInfo_do([](const tes_binding::class_meta_info& info) {
-            code_producer::produceClassToFile(info);
-        });
-    }
-};

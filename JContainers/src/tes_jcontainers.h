@@ -1,6 +1,6 @@
 namespace collections {
 
-    class tes_jcontainers : public tes_binding::class_meta_mixin_t<tes_jcontainers> {
+    class tes_jcontainers : public reflection::class_meta_mixin_t<tes_jcontainers> {
     public:
 
         REGISTER_TES_NAME("JContainers");

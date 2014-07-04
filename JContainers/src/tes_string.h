@@ -3,7 +3,7 @@ extern std::vector<std::string> StringUtil_wrapString(const char *csource, int c
 
 namespace collections {
 
-    class tes_string : public tes_binding::class_meta_mixin_t<tes_string> {
+    class tes_string : public reflection::class_meta_mixin_t<tes_string> {
     public:
 
         tes_string() {

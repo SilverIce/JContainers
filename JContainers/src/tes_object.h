@@ -5,7 +5,7 @@ namespace collections {
 
 #define ARGS(...)   #__VA_ARGS__
 
-    class tes_object : public tes_binding::class_meta_mixin_t< tes_object > {
+    class tes_object : public reflection::class_meta_mixin_t< tes_object > {
     public:
 
         REGISTER_TES_NAME("JValue");

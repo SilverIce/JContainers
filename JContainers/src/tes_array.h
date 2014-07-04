@@ -4,7 +4,7 @@ namespace collections {
 
 #define NEGATIVE_IDX_COMMENT "negative index accesses items from the end of array counting backwards."
 
-    class tes_array : public tes_binding::class_meta_mixin_t< tes_array > {
+    class tes_array : public reflection::class_meta_mixin_t< tes_array > {
     public:
 
         REGISTER_TES_NAME("JArray");

@@ -143,19 +143,21 @@
     </ClCompile>
     <ClCompile Include="src\line_breaker.cpp" />
     <ClCompile Include="src\path_resolving.cpp" />
+    <ClCompile Include="src\reflection.cpp" />
     <ClCompile Include="src\serialization.cpp" />
     <ClCompile Include="src\skse.cpp" />
     <ClCompile Include="src\tes_inteface.cpp" />
     <ClInclude Include="src\autorelease_queue.h" />
     <ClInclude Include="src\boost_extras.h" />
-    <ClInclude Include="src\code_producer.h" />
-    <ClCompile Include="src\code_producer.cpp" />
+    <ClInclude Include="src\code_producer.hpp" />
+    <ClInclude Include="src\collection_bind_traits.h" />
     <ClInclude Include="src\collection_operators.h" />
     <ClInclude Include="src\form_handling.h" />
     <ClInclude Include="src\path_resolving.h" />
     <ClInclude Include="src\jcontainers_constants.h" />
     <ClInclude Include="src\skse.h" />
     <ClInclude Include="src\tes_form_db.h" />
+    <ClInclude Include="src\reflection.h" />
     <ClInclude Include="src\typedefs.h" />
   </ItemGroup>
   <ItemGroup>

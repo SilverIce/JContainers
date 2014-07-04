@@ -2,28 +2,14 @@
 
 #include "skse/PapyrusNativeFunctions.h"
 
-#include "tes_meta_info.h"
+#include "reflection.h"
 #include "collections.h"
 #include "tes_context.h"
-#include "code_producer.h"
 
-namespace collections {
+namespace reflection {
 
-    class map;
-    class form_map;
-    class array;
-    class object_base;
-
-#define NOTHING 
-
-#define DO_0(rep, f, m, l)
-#define DO_1(rep, f, m_, l)   f rep(1) l
-#define DO_2(rep, f, m, l)   DO_1(rep, f, m, NOTHING) m  rep(2) l
-#define DO_3(rep, f, m, l)   DO_2(rep, f, m, NOTHING) m  rep(3) l
-#define DO_4(rep, f, m, l)   DO_3(rep, f, m, NOTHING) m  rep(4) l
-#define DO_5(rep, f, m, l)   DO_4(rep, f, m, NOTHING) m  rep(5) l
-
-    namespace tes_binding {
+    // traits placeholders
+    namespace binding {
 
         template<class TesType>
         struct Tes2J {
@@ -43,12 +29,20 @@ namespace collections {
             return in;
         }
 
+        template<class T> struct j2Str {
+            static function_parameter typeInfo() { return function_parameter_make(typeid(T).name(), nullptr); }
+        };
+    }
+
+    // Basic type traits
+    namespace binding {
+
         template<>
-        struct Tes2J<BSFixedString> {
+        struct Tes2J < BSFixedString > {
             typedef const char* j_type;
         };
         template<>
-        struct J2Tes<const char*> {
+        struct J2Tes < const char* > {
             typedef BSFixedString tes_type;
         };
         template<> inline BSFixedString convert2Tes<BSFixedString>(const char * str) {
@@ -61,108 +55,36 @@ namespace collections {
             return str.data;
         }
 
-        template<>
-        struct J2Tes<object_base*> {
-            typedef HandleT tes_type;
+        template<> struct j2Str < BSFixedString > {
+            static function_parameter typeInfo() { return function_parameter_make("string", nullptr); }
         };
-        template<> inline HandleT convert2Tes(object_base* obj) {
-            return obj ? obj->uid() : 0;
-        }
-        template<> inline HandleT convert2Tes(array* obj) {
-            return obj ? obj->uid() : 0;
-        }
-        template<> inline HandleT convert2Tes(map* obj) {
-            return obj ? obj->uid() : 0;
-        }
-        template<> inline HandleT convert2Tes(form_map* obj) {
-            return obj ? obj->uid() : 0;
-        }
-
-        template<>
-        struct Tes2J<HandleT> {
-            typedef object_base* j_type;
+        template<> struct j2Str < const char* > {
+            static function_parameter typeInfo() { return function_parameter_make("string", nullptr); }
+        };
+        template<> struct j2Str < Float32 > {
+            static function_parameter typeInfo() { return function_parameter_make("float", nullptr); }
+        };
+        template<> struct j2Str < SInt32 > {
+            static function_parameter typeInfo() { return function_parameter_make("int", nullptr); }
+        };
+        template<> struct j2Str < TESForm * > {
+            static function_parameter typeInfo() { return function_parameter_make("form", nullptr); }
         };
 
-        template<> struct J2Tes<array*> {
-            typedef HandleT tes_type;
-        };
-        template<> struct J2Tes<map*> {
-            typedef HandleT tes_type;
-        };
-        template<> struct J2Tes<form_map*> {
-            typedef HandleT tes_type;
-        };
-        template<> inline object_base* convert2J(HandleT hdl) {
-            return tes_context::instance().getObject(hdl);
-        }
-        template<> inline array* convert2J(HandleT hdl) {
-            return tes_context::instance().getObjectOfType<array>(hdl);
-        }
-        template<> inline map* convert2J(HandleT hdl) {
-            return tes_context::instance().getObjectOfType<map>(hdl);
-        }
-        template<> inline form_map* convert2J(HandleT hdl) {
-            return tes_context::instance().getObjectOfType<form_map>(hdl);
-        }
-        template<>
-        struct J2Tes<Handle> {
-            typedef HandleT tes_type;
-        };
-        template<> inline HandleT convert2Tes(Handle hdl) {
-            return (HandleT)hdl;
-        }
-
-        template<class T> struct j2Str {
-            static j_type_info typeInfo() { return j_type_info_make(typeid(T).name(), nullptr); }
-        };
-
-        template<> struct j2Str<object_base *> {
-            static j_type_info typeInfo() { return j_type_info_make("int", "object"); }
-        };
-        template<> struct j2Str<map *> {
-            static j_type_info typeInfo() { return j_type_info_make("int", "object"); }
-        };
-        template<> struct j2Str<array *> {
-            static j_type_info typeInfo() { return j_type_info_make("int", "object"); }
-        };
-        template<> struct j2Str<form_map *> {
-            static j_type_info typeInfo() { return j_type_info_make("int", "object"); }
-        };
-        template<> struct j2Str<HandleT> {
-            static j_type_info typeInfo() { return j_type_info_make("int", "object"); }
-        };
-        template<> struct j2Str<Handle> {
-            static j_type_info typeInfo() { return j_type_info_make("int", "object"); }
-        };
-
-        template<> struct j2Str<BSFixedString> {
-            static j_type_info typeInfo() { return j_type_info_make("string", nullptr); }
-        };
-        template<> struct j2Str<const char*> {
-            static j_type_info typeInfo() { return j_type_info_make("string", nullptr); }
-        };
-        template<> struct j2Str<Float32> {
-            static j_type_info typeInfo() { return j_type_info_make("float", nullptr); }
-        };
-        template<> struct j2Str<SInt32> {
-            static j_type_info typeInfo() { return j_type_info_make("int", nullptr); }
-        };
-        template<> struct j2Str<TESForm *> {
-            static j_type_info typeInfo() { return j_type_info_make("form", nullptr); }
-        };
-
-        template<class T> struct j2Str<VMArray<T> > {
-            static j_type_info typeInfo() {
-                std::string str( j2Str<T>::typeInfo().tes_type_name );
+        template<class T> struct j2Str < VMArray<T> > {
+            static function_parameter typeInfo() {
+                std::string str(j2Str<T>::typeInfo().tes_type_name);
                 str += "[]";
-                j_type_info info = {str, "values"};
+                function_parameter info = { str, "values" };
                 return info;
             }
         };
 
+    }
+
+    namespace binding {
 
         template <typename T, T func> struct proxy;
-
 
         template <class R, class Arg0, class Arg1, R (*func)( Arg0, Arg1 ) >
         struct proxy<R (*)(Arg0, Arg1), func>
@@ -188,7 +110,7 @@ namespace collections {
                 );
             }
 
-            static void bind(VMClassRegistry *registry, const char *name, const char *className) {
+            static void bind(VMClassRegistry *registry, const char *className, const char *name) {
                 registry->RegisterFunction(
                     new NativeFunction2 <
                             StaticFunctionTag,
@@ -219,7 +141,7 @@ namespace collections {
                 func(convert2J<Arg0>(a0), convert2J<Arg1>(a1));
             }
 
-            static void bind(VMClassRegistry *registry, const char *name, const char *className) {
+            static void bind(VMClassRegistry *registry, const char *className, const char *name) {
 
                 registry->RegisterFunction(
                     new NativeFunction2 <
@@ -243,9 +165,6 @@ namespace collections {
     #define TYPESTRING_NTH(n)     &j2Str<Arg##n>::typeInfo
 
 
-
-
-
     #define MAKE_PROXY_NTH(N) \
         template <class R DO_##N(TARGS_NTH, COMA, COMA, NOTHING), R (*func)( DO_##N(PARAM_NAMELESS_NTH, NOTHING, COMA, NOTHING) ) >     \
         struct proxy<R (*)(DO_##N(PARAM_NAMELESS_NTH, NOTHING, COMA, NOTHING)), func>     \
@@ -267,7 +186,7 @@ namespace collections {
                 ));     \
             }     \
                  \
-            static void bind(VMClassRegistry *registry, const char *name, const char *className) {     \
+            static void bind(VMClassRegistry *registry, const char *className, const char *name) {     \
                 registry->RegisterFunction(     \
                     new NativeFunction##N <StaticFunctionTag, typename J2Tes<R>::tes_type   \
                         DO_##N(TESTYPE_NTH, COMA, COMA, NOTHING)  > (name, className, &tes_func, registry)   \
@@ -293,13 +212,23 @@ namespace collections {
                 func(DO_##N(TESPARAM_CONV_NTH, NOTHING, COMA, NOTHING));     \
             }     \
                  \
-            static void bind(VMClassRegistry *registry, const char *name, const char *className) {     \
+            static void bind(VMClassRegistry *registry, const char *className, const char *name) {     \
                 registry->RegisterFunction(     \
                     new NativeFunction##N <StaticFunctionTag, void   \
                         DO_##N(TESTYPE_NTH, COMA, COMA, NOTHING)  > (name, className, tes_func, registry)   \
                 );     \
             }     \
         };
+
+#define NOTHING 
+
+#define DO_0(rep, f, m, l)
+#define DO_1(rep, f, m_, l)   f rep(1) l
+#define DO_2(rep, f, m, l)   DO_1(rep, f, m, NOTHING) m  rep(2) l
+#define DO_3(rep, f, m, l)   DO_2(rep, f, m, NOTHING) m  rep(3) l
+#define DO_4(rep, f, m, l)   DO_3(rep, f, m, NOTHING) m  rep(4) l
+#define DO_5(rep, f, m, l)   DO_4(rep, f, m, NOTHING) m  rep(5) l
+
 
 
         MAKE_PROXY_NTH(0);
@@ -317,18 +246,18 @@ namespace collections {
     // MSVC2012 bug workaround
     template <typename T> T msvc_identity(T);
 
+    // retrieves class_info pointer from member address
     // specially for hack made in REGISTERF macro
-    namespace tes_binding {
-        inline class_meta_info& metaInfoFromFieldAndOffset(void * fieldAddress, int offset) {
-            auto mixin = (class_meta_mixin *)((char *)fieldAddress - offset);
-            return mixin->metaInfo;
-        }
+    inline class_info& metaInfoFromFieldAndOffset(void * fieldAddress, int offset) {
+        auto mixin = (_detail::class_meta_mixin *)((char *)fieldAddress - offset);
+        return mixin->metaInfo;
     }
 
 #define REGISTER_TES_NAME(ScriptTesName)\
     struct CONCAT(_struct_, __LINE__) {\
         CONCAT(_struct_, __LINE__)() {\
-            auto& mInfo = tes_binding::metaInfoFromFieldAndOffset( this, offsetof(__Type, CONCAT(_mem_, __LINE__)) );\
+            using namespace reflection;\
+            auto& mInfo = metaInfoFromFieldAndOffset( this, offsetof(__Type, CONCAT(_mem_, __LINE__)) );\
             mInfo.className = (ScriptTesName);\
         }\
     } CONCAT(_mem_, __LINE__);
@@ -336,15 +265,16 @@ namespace collections {
 #define REGISTERF(func, _funcname, _args, _comment)\
     struct CONCAT(_struct_, __LINE__) {\
          CONCAT(_struct_, __LINE__)() {\
-             tes_binding::FunctionMetaInfo metaF;\
-             typedef tes_binding::proxy<decltype(msvc_identity(&(func))), &(func)> binder;\
+             using namespace reflection;\
+             function_info metaF;\
+             typedef binding::proxy<decltype(msvc_identity(&(func))), &(func)> binder;\
              metaF.registrator = &binder::bind;\
-             metaF.typeStrings = &binder::type_strings;\
+             metaF.param_list_func = &binder::type_strings;\
              \
-             metaF.args = (_args);\
+             metaF.argument_names = (_args);\
              metaF.setComment(_comment);\
-             metaF.funcName = (_funcname);\
-             tes_binding::metaInfoFromFieldAndOffset(this, offsetof(__Type, CONCAT(_mem_, __LINE__))).addFunction(metaF);\
+             metaF.name = (_funcname);\
+             metaInfoFromFieldAndOffset(this, offsetof(__Type, CONCAT(_mem_, __LINE__))).addFunction(metaF);\
          }\
     } CONCAT(_mem_, __LINE__);
 

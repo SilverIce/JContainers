@@ -1,5 +1,5 @@
 namespace collections {
-    class tes_db : public tes_binding::class_meta_mixin_t<tes_db> {
+    class tes_db : public reflection::class_meta_mixin_t<tes_db> {
     public:
 
         REGISTER_TES_NAME("JDB");

@@ -9,10 +9,9 @@
 #include "gtest.h"
 #include "jcontainers_constants.h"
 #include "tes_context.h"
+#include "reflection.h"
 
 class VMClassRegistry;
-
-extern bool registerAllFunctions(VMClassRegistry *registry);
 
 namespace collections { namespace {
 
@@ -96,6 +95,17 @@ namespace collections { namespace {
                 _MESSAGE("couldn't get papyrus interface");
                 return false;
             }
+
+            return true;
+        }
+
+        bool registerAllFunctions(VMClassRegistry *registry) {
+
+            _MESSAGE("registering functions");
+
+            reflection::foreach_metaInfo_do([=](const reflection::class_info& info) {
+                info.bind(registry);
+            });
 
             return true;
         }

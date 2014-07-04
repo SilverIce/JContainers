@@ -9,7 +9,7 @@ namespace collections {
     }
 
     template<class Key, class Cnt>
-    class tes_map_t : public tes_binding::class_meta_mixin_t< tes_map_t<Key, Cnt> > {
+    class tes_map_t : public reflection::class_meta_mixin_t< tes_map_t<Key, Cnt> > {
     public:
 
         REGISTERF(tes_object::object<Cnt>, "object", "", kCommentObject);

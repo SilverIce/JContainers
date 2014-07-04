@@ -27,13 +27,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\code_producer.cpp">
-      <Filter>code_producer</Filter>
-    </ClCompile>
     <ClCompile Include="src\serialization.cpp">
-      <Filter>collections_module</Filter>
-    </ClCompile>
-    <ClCompile Include="src\tes_inteface.cpp">
       <Filter>collections_module</Filter>
     </ClCompile>
     <ClCompile Include="src\line_breaker.cpp">
@@ -55,11 +49,14 @@
     <ClCompile Include="src\backward.compatibility.test.cpp">
       <Filter>collections_module</Filter>
     </ClCompile>
+    <ClCompile Include="src\tes_inteface.cpp">
+      <Filter>collections_module\tes_api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\reflection.cpp">
+      <Filter>code_producer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\code_producer.h">
-      <Filter>code_producer</Filter>
-    </ClInclude>
     <ClInclude Include="src\collections.h">
       <Filter>collections_module</Filter>
     </ClInclude>
@@ -73,9 +70,6 @@
       <Filter>collections_module</Filter>
     </ClInclude>
     <ClInclude Include="src\tes_error_code.h">
-      <Filter>collections_module</Filter>
-    </ClInclude>
-    <ClInclude Include="src\tes_binding.h">
       <Filter>collections_module</Filter>
     </ClInclude>
     <ClInclude Include="src\tes_context.h">
@@ -155,5 +149,17 @@
       <Filter>skse</Filter>
     </ClInclude>
     <ClInclude Include="src\jcontainers_constants.h" />
+    <ClInclude Include="src\tes_binding.h">
+      <Filter>code_producer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\reflection.h">
+      <Filter>code_producer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\collection_bind_traits.h">
+      <Filter>collections_module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\code_producer.hpp">
+      <Filter>code_producer</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
