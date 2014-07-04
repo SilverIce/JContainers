@@ -51,8 +51,6 @@ namespace collections
 
     void shared_state::loadAll(const std::string & data, int version) {
 
-        _DMESSAGE("%u bytes loaded", data.size());
-
         std::istringstream stream(data);
         boost::archive::binary_iarchive archive(stream);
 
@@ -128,8 +126,6 @@ namespace collections
         aqueue->start();
 
         std::string data(stream.str());
-
-        _DMESSAGE("%u bytes saved", data.size());
 
         return data;
     }

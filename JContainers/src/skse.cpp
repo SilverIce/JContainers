@@ -1,11 +1,13 @@
-#include "skse.h"
 
+#include <chrono>
 #include <ShlObj.h>
+
+#include "skse.h"
 
 #include "skse/PluginAPI.h"
 #include "skse/skse_version.h"
 #include "skse/PapyrusVM.h"
-#include "skse/PapyrusNativeFunctions.h"
+//#include "skse/PapyrusNativeFunctions.h"
 #include "skse/GameForms.h"
 
 #include "gtest.h"
@@ -24,34 +26,65 @@ namespace skse { namespace {
     static SKSESerializationInterface	* g_serialization = NULL;
     static SKSEPapyrusInterface			* g_papyrus = NULL;
 
+    template<class T>
+    float do_with_timing(T& func) {
+        namespace chr = std::chrono;
+        auto started = chr::system_clock::now();
+
+        func();
+
+        auto ended = chr::system_clock::now();
+        return chr::duration_cast<chr::milliseconds>(ended - started).count() / 1000.f;
+    }
+
     void Serialization_Revert(SKSESerializationInterface * intfc) {
-        collections::tes_context::instance().clearState();
+        _DMESSAGE("Revert started");
+        float diff = do_with_timing([]() {
+            collections::tes_context::instance().clearState();
+        });
+        _DMESSAGE("Revert finished in %f sec", diff);
     }
 
     void Serialization_Save(SKSESerializationInterface * intfc) {
-        if (intfc->OpenRecord(kJStorageChunk, kJSerializationCurrentVersion)) {
-            auto data = collections::tes_context::instance().saveToArray();
-            intfc->WriteRecordData(data.data(), data.size());
-        }
+        float diff = do_with_timing([intfc]() {
+            _DMESSAGE("Save started");
+
+            if (intfc->OpenRecord(kJStorageChunk, kJSerializationCurrentVersion)) {
+                auto data = collections::tes_context::instance().saveToArray();
+                intfc->WriteRecordData(data.data(), data.size());
+                _DMESSAGE("%lu bytes saved", data.size());
+            } else {
+                _DMESSAGE("Unable open JC record");
+            }
+        });
+
+        _DMESSAGE("Save finished in %f", diff);
     }
 
     void Serialization_Load(SKSESerializationInterface * intfc) {
-        UInt32	type;
-        UInt32	version;
-        UInt32	length;
 
-        std::string data;
+        float diff = do_with_timing([intfc]() {
 
-        while (intfc->GetNextRecordInfo(&type, &version, &length)) {
+            UInt32	type;
+            UInt32	version;
+            UInt32	length;
 
-            if (type == kJStorageChunk && length > 0) {
-                data.resize(length, '\0');
-                intfc->ReadRecordData((void *)data.data(), data.size());
-                break;
+            std::string data;
+
+            while (intfc->GetNextRecordInfo(&type, &version, &length)) {
+
+                if (type == kJStorageChunk && length > 0) {
+                    data.resize(length, '\0');
+                    intfc->ReadRecordData((void *)data.data(), data.size());
+                    break;
+                }
             }
-        }
 
-        collections::tes_context::instance().loadAll(data, version);
+            _DMESSAGE("Load started. %lu bytes in archive", data.size());
+            collections::tes_context::instance().loadAll(data, version);
+        });
+
+        _DMESSAGE("Load finished in %f sec", diff);
     }
 
     extern "C" {
