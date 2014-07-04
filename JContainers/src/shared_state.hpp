@@ -5,8 +5,8 @@ namespace collections
         : registry(nullptr)
         , aqueue(nullptr)
     {
-        registry = new object_registry(_mutex);
-        aqueue = new autorelease_queue(*registry, _mutex);
+        registry = new object_registry();
+        aqueue = new autorelease_queue(*registry);
     }
 
     shared_state::~shared_state() {
@@ -150,7 +150,7 @@ namespace collections
         static_assert( std::is_reference<decltype(cntCopy)>::value == false , "");
 
         for (auto& pair : cntCopy) {
-            pair.second->_context = this;
+            pair.second->set_context(*this);
             pair.second->u_onLoaded();
         }
     }

@@ -1,7 +1,13 @@
 #pragma once
 
-#include "spinlock.h"
 #include <mutex>
+#include <atomic>
+#include <assert.h>
+//#include <boost/smart_ptr/intrusive_ptr.hpp>
+#include <boost/smart_ptr/intrusive_ptr_jc.hpp>
+#include <boost/serialization/split_member.hpp>
+
+#include "spinlock.h"
 
 namespace collections {
 
@@ -22,14 +28,27 @@ namespace collections {
         CollectionTypeFormMap,
     };
 
+    struct object_base_stack_ref_policy {
+        static void intrusive_ptr_add_ref(object_base * p);
+        static void intrusive_ptr_release(object_base * p);
+    };
+
+    typedef boost::intrusive_ptr_jc<object_base, object_base_stack_ref_policy> object_ref;
+
     class object_base
     {
         friend class shared_state;
 
         Handle _id;
 
-        int32_t _refCount;
-        int32_t _tes_refCount;
+        std::atomic_int32_t _refCount;
+        std::atomic_int32_t _tes_refCount;
+        std::atomic_int32_t _stack_refCount;
+
+        CollectionType _type;
+        shared_state *_context;
+
+        void release_counter(std::atomic_int32_t& counter);
 
     public:
 
@@ -39,12 +58,10 @@ namespace collections {
         typedef std::lock_guard<spinlock> lock;
         spinlock _mutex;
 
-        CollectionType _type;
-        shared_state *_context;
-
         explicit object_base(CollectionType type)
             : _refCount(1)
             , _tes_refCount(0)
+            , _stack_refCount(0)
             , _id(HandleNull)
             , _type(type)
             , _context(nullptr)
@@ -54,34 +71,22 @@ namespace collections {
         object_base()
             : _refCount(0)
             , _tes_refCount(0)
+            , _stack_refCount(0)
             , _id(HandleNull)
             , _type(CollectionTypeNone)
             , _context(nullptr)
         {
         }
 
-        int32_t refCount() {
-            lock g(_mutex);
-            return _refCount + _tes_refCount;
-        }
-
-        bool registered() const {
-            return _id != HandleNull;
-        }
-
         Handle uid() const {
             return _id;
         }
 
-        bool operator == (const object_base& other) const { return _id == other._id; }
-        bool operator != (const object_base& other) const { return !(*this == other); }
-
-        template<class T> T * as() {
+        template<class T> T* as() {
             return (this && T::TypeId == _type) ? static_cast<T*>(this) : nullptr;
         }
 
         object_base * retain() {
-            lock g(_mutex);
             return u_retain();
         }
 
@@ -91,25 +96,62 @@ namespace collections {
         }
 
         object_base * tes_retain() {
-            lock g(_mutex);
             ++_tes_refCount;
             return this;
         }
 
+        void stack_retain() { ++_stack_refCount; }
+        void stack_release() { release_counter(_stack_refCount); }
+
+        int32_t refCount() {
+            return _refCount + _tes_refCount + _stack_refCount;
+        }
+        bool noOwners() const {
+            return
+                _refCount.load() == 0 &&
+                _tes_refCount.load() == 0 &&
+                _stack_refCount.load() == 0;
+        }
+
+/*
+        bool noOwners() const {
+            return
+                _refCount.load(std::memory_order_acquire) == 0 &&
+                _tes_refCount.load(std::memory_order_acquire) == 0 &&
+                _stack_refCount.load(std::memory_order_acquire) == 0;
+        }
+*/
+
+        // nothing left from objetive-c autorelease.
+        // now it just adds object to the queue and delays _deleteIfNoOwner call
         object_base * autorelease();
+
+        void release() { release_counter(_refCount); }
+        void tes_release() { release_counter(_tes_refCount); }
 
         // deletes object if no owners
         // true, if object deleted
         bool _deleteIfNoOwner(class autorelease_queue*);
-
-        void release();
-        void tes_release();
         void _addToDeleteQueue();
+
+        bool registered() const {
+            return _id != HandleNull;
+        }
+
+        void set_context(shared_state & ctx) {
+            assert(!_context);
+            _context = &ctx;
+        }
+
+        shared_state& context() const {
+            assert(_context);
+            return *_context;
+        }
+
         void _registerSelf();
 
         virtual void u_clear() = 0;
         virtual SInt32 u_count() = 0;
-
         virtual void u_onLoaded() {};
 
         // nillify object cross references to avoid high-level
@@ -126,8 +168,11 @@ namespace collections {
             u_clear();
         }
 
+        //////////////////////////////////////////////////////////////////////////
+
         template<class Archive>
         void serialize(Archive & ar, const unsigned int version) {
+            assert(_stack_refCount.load(std::memory_order_relaxed) == 0);
             ar & _refCount;
             ar & _tes_refCount;
 
@@ -135,6 +180,14 @@ namespace collections {
             ar & _id;
         }
     };
+
+    inline void object_base_stack_ref_policy::intrusive_ptr_add_ref(object_base * p) {
+        p->stack_retain();
+    }
+
+    inline void object_base_stack_ref_policy::intrusive_ptr_release(object_base * p) {
+        p->stack_release();
+    }
 
     class object_lock {
         object_base::lock _lock;

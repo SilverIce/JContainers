@@ -5,7 +5,6 @@
 #include <assert.h>
 
 #include <boost/serialization/split_member.hpp>
-#include <boost/smart_ptr/intrusive_ptr.hpp>
 #include <boost/variant.hpp>
 
 #include "common/ITypes.h"
@@ -21,17 +20,19 @@ namespace collections {
 	class tes_context;
 
     template<class T>
-    class collection_base_T : public object_base
+    class collection_base : public object_base
     {
     protected:
 
-        explicit collection_base_T() : object_base((CollectionType)T::TypeId) {}
+        //static_assert(std::is_base_of<collection_base<T>, T>::value, "");
+
+        explicit collection_base() : object_base((CollectionType)T::TypeId) {}
 
     public:
 
         static T* create(tes_context& context /*= tes_context::instance()*/) {
             auto obj = new T();
-            obj->_context = &context;
+            obj->set_context(context);
             obj->_registerSelf();
             return obj;
         }
@@ -39,7 +40,7 @@ namespace collections {
         template<class Init>
         static T* _createWithInitializer(Init& init, tes_context& context /*= tes_context::instance()*/) {
             auto obj = new T();
-            obj->_context = &context;
+            obj->set_context(context);
             init(obj);
             obj->_registerSelf();
             return obj;
@@ -64,26 +65,28 @@ namespace collections {
     class map;
     class object_base;
 
-    typedef boost::intrusive_ptr<object_base> object_ref;
+    struct item_object_lifetime_policy {
+        static void intrusive_ptr_add_ref(object_base * p) {
+            p->retain();
+        }
 
-    inline void intrusive_ptr_add_ref(object_base * p) {
-        p->retain();
-    }
+        static void intrusive_ptr_release(object_base * p) {
+            p->release();
+        }
+    };
 
-    inline void intrusive_ptr_release(object_base * p) {
-        p->release();
-    }
+    typedef boost::intrusive_ptr_jc<object_base, item_object_lifetime_policy> item_object_ref;
 
     class Item
     {
         typedef boost::blank blank;
-        typedef boost::variant<boost::blank, SInt32, Float32, FormId, object_ref, std::string> variant;
+        typedef boost::variant<boost::blank, SInt32, Float32, FormId, item_object_ref, std::string> variant;
         variant _var;
 
     public:
 
         void u_nullifyObject() {
-            if (auto ref = boost::get<object_ref>(&_var)) {
+            if (auto ref = boost::get<item_object_ref>(&_var)) {
                 ref->jc_nullify();
             }
         }
@@ -108,6 +111,14 @@ namespace collections {
 
         template<class T> bool is_type() const {
             return boost::get<T>(&_var) != nullptr;
+        }
+
+        template<class T> T* get() {
+            return boost::get<T>(&_var);
+        }
+
+        template<class T> const T* get() const {
+            return boost::get<T>(&_var);
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -143,9 +154,10 @@ namespace collections {
         explicit Item(object_base *val) : _var(boost::blank()) {
             *this = val;
         }
+/*
         explicit Item(const BSFixedString& val) : _var(boost::blank()) {
             *this = val.data;
-        }
+        }*/
 
         Item& operator = (unsigned int val) { _var = (SInt32)val; return *this;}
         Item& operator = (int val) { _var = (SInt32)val; return *this;}
@@ -195,7 +207,7 @@ namespace collections {
         }
 
         object_base *object() const {
-            if (auto ref = boost::get<object_ref>(&_var)) {
+            if (auto ref = boost::get<item_object_ref>(&_var)) {
                 return ref->get();
             }
             return nullptr;
@@ -273,7 +285,7 @@ namespace collections {
         }
 
         bool isEqual(const object_base *value) const {
-            return is_type<object_ref>() && object() == value;
+            return is_type<item_object_ref>() && object() == value;
         }
 
         bool isEqual(const TESForm *value) const {
@@ -315,10 +327,11 @@ namespace collections {
         return strValue();
     }
 
+/*
     template<> inline BSFixedString Item::readAs<BSFixedString>() {
         const char *chr = strValue();
         return chr ? BSFixedString(chr) : nullptr;
-    }
+    }*/
 
     template<> inline Handle Item::readAs<Handle>() {
         auto obj = object();
@@ -333,7 +346,7 @@ namespace collections {
         return object();
     }
 
-    class array : public collection_base_T< array >
+    class array : public collection_base< array >
     {
     public:
 
@@ -388,7 +401,7 @@ namespace collections {
         void serialize(Archive & ar, const unsigned int version);
     };
 
-    class map : public collection_base_T< map >
+    class map : public collection_base< map >
     {
     public:
 
@@ -417,13 +430,6 @@ namespace collections {
             object_lock g(this);
             return cnt;
         }
-
-/*
-        static std::string lowerString(const std::string& key) {
-            std::string lowerKey(key);
-            std::transform(lowerKey.begin(), lowerKey.end(), lowerKey.begin(), ::tolower);
-            return lowerKey;
-        }*/
 
         container_type::iterator findItr(const std::string& key) {
             return cnt.find(key);
@@ -470,7 +476,7 @@ namespace collections {
     };
 
 
-    class form_map : public collection_base_T< form_map >
+    class form_map : public collection_base< form_map >
     {
     public:
         enum  {

@@ -15,15 +15,11 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 
-//#include <boost/iostreams/device/array.hpp>
-//#include <boost/iostreams/stream.hpp>
-//#include <boost/iostreams/device/back_inserter.hpp>
-
 #include <fstream>
 #include <sstream>
 #include <set>
 
-#include "skse/PluginAPI.h"
+#include "boost_serialization_atomic.h"
 
 #include "gtest.h"
 #include "plugin_info.h"
@@ -34,12 +30,11 @@
 
 #include "tes_context.hpp"
 
-//BOOST_CLASS_EXPORT_GUID(collections::object_base, "kJValue");
 BOOST_CLASS_EXPORT_GUID(collections::array, "kJArray");
 BOOST_CLASS_EXPORT_GUID(collections::map, "kJMap");
 BOOST_CLASS_EXPORT_GUID(collections::form_map, "kJFormMap");
 
-BOOST_SERIALIZATION_SPLIT_FREE(collections::object_ref);
+BOOST_SERIALIZATION_SPLIT_FREE(collections::item_object_ref);
 
 BOOST_CLASS_VERSION(collections::Item, 1)
 
@@ -50,16 +45,16 @@ namespace boost {
         void serialize(Archive & ar, blank & g, const unsigned int version) {}
 
         template<class Archive>
-        void save(Archive & ar, const collections::object_ref & ptr, const unsigned int version) {
+        void save(Archive & ar, const collections::item_object_ref & ptr, const unsigned int version) {
             collections::object_base *obj = ptr.get();
             ar & obj;
         }
 
         template<class Archive>
-        void load(Archive & ar, collections::object_ref & ptr, const unsigned int version) {
+        void load(Archive & ar, collections::item_object_ref & ptr, const unsigned int version) {
             collections::object_base *obj = nullptr;
             ar & obj;
-            ptr = collections::object_ref(obj, false);
+            ptr = collections::item_object_ref(obj, false);
         }
 
     } // namespace serialization
@@ -161,8 +156,8 @@ namespace collections {
         if (version >= 1) {
             ar & _var;
 
-            if (is_type<FormId>()) {
-                *this = form_handling::resolve_handle(formId());
+            if (auto fId = get<FormId>()) {
+                *this = form_handling::resolve_handle(*fId);
             }
         }
         else {
@@ -193,7 +188,7 @@ namespace collections {
             case ItemTypeObject: {
                 object_base *object = nullptr;
                 ar & object;
-                _var = collections::object_ref(object, false);
+                _var = collections::item_object_ref(object, false);
                 break;
             }
             case ItemTypeForm:
@@ -239,7 +234,7 @@ namespace collections {
             keys.push_back(pair.first);
         }
 
-        for(auto& oldKey : keys) {
+        for(const auto& oldKey : keys) {
 			FormId newKey = form_handling::resolve_handle(oldKey);
 
             if (oldKey == newKey) {

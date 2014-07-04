@@ -50,7 +50,7 @@ namespace collections {
                 for (UInt32 i = 0; i < arr.Length(); ++i) {
                     T val;
                     arr.Get(&val, i);
-                    me->_array.push_back(Item(val));
+                    me->_array.push_back(Item(tes_binding::convert2J<tes_binding::Tes2J<T>::j_type>(val)));
                 }
             },
                 tes_context::instance());
