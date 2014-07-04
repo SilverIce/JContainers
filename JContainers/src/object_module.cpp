@@ -28,7 +28,6 @@
 #include "object_registry.h"
 #include "autorelease_queue.h"
 
-
 #include "object_base.hpp"
 #include "shared_state.hpp"
 

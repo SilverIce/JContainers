@@ -135,7 +135,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\backward.compatibility.test.cpp" />
-    <ClCompile Include="src\basic_part.cpp" />
+    <ClCompile Include="src\object_module.cpp" />
     <ClCompile Include="src\gtest.cpp" />
     <ClCompile Include="src\jcontainers_pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -148,6 +148,7 @@
     <ClCompile Include="src\tes_inteface.cpp" />
     <ClInclude Include="src\autorelease_queue.h" />
     <ClInclude Include="src\boost_extras.h" />
+    <ClInclude Include="src\boost_serialization_atomic.h" />
     <ClInclude Include="src\code_producer.h" />
     <ClCompile Include="src\code_producer.cpp" />
     <ClInclude Include="src\collection_operators.h" />

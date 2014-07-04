@@ -42,9 +42,6 @@
     <ClCompile Include="src\gtest.cpp">
       <Filter>gtest</Filter>
     </ClCompile>
-    <ClCompile Include="src\basic_part.cpp">
-      <Filter>object_module\impl</Filter>
-    </ClCompile>
     <ClCompile Include="src\jcontainers_pch.cpp" />
     <ClCompile Include="src\path_resolving.cpp">
       <Filter>collections_module\path_resolving</Filter>
@@ -54,6 +51,9 @@
     </ClCompile>
     <ClCompile Include="src\backward.compatibility.test.cpp">
       <Filter>collections_module</Filter>
+    </ClCompile>
+    <ClCompile Include="src\object_module.cpp">
+      <Filter>object_module\impl</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -154,6 +154,9 @@
     </ClInclude>
     <ClInclude Include="src\skse.h">
       <Filter>skse</Filter>
+    </ClInclude>
+    <ClInclude Include="src\boost_serialization_atomic.h">
+      <Filter>collections_module</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
