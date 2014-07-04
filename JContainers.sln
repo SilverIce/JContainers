@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.30501.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JContainers", "JContainers\JContainers.vcxproj", "{C7305D8C-5514-4C58-9ED7-04D1D7A53D8D}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JC_test_launcher", "JC_test_launcher\JC_test_launcher.vcxproj", "{FAA39367-64F7-4552-A537-002A1FFB8365}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "skse", "dep\skse\skse\skse.vcxproj", "{AA0365EC-47EA-45AA-BB1F-EBBCCCC466F2}"
@@ -19,15 +17,14 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lua", "dep\lua\lua.vcxproj"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lua_test", "lua_test\lua_test.vcxproj", "{E508F63D-945B-4ACD-856A-7650F0F010EE}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JContainers", "JContainers\JContainers.vcxproj", "{C7305D8C-5514-4C58-9ED7-04D1D7A53D8D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
 		Release|Win32 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{C7305D8C-5514-4C58-9ED7-04D1D7A53D8D}.Debug|Win32.ActiveCfg = Debug|Win32
-		{C7305D8C-5514-4C58-9ED7-04D1D7A53D8D}.Debug|Win32.Build.0 = Debug|Win32
-		{C7305D8C-5514-4C58-9ED7-04D1D7A53D8D}.Release|Win32.ActiveCfg = Release|Win32
 		{FAA39367-64F7-4552-A537-002A1FFB8365}.Debug|Win32.ActiveCfg = Debug|Win32
 		{FAA39367-64F7-4552-A537-002A1FFB8365}.Debug|Win32.Build.0 = Debug|Win32
 		{FAA39367-64F7-4552-A537-002A1FFB8365}.Release|Win32.ActiveCfg = Release|Win32
@@ -56,6 +53,10 @@ Global
 		{E508F63D-945B-4ACD-856A-7650F0F010EE}.Debug|Win32.Build.0 = Debug|Win32
 		{E508F63D-945B-4ACD-856A-7650F0F010EE}.Release|Win32.ActiveCfg = Release|Win32
 		{E508F63D-945B-4ACD-856A-7650F0F010EE}.Release|Win32.Build.0 = Release|Win32
+		{C7305D8C-5514-4C58-9ED7-04D1D7A53D8D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C7305D8C-5514-4C58-9ED7-04D1D7A53D8D}.Debug|Win32.Build.0 = Debug|Win32
+		{C7305D8C-5514-4C58-9ED7-04D1D7A53D8D}.Release|Win32.ActiveCfg = Release|Win32
+		{C7305D8C-5514-4C58-9ED7-04D1D7A53D8D}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

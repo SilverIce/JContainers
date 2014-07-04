@@ -142,9 +142,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\line_breaker.cpp" />
-    <ClCompile Include="src\lua_stuff.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="src\lua_stuff.cpp" />
     <ClCompile Include="src\path_resolving.cpp" />
     <ClCompile Include="src\serialization.cpp" />
     <ClCompile Include="src\skse.cpp" />

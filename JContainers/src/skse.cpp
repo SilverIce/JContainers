@@ -7,6 +7,7 @@
 #include "skse/PapyrusVM.h"
 #include "skse/PapyrusNativeFunctions.h"
 #include "skse/GameForms.h"
+#include "skse/GameData.h"
 
 #include "gtest.h"
 #include "tes_context.h"

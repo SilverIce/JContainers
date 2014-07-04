@@ -7,6 +7,7 @@
 #include <functional>
 #include <boost/optional.hpp>
 #include <boost/noncopyable.hpp>
+#include <fstream>
 
 #include "meta.h"
 #include "gtest.h"
@@ -332,6 +333,13 @@ namespace collections {
 // group of apply-functions:
 namespace collections { namespace lua_apply {
 
+    void printLuaError(lua_State *l) {
+        if (lua_gettop(l) > 0 && lua_isstring(l, -1)) {
+            const char *str = lua_tostring(l, -1);
+            _MESSAGE("Error during lua code load: %s", str ? str : "");
+        }
+    }
+
     namespace {
 
         using namespace lua_traits;
@@ -460,29 +468,21 @@ namespace collections { namespace lua_apply {
         }
 
         void load_lua_code(lua_State *l) {
-            luaL_dostring(l, STR(
 
-                function less(than)
-                    return function(x) return x < than end
-                end
+            std::ifstream t("Data//SKSE//Plugins//JContainers.lua");
+            std::string str((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
 
-                function find(collection, predicate)
-                    local foundValue
+            if (str.empty()) {
+                return;
+            }
 
-                    apply(collection,
-                        function(x)
-                            if predicate(x) then
-                                foundValue = x
-                                return true
-                            else
-                                return false
-                            end
-                        end
-                    )
-                    print('found', foundValue)
-                    return foundValue
-                end
-                ));
+
+            lua_settop(l, 0);
+            int failed = luaL_dostring(l, str.c_str());
+
+            if (failed) {
+                printLuaError(l);
+            }
         }
 
         void register_apply_functions(lua_State *l)
@@ -493,7 +493,6 @@ namespace collections { namespace lua_apply {
         LUA_CONTEXT_MODIFIER(register_apply_functions);
     }
 
-
     Item process_apply_func(object_base *object, const char *lua_string) {
 
         auto l = lua_context::instance().state();
@@ -501,7 +500,9 @@ namespace collections { namespace lua_apply {
         set_object_to_apply(l, object);
         {
             int error = luaL_dostring(l, lua_string);
-           // printf("lua error: %s", lua_gettop(l) > 0 ? lua_tostring(l, -1) : "hmmm");
+            if (error) {
+                printLuaError(l);
+            }
             result = trait<Item>::check(l, -1);
         }
         set_object_to_apply(l, nullptr);
@@ -517,12 +518,26 @@ namespace collections { namespace lua_apply {
         obj->u_push(Item(2));
         obj->u_push(Item(3));
 
+        map *root = map::object(tes_context::instance());
+        root->setValueForKey("aKey", Item(obj));
+
         auto result = process_apply_func(obj, STR(
             return find(jobject, less(3))
             ));
 
         EXPECT_TRUE(result.intValue() == 1);
 
+        result = process_apply_func(root, STR(
+            return find(jobject.aKey, less(3))
+            ));
+        
+        EXPECT_TRUE(result.intValue() == 1);
+
+        result = process_apply_func(root, STR(
+            return count(jobject.aKey, less(3))
+            ));
+
+        EXPECT_TRUE(result.intValue() == 2);
 
     }
 }

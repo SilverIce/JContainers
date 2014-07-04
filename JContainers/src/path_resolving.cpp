@@ -14,6 +14,10 @@
 
 namespace collections
 {
+    namespace lua_apply {
+        extern Item process_apply_func(object_base *object, const char *lua_string);
+    }
+
     namespace path_resolving {
 
         namespace bs = boost;
@@ -111,6 +115,13 @@ namespace collections
             }
 
             auto path = bs::make_iterator_range(cpath, cpath + strnlen_s(cpath, 1024));
+            path = bs::trim_copy(path);
+
+            if (!bs::is_any_of(".[]")(path.front())) {
+                Item result = lua_apply::process_apply_func(collection, path.begin());
+                itemFunction(&result);
+                return;
+            }
 
             auto operatorRule = [](const state &st) -> state {
                 const auto& path = st.path;

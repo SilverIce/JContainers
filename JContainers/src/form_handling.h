@@ -3,13 +3,9 @@
 #include <string>
 #include <boost/algorithm/string.hpp>
 #include <boost/range/iterator_range.hpp>
-//#include <boost/range/algorithm/find_if.hpp>
-//#include <boost/range/algorithm/find_end.hpp>
 #include <boost/optional.hpp>
 #include "boost_extras.h"
 
-#include "skse/GameData.h"
-#include "collections.h"
 #include "skse.h"
 
 namespace collections {
