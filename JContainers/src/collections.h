@@ -65,28 +65,16 @@ namespace collections {
     class map;
     class object_base;
 
-    struct item_object_lifetime_policy {
-        static void intrusive_ptr_add_ref(object_base * p) {
-            p->retain();
-        }
-
-        static void intrusive_ptr_release(object_base * p) {
-            p->release();
-        }
-    };
-
-    typedef boost::intrusive_ptr_jc<object_base, item_object_lifetime_policy> item_object_ref;
-
     class Item
     {
         typedef boost::blank blank;
-        typedef boost::variant<boost::blank, SInt32, Float32, FormId, item_object_ref, std::string> variant;
+        typedef boost::variant<boost::blank, SInt32, Float32, FormId, internal_object_ref, std::string> variant;
         variant _var;
 
     public:
 
         void u_nullifyObject() {
-            if (auto ref = boost::get<item_object_ref>(&_var)) {
+            if (auto ref = boost::get<internal_object_ref>(&_var)) {
                 ref->jc_nullify();
             }
         }
@@ -207,7 +195,7 @@ namespace collections {
         }
 
         object_base *object() const {
-            if (auto ref = boost::get<item_object_ref>(&_var)) {
+            if (auto ref = boost::get<internal_object_ref>(&_var)) {
                 return ref->get();
             }
             return nullptr;
@@ -285,7 +273,7 @@ namespace collections {
         }
 
         bool isEqual(const object_base *value) const {
-            return is_type<item_object_ref>() && object() == value;
+            return is_type<internal_object_ref>() && object() == value;
         }
 
         bool isEqual(const TESForm *value) const {

@@ -34,7 +34,7 @@ BOOST_CLASS_EXPORT_GUID(collections::array, "kJArray");
 BOOST_CLASS_EXPORT_GUID(collections::map, "kJMap");
 BOOST_CLASS_EXPORT_GUID(collections::form_map, "kJFormMap");
 
-BOOST_SERIALIZATION_SPLIT_FREE(collections::item_object_ref);
+BOOST_SERIALIZATION_SPLIT_FREE(collections::internal_object_ref);
 
 BOOST_CLASS_VERSION(collections::Item, 1)
 
@@ -45,16 +45,16 @@ namespace boost {
         void serialize(Archive & ar, blank & g, const unsigned int version) {}
 
         template<class Archive>
-        void save(Archive & ar, const collections::item_object_ref & ptr, const unsigned int version) {
+        void save(Archive & ar, const collections::internal_object_ref & ptr, const unsigned int version) {
             collections::object_base *obj = ptr.get();
             ar & obj;
         }
 
         template<class Archive>
-        void load(Archive & ar, collections::item_object_ref & ptr, const unsigned int version) {
+        void load(Archive & ar, collections::internal_object_ref & ptr, const unsigned int version) {
             collections::object_base *obj = nullptr;
             ar & obj;
-            ptr = collections::item_object_ref(obj, false);
+            ptr = collections::internal_object_ref(obj, false);
         }
 
     } // namespace serialization
@@ -188,7 +188,7 @@ namespace collections {
             case ItemTypeObject: {
                 object_base *object = nullptr;
                 ar & object;
-                _var = collections::item_object_ref(object, false);
+                _var = collections::internal_object_ref(object, false);
                 break;
             }
             case ItemTypeForm:

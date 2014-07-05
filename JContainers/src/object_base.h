@@ -189,6 +189,19 @@ namespace collections {
         p->stack_release();
     }
 
+    struct internal_object_lifetime_policy {
+        static void intrusive_ptr_add_ref(object_base * p) {
+            p->retain();
+        }
+
+        static void intrusive_ptr_release(object_base * p) {
+            p->release();
+        }
+    };
+
+    typedef boost::intrusive_ptr_jc<object_base, internal_object_lifetime_policy> internal_object_ref;
+
+
     class object_lock {
         object_base::lock _lock;
     public:

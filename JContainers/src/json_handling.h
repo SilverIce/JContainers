@@ -350,7 +350,7 @@ namespace collections {
             }
         }
 
-        json_ref operator()(const item_object_ref & val) {
+        json_ref operator()(const internal_object_ref & val) {
             object_base *obj = val.get();
 
             if (!obj) {
