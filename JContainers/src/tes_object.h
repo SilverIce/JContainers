@@ -140,22 +140,17 @@ useful for those who use Papyrus properties instead of manual (and more error-pr
         }
         REGISTERF2(objectFromPrototype, "prototype", "creates new container object using given JSON string-prototype");
 
-        static void writeToFile(object_base *obj, const char * path, UInt32 indent = 2) {
-            enum {jansson_max_indent = 31};
-
-            if (!path || !obj || indent > jansson_max_indent) {
+        static void writeToFile(object_base *obj, const char * path) {
+            if (!path || !obj) {
                 return;
             }
 
             auto json = json_serializer::create_json_value(*obj);
             if (json) {
-                json_dump_file(json.get(), path, JSON_INDENT(indent));
+                json_dump_file(json.get(), path, JSON_INDENT(2));
             }
         }
-        REGISTERF2(writeToFile, "* filePath indent=2",
-            "Writes JSON repsresentation of object to the file.\n"
-            "With indent > 0 it pretty-prints the result, using newlines between array and object items, and indenting with n spaces.\n"
-            "The valid range for n is between 0 and 31 (inclusive)");
+        REGISTERF2(writeToFile, "* filePath", "writes object into JSON file");
 
         static bool hasPath(object_base *obj, const char *path) {
             if (!obj || !path)
