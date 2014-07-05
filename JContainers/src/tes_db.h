@@ -79,8 +79,8 @@ for ex. JDB.setObj(\"frostfall\", frostFallInformation) will associate 'frostall
         }
         REGISTERF2(allValues, "*", "returns new array containing all containers associated with JDB");
 
-        static void writeToFile(const char * path, UInt32 indent) {
-            tes_object::writeToFile(tes_context::instance().database(), path, indent);
+        static void writeToFile(const char * path) {
+            tes_object::writeToFile( tes_context::instance().database(), path);
         }
         REGISTERF2(writeToFile, "path", "writes storage data into JSON file at given path");
 
