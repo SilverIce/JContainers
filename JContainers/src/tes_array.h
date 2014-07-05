@@ -170,7 +170,7 @@ if insertAtIndex >= 0 it appends values starting from insertAtIndex index");
             NEGATIVE_IDX_COMMENT);
         REGISTERF(itemAtIndex<Float32>, "getFlt", "* index", "");
         REGISTERF(itemAtIndex<const char *>, "getStr", "* index", "");
-        REGISTERF(itemAtIndex<Handle>, "getObj", "* index", "");
+        REGISTERF(itemAtIndex<object_base*>, "getObj", "* index", "");
         REGISTERF(itemAtIndex<TESForm*>, "getForm", "* index", "");
 
         template<class T>

@@ -321,10 +321,11 @@ namespace collections {
         return chr ? BSFixedString(chr) : nullptr;
     }*/
 
+/*
     template<> inline Handle Item::readAs<Handle>() {
         auto obj = object();
         return obj ? obj->uid() : HandleNull;
-    }
+    }*/
 
     template<> inline TESForm * Item::readAs<TESForm*>() {
         return form();

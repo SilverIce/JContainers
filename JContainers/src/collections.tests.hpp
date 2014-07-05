@@ -274,7 +274,7 @@ namespace collections {
         tes_array::addItemAt<SInt32>(arr2, 4);
 
         tes_array::addItemAt(arr, arr2);
-        EXPECT_TRUE(tes_array::itemAtIndex<Handle>(arr, 2) == arr2->uid());
+        EXPECT_TRUE(tes_array::itemAtIndex<object_base*>(arr, 2) == arr2);
 
         tes_object::release(arr);
 
@@ -590,7 +590,7 @@ namespace collections {
         auto func = [&]() {
             printf("work started\n");
 
-            auto rootId = root->uid();
+            auto rootId = root->tes_uid();
             auto elsaId = elsa->uid();
 
             int i = 0;
@@ -611,6 +611,8 @@ namespace collections {
 
         fut1.wait();
         fut2.wait();
+
+        root->release();
     }
 }
 

@@ -82,6 +82,11 @@ namespace collections {
             return _id;
         }
 
+        // will mark object as publicly exposed
+        Handle tes_uid() {
+            return _id;
+        }
+
         template<class T> T* as() {
             return (this && T::TypeId == _type) ? static_cast<T*>(this) : nullptr;
         }
