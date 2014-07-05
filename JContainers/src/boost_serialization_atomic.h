@@ -36,31 +36,11 @@ namespace boost {
         struct implementation_level_impl< const std::atomic<T> >
         {
             typedef mpl::integral_c_tag tag;
-            typedef mpl::int_< primitive_type > type;
+            typedef mpl::int_< object_serializable > type;
             BOOST_STATIC_CONSTANT(
                 int,
                 value = implementation_level_impl::type::value
             );
-        };
-
-        // BOOST_CLASS_TRACKING
-        template<class T>
-        struct tracking_level< std::atomic<T> >
-        {
-            typedef mpl::integral_c_tag tag;
-            typedef mpl::int_< track_never > type;
-            BOOST_STATIC_CONSTANT(
-                int,
-                value = tracking_level::type::value
-            );
-            /* tracking for a class  */
-            BOOST_STATIC_ASSERT((
-                mpl::greater<
-                    /* that is a prmitive */
-                    implementation_level< std::atomic<T> >,
-                    mpl::int_<primitive_type>
-                >::value
-            ));
         };
     }
 }

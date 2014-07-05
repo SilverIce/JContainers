@@ -9,9 +9,21 @@ namespace collections {
     class autorelease_queue {
     public:
         typedef std::lock_guard<bshared_mutex> lock;
-        typedef unsigned int time_point;
-        //typedef chrono::time_point<chrono::system_clock> time_point;
-        typedef std::vector<std::pair<Handle, time_point> > queue;
+        typedef uint32_t time_point;
+
+        struct object_lifetime_policy {
+            static void intrusive_ptr_add_ref(object_base * p) {
+                p->retain();
+            }
+
+            static void intrusive_ptr_release(object_base * p) {
+                p->release_from_queue();
+            }
+        };
+
+        typedef boost::intrusive_ptr_jc<object_base, object_lifetime_policy> queue_object_ref;
+        typedef std::vector<std::pair<Handle, time_point> > queue_old;
+        typedef std::vector<std::pair<queue_object_ref, time_point> > queue;
 
     private:
 
@@ -39,10 +51,38 @@ namespace collections {
             _queue.clear();
         }
 
+        friend class boost::serialization::access;
+        BOOST_SERIALIZATION_SPLIT_MEMBER();
+
         template<class Archive>
-        void serialize(Archive & ar, const unsigned int version) {
+        void save(Archive & ar, const unsigned int version) const {
             ar & _timeNow;
             ar & _queue;
+        }
+
+        template<class Archive>
+        void load(Archive & ar, const unsigned int version) {
+            ar & _timeNow;
+
+            switch (version)
+            {
+            case 1:
+                ar & _queue;
+                break;
+            case 0: {
+                queue_old old;
+                for (const auto& pair : old) {
+                    auto object = _registry.u_getObject(pair.second);
+                    if (object) {
+                        _queue.push_back(std::make_pair(object, _timeNow));
+                    }
+                }
+                break;
+            }
+            default:
+                assert(false);
+                break;
+            }
         }
 
         explicit autorelease_queue(object_registry& registry) 
@@ -55,9 +95,9 @@ namespace collections {
             start();
         }
 
-        void push(Handle handle) {
+        void push(object_base *object) {
             write_lock g(_mutex);
-            _queue.push_back(std::make_pair(handle, _timeNow));
+            _queue.push_back(std::make_pair(object, _timeNow));
         }
 
         void start() {
@@ -135,7 +175,7 @@ namespace collections {
             using namespace std;
 
             chrono::milliseconds sleepTime(sleep_duration_millis);
-            vector<Handle> toRelease;
+            vector<queue_object_ref> toRelease;
             uint32 millisecondCounter = 0; // plain & dumb counter
 
             while (true) {
@@ -159,6 +199,7 @@ namespace collections {
                                 auto diff = self.lifetimeDiff(val.second);
                                 bool release = diff >= obj_lifeInTicks;
 
+                                // just move out object reference to release it later
                                 if (release)
                                     toRelease.push_back(val.first);
                                 return release;
@@ -168,14 +209,11 @@ namespace collections {
                         self.cycleIncr();
                     }
 
-
-                    for(auto& val : toRelease) {
-                        auto obj = self._registry.getObject(val);
-                        if (obj) {
-                            bool deleted = obj->_deleteIfNoOwner(nullptr);
-                            //printf("handle %u %s\n", val, (deleted ? "deleted" : "released"));
-                        }
-                    }
+                    // How much owners object may have right now?
+                    // objectRef - +1
+                    // stack may reference
+                    // tes ..
+                    // Item..
                     toRelease.clear();
                 }
             }
@@ -184,3 +222,5 @@ namespace collections {
 
 
 }
+
+BOOST_CLASS_VERSION(collections::autorelease_queue, 1);

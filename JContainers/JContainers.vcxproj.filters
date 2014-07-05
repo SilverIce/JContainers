@@ -158,5 +158,8 @@
     <ClInclude Include="src\boost_serialization_atomic.h">
       <Filter>collections_module</Filter>
     </ClInclude>
+    <ClInclude Include="src\boost_serialization_intrusive_ptr_jc.h">
+      <Filter>collections_module</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

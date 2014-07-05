@@ -47,12 +47,12 @@ namespace collections {
         }
 
         static T* object(tes_context& context /*= tes_context::instance()*/) {
-            return static_cast<T *> (create(context)->autorelease());
+            return static_cast<T *> (create(context)->prolong_lifetime());
         }
 
         template<class Init>
         static T* objectWithInitializer(Init& init, tes_context& context /*= tes_context::instance()*/) {
-            return static_cast<T *> (_createWithInitializer(init, context)->autorelease());
+            return static_cast<T *> (_createWithInitializer(init, context)->prolong_lifetime());
         }
     };
 
@@ -68,6 +68,7 @@ namespace collections {
     class Item
     {
         typedef boost::blank blank;
+
         typedef boost::variant<boost::blank, SInt32, Float32, FormId, internal_object_ref, std::string> variant;
         variant _var;
 

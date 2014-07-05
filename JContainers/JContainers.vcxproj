@@ -149,6 +149,7 @@
     <ClInclude Include="src\autorelease_queue.h" />
     <ClInclude Include="src\boost_extras.h" />
     <ClInclude Include="src\boost_serialization_atomic.h" />
+    <ClInclude Include="src\boost_serialization_intrusive_ptr_jc.h" />
     <ClInclude Include="src\code_producer.h" />
     <ClCompile Include="src\code_producer.cpp" />
     <ClInclude Include="src\collection_operators.h" />

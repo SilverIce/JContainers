@@ -15,6 +15,9 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 
+#include "boost/smart_ptr/intrusive_ptr.hpp"
+#include "boost_serialization_intrusive_ptr_jc.h"
+
 #include <fstream>
 #include <sstream>
 #include <set>
@@ -34,27 +37,27 @@ BOOST_CLASS_EXPORT_GUID(collections::array, "kJArray");
 BOOST_CLASS_EXPORT_GUID(collections::map, "kJMap");
 BOOST_CLASS_EXPORT_GUID(collections::form_map, "kJFormMap");
 
-BOOST_SERIALIZATION_SPLIT_FREE(collections::internal_object_ref);
-
 BOOST_CLASS_VERSION(collections::Item, 1)
+
+BOOST_CLASS_IMPLEMENTATION(boost::blank, boost::serialization::primitive_type);
+
+typedef boost::intrusive_ptr<collections::object_base> object_ref_old;
+BOOST_SERIALIZATION_SPLIT_FREE(object_ref_old);
 
 namespace boost {
     namespace serialization {
 
         template<class Archive>
-        void serialize(Archive & ar, blank & g, const unsigned int version) {}
-
-        template<class Archive>
-        void save(Archive & ar, const collections::internal_object_ref & ptr, const unsigned int version) {
+        void save(Archive & ar, const object_ref_old & ptr, const unsigned int version) {
             collections::object_base *obj = ptr.get();
             ar & obj;
         }
 
         template<class Archive>
-        void load(Archive & ar, collections::internal_object_ref & ptr, const unsigned int version) {
+        void load(Archive & ar, object_ref_old & ptr, const unsigned int version) {
             collections::object_base *obj = nullptr;
             ar & obj;
-            ptr = collections::internal_object_ref(obj, false);
+            ptr = object_ref_old(obj, false);
         }
 
     } // namespace serialization
@@ -97,6 +100,26 @@ namespace collections {
 
 
         }
+    }
+
+
+    TEST(ttt, rrr)
+    {
+        std::ostringstream data;
+        ::boost::archive::binary_oarchive arch(data);
+
+        auto obj = map::object(tes_context::instance());
+        object_ref_old oldRef(obj);
+
+        arch << oldRef;
+
+        // reading
+        std::string string = data.str();
+        std::istringstream istr(string);
+        boost::archive::binary_iarchive ia(istr);
+
+        internal_object_ref newRef;
+        ia >> newRef;
     }
 
 /*
@@ -150,18 +173,42 @@ namespace collections {
         ItemTypeForm = 5,
     };
 
+    // deprecate:
+    inline void intrusive_ptr_add_ref(object_base * p) {
+        p->retain();
+    }
+    inline void intrusive_ptr_release(object_base * p) {
+        p->release();
+    }
+
     template<class Archive>
     void Item::load(Archive & ar, const unsigned int version)
     {
-        if (version >= 1) {
+        switch (version)
+        {
+        default:
+            BOOST_ASSERT(false);
+            break;
+        case 1:
             ar & _var;
 
             if (auto fId = get<FormId>()) {
                 *this = form_handling::resolve_handle(*fId);
             }
-        }
-        else {
+            break;
+        /*case 2: {
+            typedef boost::variant<boost::blank, SInt32, Float32, FormId, object_ref_old, std::string> variant_old;
+            variant_old varOld;
 
+            ar & varOld;
+
+            if (auto fId = get<FormId>()) {
+                *this = form_handling::resolve_handle(*fId);
+            }
+
+            break;
+        }*/
+        case 0: {
             ItemType type = ItemTypeNone;
             ar & type;
 
@@ -197,6 +244,8 @@ namespace collections {
             default:
                 break;
             }
+        }
+            break;
         }
     }
 

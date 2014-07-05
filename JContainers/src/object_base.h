@@ -59,7 +59,7 @@ namespace collections {
         spinlock _mutex;
 
         explicit object_base(CollectionType type)
-            : _refCount(1)
+            : _refCount(0)      // for now autorelease queue owns object
             , _tes_refCount(0)
             , _stack_refCount(0)
             , _id(HandleNull)
@@ -127,17 +127,20 @@ namespace collections {
         }
 */
 
-        // nothing left from objetive-c autorelease.
-        // now it just adds object to the queue and delays _deleteIfNoOwner call
-        object_base * autorelease();
+        // push object into the queue (which owns it)
+        // after some amount of time object will be released
+        object_base * prolong_lifetime() {
+            _prolong_lifetime();
+            return this;
+        }
 
         void release() { release_counter(_refCount); }
         void tes_release() { release_counter(_tes_refCount); }
 
-        // deletes object if no owners
+        // releases and then deletes object if no owners
         // true, if object deleted
-        bool _deleteIfNoOwner(class autorelease_queue*);
-        void _addToDeleteQueue();
+        bool release_from_queue();
+        void _prolong_lifetime();
 
         bool registered() const {
             return _id != HandleNull;

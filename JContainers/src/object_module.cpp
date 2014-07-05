@@ -18,6 +18,8 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 
+#include "boost_serialization_intrusive_ptr_jc.h"
+
 #include "rw_mutex.h"
 
 #include "plugin_info.h"
