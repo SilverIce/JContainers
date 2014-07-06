@@ -13,11 +13,11 @@ namespace collections {
         typedef uint32_t time_point;
 
         struct object_lifetime_policy {
-            static void intrusive_ptr_add_ref(object_base * p) {
+            static void retain(object_base * p) {
                 p->retain();
             }
 
-            static void intrusive_ptr_release(object_base * p) {
+            static void release(object_base * p) {
                 p->release_from_queue();
             }
         };

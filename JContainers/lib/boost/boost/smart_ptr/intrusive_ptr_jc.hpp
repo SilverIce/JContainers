@@ -63,7 +63,7 @@ public:
 
     intrusive_ptr_jc(T * p, bool add_ref = true) : px(p)
     {
-        if (px != 0 && add_ref) Policy::intrusive_ptr_add_ref(px);
+        if (px != 0 && add_ref) Policy::retain(px);
     }
 
 #if !defined(BOOST_NO_MEMBER_TEMPLATES) || defined(BOOST_MSVC6_MEMBER_TEMPLATES)
@@ -80,19 +80,19 @@ public:
 #endif
     : px( rhs.get() )
     {
-        if (px != 0) Policy::intrusive_ptr_add_ref(px);
+        if (px != 0) Policy::retain(px);
     }
 
 #endif
 
     intrusive_ptr_jc(intrusive_ptr_jc const & rhs) : px(rhs.px)
     {
-        if (px != 0) Policy::intrusive_ptr_add_ref(px);
+        if (px != 0) Policy::retain(px);
     }
 
     ~intrusive_ptr_jc()
     {
-        if (px != 0) Policy::intrusive_ptr_release(px);
+        if (px != 0) Policy::release(px);
     }
 
 #if !defined(BOOST_NO_MEMBER_TEMPLATES) || defined(BOOST_MSVC6_MEMBER_TEMPLATES)

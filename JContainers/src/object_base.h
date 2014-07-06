@@ -27,8 +27,8 @@ namespace collections {
     };
 
     struct object_base_stack_ref_policy {
-        static void intrusive_ptr_add_ref(object_base * p);
-        static void intrusive_ptr_release(object_base * p);
+        static void retain(object_base * p);
+        static void release(object_base * p);
     };
 
     typedef boost::intrusive_ptr_jc<object_base, object_base_stack_ref_policy> object_ref;
@@ -176,20 +176,20 @@ namespace collections {
         }
     };
 
-    inline void object_base_stack_ref_policy::intrusive_ptr_add_ref(object_base * p) {
+    inline void object_base_stack_ref_policy::retain(object_base * p) {
         p->stack_retain();
     }
 
-    inline void object_base_stack_ref_policy::intrusive_ptr_release(object_base * p) {
+    inline void object_base_stack_ref_policy::release(object_base * p) {
         p->stack_release();
     }
 
     struct internal_object_lifetime_policy {
-        static void intrusive_ptr_add_ref(object_base * p) {
+        static void retain(object_base * p) {
             p->retain();
         }
 
-        static void intrusive_ptr_release(object_base * p) {
+        static void release(object_base * p) {
             p->release();
         }
     };
