@@ -35,6 +35,6 @@ namespace collections
     }
 
     void object_base::_prolong_lifetime() {
-        context().aqueue->push(this);
+        context().aqueue->prolong_lifetime(*this);
     }
 }

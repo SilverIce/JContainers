@@ -21,6 +21,7 @@
 #include "boost_serialization_intrusive_ptr_jc.h"
 
 #include "rw_mutex.h"
+#include "gtest.h"
 
 #include "plugin_info.h"
 #include "object_base.h"

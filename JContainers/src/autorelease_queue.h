@@ -97,9 +97,12 @@ namespace collections {
             start();
         }
 
-        void push(object_base *object) {
+        // prolong object lifetime for standard ~10 seconds
+        // reduceLifeTimeBy sets lifetime to 10 / reduceLifeTimeInNTimes, if zero then no reduction
+        void prolong_lifetime(object_base& object, uint32_t reduceLifeTimeInNTimes = 0) {
             write_lock g(_mutex);
-            _queue.push_back(std::make_pair(object, _timeNow));
+            uint32_t pushedTime = reduceLifeTimeInNTimes ? time_subtract(_timeNow, obj_lifetime - obj_lifetime / reduceLifeTimeInNTimes) : _timeNow;
+            _queue.push_back(std::make_pair(&object, pushedTime));
         }
 
         void start() {
@@ -148,19 +151,32 @@ namespace collections {
 
     private:
         void cycleIncr() {
-            if (_timeNow < (std::numeric_limits<time_point>::max)()) {
-                ++_timeNow;
-            } else {
-                _timeNow = 0;
+            _timeNow = time_add(_timeNow, 1);
+        }
+
+    public:
+        static time_point time_subtract(time_point minuend, time_point subtrahend) {
+            if (minuend >= subtrahend) {
+                return minuend - subtrahend;
+            }
+            else {
+                return (std::numeric_limits<time_point>::max)() - (subtrahend - minuend);
             }
         }
 
-        time_point lifetimeDiff(time_point time) const {
-            if (_timeNow >= time) {
-                return _timeNow - time;
-            } else {
-                return ((std::numeric_limits<time_point>::max)() - time) + _timeNow;
+        static time_point time_add(time_point a, time_point b) {
+            auto max = (std::numeric_limits<time_point>::max)();
+            if ((max - a) > b) {
+                return a + b;
             }
+            else {
+                return b - (max - a);
+            }
+        }
+
+        // result is (time - _timeNow)
+        time_point lifetimeDiff(time_point time) const {
+            return time_subtract(_timeNow, time);
         }
 
     public:
@@ -228,7 +244,42 @@ namespace collections {
         }
     };
 
+    TEST(autorelease_queue, time_wrapping)
+    {
+        auto max = (std::numeric_limits<autorelease_queue::time_point>::max)();
 
+        auto res = autorelease_queue::time_add(max, 1);
+        EXPECT_TRUE(res == 1);
+
+        res = autorelease_queue::time_add(max, 0);
+        EXPECT_TRUE(res == 0);
+
+        res = autorelease_queue::time_add(max, max);
+        EXPECT_TRUE(res == max);
+
+        res = autorelease_queue::time_add(max, 10);
+        EXPECT_TRUE(res == 10);
+
+        res = autorelease_queue::time_subtract(0, 1);
+        EXPECT_TRUE(res == max - 1);
+
+        res = autorelease_queue::time_subtract(10, 20);
+        EXPECT_TRUE(res == max - 10);
+
+        // test inversivity:
+        uint32_t a = 40, b = 20;
+        // if c == b - a then b == c + a and a == b - c
+        uint32_t c = autorelease_queue::time_subtract(b, a);
+
+        EXPECT_TRUE(b == autorelease_queue::time_add(a, c));
+        EXPECT_TRUE(a == autorelease_queue::time_subtract(b, c));
+
+        a = 8, b = 9;
+        // c == a + b, a == c - b and b == c - a
+        c = autorelease_queue::time_add(a,b);
+        EXPECT_TRUE(a == autorelease_queue::time_subtract(c, b));
+        EXPECT_TRUE(b == autorelease_queue::time_subtract(c, a));
+    }
 }
 
 BOOST_CLASS_VERSION(collections::autorelease_queue, 1);
