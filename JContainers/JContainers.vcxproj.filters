@@ -161,5 +161,8 @@
     <ClInclude Include="src\boost_serialization_intrusive_ptr_jc.h">
       <Filter>collections_module</Filter>
     </ClInclude>
+    <ClInclude Include="src\object_base_serialization.h">
+      <Filter>object_module</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

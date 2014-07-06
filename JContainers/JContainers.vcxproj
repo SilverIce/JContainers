@@ -154,6 +154,7 @@
     <ClCompile Include="src\code_producer.cpp" />
     <ClInclude Include="src\collection_operators.h" />
     <ClInclude Include="src\form_handling.h" />
+    <ClInclude Include="src\object_base_serialization.h" />
     <ClInclude Include="src\path_resolving.h" />
     <ClInclude Include="src\plugin_info.h" />
     <ClInclude Include="src\skse.h" />

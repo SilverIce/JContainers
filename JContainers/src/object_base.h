@@ -3,9 +3,7 @@
 #include <mutex>
 #include <atomic>
 #include <assert.h>
-//#include <boost/smart_ptr/intrusive_ptr.hpp>
 #include <boost/smart_ptr/intrusive_ptr_jc.hpp>
-#include <boost/serialization/split_member.hpp>
 
 #include "spinlock.h"
 
@@ -38,7 +36,7 @@ namespace collections {
     class object_base
     {
         friend class shared_state;
-
+    public:
         Handle _id;
 
         std::atomic_int32_t _refCount;
@@ -46,6 +44,7 @@ namespace collections {
         std::atomic_int32_t _stack_refCount;
 
         CollectionType _type;
+    private:
         shared_state *_context;
 
         void release_counter(std::atomic_int32_t& counter);
@@ -174,18 +173,6 @@ namespace collections {
         void s_clear() {
             lock g(_mutex);
             u_clear();
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-
-        template<class Archive>
-        void serialize(Archive & ar, const unsigned int version) {
-            assert(_stack_refCount.load(std::memory_order_relaxed) == 0);
-            ar & _refCount;
-            ar & _tes_refCount;
-
-            ar & _type;
-            ar & _id;
         }
     };
 

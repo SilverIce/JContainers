@@ -26,6 +26,8 @@
 #include "object_base.h"
 #include "shared_state.h"
 
+#include "object_base_serialization.h"
+
 #include "id_generator.h"
 #include "object_registry.h"
 #include "autorelease_queue.h"

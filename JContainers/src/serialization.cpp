@@ -30,6 +30,7 @@
 #include "collections.h"
 #include "tes_context.h"
 #include "form_handling.h"
+#include "object_base_serialization.h"
 
 #include "tes_context.hpp"
 
@@ -102,26 +103,6 @@ namespace collections {
         }
     }
 
-
-    TEST(ttt, rrr)
-    {
-        std::ostringstream data;
-        ::boost::archive::binary_oarchive arch(data);
-
-        auto obj = map::object(tes_context::instance());
-        object_ref_old oldRef(obj);
-
-        arch << oldRef;
-
-        // reading
-        std::string string = data.str();
-        std::istringstream istr(string);
-        boost::archive::binary_iarchive ia(istr);
-
-        internal_object_ref newRef;
-        ia >> newRef;
-    }
-
 /*
     TEST(autorelease_queue, serialization)
     {
@@ -162,7 +143,7 @@ namespace collections {
         ar & _var;
     }
 
-    // deprecate:
+    // deprecate in 0.67:
     enum ItemType : unsigned char
     {
         ItemTypeNone = 0,
@@ -172,8 +153,8 @@ namespace collections {
         ItemTypeObject = 4,
         ItemTypeForm = 5,
     };
-
-    // deprecate:
+    /*
+    // deprecate in 0.68:
     inline void intrusive_ptr_add_ref(object_base * p) {
         p->retain();
     }
@@ -181,6 +162,33 @@ namespace collections {
         p->release();
     }
 
+    struct item_converter_1_2 : boost::static_visitor < > {
+        Item::variant& varNew;
+        
+        explicit item_converter_1_2(Item::variant& var) : varNew(var) {}
+
+        template<class T> void operator() (T& val) {
+            varNew = val;
+        }
+
+        template<> void operator()(object_ref_old& val) {
+            varNew = internal_object_ref(val.get(), false);
+            val.jc_nullify();
+        }
+    };
+    
+    TEST(tt, nbnb)
+    {
+        Item itm;
+        typedef boost::variant<boost::blank, SInt32, Float32, FormId, object_ref_old, std::string> variant_old;
+        variant_old varOld;
+        varOld = object_ref_old(nullptr);
+
+        item_converter_1_2 converter(()itm.var());
+        boost::apply_visitor(converter, _var);
+    }
+
+*/
     template<class Archive>
     void Item::load(Archive & ar, const unsigned int version)
     {
@@ -199,8 +207,10 @@ namespace collections {
         /*case 2: {
             typedef boost::variant<boost::blank, SInt32, Float32, FormId, object_ref_old, std::string> variant_old;
             variant_old varOld;
+            ar >> varOld;
 
-            ar & varOld;
+            item_converter_1_2 converter(_var);
+            boost::apply_visitor(converter, varOld);
 
             if (auto fId = get<FormId>()) {
                 *this = form_handling::resolve_handle(*fId);

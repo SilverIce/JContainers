@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include "boost\serialization\version.hpp"
 
 namespace collections {
 
@@ -131,6 +132,12 @@ namespace collections {
             
             if (_thread.joinable()) {
                 _thread.join();
+            }
+        }
+
+        void u_nullify() {
+            for (auto &pair : _queue) {
+                pair.first.jc_nullify();
             }
         }
 

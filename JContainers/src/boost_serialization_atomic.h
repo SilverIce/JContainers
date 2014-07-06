@@ -1,5 +1,5 @@
 #pragma once
-
+#if 0
 #include <boost/serialization/split_free.hpp>
 #include <boost/serialization/nvp.hpp>
 #include <atomic>
@@ -33,14 +33,35 @@ namespace boost {
 
         // BOOST_CLASS_IMPLEMENTATION
         template <class T>
-        struct implementation_level_impl< const std::atomic<T> >
+        struct implementation_level_impl < const std::atomic<T> >
         {
             typedef mpl::integral_c_tag tag;
-            typedef mpl::int_< object_serializable > type;
+            typedef mpl::int_< primitive_type > type;
             BOOST_STATIC_CONSTANT(
                 int,
                 value = implementation_level_impl::type::value
-            );
+                );
+        };
+
+        // BOOST_CLASS_TRACKING
+        template<class T>
+        struct tracking_level < std::atomic<T> >
+        {
+            typedef mpl::integral_c_tag tag;
+            typedef mpl::int_< track_never > type;
+            BOOST_STATIC_CONSTANT(
+                int,
+                value = tracking_level::type::value
+                );
+            /* tracking for a class  */
+            BOOST_STATIC_ASSERT((
+                mpl::greater <
+                /* that is a prmitive */
+                implementation_level< std::atomic<T> >,
+                mpl::int_ < primitive_type >
+                > ::value
+                ));
         };
     }
 }
+#endif

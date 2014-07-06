@@ -16,6 +16,28 @@ namespace collections
     }
     
     void shared_state::u_clearState() {
+
+        /*  Not good, but working solution.
+
+        issue: deadlock during loading savegame - e.g. cleaning current state.
+
+        due to: collection release -> dealloc -> collection_registry::removeObject
+        introduces deadlock ( registry locked during context cleanup )
+
+        solution: nullify object cross-references, then delete objects
+
+        all we need is just free the memory but this will require track allocated collection & stl memory blocks
+        */
+
+        aqueue->u_nullify();
+
+        for (auto& pair : registry->u_container()) {
+            pair.second->u_nullifyObjects();
+        }
+        for (auto& pair : registry->u_container()) {
+            delete pair.second;
+        }
+
         registry->u_clear();
         aqueue->u_clear();
         

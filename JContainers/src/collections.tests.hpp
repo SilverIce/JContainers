@@ -58,36 +58,29 @@ namespace collections {
 
     JC_TEST(object_base, refCount)
     {
-        {
-            auto obj = array::create(context);
-            EXPECT_TRUE(obj->refCount() == 1);
-            obj->retain();
-            EXPECT_TRUE(obj->refCount() == 2);
+        auto obj = array::object(context);
+        EXPECT_TRUE(obj->refCount() == 1); // aqueue retains it
 
-            obj->release();
-            EXPECT_TRUE(obj->refCount() == 1);
+        obj->retain();
+        EXPECT_TRUE(obj->refCount() == 2);
+
+        obj->tes_retain();
+        obj->tes_retain();
+        obj->tes_retain();
+        EXPECT_TRUE(obj->refCount() == 2 + 3);
+
+        // ensure that over-release does not affects internal ref count:
+        for (int i = 0; i < 20 ; i++) {
+            obj->tes_release();
         }
-        {
-            auto obj = array::object(context);
-            EXPECT_TRUE(obj->refCount() == 0);
+        EXPECT_TRUE(obj->refCount() == 2);
 
-            obj->retain();
-            EXPECT_TRUE(obj->refCount() == 1);
+        obj->release();
+        EXPECT_TRUE(obj->refCount() == 1); // aqueue retains it
 
-            obj->tes_retain();
-            obj->tes_retain();
-            obj->tes_retain();
-            EXPECT_TRUE(obj->refCount() == 1 + 3);
-
-            // ensure that over-release does not affects internal ref count:
-            for (int i = 0; i < 20 ; i++) {
-                obj->tes_release();
-            }
-            EXPECT_TRUE(obj->refCount() == 1);
-
-            obj->release();
-            EXPECT_TRUE(obj->refCount() == 0);
-        }
+        // that will damage memory, later: 
+        //obj->release();
+        //EXPECT_TRUE(obj->refCount() == 1);
     }
 
     JC_TEST(Item, nulls)
@@ -256,7 +249,7 @@ namespace collections {
 
     JC_TEST(array,  test)
     {
-        auto arr = array::create(context);
+        auto arr = array::object(context);
 
         EXPECT_TRUE(tes_array::count(arr) == 0);
 
@@ -270,17 +263,13 @@ namespace collections {
         EXPECT_TRUE(tes_array::count(arr) == 2);
         EXPECT_TRUE(tes_array::itemAtIndex<SInt32>(arr, 1) == 30);
 
-        auto arr2 = array::create(context);
+        auto arr2 = array::object(context);
         tes_array::addItemAt<SInt32>(arr2, 4);
 
         tes_array::addItemAt(arr, arr2);
         EXPECT_TRUE(tes_array::itemAtIndex<object_base*>(arr, 2) == arr2);
 
-        tes_object::release(arr);
-
         EXPECT_TRUE(tes_array::itemAtIndex<SInt32>( arr2, 0) == 4);
-
-        tes_object::release( arr2);
     }
 
     JC_TEST(array,  negative_indices)
@@ -390,7 +379,7 @@ namespace collections {
         EXPECT_TRUE(data.size() == newData.size());
     }
 
-    JC_TEST_DISABLED(autorelease_queue, over_release)
+    JC_TEST(autorelease_queue, over_release)
     {
         using namespace std;
 
@@ -398,17 +387,17 @@ namespace collections {
         //int countBefore = queue.count();
 
         for (int i = 0; i < 10; ++i) {
-            auto obj = map::create(context);//+1, rc is 1
-            EXPECT_TRUE(obj->refCount() == 1);
-
-            obj->release();//-1, rc is 0, add to delete queue
+            auto obj = map::make(context);//rc is 0
             EXPECT_TRUE(obj->refCount() == 0);
 
-            obj->release();//rc is 0
-            EXPECT_TRUE(obj->refCount() == 0);
-
-            obj->retain();// +1, rc is 1
+            obj->retain();//+1 rc
             EXPECT_TRUE(obj->refCount() == 1);
+
+            obj->release();//-1, rc is 0, add to aqueue, rc is 1
+            EXPECT_TRUE(obj->refCount() == 1); // queue owns it now
+
+            obj->retain();// +1, rc is 2
+            EXPECT_TRUE(obj->refCount() == 2);
 
             identifiers.push_back(obj->uid());
         }
@@ -423,9 +412,14 @@ namespace collections {
 
         //
         EXPECT_TRUE(allExist());
+
+        for (Handle id : identifiers) {
+            auto obj = context.getObject(id);
+            EXPECT_TRUE(obj->refCount() == 1);
+        }
     }
 
-    JC_TEST_DISABLED(autorelease_queue, ensure_destroys)
+    JC_TEST(autorelease_queue, ensure_destroys)
     {
         using namespace std;
 
