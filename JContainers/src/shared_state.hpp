@@ -59,11 +59,11 @@ namespace collections
         aqueue->start();
     }
 
-    object_base * shared_state::getObject(HandleT hdl) {
+    object_base * shared_state::getObject(Handle hdl) {
         return registry->getObject(hdl);
     }
 
-    object_base * shared_state::u_getObject(HandleT hdl) {
+    object_base * shared_state::u_getObject(Handle hdl) {
         return registry->u_getObject(hdl);
     }
 

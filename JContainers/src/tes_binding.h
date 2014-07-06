@@ -93,16 +93,16 @@ namespace collections {
             typedef HandleT tes_type;
         };
         template<> inline object_base* convert2J(HandleT hdl) {
-            return tes_context::instance().getObject(hdl);
+            return tes_context::instance().getObject((Handle)hdl);
         }
         template<> inline array* convert2J(HandleT hdl) {
-            return tes_context::instance().getObjectOfType<array>(hdl);
+            return tes_context::instance().getObjectOfType<array>((Handle)hdl);
         }
         template<> inline map* convert2J(HandleT hdl) {
-            return tes_context::instance().getObjectOfType<map>(hdl);
+            return tes_context::instance().getObjectOfType<map>((Handle)hdl);
         }
         template<> inline form_map* convert2J(HandleT hdl) {
-            return tes_context::instance().getObjectOfType<form_map>(hdl);
+            return tes_context::instance().getObjectOfType<form_map>((Handle)hdl);
         }
         template<>
         struct J2Tes<Handle> {

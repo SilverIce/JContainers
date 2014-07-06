@@ -65,8 +65,7 @@ namespace collections {
         void load(Archive & ar, const unsigned int version) {
             ar & _timeNow;
 
-            switch (version)
-            {
+            switch (version) {
             case 1:
                 ar & _queue;
                 break;
@@ -77,7 +76,7 @@ namespace collections {
                 for (const auto& pair : old) {
                     auto object = _registry.u_getObject(pair.first);
                     if (object) {
-                        _queue.push_back(std::make_pair(object, _timeNow));
+                        _queue.push_back(std::make_pair(object, pair.second));
                     }
                 }
                 break;
@@ -219,7 +218,7 @@ namespace collections {
                     }
 
                     // How much owners object may have right now?
-                    // objectRef - +1
+                    // queue - +1
                     // stack may reference
                     // tes ..
                     // Item..

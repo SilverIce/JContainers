@@ -27,7 +27,7 @@ namespace collections
 
         Handle registerObject(object_base *collection);
 
-        void removeObject(HandleT hdl) {
+        void removeObject(Handle hdl) {
             if (!hdl) {
                 return;
             }
@@ -39,7 +39,7 @@ namespace collections
             _idGen.reuseId(hdl);
         }
 
-        object_base *getObject(HandleT hdl) {
+        object_base *getObject(Handle hdl) {
             if (!hdl) {
                 return nullptr;
             }
@@ -48,7 +48,7 @@ namespace collections
             return u_getObject(hdl);
         }
 
-        object_base *u_getObject(HandleT hdl) {
+        object_base *u_getObject(Handle hdl) {
             if (!hdl) {
                 return nullptr;
             }

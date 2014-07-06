@@ -51,13 +51,13 @@ namespace collections {
         shared_state_delegate *delegate;
 
         template<class T>
-        T * getObjectOfType(HandleT hdl) {
+        T * getObjectOfType(Handle hdl) {
             return getObject(hdl)->as<T>();
         }
 
         size_t aqueueSize();
-        object_base * getObject(HandleT hdl);
-        object_base * u_getObject(HandleT hdl);
+        object_base * getObject(Handle hdl);
+        object_base * u_getObject(Handle hdl);
 
         void clearState();
         void u_clearState();
