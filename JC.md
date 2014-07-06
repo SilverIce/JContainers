@@ -66,9 +66,24 @@ JValue.writeToFile(array, "array.txt")
 
 Take it as a global entry point or database - you put information in it under a string key "yourKey", and then you can access to it from any script in the game. There is only one JDB in game, so each time you access it you access that one, single JDB. It is an **associative** container like JMap (it is, in fact, JMap internally), but the script interface is slightly different.
 
+Typical JDB usage would involve:
+1. Setup (during mod installation) where you specify `root key` name. In example below root key is `frostfall`. **Choose root name carefully to avoid clashes with rest of JDB root keys and with JFormDB storage names**.
+2. Access data
+```
+;// 1. Setup procedure
+int frosfallData = JValue.readFromFile("frostfall_config.json")
+JDB.setObj("frostfall", frosfallData)
+
+;// 2. read/write data later in another script:
+int lighttignMode = JDB.solveInt(".frostfall.campfileLightingMode")
+JDB.solveIntSetter(".frostfall.campfileLightingMode", 1)
+```
+
+
+
 #### JFormDB
 
-Provides a convenient way to associate values with a form. You may find it looking like a mix of JMap and JDB - like JDB, there is only one JFormDB in game, and it's associative cotainer, like JMap. Also it supports path resolving.
+Provides a convenient way to associate values with a form. You may find it looking like a mix of JMap and JDB - like JDB, there is only one JFormDB in game, and it's associative container, like JMap. Also it supports path resolving.
 To store or retrieve value form-key and string path must be passed:
 
 ```lua
@@ -232,7 +247,7 @@ solveInt(map, ".invalid.key.k") is 0
 // although it's still possible to access value in another way:
 getObj(map, "invalid.key") is {"k": 10}
 ```
-This convention applies to every key-string, not just JMap key - it affects JFormDB storage name and keys, JDB.setObj key.
+This convention applies to every key-string, not just JMap key - it affects JFormDB storage name and keys, JDB.setObj key. Key naming shouldn't matter if it not involved in path resolving.
 
 ### Number conversion notes
 
@@ -254,7 +269,7 @@ The rules:
 
 Newly created object (created with object, `objectWith*` or `readFromFile` function) owned by no one and destroyed after short amount of time (roughly 10 seconds).
 
-**Note** that container gets owned (retained) automatically once it gets inserted into another container or JDB (which is also container) and released when removed. Thus you don't have to care about lifetime of object that owned by JDB.
+**Note** that container gets owned (retained) automatically once it gets inserted into another container or JDB (which is also container) and released when removed. Thus you don't have to care about lifetime of object that owned by JDB or JFormDB.
 
 Illustration shows the idea:
 
