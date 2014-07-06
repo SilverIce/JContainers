@@ -67,8 +67,10 @@ JValue.writeToFile(array, "array.txt")
 Take it as a global entry point or database - you put information in it under a string key "yourKey", and then you can access to it from any script in the game. There is only one JDB in game, so each time you access it you access that one, single JDB. It is an **associative** container like JMap (it is, in fact, JMap internally), but the script interface is slightly different.
 
 Typical JDB usage would involve:
+
 1. Setup (during mod installation) where you specify `root key` name. In example below root key is `frostfall`. **Choose root name carefully to avoid clashes with rest of JDB root keys and with JFormDB storage names**.
 2. Access data
+
 ```
 ;// 1. Setup procedure
 int frosfallData = JValue.readFromFile("frostfall_config.json")
