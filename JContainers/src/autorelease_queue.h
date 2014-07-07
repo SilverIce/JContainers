@@ -57,6 +57,7 @@ namespace collections {
 
         template<class Archive>
         void save(Archive & ar, const unsigned int version) const {
+            jc_assert(version == 1);
             ar & _timeNow;
             ar & _queue;
         }

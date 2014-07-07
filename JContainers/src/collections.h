@@ -371,7 +371,7 @@ namespace collections {
             _array.clear();
         }
 
-        SInt32 u_count() override {
+        SInt32 u_count() const override {
             return _array.size();
         }
 
@@ -457,7 +457,7 @@ namespace collections {
             cnt.clear();
         }
 
-        SInt32 u_count() override {
+        SInt32 u_count() const override {
             return cnt.size();
         }
 
@@ -518,7 +518,7 @@ namespace collections {
             cnt[key] = value;
         }
 
-        SInt32 u_count() override {
+        SInt32 u_count() const override {
             return cnt.size();
         }
 

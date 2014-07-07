@@ -46,6 +46,24 @@ namespace collections {
 
 #ifndef TEST_COMPILATION_DISABLED
 
+    template<class T>
+    void do_serialization_and_comparison(testing::State& testState, const T& sourceObj) {
+        std::ostringstream data;
+        ::boost::archive::binary_oarchive arch(data);
+
+        arch << sourceObj;
+
+        // reading
+        std::string string = data.str();
+        std::istringstream istr(string);
+        boost::archive::binary_iarchive ia(istr);
+
+        T clone;
+        ia >> clone;
+
+        EXPECT_TRUE(clone.is_equal_to(sourceObj));
+    }
+
     TEST(Item, serialization)
     {
         std::ostringstream data;
@@ -79,6 +97,27 @@ namespace collections {
 
 
         }
+    }
+
+    TEST(map, serialization)
+    {
+        map sourceObj;
+        sourceObj.tes_retain();
+        sourceObj.tes_retain();
+        sourceObj.retain();
+        sourceObj.u_setValueForKey("test", Item(10.0));
+
+        do_serialization_and_comparison(testState, sourceObj);
+    }
+
+    TEST(array, serialization)
+    {
+        array sourceObj;
+        sourceObj.tes_retain();
+        sourceObj.tes_retain();
+        sourceObj.u_push(Item(10.0));
+
+        do_serialization_and_comparison(testState, sourceObj);
     }
 
 #endif

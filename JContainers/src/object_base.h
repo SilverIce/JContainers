@@ -31,7 +31,7 @@ namespace collections {
         static void release(object_base * p);
     };
 
-    typedef boost::intrusive_ptr_jc<object_base, object_base_stack_ref_policy> object_ref;
+    typedef boost::intrusive_ptr_jc<object_base, object_base_stack_ref_policy> object_stack_ref;
 
     class object_base
     {
@@ -90,6 +90,10 @@ namespace collections {
             return (this && T::TypeId == _type) ? static_cast<T*>(this) : nullptr;
         }
 
+        template<class T> const T* as() const {
+            return (this && T::TypeId == _type) ? static_cast<const T*>(this) : nullptr;
+        }
+
         object_base * retain() {
             return u_retain();
         }
@@ -103,9 +107,6 @@ namespace collections {
             ++_tes_refCount;
             return this;
         }
-
-        void stack_retain() { ++_stack_refCount; }
-        void stack_release() { release_counter(_stack_refCount); }
 
         int32_t refCount() {
             return _refCount + _tes_refCount + _stack_refCount;
@@ -135,6 +136,9 @@ namespace collections {
 
         void release() { release_counter(_refCount); }
         void tes_release() { release_counter(_tes_refCount); }
+        void stack_retain() { ++_stack_refCount; }
+        void stack_release() { release_counter(_stack_refCount); }
+
 
         // releases and then deletes object if no owners
         // true, if object deleted
@@ -158,7 +162,7 @@ namespace collections {
         void _registerSelf();
 
         virtual void u_clear() = 0;
-        virtual SInt32 u_count() = 0;
+        virtual SInt32 u_count() const = 0;
         virtual void u_onLoaded() {};
 
         // nillify object cross references to avoid high-level
@@ -173,6 +177,16 @@ namespace collections {
         void s_clear() {
             lock g(_mutex);
             u_clear();
+        }
+
+        virtual bool is_equal_to(const object_base& other) const {
+            return
+                _id == other._id &&
+                _type == other._type &&
+                _refCount == other._refCount &&
+                _tes_refCount == other._tes_refCount &&
+                _stack_refCount == other._stack_refCount &&
+                u_count() == other.u_count();
         }
     };
 
