@@ -129,10 +129,7 @@ namespace collections {
 
         // push object into the queue (which owns it)
         // after some amount of time object will be released
-        object_base * prolong_lifetime() {
-            _prolong_lifetime();
-            return this;
-        }
+        object_base * prolong_lifetime();
 
         void release() { release_counter(_refCount); }
         void tes_release() { release_counter(_tes_refCount); }
@@ -143,7 +140,6 @@ namespace collections {
         // releases and then deletes object if no owners
         // true, if object deleted
         bool release_from_queue();
-        void _prolong_lifetime();
 
         bool registered() const {
             return _id != HandleNull;

@@ -25,19 +25,20 @@ namespace collections
     }
 
     void object_base::release_counter(std::atomic_int32_t& counter) {
-        // allows over-release - publicly accessible tes_counter is allowed to receive redundant release calls
-        //jc_assert(counter > 0);
+        // publicly accessible tes_counter is allowed to receive redundant release calls
+        jc_assert(&counter == &_tes_refCount || counter > 0);
 
         if (counter > 0) {
             --counter;
 
             if (noOwners()) {
-                _prolong_lifetime();
+                prolong_lifetime();
             }
         }
     }
 
-    void object_base::_prolong_lifetime() {
+    object_base* object_base::prolong_lifetime() {
         context().aqueue->prolong_lifetime(*this);
+        return this;
     }
 }
