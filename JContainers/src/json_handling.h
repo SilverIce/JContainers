@@ -133,7 +133,7 @@ namespace collections {
                 }
             }
 
-            assert(object);
+            jc_assert(object);
             _toFill.push_back(std::make_pair(object, val));
             return *object;
         }
@@ -277,7 +277,7 @@ namespace collections {
             else if (object.as<map>() || object.as<form_map>()) {
                 placeholder = json_object();
             }
-            assert(placeholder);
+            jc_assert(placeholder);
 
             _toFill.push_back( objects_to_fill::value_type(&object, placeholder) );
             return placeholder;

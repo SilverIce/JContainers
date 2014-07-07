@@ -34,7 +34,7 @@ namespace collections
 
             write_lock g(_mutex);
             auto itr = _map.find(hdl);
-            assert(itr != _map.end());
+            jc_assert(itr != _map.end());
             _map.erase(itr);
             _idGen.reuseId(hdl);
         }
@@ -89,7 +89,7 @@ namespace collections
     {
         write_lock g(_mutex);
         auto newId = _idGen.newId();
-        assert(_map.find(newId) == _map.end());
+        jc_assert(_map.find(newId) == _map.end());
         _map[newId] = collection;
         return (Handle)newId;
     }

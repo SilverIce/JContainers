@@ -82,7 +82,7 @@ namespace collections {
                 break;
             }
             default:
-                assert(false);
+                jc_assert(false);
                 break;
             }
         }
@@ -200,7 +200,7 @@ namespace collections {
 
             chrono::milliseconds sleepTime(sleep_duration_millis);
             vector<queue_object_ref> toRelease;
-            uint32 millisecondCounter = 0; // plain & dumb counter
+            uint32_t millisecondCounter = 0; // plain & dumb counter
 
             while (true) {
                 

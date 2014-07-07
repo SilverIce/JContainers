@@ -104,11 +104,11 @@ objectWithBooleans converts booleans into integers");
 "adds values from source array into this array. if insertAtIndex is -1 (default behaviour) it adds to the end.\n\
 if insertAtIndex >= 0 it appends values starting from insertAtIndex index");
 
-        typedef boost::optional<uint32> maybe_index;
+        typedef boost::optional<uint32_t> maybe_index;
 
         static maybe_index convertReadIndex(array *ar, int pyIndex) {
             auto count = ar->u_count();
-            uint32 index = (pyIndex >= 0 ? pyIndex : (count + pyIndex) );
+            uint32_t index = (pyIndex >= 0 ? pyIndex : (count + pyIndex));
 
             return maybe_index(count > 0 && index < count,
                                 index);
@@ -116,7 +116,7 @@ if insertAtIndex >= 0 it appends values starting from insertAtIndex index");
 
         static maybe_index convertWriteIndex(array *ar, int pyIndex) {
             auto count = ar->u_count();
-            uint32 index = (pyIndex >= 0 ? pyIndex : (count + pyIndex + 1) );
+            uint32_t index = (pyIndex >= 0 ? pyIndex : (count + pyIndex + 1));
 
             return maybe_index(index <= count,
                                 index);
@@ -160,7 +160,7 @@ if insertAtIndex >= 0 it appends values starting from insertAtIndex index");
         template<class T>
         static T itemAtIndex(array *obj, Index index) {
             T t((T)0);
-            doReadOp(obj, index, [=, &t](uint32 idx) {
+            doReadOp(obj, index, [=, &t](uint32_t idx) {
                 t = obj->_array[idx].readAs<T>();
             });
 
@@ -178,7 +178,7 @@ if insertAtIndex >= 0 it appends values starting from insertAtIndex index");
 
             int result = -1;
 
-            doReadOp(obj, pySearchStartIndex, [=, &result](uint32 idx) {
+            doReadOp(obj, pySearchStartIndex, [=, &result](uint32_t idx) {
 
                 auto pred = [=](const Item& item) {
                     return item.isEqual(value);
@@ -207,7 +207,7 @@ NEGATIVE_IDX_COMMENT);
 
         template<class T>
         static void replaceItemAtIndex(array *obj, Index index, T item) {
-            doReadOp(obj, index, [=](uint32 idx) {
+            doReadOp(obj, index, [=](uint32_t idx) {
                 obj->_array[idx] = Item(item);
             });
         }
@@ -220,7 +220,7 @@ NEGATIVE_IDX_COMMENT);
 
         template<class T>
         static void addItemAt(array *obj, T item, SInt32 addToIndex = -1) {
-            doWriteOp(obj, addToIndex, [&](uint32 idx) {
+            doWriteOp(obj, addToIndex, [&](uint32_t idx) {
                 obj->_array.insert(obj->begin() + idx, Item(item));
             });
         }
@@ -242,7 +242,7 @@ if addToIndex >= 0 it inserts value at given index. "NEGATIVE_IDX_COMMENT);
         REGISTERF2(clear, "*", "removes all items from array");
 
         static void eraseIndex(array *obj, SInt32 index) {
-            doReadOp(obj, index, [=](uint32 idx) {
+            doReadOp(obj, index, [=](uint32_t idx) {
                 obj->_array.erase(obj->begin() + idx);
             });
         }

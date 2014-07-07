@@ -10,7 +10,7 @@ namespace boost { namespace serialization {
 
     template<class Archive>
     void save(Archive & ar, const cl::object_base & t, unsigned int version) {
-        assert(t._stack_refCount.load(std::memory_order_relaxed) == 0);
+        jc_assert(t._stack_refCount.load(std::memory_order_relaxed) == 0);
         int32_t refCnt = t._refCount.load(std::memory_order_relaxed);
         int32_t tesCnt = t._tes_refCount.load(std::memory_order_relaxed);
 

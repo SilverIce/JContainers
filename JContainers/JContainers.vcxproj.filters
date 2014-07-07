@@ -66,9 +66,6 @@
     <ClInclude Include="src\collections.tests.hpp">
       <Filter>collections_module</Filter>
     </ClInclude>
-    <ClInclude Include="src\jcontainers_pch.h">
-      <Filter>collections_module</Filter>
-    </ClInclude>
     <ClInclude Include="src\json_handling.h">
       <Filter>collections_module</Filter>
     </ClInclude>
@@ -164,5 +161,6 @@
     <ClInclude Include="src\object_base_serialization.h">
       <Filter>object_module</Filter>
     </ClInclude>
+    <ClInclude Include="src\jcontainers_pch.h" />
   </ItemGroup>
 </Project>

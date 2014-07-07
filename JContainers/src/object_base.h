@@ -146,12 +146,12 @@ namespace collections {
         }
 
         void set_context(shared_state & ctx) {
-            assert(!_context);
+            jc_assert(!_context);
             _context = &ctx;
         }
 
         shared_state& context() const {
-            assert(_context);
+            jc_assert(_context);
             return *_context;
         }
 
