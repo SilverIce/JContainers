@@ -97,8 +97,8 @@ namespace collections {
             start();
         }
 
-        // prolong object lifetime for standard ~10 seconds
-        // reduceLifeTimeBy sets lifetime to 10 / reduceLifeTimeInNTimes, if zero then no reduction
+        // prolongs object lifetime for ~10 seconds
+        // reduceLifeTimeBy sets lifetime to 10 / reduceLifeTimeInNTimes, zero disables reduction
         void prolong_lifetime(object_base& object, uint32_t reduceLifeTimeInNTimes = 0) {
             write_lock g(_mutex);
             uint32_t pushedTime = reduceLifeTimeInNTimes ? time_subtract(_timeNow, obj_lifetime - obj_lifetime / reduceLifeTimeInNTimes) : _timeNow;
@@ -174,7 +174,7 @@ namespace collections {
             }
         }
 
-        // result is (time - _timeNow)
+        // result is (_timeNow - time)
         time_point lifetimeDiff(time_point time) const {
             return time_subtract(_timeNow, time);
         }
