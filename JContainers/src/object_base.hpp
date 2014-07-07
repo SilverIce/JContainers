@@ -25,6 +25,8 @@ namespace collections
     }
 
     void object_base::release_counter(std::atomic_int32_t& counter) {
+        jc_assert(counter > 0);
+
         if (counter > 0) {
             --counter;
 

@@ -28,9 +28,7 @@ namespace collections
         Handle registerObject(object_base *collection);
 
         void removeObject(Handle hdl) {
-            if (!hdl) {
-                return;
-            }
+            jc_assert(hdl != HandleNull);
 
             write_lock g(_mutex);
             auto itr = _map.find(hdl);

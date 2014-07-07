@@ -8,14 +8,26 @@ namespace boost { namespace serialization {
 
     namespace cl = collections;
 
+    template<class Archive, class T>
+    void save_atomic(Archive& ar, const std::atomic<T>& v) {
+        T refCnt = v.load(std::memory_order_relaxed);
+        ar & refCnt;
+    }
+
+    template<class Archive, class T>
+    void load_atomic (Archive& ar, std::atomic<T> & v) {
+        T refCnt = 0;
+        ar & refCnt;
+        v.store(refCnt, std::memory_order_relaxed);
+    }
+
     template<class Archive>
     void save(Archive & ar, const cl::object_base & t, unsigned int version) {
         jc_assert(t._stack_refCount.load(std::memory_order_relaxed) == 0);
-        int32_t refCnt = t._refCount.load(std::memory_order_relaxed);
-        int32_t tesCnt = t._tes_refCount.load(std::memory_order_relaxed);
+        jc_assert(t.noOwners() == false);
 
-        ar & refCnt;
-        ar & tesCnt;
+        save_atomic(ar, t._refCount);
+        save_atomic(ar, t._tes_refCount);
 
         ar & t._type;
         ar & t._id;
@@ -23,14 +35,14 @@ namespace boost { namespace serialization {
 
     template<class Archive>
     void load(Archive & ar, cl::object_base & t, unsigned int version) {
-        int32_t refCnt = 0, tesCnt = 0;
-        ar & refCnt;
-        ar & tesCnt;
+        load_atomic(ar, t._refCount);
+        load_atomic(ar, t._tes_refCount);
         ar & t._type;
         ar & t._id;
 
-        t._refCount.store(refCnt, std::memory_order_relaxed);
-        t._tes_refCount.store(tesCnt, std::memory_order_relaxed);
+        // trying detect objects with no owners
+        // objects from version 0 are allowed to have no owners
+        jc_assert(version == 0 || t.noOwners() == false);
     }
 
 }
