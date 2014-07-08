@@ -72,8 +72,10 @@ namespace collections {
                 break;
             case 0: {
                 queue_old old;
+                ar & old;
+
                 for (const auto& pair : old) {
-                    auto object = _registry.u_getObject(pair.second);
+                    auto object = _registry.u_getObject(pair.first);
                     if (object) {
                         _queue.push_back(std::make_pair(object, _timeNow));
                     }

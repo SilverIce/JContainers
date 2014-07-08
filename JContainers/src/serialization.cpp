@@ -38,31 +38,9 @@ BOOST_CLASS_EXPORT_GUID(collections::array, "kJArray");
 BOOST_CLASS_EXPORT_GUID(collections::map, "kJMap");
 BOOST_CLASS_EXPORT_GUID(collections::form_map, "kJFormMap");
 
-BOOST_CLASS_VERSION(collections::Item, 1)
+BOOST_CLASS_VERSION(collections::Item, 2)
 
 BOOST_CLASS_IMPLEMENTATION(boost::blank, boost::serialization::primitive_type);
-
-typedef boost::intrusive_ptr<collections::object_base> object_ref_old;
-BOOST_SERIALIZATION_SPLIT_FREE(object_ref_old);
-
-namespace boost {
-    namespace serialization {
-
-        template<class Archive>
-        void save(Archive & ar, const object_ref_old & ptr, const unsigned int version) {
-            collections::object_base *obj = ptr.get();
-            ar & obj;
-        }
-
-        template<class Archive>
-        void load(Archive & ar, object_ref_old & ptr, const unsigned int version) {
-            collections::object_base *obj = nullptr;
-            ar & obj;
-            ptr = object_ref_old(obj, false);
-        }
-
-    } // namespace serialization
-} // namespace boost
 
 namespace collections {
 
@@ -103,45 +81,7 @@ namespace collections {
         }
     }
 
-/*
-    TEST(autorelease_queue, serialization)
-    {
-        bshared_mutex mt;
-        autorelease_queue queue(mt);
-        //  queue.start();
-        queue.push(10);
-        queue.push(20);
-
-        std::ostringstream str;
-        ::boost::archive::binary_oarchive arch(str);
-        arch << queue;
-
-        bshared_mutex mt2;
-        autorelease_queue queue2(mt2);
-        // reading
-        std::string string = str.str();
-        std::istringstream istr(string);
-        boost::archive::binary_iarchive ia(istr);
-
-        ia >> queue2;
-
-        EXPECT_TRUE(queue.count() == queue2.count());
-        ;
-    }*/
-
 #endif
-
-    template<class Archive>
-    static FormId readOldFormIdToNew(Archive& ar) {
-        UInt32 oldId = 0;
-        ar & oldId;
-        return form_handling::resolve_handle ((FormId)oldId);
-    }
-
-    template<class Archive>
-    void Item::save(Archive & ar, const unsigned int version) const {
-        ar & _var;
-    }
 
     // deprecate in 0.67:
     enum ItemType : unsigned char
@@ -153,42 +93,51 @@ namespace collections {
         ItemTypeObject = 4,
         ItemTypeForm = 5,
     };
-    /*
-    // deprecate in 0.68:
-    inline void intrusive_ptr_add_ref(object_base * p) {
-        p->retain();
-    }
-    inline void intrusive_ptr_release(object_base * p) {
-        p->release();
-    }
 
-    struct item_converter_1_2 : boost::static_visitor < > {
-        Item::variant& varNew;
+    // 0.67 to 0.68:
+    namespace conv_1_to_2 {
+
+        struct old_blank {
+            template<class Archive>
+            void serialize(Archive & ar, const unsigned int version) {}
+        };
+
+        struct object_ref_old {
+            object_base *px = nullptr;
+
+            template<class Archive>
+            void serialize(Archive & ar, const unsigned int version) {
+                ar & px;
+            }
+        };
+
+        struct item_converter : boost::static_visitor < > {
+            Item::variant& varNew;
         
-        explicit item_converter_1_2(Item::variant& var) : varNew(var) {}
+            explicit item_converter(Item::variant& var) : varNew(var) {}
 
-        template<class T> void operator() (T& val) {
-            varNew = val;
+            template<class T> void operator() (T& val) {
+                varNew = val;
+            }
+
+            void operator()(old_blank& val) {}
+
+            void operator()(object_ref_old& val) {
+                varNew = internal_object_ref(val.px, false);
+            }
+        };
+
+        template<class A> void do_conversion(A& ar, Item::variant& varNew) {
+            typedef boost::variant<old_blank, SInt32, Float32, FormId, object_ref_old, std::string> variant_old;
+            variant_old varOld;
+            ar >> varOld;
+
+            item_converter converter(varNew);
+            boost::apply_visitor(converter, varOld);
         }
-
-        template<> void operator()(object_ref_old& val) {
-            varNew = internal_object_ref(val.get(), false);
-            val.jc_nullify();
-        }
-    };
-    
-    TEST(tt, nbnb)
-    {
-        Item itm;
-        typedef boost::variant<boost::blank, SInt32, Float32, FormId, object_ref_old, std::string> variant_old;
-        variant_old varOld;
-        varOld = object_ref_old(nullptr);
-
-        item_converter_1_2 converter(()itm.var());
-        boost::apply_visitor(converter, _var);
     }
+    
 
-*/
     template<class Archive>
     void Item::load(Archive & ar, const unsigned int version)
     {
@@ -197,27 +146,13 @@ namespace collections {
         default:
             BOOST_ASSERT(false);
             break;
-        case 1:
+        case 2:
             ar & _var;
-
-            if (auto fId = get<FormId>()) {
-                *this = form_handling::resolve_handle(*fId);
-            }
             break;
-        /*case 2: {
-            typedef boost::variant<boost::blank, SInt32, Float32, FormId, object_ref_old, std::string> variant_old;
-            variant_old varOld;
-            ar >> varOld;
-
-            item_converter_1_2 converter(_var);
-            boost::apply_visitor(converter, varOld);
-
-            if (auto fId = get<FormId>()) {
-                *this = form_handling::resolve_handle(*fId);
-            }
-
+        case 1: {
+            conv_1_to_2::do_conversion(ar, _var);
             break;
-        }*/
+        }
         case 0: {
             ItemType type = ItemTypeNone;
             ar & type;
@@ -245,18 +180,30 @@ namespace collections {
             case ItemTypeObject: {
                 object_base *object = nullptr;
                 ar & object;
-                _var = collections::internal_object_ref(object, false);
+                _var = internal_object_ref(object, false);
                 break;
             }
-            case ItemTypeForm:
-                *this = readOldFormIdToNew(ar);
+            case ItemTypeForm: {
+                UInt32 oldId = 0;
+                ar & oldId;
+                *this = (FormId)oldId;
                 break;
+            }
             default:
                 break;
             }
         }
             break;
         }
+
+        if (auto fId = get<FormId>()) {
+            *this = form_handling::resolve_handle(*fId);
+        }
+    }
+
+    template<class Archive>
+    void Item::save(Archive & ar, const unsigned int version) const {
+        ar & _var;
     }
 
     template<class Archive>
