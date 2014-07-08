@@ -73,6 +73,10 @@ namespace collections
 
     void shared_state::loadAll(const std::string & data, int version) {
 
+        if (data.empty()) {
+            return;
+        }
+
         std::istringstream stream(data);
         boost::archive::binary_iarchive archive(stream);
 

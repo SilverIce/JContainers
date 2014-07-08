@@ -31,7 +31,12 @@ namespace skse { namespace {
         namespace chr = std::chrono;
         auto started = chr::system_clock::now();
 
-        func();
+        try {
+            func();
+        }
+        catch (...) {
+            assert(false);
+        }
 
         auto ended = chr::system_clock::now();
         return chr::duration_cast<chr::milliseconds>(ended - started).count() / 1000.f;
