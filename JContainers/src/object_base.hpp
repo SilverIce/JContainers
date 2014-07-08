@@ -1,8 +1,20 @@
 namespace collections
 {
     void object_base::_registerSelf() {
-        jc_assert(_id == HandleNull);
-        _id = context().registry->registerObject(this);
+        context().registry->registerNewObject(*this);
+    }
+
+    Handle object_base::tes_uid() {
+        if (_id == HandleNull) {
+            object_lock l(this);
+            if (_id == HandleNull) {
+                context().registry->registerNewObjectId(*this);
+                context().aqueue->prolong_lifetime(*this, 0);
+            }
+        }
+
+        // it's possible that release from queue will arrive just before public id will be exposed?
+        return _id;
     }
 
     // decreases internal ref counter - _refCount OR deletes if summ refCount is 0
@@ -15,7 +27,7 @@ namespace collections
 
         if (noOwners()) {
 			// it's still possible to get an access at this point?
-            context().registry->removeObject(_id);
+            context().registry->removeObject(*this);
 
             delete this;
             return true;
@@ -38,7 +50,7 @@ namespace collections
     }
 
     object_base* object_base::prolong_lifetime() {
-        context().aqueue->prolong_lifetime(*this);
+        context().aqueue->prolong_lifetime(*this, is_public() ? 0 : 10);
         return this;
     }
 }

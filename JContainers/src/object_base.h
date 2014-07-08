@@ -77,13 +77,19 @@ namespace collections {
         {
         }
 
-        Handle uid() const {
+        Handle _uid() const {
             return _id;
         }
 
+        Handle uid() {
+            return tes_uid();
+        }
+
         // will mark object as publicly exposed
-        Handle tes_uid() {
-            return _id;
+        Handle tes_uid();
+
+        bool is_public() const {
+            return _id != HandleNull;
         }
 
         template<class T> T* as() {
@@ -140,10 +146,6 @@ namespace collections {
         // releases and then deletes object if no owners
         // true, if object deleted
         bool release_from_queue();
-
-        bool registered() const {
-            return _id != HandleNull;
-        }
 
         void set_context(shared_state & ctx) {
             jc_assert(!_context);

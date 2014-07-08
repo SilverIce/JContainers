@@ -1,6 +1,7 @@
 #pragma once
 
 #include "boost\serialization\split_free.hpp"
+#include "boost\serialization\version.hpp"
 
 #include "object_base.h"
 
@@ -23,12 +24,12 @@ namespace boost { namespace serialization {
 
     template<class Archive>
     void save(Archive & ar, const cl::object_base & t, unsigned int version) {
+        //jc_assert(version == 1);
         jc_assert(t._stack_refCount.load(std::memory_order_relaxed) == 0);
         jc_assert(t.noOwners() == false);
 
         save_atomic(ar, t._refCount);
         save_atomic(ar, t._tes_refCount);
-
         ar & t._type;
         ar & t._id;
     }
@@ -41,7 +42,6 @@ namespace boost { namespace serialization {
         ar & t._id;
 
         // trying detect objects with no owners
-        // objects from version 0 are allowed to have no owners
         jc_assert(version == 0 || t.noOwners() == false);
     }
 
@@ -49,3 +49,4 @@ namespace boost { namespace serialization {
 }
 
 BOOST_SERIALIZATION_SPLIT_FREE(collections::object_base);
+BOOST_CLASS_VERSION(collections::object_base, 1);

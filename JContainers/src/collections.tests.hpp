@@ -59,21 +59,21 @@ namespace collections {
     JC_TEST(object_base, refCount)
     {
         auto obj = array::object(context);
-        EXPECT_TRUE(obj->refCount() == 1); // aqueue retains it
+        EXPECT_TRUE(obj->refCount() == 0); // aqueue retains it -- no more
 
         obj->retain();
-        EXPECT_TRUE(obj->refCount() == 2);
+        EXPECT_TRUE(obj->refCount() == 1);
 
         obj->tes_retain();
         obj->tes_retain();
         obj->tes_retain();
-        EXPECT_TRUE(obj->refCount() == 2 + 3);
+        EXPECT_TRUE(obj->refCount() == 1 + 3);
 
         // ensure that over-release does not affects internal ref count:
         for (int i = 0; i < 20 ; i++) {
             obj->tes_release();
         }
-        EXPECT_TRUE(obj->refCount() == 2);
+        EXPECT_TRUE(obj->refCount() == 1);
 
         obj->release();
         EXPECT_TRUE(obj->refCount() == 1); // aqueue retains it

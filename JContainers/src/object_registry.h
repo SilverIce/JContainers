@@ -1,18 +1,22 @@
+#include <hash_set>
+#include <hash_map>
+
 namespace collections
 {
     class object_registry
     {
     public:
-        typedef std::map<HandleT, object_base *> registry_container;
+        typedef std::hash_set<object_base *> all_objects_set;
+        typedef std::hash_map<HandleT, object_base *> registry_container;
         typedef id_generator<HandleT> id_generator_type;
 
     private:
 
         friend class shared_state;
 
-
         registry_container _map;
         id_generator<HandleT> _idGen;
+        all_objects_set _all_objects;
         bshared_mutex _mutex;
 
         object_registry(const object_registry& );
@@ -25,16 +29,36 @@ namespace collections
         {
         }
 
-        Handle registerObject(object_base *collection);
+        void registerNewObject(object_base& obj) {
+            write_lock g(_mutex);
+            auto itr = _all_objects.find(&obj);
+            jc_assert(itr == _all_objects.end());
+            _all_objects.insert(&obj);
+        }
 
-        void removeObject(Handle hdl) {
-            jc_assert(hdl != HandleNull);
+        void registerNewObjectId(object_base& obj) {
+            jc_assert(obj._uid() == HandleNull);
 
             write_lock g(_mutex);
-            auto itr = _map.find(hdl);
-            jc_assert(itr != _map.end());
-            _map.erase(itr);
-            _idGen.reuseId(hdl);
+
+            auto id = _idGen.newId();
+            jc_assert(_map.find(id) == _map.end());
+            _map.insert(registry_container::value_type(id, &obj));
+            obj._id = (Handle)id;
+        }
+
+        void removeObject(object_base& obj) {
+            write_lock g(_mutex);
+
+            auto id = obj._uid();
+            if (id != HandleNull) {
+                _map.erase(id);
+                _idGen.reuseId(id);
+            }
+
+            auto itr = _all_objects.find(&obj);
+            jc_assert(itr != _all_objects.end());
+            _all_objects.erase(itr);
         }
 
         object_base *getObject(Handle hdl) {
@@ -59,43 +83,70 @@ namespace collections
         }
 
         template<class T>
-        T *getObjectOfType(HandleT hdl) {
+        T *getObjectOfType(Handle hdl) {
             auto obj = getObject(hdl);
             return obj->as<T>();
         }
 
         template<class T>
-        T *u_getObjectOfType(HandleT hdl) {
+        T *u_getObjectOfType(Handle hdl) {
             auto obj = u_getObject(hdl);
             return obj->as<T>();
         }
 
-        void u_clear();
+        void u_clear() {
+            _map.clear();
+            _idGen.u_clear();
+            _all_objects.clear();
+        }
 
-        registry_container& u_container() {
-            return _map;
+        all_objects_set& u_container() {
+            return _all_objects;
+        }
+
+        friend class boost::serialization::access;
+        BOOST_SERIALIZATION_SPLIT_MEMBER();
+
+        template<class Archive>
+        void save(Archive & ar, const unsigned int version) const {
+            jc_assert(version == 1);
+            ar << _all_objects << _idGen;
         }
 
         template<class Archive>
-        void serialize(Archive & ar, const unsigned int version) {
-            ar & _map;
-            ar & _idGen;
+        void load(Archive & ar, const unsigned int version) {
+
+            switch (version) {
+            default:
+                jc_assert(false);
+                break;
+            case 1:
+                ar >> _all_objects >> _idGen;
+
+                for (auto& obj : _all_objects) {
+                    if (obj->is_public()) {
+                        _map.insert(registry_container::value_type(obj->_uid(), obj));
+                    }
+                }
+
+                break;
+            case 0: {
+                typedef std::map<HandleT, object_base *> registry_container_old;
+                registry_container_old oldCnt;
+                ar >> oldCnt >> _idGen;
+
+                _map.insert(oldCnt.begin(), oldCnt.end());
+
+                std::transform(oldCnt.begin(), oldCnt.end(), std::inserter(_all_objects, _all_objects.begin()),
+                    [](const registry_container_old::value_type& pair) {
+                        return pair.second;
+                    }
+                );
+            }
+                break;
+            }
         }
     };
-
-    Handle object_registry::registerObject(object_base *collection)
-    {
-        write_lock g(_mutex);
-        auto newId = _idGen.newId();
-        jc_assert(_map.find(newId) == _map.end());
-        _map[newId] = collection;
-        return (Handle)newId;
-    }
-
-    void object_registry::u_clear() {
-        _map.clear();
-        _idGen.u_clear();
-    }
 
     struct all_objects_lock
     {
@@ -104,14 +155,14 @@ namespace collections
         explicit all_objects_lock(object_registry & registry)
             : _registry(registry)
         {
-            for (auto& pair : registry.u_container()) {
-                pair.second->_mutex.lock();
+            for (auto& obj : registry.u_container()) {
+                obj->_mutex.lock();
             }
         }
 
         ~all_objects_lock() {
-            for (auto& pair : _registry.u_container()) {
-                pair.second->_mutex.unlock();
+            for (auto& obj : _registry.u_container()) {
+                obj->_mutex.unlock();
             }
         }
 
@@ -120,5 +171,4 @@ namespace collections
 
 }
 
-//BOOST_CLASS_EXPORT_GUID(collections::collection_registry, "kObjectRegistry");
-//BOOST_CLASS_EXPORT_GUID(collections::collection_registry::id_generator_type, "kJObjectIdGenerator");
+BOOST_CLASS_VERSION(collections::object_registry, 1);

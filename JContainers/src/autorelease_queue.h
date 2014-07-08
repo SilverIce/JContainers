@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <deque>
 #include "boost\serialization\version.hpp"
 
 namespace collections {
@@ -24,7 +25,7 @@ namespace collections {
 
         typedef boost::intrusive_ptr_jc<object_base, object_lifetime_policy> queue_object_ref;
         typedef std::vector<std::pair<Handle, time_point> > queue_old;
-        typedef std::vector<std::pair<queue_object_ref, time_point> > queue;
+        typedef std::deque<std::pair<queue_object_ref, time_point> > queue;
 
     private:
 

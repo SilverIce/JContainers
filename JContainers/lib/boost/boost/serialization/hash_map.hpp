@@ -18,8 +18,7 @@
 //  See http://www.boost.org for updates, documentation, and revision history.
 
 #include <boost/config.hpp>
-#ifdef BOOST_HAS_HASH
-#include BOOST_HASH_MAP_HEADER
+#include <hash_map>
 
 #include <boost/serialization/utility.hpp>
 #include <boost/serialization/hash_collections_save_imp.hpp>
@@ -94,14 +93,14 @@ template<
 >
 inline void save(
     Archive & ar,
-    const BOOST_STD_EXTENSION_NAMESPACE::hash_map<
+    const std::hash_map<
         Key, HashFcn, EqualKey, Allocator
     > &t,
     const unsigned int file_version
 ){
     boost::serialization::stl::save_hash_collection<
         Archive, 
-        BOOST_STD_EXTENSION_NAMESPACE::hash_map<
+        std::hash_map<
             Key, HashFcn, EqualKey, Allocator
         >
     >(ar, t);
@@ -116,19 +115,19 @@ template<
 >
 inline void load(
     Archive & ar,
-    BOOST_STD_EXTENSION_NAMESPACE::hash_map<
+    std::hash_map<
         Key, HashFcn, EqualKey, Allocator
     > &t,
     const unsigned int file_version
 ){
     boost::serialization::stl::load_hash_collection<
         Archive,
-        BOOST_STD_EXTENSION_NAMESPACE::hash_map<
+        std::hash_map<
             Key, HashFcn, EqualKey, Allocator
         >,
         boost::serialization::stl::archive_input_hash_map<
             Archive, 
-            BOOST_STD_EXTENSION_NAMESPACE::hash_map<
+            std::hash_map<
                 Key, HashFcn, EqualKey, Allocator
             >
         >
@@ -146,7 +145,7 @@ template<
 >
 inline void serialize(
     Archive & ar,
-    BOOST_STD_EXTENSION_NAMESPACE::hash_map<
+    std::hash_map<
         Key, HashFcn, EqualKey, Allocator
     > &t,
     const unsigned int file_version
@@ -164,14 +163,14 @@ template<
 >
 inline void save(
     Archive & ar,
-    const BOOST_STD_EXTENSION_NAMESPACE::hash_multimap<
+    const std::hash_multimap<
         Key, HashFcn, EqualKey, Allocator
     > &t,
     const unsigned int file_version
 ){
     boost::serialization::stl::save_hash_collection<
         Archive, 
-        BOOST_STD_EXTENSION_NAMESPACE::hash_multimap<
+        std::hash_multimap<
             Key, HashFcn, EqualKey, Allocator
         >
     >(ar, t);
@@ -186,19 +185,19 @@ template<
 >
 inline void load(
     Archive & ar,
-    BOOST_STD_EXTENSION_NAMESPACE::hash_multimap<
+    std::hash_multimap<
         Key, HashFcn, EqualKey, Allocator
     > &t,
     const unsigned int file_version
 ){
     boost::serialization::stl::load_hash_collection<
         Archive,
-        BOOST_STD_EXTENSION_NAMESPACE::hash_multimap<
+        std::hash_multimap<
             Key, HashFcn, EqualKey, Allocator
         >,
         boost::serialization::stl::archive_input_hash_multimap<
             Archive, 
-            BOOST_STD_EXTENSION_NAMESPACE::hash_multimap<
+            std::hash_multimap<
                 Key, HashFcn, EqualKey, Allocator
             >
         >
@@ -216,7 +215,7 @@ template<
 >
 inline void serialize(
     Archive & ar,
-    BOOST_STD_EXTENSION_NAMESPACE::hash_multimap<
+    std::hash_multimap<
         Key, HashFcn, EqualKey, Allocator
     > &t,
     const unsigned int file_version
@@ -227,5 +226,4 @@ inline void serialize(
 } // namespace serialization
 } // namespace boost
 
-#endif // BOOST_HAS_HASH
 #endif // BOOST_SERIALIZATION_HASH_MAP_HPP

@@ -11,6 +11,11 @@
 
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/map.hpp>
+#include <boost/serialization/set.hpp>
+
+#include <boost/serialization/deque.hpp>
+#include <boost/serialization/hash_set.hpp>
+#include <boost/serialization/hash_map.hpp>
 
 #include <boost/serialization/split_member.hpp>
 #include <boost/serialization/version.hpp>
@@ -38,8 +43,4 @@
 
 namespace collections
 {
-
-
-
-
 }

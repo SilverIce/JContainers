@@ -19,23 +19,21 @@ namespace collections
 
         /*  Not good, but working solution.
 
-        issue: deadlock during loading savegame - e.g. cleaning current state.
+        purpose: free allocated memory
+        problem: regular delete call won't help as delete call will access memory of possible deleted object
 
-        due to: collection release -> dealloc -> collection_registry::removeObject
-        introduces deadlock ( registry locked during context cleanup )
+        solution: isolate objects by nullifying cross-references, then delete objects
 
-        solution: nullify object cross-references, then delete objects
-
-        all we need is just free the memory but this will require track allocated collection & stl memory blocks
+        all we need is just free all allocated memory but this will require track stl memory blocks
         */
 
         aqueue->u_nullify();
 
-        for (auto& pair : registry->u_container()) {
-            pair.second->u_nullifyObjects();
+        for (auto& obj : registry->u_container()) {
+            obj->u_nullifyObjects();
         }
-        for (auto& pair : registry->u_container()) {
-            delete pair.second;
+        for (auto& obj : registry->u_container()) {
+            delete obj;
         }
 
         registry->u_clear();
@@ -122,8 +120,8 @@ namespace collections
             // deadlock possible
             u_postLoadMaintenance(version);
 
-            _DMESSAGE("%u objects total", registry->u_container().size());
-            _DMESSAGE("%u objects in aqueue", aqueue->u_count());
+            _DMESSAGE("%lu objects total", registry->u_container().size());
+            _DMESSAGE("%lu objects in aqueue", aqueue->u_count());
         }
         aqueue->start();
     }
@@ -148,6 +146,9 @@ namespace collections
             if (delegate) {
                 delegate->u_saveAdditional(arch);
             }
+            _DMESSAGE("%lu objects total", registry->u_container().size());
+            _DMESSAGE("%lu objects in aqueue", aqueue->u_count());
+
         }
         aqueue->start();
 
@@ -164,12 +165,9 @@ namespace collections
 
     void shared_state::u_postLoadMaintenance(int saveVersion)
     {
-        auto cntCopy = registry->u_container();
-        static_assert( std::is_reference<decltype(cntCopy)>::value == false , "");
-
-        for (auto& pair : cntCopy) {
-            pair.second->set_context(*this);
-            pair.second->u_onLoaded();
+        for (auto& obj : registry->u_container()) {
+            obj->set_context(*this);
+            obj->u_onLoaded();
         }
     }
 
