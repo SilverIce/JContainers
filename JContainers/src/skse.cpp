@@ -208,4 +208,8 @@ namespace skse {
     TESForm* lookup_form(uint32_t handle) {
         return g_serialization ? LookupFormByID(handle) : nullptr;
     }
+
+    bool is_fake() {
+        return g_serialization == nullptr;
+    }
 }

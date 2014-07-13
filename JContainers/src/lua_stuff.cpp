@@ -13,6 +13,8 @@
 #include "gtest.h"
 
 #include "collections.h"
+#include "json_handling.h"
+#include "skse.h"
 
 namespace collections { namespace lua_traits {
 
@@ -469,13 +471,9 @@ namespace collections { namespace lua_apply {
 
         void load_lua_code(lua_State *l) {
 
-            std::ifstream t("Data//SKSE//Plugins//JContainers.lua");
+            std::ifstream t(skse::is_fake() ? "JContainers.lua" : "Data//SKSE//Plugins//JContainers.lua");
+            assert(t.eof() == false);
             std::string str((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
-
-            if (str.empty()) {
-                return;
-            }
-
 
             lua_settop(l, 0);
             int failed = luaL_dostring(l, str.c_str());
@@ -538,7 +536,28 @@ namespace collections { namespace lua_apply {
             ));
 
         EXPECT_TRUE(result.intValue() == 2);
-
     }
+
+    TEST(apply2, t)
+    {
+        auto obj = json_deserializer::object_from_json_data(tes_context::instance(), STR(
+            [
+                {   "theSearchString": "a",
+                    "theSearchForm" : "__formData|A|0x14"
+                },
+
+                {   "theSearchString": "b",
+                    "theSearchForm" : "__formData|A|0x15"
+                }
+            ]
+        ));
+
+        auto result = process_apply_func(obj, STR(
+            return find(jobject, function(x) return x.theSearchString == 'a' end)
+            ));
+
+        EXPECT_TRUE(result.intValue() == 0);
+    }
+
 }
 }
