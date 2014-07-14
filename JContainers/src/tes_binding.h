@@ -26,91 +26,80 @@ namespace collections {
     namespace tes_binding {
 
         template<class TesType>
-        struct Tes2J {
-            typedef TesType j_type;
+        struct ValueConverter {
+            typedef TesType tes_type;
+
+            static TesType convert2J(const TesType& val) {
+                return val;
+            }
+
+            static TesType convert2Tes(const TesType& val) {
+                return val;
+            }
         };
 
-        template<class J>
-        struct J2Tes {
-            typedef J tes_type;
-        };
-
-        template<class Out, class In> inline Out convert2J(In in) {
-            return in;
-        }
-
-        template<class Out, class In> inline Out convert2Tes(In in) {
-            return in;
-        }
-
-        template<>
-        struct Tes2J<BSFixedString> {
-            typedef const char* j_type;
-        };
-        template<>
-        struct J2Tes<const char*> {
+        struct StringConverter {
             typedef BSFixedString tes_type;
-        };
-        template<> inline BSFixedString convert2Tes<BSFixedString>(const char * str) {
-            return BSFixedString(str);
-        }
-        template<> inline const char* convert2J(const BSFixedString& str) {
-            return str.data;
-        }
-        template<> inline const char* convert2J(BSFixedString str) {
-            return str.data;
-        }
 
-        template<>
-        struct J2Tes<object_base*> {
-            typedef HandleT tes_type;
-        };
-        template<> inline HandleT convert2Tes(object_base* obj) {
-            return obj ? obj->tes_uid() : 0;
-        }
-        template<> inline HandleT convert2Tes(array* obj) {
-            return obj ? obj->tes_uid() : 0;
-        }
-        template<> inline HandleT convert2Tes(map* obj) {
-            return obj ? obj->tes_uid() : 0;
-        }
-        template<> inline HandleT convert2Tes(form_map* obj) {
-            return obj ? obj->tes_uid() : 0;
-        }
+            static const char* convert2J(const BSFixedString& str) {
+                return str.data;
+            }
 
-        template<>
-        struct Tes2J<HandleT> {
-            typedef object_base* j_type;
+            static BSFixedString convert2Tes(const char * str) {
+                return BSFixedString(str);
+            }
         };
 
-        template<> struct J2Tes<array*> {
+
+        struct ObjectConverter {
+
             typedef HandleT tes_type;
+
+            static HandleT convert2Tes(object_base* obj) {
+                return obj ? obj->tes_uid() : 0;
+            }
+
+            static object_stack_ref convert2J(HandleT hdl) {
+                return tes_context::instance().getObjectRef((Handle)hdl);
+            }
+
         };
-        template<> struct J2Tes<map*> {
-            typedef HandleT tes_type;
+
+        //////////////////////////////////////////////////////////////////////////
+
+        template<class JType> struct GetConv : ValueConverter<JType> {
+            //typedef ValueConverter<TesType> Conv;
         };
-        template<> struct J2Tes<form_map*> {
-            typedef HandleT tes_type;
+
+        template<> struct GetConv<const char*> : StringConverter {
         };
-        template<> inline object_base* convert2J(HandleT hdl) {
-            return tes_context::instance().getObject((Handle)hdl);
-        }
-        template<> inline array* convert2J(HandleT hdl) {
-            return tes_context::instance().getObjectOfType<array>((Handle)hdl);
-        }
-        template<> inline map* convert2J(HandleT hdl) {
-            return tes_context::instance().getObjectOfType<map>((Handle)hdl);
-        }
-        template<> inline form_map* convert2J(HandleT hdl) {
-            return tes_context::instance().getObjectOfType<form_map>((Handle)hdl);
-        }
-        template<>
-        struct J2Tes<Handle> {
-            typedef HandleT tes_type;
+
+        template<> struct GetConv < object_stack_ref& > : ObjectConverter {};
+        //template<> struct GetConv < object_stack_ref > : ObjectConverter{};
+
+        template<> struct GetConv < object_base* > : ObjectConverter{};
+        template<> struct GetConv < array* > : ObjectConverter{};
+        template<> struct GetConv < map* > : ObjectConverter{};
+        template<> struct GetConv < form_map* > : ObjectConverter{};
+
+
+/*
+        template<class T, class P> struct GetConv < boost::intrusive_ptr_jc<T, P> > : ObjectConverter{
+
+            static boost::intrusive_ptr_jc<T, P> convert2J(HandleT hdl) {
+                return tes_context::instance().getObjectRefOfType<T>((Handle)hdl);
+            }
+
         };
-        template<> inline HandleT convert2Tes(Handle hdl) {
-            return (HandleT)hdl;
-        }
+*/
+
+        template<class T, class P> struct GetConv < boost::intrusive_ptr_jc<T, P>& > : ObjectConverter{
+            static boost::intrusive_ptr_jc<T, P> convert2J(HandleT hdl) {
+                return tes_context::instance().getObjectRefOfType<T>((Handle)hdl);
+            }
+        };
+
+        //////////////////////////////////////////////////////////////////////////
 
         template<class T> struct j2Str {
             static j_type_info typeInfo() { return j_type_info_make(typeid(T).name(), nullptr); }
@@ -133,6 +122,9 @@ namespace collections {
         };
         template<> struct j2Str<Handle> {
             static j_type_info typeInfo() { return j_type_info_make("int", "object"); }
+        };
+        template<class T, class P> struct j2Str < boost::intrusive_ptr_jc<T,P> > {
+            static j_type_info typeInfo() { return j2Str<T*>::typeInfo(); }
         };
 
         template<> struct j2Str<BSFixedString> {
@@ -160,6 +152,7 @@ namespace collections {
             }
         };
 
+        //////////////////////////////////////////////////////////////////////////
 
         template <typename T, T func> struct proxy;
 
@@ -176,15 +169,15 @@ namespace collections {
                 return std::vector<type_info_func>(&types[0], &types[0] + sizeof(types)/sizeof(type_info_func));
             }
 
-            static typename J2Tes<R>::tes_type tes_func(
+            static typename GetConv<R>::tes_type tes_func(
                 StaticFunctionTag* tag,
-                typename J2Tes<Arg0>::tes_type a0,
-                typename J2Tes<Arg1>::tes_type a1)
+                typename GetConv<Arg0>::tes_type a0,
+                typename GetConv<Arg1>::tes_type a1)
             {
-                return convert2Tes<J2Tes<R>::tes_type, R>(
+                return GetConv<R>::convert2Tes(
                     func(
-                        convert2J<Arg0>(a0),
-                        convert2J<Arg1>(a1))
+                        GetConv<Arg0>::convert2J(a0),
+                        GetConv<Arg1>::convert2J(a1))
                 );
             }
 
@@ -192,9 +185,9 @@ namespace collections {
                 registry->RegisterFunction(
                     new NativeFunction2 <
                             StaticFunctionTag,
-                            typename J2Tes<R>::tes_type,
-                            typename J2Tes<Arg0>::tes_type,
-                            typename J2Tes<Arg1>::tes_type > (name, className, &tes_func, registry)
+                            typename GetConv<R>::tes_type,
+                            typename GetConv<Arg0>::tes_type,
+                            typename GetConv<Arg1>::tes_type >(name, className, &tes_func, registry)
                 );
             }
         };
@@ -213,10 +206,11 @@ namespace collections {
 
             static void tes_func(
                 StaticFunctionTag* tag,
-                typename J2Tes<Arg0>::tes_type a0,
-                typename J2Tes<Arg1>::tes_type a1)
+                typename GetConv<Arg0>::tes_type a0,
+                typename GetConv<Arg1>::tes_type a1)
             {
-                func(convert2J<Arg0>(a0), convert2J<Arg1>(a1));
+                func(GetConv<Arg0>::convert2J(a0),
+                     GetConv<Arg1>::convert2J(a1));
             }
 
             static void bind(VMClassRegistry *registry, const char *name, const char *className) {
@@ -225,8 +219,8 @@ namespace collections {
                     new NativeFunction2 <
                     StaticFunctionTag,
                     void,
-                    typename J2Tes<Arg0>::tes_type,
-                    typename J2Tes<Arg1>::tes_type > (name, className, &tes_func, registry)
+                    typename GetConv<Arg0>::tes_type,
+                    typename GetConv<Arg1>::tes_type >(name, className, &tes_func, registry)
                     );
             }
         };
@@ -237,13 +231,10 @@ namespace collections {
     #define ARG_NTH(n)              a##n
     #define COMA                    ,
 
-    #define TESTYPE_NTH(n)     typename J2Tes<Arg##n>::tes_type
+    #define TESTYPE_NTH(n)          typename GetConv<Arg##n>::tes_type
     #define TESPARAM_NTH(n)     TESTYPE_NTH(n) a##n
-    #define TESPARAM_CONV_NTH(n)     convert2J<Arg##n>(a##n)
+    #define TESPARAM_CONV_NTH(n)     GetConv<Arg##n>::convert2J(a##n)
     #define TYPESTRING_NTH(n)     &j2Str<Arg##n>::typeInfo
-
-
-
 
 
     #define MAKE_PROXY_NTH(N) \
@@ -258,18 +249,18 @@ namespace collections {
                 return std::vector<type_info_func>(&types[0], &types[0] + sizeof(types)/sizeof(type_info_func));\
             }\
             \
-            static typename J2Tes<R>::tes_type tes_func(     \
+            static typename GetConv<R>::tes_type tes_func(     \
                 StaticFunctionTag* tag     \
                 DO_##N(TESPARAM_NTH, COMA, COMA, NOTHING))     \
             {     \
-                return convert2Tes<J2Tes<R>::tes_type, R> ( func(    \
+                return GetConv<R>::convert2Tes(func(\
                     DO_##N(TESPARAM_CONV_NTH, NOTHING, COMA, NOTHING)   \
                 ));     \
             }     \
                  \
             static void bind(VMClassRegistry *registry, const char *name, const char *className) {     \
                 registry->RegisterFunction(     \
-                    new NativeFunction##N <StaticFunctionTag, typename J2Tes<R>::tes_type   \
+                    new NativeFunction##N <StaticFunctionTag, typename GetConv<R>::tes_type   \
                         DO_##N(TESTYPE_NTH, COMA, COMA, NOTHING)  > (name, className, &tes_func, registry)   \
                 );     \
             }     \

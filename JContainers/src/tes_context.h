@@ -7,6 +7,8 @@
 
 namespace collections
 {
+    class map;
+
     class tes_context : public shared_state, public shared_state_delegate
     {
         Handle _databaseId;
@@ -43,7 +45,11 @@ namespace collections
             return _databaseId;
         }
 
-        class map* database();
+        map* database();
+
+        map::ref database_ref() {
+            return database();
+        }
 
         void setDataBase(object_base *db) {
             object_base * prev = nullptr;

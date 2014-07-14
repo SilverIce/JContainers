@@ -95,6 +95,18 @@ public:
         if (px != 0) Policy::release(px);
     }
 
+    template<class Base>
+    intrusive_ptr_jc<Base, Policy>& to_base() {
+        static_assert(std::is_base_of<Base, T>::value, "");
+        return reinterpret_cast< intrusive_ptr_jc<Base, Policy>& >(*this);
+    }
+
+    template<class Base>
+    const intrusive_ptr_jc<Base, Policy>& to_base() const {
+        static_assert(std::is_base_of<Base, T>::value, "");
+        return reinterpret_cast<const intrusive_ptr_jc<Base, Policy>& >(*this);
+    }
+
 #if !defined(BOOST_NO_MEMBER_TEMPLATES) || defined(BOOST_MSVC6_MEMBER_TEMPLATES)
 
     template<class U, class UP> intrusive_ptr_jc & operator=(intrusive_ptr_jc<U,UP> const & rhs)
@@ -157,7 +169,7 @@ public:
 
     T * operator->() const
     {
-        BOOST_ASSERT( px != 0 );
+        //BOOST_ASSERT( px != 0 );
         return px;
     }
 

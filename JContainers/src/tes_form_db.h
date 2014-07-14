@@ -68,21 +68,21 @@ namespace collections {
             }
 
             auto db = tes_context::instance().database();
-            form_map *fmap = tes_map::getItem<object_base*>(db, storageName)->as<form_map>();
+            form_map::ref fmap = tes_map::getItem<object_base*>(db, storageName)->as<form_map>();
 
             if (!fmap) {
                 fmap = tes_object::object<form_map>();
-                tes_db::setObj(storageName, fmap);
+                tes_db::setObj(storageName, fmap.to_base<object_base>());
             }
 
-            return fmap;
+            return fmap.get();
         }
 
         static bool validate_storage_name(const char *name) {
             return name && *name;
         }
 
-        static void setEntry(const char *storageName, TESForm *formKey, object_base *entry) {
+        static void setEntry(const char *storageName, TESForm *formKey, object_stack_ref& entry) {
             if (!validate_storage_name(storageName) || !formKey) {
                 return;
             }
@@ -147,7 +147,7 @@ namespace collections {
             "attempts to assign value. returns false if no such path");
         REGISTERF(solveSetter<SInt32>, "solveIntSetter", "fKey path value", NULL);
         REGISTERF(solveSetter<const char*>, "solveStrSetter", "fKey path value", NULL);
-        REGISTERF(solveSetter<object_base*>, "solveObjSetter", "fKey path value", NULL);
+        REGISTERF(solveSetter<object_stack_ref&>, "solveObjSetter", "fKey path value", NULL);
         REGISTERF(solveSetter<TESForm*>, "solveFormSetter", "fKey path value", NULL);
 
         static bool hasPath(TESForm *form, const char* path) {
@@ -192,7 +192,7 @@ namespace collections {
         REGISTERF(setItem<SInt32>, "setInt", "fKey key value", "creates key-value association. replaces existing value if any");
         REGISTERF(setItem<Float32>, "setFlt", "fKey key value", "");
         REGISTERF(setItem<const char *>, "setStr", "fKey key value", "");
-        REGISTERF(setItem<object_base*>, "setObj", "fKey key container", "");
+        REGISTERF(setItem<object_stack_ref&>, "setObj", "fKey key container", "");
         REGISTERF(setItem<TESForm*>, "setForm", "fKey key value", "");
     };
 

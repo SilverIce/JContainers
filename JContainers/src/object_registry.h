@@ -70,6 +70,15 @@ namespace collections
             return u_getObject(hdl);
         }
 
+        object_stack_ref getObjectRef(Handle hdl) {
+            // had to copy&paste getObject function as we really must own an object BEFORE read lock will be released
+            if (!hdl) {
+                return nullptr;
+            }
+            read_lock g(_mutex);
+            return u_getObject(hdl);
+        }
+
         object_base *u_getObject(Handle hdl) {
             if (!hdl) {
                 return nullptr;

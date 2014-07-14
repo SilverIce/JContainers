@@ -49,8 +49,6 @@ namespace collections
         aqueue->stop();
         
         {
-            write_lock w(_mutex);
-            all_objects_lock l(*registry);
             u_clearState();
         }
         
@@ -59,6 +57,10 @@ namespace collections
 
     object_base * shared_state::getObject(Handle hdl) {
         return registry->getObject(hdl);
+    }
+
+    object_stack_ref shared_state::getObjectRef(Handle hdl) {
+        return registry->getObjectRef(hdl);
     }
 
     object_base * shared_state::u_getObject(Handle hdl) {

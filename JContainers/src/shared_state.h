@@ -55,8 +55,14 @@ namespace collections {
             return getObject(hdl)->as<T>();
         }
 
+        template<class T>
+        object_stack_ref_template<T> getObjectRefOfType(Handle hdl) {
+            return getObjectRef(hdl)->as<T>();
+        }
+
         size_t aqueueSize();
         object_base * getObject(Handle hdl);
+        object_stack_ref getObjectRef(Handle hdl);
         object_base * u_getObject(Handle hdl);
 
         void clearState();

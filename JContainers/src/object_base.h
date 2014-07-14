@@ -31,7 +31,10 @@ namespace collections {
         static void release(object_base * p);
     };
 
-    typedef boost::intrusive_ptr_jc<object_base, object_base_stack_ref_policy> object_stack_ref;
+    template <class T>
+    using object_stack_ref_template = boost::intrusive_ptr_jc<T, object_base_stack_ref_policy>;
+
+    typedef object_stack_ref_template<object_base> object_stack_ref;
 
     class object_base
     {
@@ -67,6 +70,7 @@ namespace collections {
         {
         }
 
+/*
         object_base()
             : _refCount(0)
             , _tes_refCount(0)
@@ -75,7 +79,11 @@ namespace collections {
             , _type(CollectionTypeNone)
             , _context(nullptr)
         {
-        }
+        }*/
+
+        // for test purpose only!
+        // registers (or returns already registered) identifier
+        Handle public_id();
 
         Handle _uid() const {
             return _id;
@@ -214,5 +222,9 @@ namespace collections {
     public:
         explicit object_lock(object_base *obj) : _lock(obj->_mutex) {}
         explicit object_lock(object_base &obj) : _lock(obj._mutex) {}
+
+        template<class T, class P>
+        explicit object_lock(const boost::intrusive_ptr_jc<T, P>& ref) : _lock(static_cast<object_base&>(*ref)._mutex) {}
+        //explicit object_lock(object_base &obj) : _lock(obj._mutex) {}
     };
 }

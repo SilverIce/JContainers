@@ -4,6 +4,17 @@ namespace collections
         context().registry->registerNewObject(*this);
     }
 
+    Handle object_base::public_id() {
+        if (_id == HandleNull) {
+            object_lock l(this);
+            if (_id == HandleNull) {
+                context().registry->registerNewObjectId(*this);
+            }
+        }
+
+        return _id;
+    }
+
     Handle object_base::tes_uid() {
         if (_id == HandleNull) {
             object_lock l(this);
@@ -37,7 +48,8 @@ namespace collections
     }
 
     void object_base::release_counter(std::atomic_int32_t& counter) {
-        // publicly accessible tes_counter is allowed to receive redundant release calls
+
+        // publicly accessible tes_counter allowed to receive redundant release calls
         jc_assert(&counter == &_tes_refCount || counter > 0);
 
         if (counter > 0) {

@@ -12,7 +12,6 @@
 #include "skse/GameForms.h"
 
 #include "object_base.h"
-#include "tes_context.h"
 #include "skse.h"
 
 namespace collections {
@@ -29,6 +28,9 @@ namespace collections {
         explicit collection_base() : object_base((CollectionType)T::TypeId) {}
 
     public:
+
+        typedef typename object_stack_ref_template<T> ref;
+        typedef typename object_stack_ref_template<const T> cref;
 
         static T* make(tes_context& context /*= tes_context::instance()*/) {
             auto obj = new T();
@@ -82,7 +84,7 @@ namespace collections {
             }
         }
 
-        Item() : _var(boost::blank()) {}
+        Item() {}
         Item(Item&& other) : _var(std::move(other._var)) {}
         Item(const Item& other) : _var(other._var) {}
 
@@ -136,14 +138,20 @@ namespace collections {
         explicit Item(std::string&& val) : _var(val) {}
 
         // these are none if data pointers zero
-        explicit Item(const TESForm *val) : _var(boost::blank()) {
+        explicit Item(const TESForm *val) {
             *this = val;
         }
-        explicit Item(const char * val) : _var(boost::blank()) {
+        explicit Item(const char * val) {
             *this = val;
         }
-        explicit Item(object_base *val) : _var(boost::blank()) {
+        explicit Item(const BSFixedString& val) {
+            *this = val.data;
+        }
+        explicit Item(object_base *val) {
             *this = val;
+        }
+        explicit Item(const object_stack_ref &val) {
+            *this = val.get();
         }
 /*
         explicit Item(const BSFixedString& val) : _var(boost::blank()) {
@@ -277,6 +285,10 @@ namespace collections {
 
         bool isEqual(const object_base *value) const {
             return is_type<internal_object_ref>() && object() == value;
+        }
+
+        bool isEqual(const object_stack_ref& value) const {
+            return isEqual(value.get());
         }
 
         bool isEqual(const TESForm *value) const {

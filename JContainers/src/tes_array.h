@@ -7,6 +7,8 @@ namespace collections {
     class tes_array : public tes_binding::class_meta_mixin_t< tes_array > {
     public:
 
+        typedef array::ref& ref;
+
         REGISTER_TES_NAME("JArray");
 
         void additionalSetup() {
@@ -50,7 +52,7 @@ namespace collections {
                 for (UInt32 i = 0; i < arr.Length(); ++i) {
                     T val;
                     arr.Get(&val, i);
-                    me->_array.push_back(Item(tes_binding::convert2J<tes_binding::Tes2J<T>::j_type>(val)));
+                    me->_array.push_back(Item(val));
                 }
             },
                 tes_context::instance());
@@ -64,14 +66,14 @@ objectWithBooleans converts booleans into integers");
         REGISTERF(fromArray<Float32>, "objectWithFloats",  "values", NULL);
         REGISTERF(fromArray<bool>, "objectWithBooleans",  "values", NULL);
 
-        static object_base* subArray(array *source, SInt32 startIndex, SInt32 endIndex) {
+        static object_base* subArray(ref source, SInt32 startIndex, SInt32 endIndex) {
             if (!source) {
                 return nullptr;
             }
 
             object_lock g(source);
 
-            if (!validateReadIndexRange(source, startIndex, endIndex)) {
+            if (!validateReadIndexRange(source.get(), startIndex, endIndex)) {
                 return nullptr;
             }
 
@@ -84,14 +86,14 @@ objectWithBooleans converts booleans into integers");
         }
         REGISTERF2(subArray, "* startIndex endIndex", "creates new array containing all values from source array in range [startIndex, endIndex)");
 
-        static void addFromArray(array *obj, array *another, SInt32 insertAtIndex = -1) {
+        static void addFromArray(ref obj, ref another, SInt32 insertAtIndex = -1) {
             if (!obj || !another || obj == another) {
                 return ;
             }
 
             object_lock g1(obj), g2(another);
 
-            if (insertAtIndex >= 0 && validateWriteIndex(obj, insertAtIndex) == false) {
+            if (insertAtIndex >= 0 && validateWriteIndex(obj.get(), insertAtIndex) == false) {
                 onOutOfBoundAccess();
                 return;
             }
@@ -124,14 +126,14 @@ if insertAtIndex >= 0 it appends values starting from insertAtIndex index");
 
 
         template<class Op>
-        static void doReadOp(array *obj, int pyIndex, Op& operation) {
+        static void doReadOp(ref obj, int pyIndex, Op& operation) {
             if (!obj) {
                 return;
             }
 
             object_lock g(obj);
 
-            auto idx = convertReadIndex(obj, pyIndex);
+            auto idx = convertReadIndex(obj.get(), pyIndex);
 
             if (idx) {
                 operation(*idx);
@@ -141,14 +143,14 @@ if insertAtIndex >= 0 it appends values starting from insertAtIndex index");
         }
 
         template<class Op>
-        static void doWriteOp(array *obj, int pyIndex, Op& operation) {
+        static void doWriteOp(ref obj, int pyIndex, Op& operation) {
             if (!obj) {
                 return;
             }
 
             object_lock g(obj);
 
-            auto idx = convertWriteIndex(obj, pyIndex);
+            auto idx = convertWriteIndex(obj.get(), pyIndex);
 
             if (idx) {
                 operation(*idx);
@@ -158,7 +160,7 @@ if insertAtIndex >= 0 it appends values starting from insertAtIndex index");
         }
 
         template<class T>
-        static T itemAtIndex(array *obj, Index index) {
+        static T itemAtIndex(ref obj, Index index) {
             T t((T)0);
             doReadOp(obj, index, [=, &t](uint32_t idx) {
                 t = obj->_array[idx].readAs<T>();
@@ -174,7 +176,7 @@ if insertAtIndex >= 0 it appends values starting from insertAtIndex index");
         REGISTERF(itemAtIndex<TESForm*>, "getForm", "* index", "");
 
         template<class T>
-        static SInt32 findVal(array *obj, T value, SInt32 pySearchStartIndex = 0) {
+        static SInt32 findVal(ref obj, T value, SInt32 pySearchStartIndex = 0) {
 
             int result = -1;
 
@@ -202,11 +204,11 @@ searchStartIndex - array index where to start search\n"
 NEGATIVE_IDX_COMMENT);
         REGISTERF(findVal<Float32>, "findFlt", "* value searchStartIndex=0", "");
         REGISTERF(findVal<const char *>, "findStr", "* value searchStartIndex=0", "");
-        REGISTERF(findVal<object_base*>, "findObj", "* container searchStartIndex=0", "");
+        REGISTERF(findVal<object_stack_ref&>, "findObj", "* container searchStartIndex=0", "");
         REGISTERF(findVal<TESForm*>, "findForm", "* value searchStartIndex=0", "");
 
         template<class T>
-        static void replaceItemAtIndex(array *obj, Index index, T item) {
+        static void replaceItemAtIndex(ref obj, Index index, T item) {
             doReadOp(obj, index, [=](uint32_t idx) {
                 obj->_array[idx] = Item(item);
             });
@@ -215,11 +217,11 @@ NEGATIVE_IDX_COMMENT);
                                                                          NEGATIVE_IDX_COMMENT);
         REGISTERF(replaceItemAtIndex<Float32>, "setFlt", "* index value", "");
         REGISTERF(replaceItemAtIndex<const char *>, "setStr", "* index value", "");
-        REGISTERF(replaceItemAtIndex<object_base*>, "setObj", "* index container", "");
+        REGISTERF(replaceItemAtIndex<object_stack_ref&>, "setObj", "* index container", "");
         REGISTERF(replaceItemAtIndex<TESForm*>, "setForm", "* index value", "");
 
         template<class T>
-        static void addItemAt(array *obj, T item, SInt32 addToIndex = -1) {
+        static void addItemAt(ref obj, T item, SInt32 addToIndex = -1) {
             doWriteOp(obj, addToIndex, [&](uint32_t idx) {
                 obj->_array.insert(obj->begin() + idx, Item(item));
             });
@@ -228,20 +230,20 @@ NEGATIVE_IDX_COMMENT);
 if addToIndex >= 0 it inserts value at given index. "NEGATIVE_IDX_COMMENT);
         REGISTERF(addItemAt<Float32>, "addFlt", "* value addToIndex=-1", "");
         REGISTERF(addItemAt<const char *>, "addStr", "* value addToIndex=-1", "");
-        REGISTERF(addItemAt<object_base*>, "addObj", "* container addToIndex=-1", "");
+        REGISTERF(addItemAt<object_stack_ref&>, "addObj", "* container addToIndex=-1", "");
         REGISTERF(addItemAt<TESForm*>, "addForm", "* value addToIndex=-1", "");
 
-        static Index count(array *obj) {
-            return tes_object::count(obj);
+        static Index count(ref obj) {
+            return tes_object::count(obj.to_base<object_base>());
         }
         REGISTERF2(count, "*", "returns number of items in array");
 
-        static void clear(array *obj) {
-            tes_object::clear(obj);
+        static void clear(ref obj) {
+            tes_object::clear(obj.to_base<object_base>());
         }
         REGISTERF2(clear, "*", "removes all items from array");
 
-        static void eraseIndex(array *obj, SInt32 index) {
+        static void eraseIndex(ref obj, SInt32 index) {
             doReadOp(obj, index, [=](uint32_t idx) {
                 obj->_array.erase(obj->begin() + idx);
             });
