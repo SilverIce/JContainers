@@ -258,7 +258,7 @@ Functions accessing number (`getFlt`, `solveFlt`, `getInt`, `solveInt`) may conv
 
 ### Object lifetime management rules
 
-Each time script creates new string or default papyrus array Skyrim allocates memory and automatically frees it when you do not need that string or array or something else.
+Each time script creates new string or papyrus array, Skyrim allocates memory and automatically frees it when you do not need that string or array or something else.
 
 Internally all containers are C++ objects, Skyrim knows nothing about them and unable to manage their lifetime and memory.
 
@@ -269,9 +269,12 @@ The rules:
 - to prevent destruction you must own container (use `JValue.retain` function)
 - when you do not need that object you must release it (use `JValue.release`)
 
-Newly created object (created with object, `objectWith*` or `readFromFile` function) owned by no one and destroyed after short amount of time (roughly 10 seconds).
+**The caller of `JValue.retain` is responsible for releasing object. Not released object will remain in savefile forever.**
 
-**Note** that container gets owned (retained) automatically once it gets inserted into another container or JDB (which is also container) and released when removed. Thus you don't have to care about lifetime of object that owned by JDB or JFormDB.
+The lifetime model implemented using simple owner(reference) counter. Each object have a such counter. Each time object gets inserted into another container or `JValue.retain` used reference counter increases. Each time object gets removed from container or released via `JValue.release` reference counter decreases.
+If reference counter reaches zero, object temporarily owned for roughly 10 seconds, during this perod of time it have a  'last chance to survive' - and gets destroyed if nobody owned it.
+
+Newly created object (created with `object`, `objectWith*`, `all/Keys/Values` or `readFromFile` function) also have that 'last chance'.
 
 Illustration shows the idea:
 
@@ -303,7 +306,7 @@ endfunction
 ```
 ### Config reading
 
-You wish to have all your mod config values to be stored somewhere (for ex. in `"Data/preset.txt"` file) so you could easy adjust them all by editing the file. Or you do not wish to hardcode all these values. File contains following info:
+You wish to have all your mod config values to be stored somewhere (for ex. in `"Data/preset.txt"` file) so you could easy adjust them all by editing the file. Or you do not wish to hardcode all these values. JSON formatted file contains following information:
 
 ```json
 {
@@ -323,7 +326,6 @@ You wish to have all your mod config values to be stored somewhere (for ex. in `
     }
 }
 ```
-File written in JSON format.
 It contains root map containing two maps - two standard presets your mod provides - classicPreset & winterHorkerPreset. Config file reading may look like:
 
 ```lua
