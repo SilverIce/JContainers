@@ -42,24 +42,17 @@ namespace reflection { namespace binding {
         static function_parameter typeInfo() { return j2Str<T*>::typeInfo(); }
     };
 
-    template<> struct j2Str < object_base * > {
-        static function_parameter typeInfo() { return function_parameter_make("int", "object"); }
+    template<class T, class P> struct j2Str < boost::intrusive_ptr_jc<T, P>& > {
+        static function_parameter typeInfo() { return j2Str<T*>::typeInfo(); }
     };
-    template<> struct j2Str < map * > {
-        static function_parameter typeInfo() { return function_parameter_make("int", "object"); }
-    };
-    template<> struct j2Str < array * > {
-        static function_parameter typeInfo() { return function_parameter_make("int", "object"); }
-    };
-    template<> struct j2Str < form_map * > {
-        static function_parameter typeInfo() { return function_parameter_make("int", "object"); }
-    };
-    template<> struct j2Str < HandleT > {
-        static function_parameter typeInfo() { return function_parameter_make("int", "object"); }
-    };
-    template<> struct j2Str < Handle > {
+
+    struct jc_object_type_info {
         static function_parameter typeInfo() { return function_parameter_make("int", "object"); }
     };
 
+    template<> struct j2Str < object_base * > : jc_object_type_info{};
+    template<> struct j2Str < map * > : jc_object_type_info{};
+    template<> struct j2Str < array * > : jc_object_type_info{};
+    template<> struct j2Str < form_map * > : jc_object_type_info{};
 }
 }

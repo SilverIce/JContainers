@@ -47,7 +47,7 @@ namespace reflection {
             std::string str;
             auto types = self.param_list_func();
 
-            _pushComment(self.commentFunc(), str);
+            _pushComment(self.comment(), str);
 
             if (types[0]().tes_type_name != "void") {
                 str += types[0]().tes_type_name;

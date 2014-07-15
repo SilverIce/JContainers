@@ -2,10 +2,8 @@
 
 #include <string>
 #include <vector>
-#include <map>
-#include <set>
-#include <functional>
 #include <assert.h>
+#include <algorithm>
 
 #include "meta.h"
 
@@ -25,32 +23,37 @@ namespace reflection {
     typedef function_parameter (*type_info_func)();
 
     struct function_info {
+        typedef std::string (*comment_generator)();
         typedef  void (*tes_function_binder)(VMClassRegistry* registry, const char* className, const char* funcName);
         typedef  std::vector<type_info_func> (*parameter_list_creator)();
 
-        tes_function_binder registrator;
-        parameter_list_creator param_list_func;
-        const char *argument_names;
-        const char *name;
+        tes_function_binder registrator = nullptr;
+        parameter_list_creator param_list_func = nullptr;
+        const char *argument_names = nullptr;
+        const char *name = nullptr;
 
-        std::function<std::string () > commentFunc;
+        comment_generator _comment_func = nullptr;
+        const char *_comment_str = nullptr;
 
-        function_info() {
-            registrator = nullptr;
-            param_list_func = nullptr;
-            argument_names = nullptr;
-            name = nullptr;
+        std::string comment() const {
+            if (_comment_func) {
+                return _comment_func();
+            }
+
+            return _comment_str ? _comment_str : "";
         }
 
-        void setComment(const char *comment) {
-            commentFunc = [=]() {
-                return std::string(comment ? comment : "");
-            };
+        void setComment(comment_generator func) {
+            _comment_func = func;
         }
 
-        template<class T>
-        void setComment(T &lambda) {
-            commentFunc = lambda;
+        void setComment(nullptr_t) {
+            _comment_func = nullptr;
+            _comment_str = nullptr;
+        }
+
+        void setComment(const char * comment) {
+            _comment_str = comment;
         }
 
         void bind(VMClassRegistry *registry, const char *className) const;
@@ -58,11 +61,7 @@ namespace reflection {
 
     struct class_info {
 
-        struct function_info_comparison {
-            bool operator() (const function_info& l, const function_info& r) const { return _strcmpi(l.name, r.name) < 0; }
-        };
-
-        std::set<function_info, function_info_comparison > methods;
+        std::vector<function_info > methods;
         std::string className;
         std::string extendsClass;
         std::string comment;
@@ -71,9 +70,14 @@ namespace reflection {
             className = "NoClassName";
         }
 
+        function_info * find_function(const char* func_name) {
+            auto itr = std::find_if(methods.begin(), methods.end(), [&](const function_info& fi) { return _strcmpi(func_name, fi.name) == 0; });
+            return itr != methods.end() ? &*itr : nullptr;
+        }
+
         void addFunction(const function_info& info) {
-            assert(methods.find(info) == methods.end());
-            methods.insert(info);
+            assert(find_function(info.name) == nullptr);
+            methods.push_back(info);
         }
 
         void bind(VMClassRegistry* registry) const {

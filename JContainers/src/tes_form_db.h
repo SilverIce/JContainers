@@ -133,10 +133,10 @@ namespace collections {
             return tes_object::resolveGetter<T>(findEntry(sub.storageName(), form), sub.rest()); 
         }
         REGISTERF(solveGetter<Float32>, "solveFlt", "fKey path", "attempts to get value associated with path.");
-        REGISTERF(solveGetter<SInt32>, "solveInt", "fKey path", NULL);
-        REGISTERF(solveGetter<const char*>, "solveStr", "fKey path", NULL);
-        REGISTERF(solveGetter<object_base*>, "solveObj", "fKey path", NULL);
-        REGISTERF(solveGetter<TESForm*>, "solveForm", "fKey path", NULL);
+        REGISTERF(solveGetter<SInt32>, "solveInt", "fKey path", nullptr);
+        REGISTERF(solveGetter<const char*>, "solveStr", "fKey path", nullptr);
+        REGISTERF(solveGetter<object_base*>, "solveObj", "fKey path", nullptr);
+        REGISTERF(solveGetter<TESForm*>, "solveForm", "fKey path", nullptr);
 
         template<class T>
         static bool solveSetter(TESForm *form, const char* path, T value) { 
@@ -145,10 +145,10 @@ namespace collections {
         }
         REGISTERF(solveSetter<Float32>, "solveFltSetter", "fKey path value",
             "attempts to assign value. returns false if no such path");
-        REGISTERF(solveSetter<SInt32>, "solveIntSetter", "fKey path value", NULL);
-        REGISTERF(solveSetter<const char*>, "solveStrSetter", "fKey path value", NULL);
-        REGISTERF(solveSetter<object_stack_ref&>, "solveObjSetter", "fKey path value", NULL);
-        REGISTERF(solveSetter<TESForm*>, "solveFormSetter", "fKey path value", NULL);
+        REGISTERF(solveSetter<SInt32>, "solveIntSetter", "fKey path value", nullptr);
+        REGISTERF(solveSetter<const char*>, "solveStrSetter", "fKey path value", nullptr);
+        REGISTERF(solveSetter<object_stack_ref&>, "solveObjSetter", "fKey path value", nullptr);
+        REGISTERF(solveSetter<TESForm*>, "solveFormSetter", "fKey path value", nullptr);
 
         static bool hasPath(TESForm *form, const char* path) {
             subpath_extractor sub(path);

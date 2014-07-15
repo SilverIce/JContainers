@@ -12,12 +12,12 @@ namespace collections {
         static bool isInstalled() {
             return true;
         }
-        REGISTERF2(isInstalled, NULL, "returns true if JContainers plugin is installed");
+        REGISTERF2(isInstalled, nullptr, "returns true if JContainers plugin is installed");
 
         static UInt32 APIVersion() {
             return kJAPIVersion;
         }
-        REGISTERF2(APIVersion, NULL, []() {
+        REGISTERF2(APIVersion, nullptr, []() {
             std::stringstream comm;
             comm << "returns API version. Incremented by 1 each time old API is not backward compatible with new one.\n";
             comm << "current API version is " << APIVersion();
@@ -38,7 +38,7 @@ namespace collections {
         static SInt32 lastError() {
             return tes_context::instance().lastError();
         }
-        REGISTERF2(lastError, NULL, []() {
+        REGISTERF2(lastError, nullptr, []() {
             std::stringstream comm;
             comm << "returns last occured error (error code):";
             for (int i = 0; i < JErrorCount; ++i) {
@@ -50,7 +50,7 @@ namespace collections {
         static const char* lastErrorString() {
             return JErrorCodeToString(tes_context::instance().lastError());
         }
-        REGISTERF2(lastErrorString, NULL, "returns string that describes last error");
+        REGISTERF2(lastErrorString, nullptr, "returns string that describes last error");
     };
 
     TES_META_INFO(tes_jcontainers);

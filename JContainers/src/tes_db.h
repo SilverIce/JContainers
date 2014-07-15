@@ -26,10 +26,10 @@ for ex. following information associated with 'frosfall' key:\n\
 then JDB.solveFlt(\".frostfall.exposureRate\") will return 0.5 and\n\
 JDB.solveObj(\".frostfall.arrayC\") will return array containing [\"stringValue\", 1.5, 10, 1.14] values");
 
-        REGISTERF(solveGetter<SInt32>, "solveInt", "path", NULL);
-        REGISTERF(solveGetter<const char*>, "solveStr", "path", NULL);
-        REGISTERF(solveGetter<object_base*>, "solveObj", "path", NULL);
-        REGISTERF(solveGetter<TESForm*>, "solveForm", "path", NULL);
+        REGISTERF(solveGetter<SInt32>, "solveInt", "path", nullptr);
+        REGISTERF(solveGetter<const char*>, "solveStr", "path", nullptr);
+        REGISTERF(solveGetter<object_base*>, "solveObj", "path", nullptr);
+        REGISTERF(solveGetter<TESForm*>, "solveForm", "path", nullptr);
 
         template<class T>
         static bool solveSetter(const char* path, T value) { 
@@ -38,10 +38,10 @@ JDB.solveObj(\".frostfall.arrayC\") will return array containing [\"stringValue\
         REGISTERF(solveSetter<Float32>, "solveFltSetter", "path value",
             "attempts to assign value. returns false if no such path\n\
             for ex. JDB.solveFltSetter(\".frostfall.exposureRate\", 1.0) assigns 1.0 to \".frostfall.exposureRate\" path");
-        REGISTERF(solveSetter<SInt32>, "solveIntSetter", "path value", NULL);
-        REGISTERF(solveSetter<const char*>, "solveStrSetter", "path value", NULL);
-        REGISTERF(solveSetter<object_stack_ref&>, "solveObjSetter", "path value", NULL);
-        REGISTERF(solveSetter<TESForm*>, "solveFormSetter", "path value", NULL);
+        REGISTERF(solveSetter<SInt32>, "solveIntSetter", "path value", nullptr);
+        REGISTERF(solveSetter<const char*>, "solveStrSetter", "path value", nullptr);
+        REGISTERF(solveSetter<object_stack_ref&>, "solveObjSetter", "path value", nullptr);
+        REGISTERF(solveSetter<TESForm*>, "solveFormSetter", "path value", nullptr);
 
 
         static void setObj(const char *path, object_stack_ref& obj) {

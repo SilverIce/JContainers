@@ -36,7 +36,11 @@ namespace collections {
 
         REGISTERF(tes_object::object<array>, "object", "", kCommentObject);
 
-        static object_base* objectWithSize(UInt32 size) {
+        static object_base* objectWithSize(SInt32 size) {
+            if (size < 0) {
+                return nullptr;
+            }
+
             auto obj = array::objectWithInitializer([&](array *me) {
                 me->_array.resize(size);
             },
@@ -62,9 +66,9 @@ namespace collections {
         REGISTERF(fromArray<SInt32>, "objectWithInts", "values",
 "creates new array that contains given values\n\
 objectWithBooleans converts booleans into integers");
-        REGISTERF(fromArray<BSFixedString>, "objectWithStrings",  "values", NULL);
-        REGISTERF(fromArray<Float32>, "objectWithFloats",  "values", NULL);
-        REGISTERF(fromArray<bool>, "objectWithBooleans",  "values", NULL);
+        REGISTERF(fromArray<BSFixedString>, "objectWithStrings",  "values", nullptr);
+        REGISTERF(fromArray<Float32>, "objectWithFloats",  "values", nullptr);
+        REGISTERF(fromArray<bool>, "objectWithBooleans",  "values", nullptr);
 
         static object_base* subArray(ref source, SInt32 startIndex, SInt32 endIndex) {
             if (!source) {

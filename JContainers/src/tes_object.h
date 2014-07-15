@@ -70,12 +70,12 @@ useful for those who use Papyrus properties instead of manual (and more error-pr
         static bool isMap(ref obj) {
             return obj->as<map>() != nullptr;
         }
-        REGISTERF2(isMap, "*", NULL);
+        REGISTERF2(isMap, "*", nullptr);
 
         static bool isFormMap(ref obj) {
             return obj->as<form_map>() != nullptr;
         }
-        REGISTERF2(isFormMap, "*", NULL);
+        REGISTERF2(isFormMap, "*", nullptr);
 
         static bool empty(ref obj) {
             return count(obj) == 0;
@@ -196,10 +196,10 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
             return resolveGetter<T>(obj.get(), path);
         }
         REGISTERF(_resolveGetter<Float32>, "solveFlt", "* path", "attempts to get value at given path.\nJValue.solveInt(container, \".player.mood\") will return player's mood");
-        REGISTERF(_resolveGetter<SInt32>, "solveInt", "* path", NULL);
-        REGISTERF(_resolveGetter<const char*>, "solveStr", "* path", NULL);
-        REGISTERF(_resolveGetter<object_base*>, "solveObj", "* path", NULL);
-        REGISTERF(_resolveGetter<TESForm*>, "solveForm", "* path", NULL);
+        REGISTERF(_resolveGetter<SInt32>, "solveInt", "* path", nullptr);
+        REGISTERF(_resolveGetter<const char*>, "solveStr", "* path", nullptr);
+        REGISTERF(_resolveGetter<object_base*>, "solveObj", "* path", nullptr);
+        REGISTERF(_resolveGetter<TESForm*>, "solveForm", "* path", nullptr);
 
         template<class T>
         static bool solveSetter(object_base* obj, const char* path, T value) {
@@ -222,10 +222,10 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
             return solveSetter<T>(obj.get(), path, value);
         }
         REGISTERF(_solveSetter<Float32>, "solveFltSetter", "* path value", "attempts to set value.\nJValue.solveIntSetter(container, \".player.mood\", 12) will set player's mood to 12");
-        REGISTERF(_solveSetter<SInt32>, "solveIntSetter", "* path value", NULL);
-        REGISTERF(_solveSetter<const char*>, "solveStrSetter", "* path value", NULL);
-        REGISTERF(_solveSetter<ref>, "solveObjSetter", "* path value", NULL);
-        REGISTERF(_solveSetter<TESForm*>, "solveFormSetter", "* path value", NULL);
+        REGISTERF(_solveSetter<SInt32>, "solveIntSetter", "* path value", nullptr);
+        REGISTERF(_solveSetter<const char*>, "solveStrSetter", "* path value", nullptr);
+        REGISTERF(_solveSetter<ref>, "solveObjSetter", "* path value", nullptr);
+        REGISTERF(_solveSetter<TESForm*>, "solveFormSetter", "* path value", nullptr);
 
     };
 

@@ -56,6 +56,9 @@ namespace reflection { namespace binding {
     template<> struct j2Str < SInt32 > {
         static function_parameter typeInfo() { return function_parameter_make("int", nullptr); }
     };
+    template<> struct j2Str < UInt32 > {
+        static function_parameter typeInfo() { return function_parameter_make("int", nullptr); }
+    };
     template<> struct j2Str < TESForm * > {
         static function_parameter typeInfo() { return function_parameter_make("form", nullptr); }
     };
