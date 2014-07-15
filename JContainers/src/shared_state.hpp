@@ -5,8 +5,8 @@ namespace collections
         : registry(nullptr)
         , aqueue(nullptr)
     {
-        registry = new object_registry(_mutex);
-        aqueue = new autorelease_queue(*registry, _mutex);
+        registry = new object_registry();
+        aqueue = new autorelease_queue(*registry);
     }
 
     shared_state::~shared_state() {
@@ -16,6 +16,26 @@ namespace collections
     }
     
     void shared_state::u_clearState() {
+
+        /*  Not good, but working solution.
+
+        purpose: free allocated memory
+        problem: regular delete call won't help as delete call will access memory of possible deleted object
+
+        solution: isolate objects by nullifying cross-references, then delete objects
+
+        all we need is just free all allocated memory but this will require track stl memory blocks
+        */
+
+        aqueue->u_nullify();
+
+        for (auto& obj : registry->u_container()) {
+            obj->u_nullifyObjects();
+        }
+        for (auto& obj : registry->u_container()) {
+            delete obj;
+        }
+
         registry->u_clear();
         aqueue->u_clear();
         
@@ -29,19 +49,21 @@ namespace collections
         aqueue->stop();
         
         {
-            write_lock w(_mutex);
-            all_objects_lock l(*registry);
             u_clearState();
         }
         
         aqueue->start();
     }
 
-    object_base * shared_state::getObject(HandleT hdl) {
+    object_base * shared_state::getObject(Handle hdl) {
         return registry->getObject(hdl);
     }
 
-    object_base * shared_state::u_getObject(HandleT hdl) {
+    object_stack_ref shared_state::getObjectRef(Handle hdl) {
+        return registry->getObjectRef(hdl);
+    }
+
+    object_base * shared_state::u_getObject(Handle hdl) {
         return registry->u_getObject(hdl);
     }
 
@@ -51,7 +73,9 @@ namespace collections
 
     void shared_state::loadAll(const std::string & data, int version) {
 
-        _DMESSAGE("%u bytes loaded", data.size());
+        if (data.empty()) {
+            return;
+        }
 
         std::istringstream stream(data);
         boost::archive::binary_iarchive archive(stream);
@@ -98,8 +122,8 @@ namespace collections
             // deadlock possible
             u_postLoadMaintenance(version);
 
-            _DMESSAGE("%u objects total", registry->u_container().size());
-            _DMESSAGE("%u objects in aqueue", aqueue->u_count());
+            _DMESSAGE("%lu objects total", registry->u_container().size());
+            _DMESSAGE("%lu objects in aqueue", aqueue->u_count());
         }
         aqueue->start();
     }
@@ -112,9 +136,11 @@ namespace collections
         {
             // i have assumed that Skyrim devs are not idiots to run scripts in process of saving
             // but didn't dare to disable all that locks
-            read_lock g(_mutex);
 
-            all_objects_lock l(*registry);
+            // do not lock as test shows that skyrim waits for completion of any native function running.
+            // this _probably_ means that there is no any thread inside my code during save
+            //read_lock g(_mutex);
+            //all_objects_lock l(*registry);
 
             arch << *registry;
             arch << *aqueue;
@@ -122,12 +148,13 @@ namespace collections
             if (delegate) {
                 delegate->u_saveAdditional(arch);
             }
+            _DMESSAGE("%lu objects total", registry->u_container().size());
+            _DMESSAGE("%lu objects in aqueue", aqueue->u_count());
+
         }
         aqueue->start();
 
         std::string data(stream.str());
-
-        _DMESSAGE("%u bytes saved", data.size());
 
         return data;
     }
@@ -136,24 +163,13 @@ namespace collections
 
     void shared_state::u_applyUpdates(int saveVersion) {
 
-        if (saveVersion <= kJJSerializationVersionPreAQueueFix) {
-            for (auto& pair : aqueue->u_queue()) {
-                auto obj = u_getObject(pair.first);
-                if (obj && obj->_refCount == 1) {
-                    obj->_refCount = 0;
-                }
-            }
-        }
     }
 
     void shared_state::u_postLoadMaintenance(int saveVersion)
     {
-        auto cntCopy = registry->u_container();
-        static_assert( std::is_reference<decltype(cntCopy)>::value == false , "");
-
-        for (auto& pair : cntCopy) {
-            pair.second->_context = this;
-            pair.second->u_onLoaded();
+        for (auto& obj : registry->u_container()) {
+            obj->set_context(*this);
+            obj->u_onLoaded();
         }
     }
 

@@ -1,69 +1,68 @@
-//BOOST_CLASS_VERSION(collections::object_base, 1);
-
 namespace collections
 {
     void object_base::_registerSelf() {
-        assert(_id == HandleNull);
-        _id = _context->registry->registerObject(this);
+        context().registry->registerNewObject(*this);
+    }
+
+    Handle object_base::public_id() {
+        if (_id == HandleNull) {
+            object_lock l(this);
+            if (_id == HandleNull) {
+                context().registry->registerNewObjectId(*this);
+            }
+        }
+
+        return _id;
+    }
+
+    Handle object_base::tes_uid() {
+        if (_id == HandleNull) {
+            object_lock l(this);
+            if (_id == HandleNull) {
+                context().registry->registerNewObjectId(*this);
+                context().aqueue->prolong_lifetime(*this, 0);
+            }
+        }
+
+        // it's possible that release from queue will arrive just before public id will be exposed?
+        return _id;
     }
 
     // decreases internal ref counter - _refCount OR deletes if summ refCount is 0
     // if old refCountSumm is 1 - then release, if 0 - delete
     // true, if object deleted
-    bool object_base::_deleteIfNoOwner(class autorelease_queue*) {
-        bool deleteObject = false; {
-            lock g(_mutex);
-            deleteObject = (_refCount == 0 && _tes_refCount == 0);
-        }
+    bool object_base::release_from_queue() {
+        jc_assert(_refCount > 0);
 
-        if (deleteObject) {
-            assert(_context);
+        --_refCount;
 
+        if (noOwners()) {
 			// it's still possible to get an access at this point?
-            _context->registry->removeObject(_id);
+            context().registry->removeObject(*this);
 
             delete this;
+            return true;
         }
 
-        return deleteObject;
+        return false;
     }
 
-    object_base * object_base::autorelease() {
-        this->release();
+    void object_base::release_counter(std::atomic_int32_t& counter) {
+
+        // publicly accessible tes_counter allowed to receive redundant release calls
+        jc_assert(&counter == &_tes_refCount || counter > 0);
+
+        if (counter > 0) {
+            --counter;
+
+            if (noOwners()) {
+                prolong_lifetime();
+            }
+        }
+    }
+
+    object_base* object_base::prolong_lifetime() {
+        context().aqueue->prolong_lifetime(*this, is_public() ? 0 : 10);
         return this;
     }
-
-    void object_base::release() {
-        bool deleteObject = false; {
-            lock g(_mutex);
-            if (_refCount > 0) {
-                --_refCount;
-                deleteObject = (_refCount == 0 && _tes_refCount == 0);
-            }
-        }
-
-        if (deleteObject) {
-            _addToDeleteQueue();
-        }
-    }
-
-    void object_base::tes_release() {
-        bool deleteObject = false; {
-            lock g(_mutex);
-            if (_tes_refCount > 0) {
-                --_tes_refCount;
-                deleteObject = (_refCount == 0 && _tes_refCount == 0);
-            }
-        }
-
-        if (deleteObject) {
-            _addToDeleteQueue();
-        }
-    }
-
-    void object_base::_addToDeleteQueue() {
-        assert(_context);
-        _context->aqueue->push(_id);
-    }
-
 }

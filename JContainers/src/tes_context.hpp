@@ -10,7 +10,7 @@ namespace collections {
     }
 
     void tes_context::u_cleanup() {
-        _databaseId = 0;
+        _databaseId = HandleNull;
         _lastError = 0;
     }
 

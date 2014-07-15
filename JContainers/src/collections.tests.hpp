@@ -58,36 +58,29 @@ namespace collections {
 
     JC_TEST(object_base, refCount)
     {
-        {
-            auto obj = array::create(context);
-            EXPECT_TRUE(obj->refCount() == 1);
-            obj->retain();
-            EXPECT_TRUE(obj->refCount() == 2);
+        auto obj = array::object(context);
+        EXPECT_TRUE(obj->refCount() == 0); // aqueue retains it -- no more
 
-            obj->release();
-            EXPECT_TRUE(obj->refCount() == 1);
+        obj->retain();
+        EXPECT_TRUE(obj->refCount() == 1);
+
+        obj->tes_retain();
+        obj->tes_retain();
+        obj->tes_retain();
+        EXPECT_TRUE(obj->refCount() == 1 + 3);
+
+        // ensure that over-release does not affects internal ref count:
+        for (int i = 0; i < 20 ; i++) {
+            obj->tes_release();
         }
-        {
-            auto obj = array::object(context);
-            EXPECT_TRUE(obj->refCount() == 0);
+        EXPECT_TRUE(obj->refCount() == 1);
 
-            obj->retain();
-            EXPECT_TRUE(obj->refCount() == 1);
+        obj->release();
+        EXPECT_TRUE(obj->refCount() == 1); // aqueue retains it
 
-            obj->tes_retain();
-            obj->tes_retain();
-            obj->tes_retain();
-            EXPECT_TRUE(obj->refCount() == 1 + 3);
-
-            // ensure that over-release does not affects internal ref count:
-            for (int i = 0; i < 20 ; i++) {
-                obj->tes_release();
-            }
-            EXPECT_TRUE(obj->refCount() == 1);
-
-            obj->release();
-            EXPECT_TRUE(obj->refCount() == 0);
-        }
+        // that will damage memory, later: 
+        //obj->release();
+        //EXPECT_TRUE(obj->refCount() == 1);
     }
 
     JC_TEST(Item, nulls)
@@ -256,36 +249,30 @@ namespace collections {
 
     JC_TEST(array,  test)
     {
-        auto arr = array::create(context);
+        array::ref arr = array::object(context);
 
         EXPECT_TRUE(tes_array::count(arr) == 0);
 
-        auto str = 10;
-        tes_array::addItemAt<SInt32>(arr, str);
+        tes_array::addItemAt<SInt32>(arr, 10);
         EXPECT_TRUE(tes_array::count(arr) == 1);
         EXPECT_TRUE( tes_array::itemAtIndex<SInt32>(arr, 0) == 10);
 
-        str = 30;
-        tes_array::addItemAt<SInt32>( arr, str);
+        tes_array::addItemAt<SInt32>( arr, 30);
         EXPECT_TRUE(tes_array::count(arr) == 2);
         EXPECT_TRUE(tes_array::itemAtIndex<SInt32>(arr, 1) == 30);
 
-        auto arr2 = array::create(context);
+        array::ref arr2 = array::object(context);
         tes_array::addItemAt<SInt32>(arr2, 4);
 
-        tes_array::addItemAt(arr, arr2);
-        EXPECT_TRUE(tes_array::itemAtIndex<Handle>(arr, 2) == arr2->uid());
-
-        tes_object::release(arr);
+        tes_array::addItemAt(arr, arr2.to_base<object_base>());
+        EXPECT_TRUE(tes_array::itemAtIndex<object_base*>(arr, 2) == arr2.get());
 
         EXPECT_TRUE(tes_array::itemAtIndex<SInt32>( arr2, 0) == 4);
-
-        tes_object::release( arr2);
     }
 
     JC_TEST(array,  negative_indices)
     {
-        auto obj = array::object(context);
+        array::ref obj = array::object(context);
 
         SInt32 values[] = {1,2,3,4,5,6,7};
 
@@ -390,7 +377,7 @@ namespace collections {
         EXPECT_TRUE(data.size() == newData.size());
     }
 
-    JC_TEST_DISABLED(autorelease_queue, over_release)
+    JC_TEST(autorelease_queue, over_release)
     {
         using namespace std;
 
@@ -398,19 +385,19 @@ namespace collections {
         //int countBefore = queue.count();
 
         for (int i = 0; i < 10; ++i) {
-            auto obj = map::create(context);//+1, rc is 1
-            EXPECT_TRUE(obj->refCount() == 1);
+            auto obj = map::make(context);//rc is 0
+            identifiers.push_back(obj->public_id());
 
-            obj->release();//-1, rc is 0, add to delete queue
             EXPECT_TRUE(obj->refCount() == 0);
 
-            obj->release();//rc is 0
-            EXPECT_TRUE(obj->refCount() == 0);
-
-            obj->retain();// +1, rc is 1
+            obj->retain();//+1 rc
             EXPECT_TRUE(obj->refCount() == 1);
 
-            identifiers.push_back(obj->uid());
+            obj->release();//-1, rc is 0, add to aqueue, rc is 1
+            EXPECT_TRUE(obj->refCount() == 1); // queue owns it now
+
+            obj->retain();// +1, rc is 2
+            EXPECT_TRUE(obj->refCount() == 2);
         }
 
         auto allExist = [&]() {
@@ -423,34 +410,49 @@ namespace collections {
 
         //
         EXPECT_TRUE(allExist());
+
+        for (Handle id : identifiers) {
+            auto obj = context.getObject(id);
+            EXPECT_TRUE(obj->refCount() == 1);
+        }
     }
 
-    JC_TEST_DISABLED(autorelease_queue, ensure_destroys)
+    JC_TEST(autorelease_queue, ensure_destroys)
     {
         using namespace std;
 
-        vector<Handle> identifiers;
-        //int countBefore = queue.count();
+        vector<Handle> public_identifiers, privateIds;
 
         for (int i = 0; i < 10; ++i) {
             auto obj = map::object(context);
+            public_identifiers.push_back(obj->uid());
 
-            identifiers.push_back(obj->uid());
+            auto priv = map::make(context);
+            privateIds.push_back(priv->public_id());
+            priv->prolong_lifetime();
         }
 
-        auto allExist = [&]() {
+        auto allExist = [&](vector<Handle>& identifiers) {
             return std::all_of(identifiers.begin(), identifiers.end(), [&](Handle id) {
                 return context.getObject(id);
             });
         };
 
-        std::this_thread::sleep_for( std::chrono::seconds(11) );
+        auto allDestroyed = [&](vector<Handle>& identifiers) {
+            return std::all_of(identifiers.begin(), identifiers.end(), [&](Handle id) {
+                return !context.getObject(id);
+            });
+        };
 
-        EXPECT_TRUE(allExist());
+
+        std::this_thread::sleep_for( std::chrono::seconds(9) );
+
+        EXPECT_FALSE(allDestroyed(privateIds));
+        EXPECT_TRUE(allExist(public_identifiers));
 
         std::this_thread::sleep_for( std::chrono::seconds(5) );
 
-        EXPECT_TRUE(allExist() == false);
+        EXPECT_TRUE(allExist(public_identifiers) == false);
     }
 
     TEST(path_resolving, collection_operators)
@@ -578,11 +580,9 @@ namespace collections {
 
     JC_TEST_DISABLED(deadlock, deadlock)
     {
-        map *root = map::object(context);
+        map::ref root = map::object(context);
         map *elsa = map::object(context);
         map *local = map::object(context);
-
-        root->retain();
 
         root->setValueForKey("elsa", Item(elsa));
         elsa->setValueForKey("local", Item(local));
@@ -590,7 +590,7 @@ namespace collections {
         auto func = [&]() {
             printf("work started\n");
 
-            auto rootId = root->uid();
+            auto rootId = root->tes_uid();
             auto elsaId = elsa->uid();
 
             int i = 0;

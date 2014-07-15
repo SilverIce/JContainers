@@ -2,61 +2,45 @@
 
 #include "tes_binding.h"
 #include "collections.h"
+#include "tes_context.h"
 
 namespace reflection { namespace binding {
 
     using namespace collections;
 
-    template<>
-    struct J2Tes < object_base* > {
-        typedef HandleT tes_type;
-    };
-    template<> inline HandleT convert2Tes(object_base* obj) {
-        return obj ? obj->uid() : 0;
-    }
-    template<> inline HandleT convert2Tes(array* obj) {
-        return obj ? obj->uid() : 0;
-    }
-    template<> inline HandleT convert2Tes(map* obj) {
-        return obj ? obj->uid() : 0;
-    }
-    template<> inline HandleT convert2Tes(form_map* obj) {
-        return obj ? obj->uid() : 0;
-    }
+    struct ObjectConverter {
 
-    template<>
-    struct Tes2J < HandleT > {
-        typedef object_base* j_type;
+        typedef HandleT tes_type;
+
+        static HandleT convert2Tes(object_base* obj) {
+            return obj ? obj->tes_uid() : 0;
+        }
+
+        static object_stack_ref convert2J(HandleT hdl) {
+            return tes_context::instance().getObjectRef((Handle)hdl);
+        }
+
     };
 
-    template<> struct J2Tes < array* > {
-        typedef HandleT tes_type;
+    template<class T, class P> struct GetConv < boost::intrusive_ptr_jc<T, P>& > : ObjectConverter{
+        static boost::intrusive_ptr_jc<T, P> convert2J(HandleT hdl) {
+            return tes_context::instance().getObjectRefOfType<T>((Handle)hdl);
+        }
     };
-    template<> struct J2Tes < map* > {
-        typedef HandleT tes_type;
+
+    template<> struct GetConv < object_stack_ref& > : ObjectConverter{};
+    //template<> struct GetConv < object_stack_ref > : ObjectConverter{};
+
+    template<> struct GetConv < object_base* > : ObjectConverter{};
+    template<> struct GetConv < array* > : ObjectConverter{};
+    template<> struct GetConv < map* > : ObjectConverter{};
+    template<> struct GetConv < form_map* > : ObjectConverter{};
+
+    //////////////////////////////////////////////////////////////////////////
+
+    template<class T, class P> struct j2Str < boost::intrusive_ptr_jc<T, P> > {
+        static function_parameter typeInfo() { return j2Str<T*>::typeInfo(); }
     };
-    template<> struct J2Tes < form_map* > {
-        typedef HandleT tes_type;
-    };
-    template<> inline object_base* convert2J(HandleT hdl) {
-        return tes_context::instance().getObject(hdl);
-    }
-    template<> inline array* convert2J(HandleT hdl) {
-        return tes_context::instance().getObjectOfType<array>(hdl);
-    }
-    template<> inline map* convert2J(HandleT hdl) {
-        return tes_context::instance().getObjectOfType<map>(hdl);
-    }
-    template<> inline form_map* convert2J(HandleT hdl) {
-        return tes_context::instance().getObjectOfType<form_map>(hdl);
-    }
-    template<>
-    struct J2Tes < Handle > {
-        typedef HandleT tes_type;
-    };
-    template<> inline HandleT convert2Tes(Handle hdl) {
-        return (HandleT)hdl;
-    }
 
     template<> struct j2Str < object_base * > {
         static function_parameter typeInfo() { return function_parameter_make("int", "object"); }

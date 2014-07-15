@@ -71,7 +71,7 @@ namespace collections {
                 return nullptr;
             }
 
-            auto& root = make_placeholder(ref);
+            auto& root = make_placeholder(ref, true);
 
             while (_toFill.empty() == false) {
                 objects_to_fill toFill;
@@ -118,22 +118,22 @@ namespace collections {
             }
         }
 
-        object_base& make_placeholder(json_ref val) {
+        object_base& make_placeholder(json_ref val, bool is_root_object) {
             object_base *object = nullptr;
             auto type = json_typeof(val);
 
             if (type == JSON_ARRAY) {
-                object = array::object(_context);
+                object = is_root_object ? array::object(_context) : array::make(_context);
             }
             else if (type == JSON_OBJECT) {
                 if (!json_object_get(val, form_handling::kFormData)) {
-                    object = map::object(_context);
+                    object = is_root_object ? map::object(_context) : map::make(_context);
                 } else {
-                    object = form_map::object(_context);
+                    object = is_root_object ? form_map::object(_context) : form_map::make(_context);
                 }
             }
 
-            assert(object);
+            jc_assert(object);
             _toFill.push_back(std::make_pair(object, val));
             return *object;
         }
@@ -144,7 +144,7 @@ namespace collections {
             auto type = json_typeof(val);
 
             if (type == JSON_ARRAY || type == JSON_OBJECT) {
-                item = &make_placeholder(val);
+                item = &make_placeholder(val, false);
             }
             else if (type == JSON_STRING) {
 
@@ -174,51 +174,6 @@ namespace collections {
             return item;
         }
     };
-
-    
-
-/*
-    class item_serializer : public boost::static_visitor<json_ref>
-    {
-    public:
-
-        json_ref null() const {
-            return * new js_value();
-        }
-
-        json_ref operator()(const std::string & val) {
-            return * new js_value(val);
-        }
-
-        json_ref operator()(boost::blank ) {
-            return null();
-        }
-
-        // SInt32, Float32, std::string, object_ref, FormId
-
-        json_ref operator()(const SInt32 & val) {
-            return * new js_value(val);
-        }
-
-        json_ref operator()(const Float32 & val) {
-            return * new js_value(val);
-        }
-
-        json_ref operator()(const FormId&  val) {
-            auto formStr = form_handling::to_string(val);
-            if (formStr) {
-                return * new js_value(*formStr);
-            } else {
-                return null();
-            }
-        }
-
-        json_ref operator()(const object_ref & val) {
-            return null();
-        }
-
-    };
-*/
 
 
     class json_serializer : public boost::static_visitor<json_ref> {
@@ -277,7 +232,7 @@ namespace collections {
             else if (object.as<map>() || object.as<form_map>()) {
                 placeholder = json_object();
             }
-            assert(placeholder);
+            jc_assert(placeholder);
 
             _toFill.push_back( objects_to_fill::value_type(&object, placeholder) );
             return placeholder;
@@ -350,7 +305,7 @@ namespace collections {
             }
         }
 
-        json_ref operator()(const object_ref & val) {
+        json_ref operator()(const internal_object_ref & val) {
             object_base *obj = val.get();
 
             if (!obj) {

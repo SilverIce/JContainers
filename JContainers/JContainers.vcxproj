@@ -135,7 +135,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\backward.compatibility.test.cpp" />
-    <ClCompile Include="src\basic_part.cpp" />
+    <ClCompile Include="src\object_module.cpp" />
     <ClCompile Include="src\gtest.cpp" />
     <ClCompile Include="src\jcontainers_pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -151,8 +151,11 @@
     <ClInclude Include="src\boost_extras.h" />
     <ClInclude Include="src\code_producer.hpp" />
     <ClInclude Include="src\collection_bind_traits.h" />
+    <ClInclude Include="src\boost_serialization_atomic.h" />
+    <ClInclude Include="src\boost_serialization_intrusive_ptr_jc.h" />
     <ClInclude Include="src\collection_operators.h" />
     <ClInclude Include="src\form_handling.h" />
+    <ClInclude Include="src\object_base_serialization.h" />
     <ClInclude Include="src\path_resolving.h" />
     <ClInclude Include="src\jcontainers_constants.h" />
     <ClInclude Include="src\skse.h" />

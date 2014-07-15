@@ -7,16 +7,18 @@
 
 namespace collections
 {
+    class map;
+
     class tes_context : public shared_state, public shared_state_delegate
     {
-        HandleT _databaseId;
+        Handle _databaseId;
         std::atomic_uint_fast16_t _lastError;
         spinlock _lazyDBLock;
 
     public:
 
         tes_context()
-            : _databaseId(0)
+            : _databaseId(HandleNull)
             , _lastError(0)
         {
             shared_state::delegate = this;
@@ -38,12 +40,16 @@ namespace collections
             return st;
         }
 
-        HandleT databaseId() {
+        Handle databaseId() {
             read_lock r(_mutex);
             return _databaseId;
         }
 
-        class map* database();
+        map* database();
+
+        map::ref database_ref() {
+            return database();
+        }
 
         void setDataBase(object_base *db) {
             object_base * prev = nullptr;
@@ -64,7 +70,7 @@ namespace collections
             }
 
             write_lock g(_mutex);
-            _databaseId = db ? db->uid() : 0;
+            _databaseId = db ? db->uid() : HandleNull;
         }
 
         void u_loadAdditional(boost::archive::binary_iarchive & arch) override;

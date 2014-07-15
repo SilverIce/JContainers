@@ -14,12 +14,10 @@ namespace reflection {
 
         __declspec(dllexport) void produceCode() {
 
-            using namespace collections;
-
             foreach_metaInfo_do([](const class_info& info) {
                 code_producer::produceClassToFile(info);
             });
         }
-};
+    };
 
 }

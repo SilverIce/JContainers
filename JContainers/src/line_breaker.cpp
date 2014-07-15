@@ -21,7 +21,7 @@ namespace {
     typedef bs::iterator_range<const char *> cstring;
 
     float charactersPerLine(int total, int maxCharsPerLine) {
-        assert(maxCharsPerLine > 0);
+        jc_assert(maxCharsPerLine > 0);
         float result = (total) / (1.f + (float)total / maxCharsPerLine);
         return result;
     }

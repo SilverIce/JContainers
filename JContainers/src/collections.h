@@ -5,7 +5,6 @@
 #include <assert.h>
 
 #include <boost/serialization/split_member.hpp>
-#include <boost/smart_ptr/intrusive_ptr.hpp>
 #include <boost/variant.hpp>
 
 #include "common/ITypes.h"
@@ -13,7 +12,6 @@
 #include "skse/GameForms.h"
 
 #include "object_base.h"
-#include "tes_context.h"
 #include "skse.h"
 
 namespace collections {
@@ -21,37 +19,42 @@ namespace collections {
 	class tes_context;
 
     template<class T>
-    class collection_base_T : public object_base
+    class collection_base : public object_base
     {
     protected:
 
-        explicit collection_base_T() : object_base((CollectionType)T::TypeId) {}
+        //static_assert(std::is_base_of<collection_base<T>, T>::value, "");
+
+        explicit collection_base() : object_base((CollectionType)T::TypeId) {}
 
     public:
 
-        static T* create(tes_context& context /*= tes_context::instance()*/) {
+        typedef typename object_stack_ref_template<T> ref;
+        typedef typename object_stack_ref_template<const T> cref;
+
+        static T* make(tes_context& context /*= tes_context::instance()*/) {
             auto obj = new T();
-            obj->_context = &context;
+            obj->set_context(context);
             obj->_registerSelf();
             return obj;
         }
 
         template<class Init>
-        static T* _createWithInitializer(Init& init, tes_context& context /*= tes_context::instance()*/) {
+        static T* _makeWithInitializer(Init& init, tes_context& context /*= tes_context::instance()*/) {
             auto obj = new T();
-            obj->_context = &context;
+            obj->set_context(context);
             init(obj);
             obj->_registerSelf();
             return obj;
         }
 
         static T* object(tes_context& context /*= tes_context::instance()*/) {
-            return static_cast<T *> (create(context)->autorelease());
+            return static_cast<T *> (make(context));
         }
 
         template<class Init>
         static T* objectWithInitializer(Init& init, tes_context& context /*= tes_context::instance()*/) {
-            return static_cast<T *> (_createWithInitializer(init, context)->autorelease());
+            return static_cast<T *> (_makeWithInitializer(init, context));
         }
     };
 
@@ -64,31 +67,24 @@ namespace collections {
     class map;
     class object_base;
 
-    typedef boost::intrusive_ptr<object_base> object_ref;
-
-    inline void intrusive_ptr_add_ref(object_base * p) {
-        p->retain();
-    }
-
-    inline void intrusive_ptr_release(object_base * p) {
-        p->release();
-    }
-
     class Item
     {
+    public:
         typedef boost::blank blank;
-        typedef boost::variant<boost::blank, SInt32, Float32, FormId, object_ref, std::string> variant;
+        typedef boost::variant<boost::blank, SInt32, Float32, FormId, internal_object_ref, std::string> variant;
+
+    private:
         variant _var;
 
     public:
 
         void u_nullifyObject() {
-            if (auto ref = boost::get<object_ref>(&_var)) {
+            if (auto ref = boost::get<internal_object_ref>(&_var)) {
                 ref->jc_nullify();
             }
         }
 
-        Item() : _var(boost::blank()) {}
+        Item() {}
         Item(Item&& other) : _var(std::move(other._var)) {}
         Item(const Item& other) : _var(other._var) {}
 
@@ -108,6 +104,14 @@ namespace collections {
 
         template<class T> bool is_type() const {
             return boost::get<T>(&_var) != nullptr;
+        }
+
+        template<class T> T* get() {
+            return boost::get<T>(&_var);
+        }
+
+        template<class T> const T* get() const {
+            return boost::get<T>(&_var);
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -134,18 +138,25 @@ namespace collections {
         explicit Item(std::string&& val) : _var(val) {}
 
         // these are none if data pointers zero
-        explicit Item(const TESForm *val) : _var(boost::blank()) {
+        explicit Item(const TESForm *val) {
             *this = val;
         }
-        explicit Item(const char * val) : _var(boost::blank()) {
+        explicit Item(const char * val) {
             *this = val;
         }
-        explicit Item(object_base *val) : _var(boost::blank()) {
-            *this = val;
-        }
-        explicit Item(const BSFixedString& val) : _var(boost::blank()) {
+        explicit Item(const BSFixedString& val) {
             *this = val.data;
         }
+        explicit Item(object_base *val) {
+            *this = val;
+        }
+        explicit Item(const object_stack_ref &val) {
+            *this = val.get();
+        }
+/*
+        explicit Item(const BSFixedString& val) : _var(boost::blank()) {
+            *this = val.data;
+        }*/
 
         Item& operator = (unsigned int val) { _var = (SInt32)val; return *this;}
         Item& operator = (int val) { _var = (SInt32)val; return *this;}
@@ -195,7 +206,7 @@ namespace collections {
         }
 
         object_base *object() const {
-            if (auto ref = boost::get<object_ref>(&_var)) {
+            if (auto ref = boost::get<internal_object_ref>(&_var)) {
                 return ref->get();
             }
             return nullptr;
@@ -273,7 +284,11 @@ namespace collections {
         }
 
         bool isEqual(const object_base *value) const {
-            return is_type<object_ref>() && object() == value;
+            return is_type<internal_object_ref>() && object() == value;
+        }
+
+        bool isEqual(const object_stack_ref& value) const {
+            return isEqual(value.get());
         }
 
         bool isEqual(const TESForm *value) const {
@@ -315,15 +330,17 @@ namespace collections {
         return strValue();
     }
 
+/*
     template<> inline BSFixedString Item::readAs<BSFixedString>() {
         const char *chr = strValue();
         return chr ? BSFixedString(chr) : nullptr;
-    }
+    }*/
 
+/*
     template<> inline Handle Item::readAs<Handle>() {
         auto obj = object();
         return obj ? obj->uid() : HandleNull;
-    }
+    }*/
 
     template<> inline TESForm * Item::readAs<TESForm*>() {
         return form();
@@ -333,7 +350,7 @@ namespace collections {
         return object();
     }
 
-    class array : public collection_base_T< array >
+    class array : public collection_base< array >
     {
     public:
 
@@ -366,7 +383,7 @@ namespace collections {
             _array.clear();
         }
 
-        SInt32 u_count() override {
+        SInt32 u_count() const override {
             return _array.size();
         }
 
@@ -388,7 +405,7 @@ namespace collections {
         void serialize(Archive & ar, const unsigned int version);
     };
 
-    class map : public collection_base_T< map >
+    class map : public collection_base< map >
     {
     public:
 
@@ -417,13 +434,6 @@ namespace collections {
             object_lock g(this);
             return cnt;
         }
-
-/*
-        static std::string lowerString(const std::string& key) {
-            std::string lowerKey(key);
-            std::transform(lowerKey.begin(), lowerKey.end(), lowerKey.begin(), ::tolower);
-            return lowerKey;
-        }*/
 
         container_type::iterator findItr(const std::string& key) {
             return cnt.find(key);
@@ -459,7 +469,7 @@ namespace collections {
             cnt.clear();
         }
 
-        SInt32 u_count() override {
+        SInt32 u_count() const override {
             return cnt.size();
         }
 
@@ -470,7 +480,7 @@ namespace collections {
     };
 
 
-    class form_map : public collection_base_T< form_map >
+    class form_map : public collection_base< form_map >
     {
     public:
         enum  {
@@ -520,7 +530,7 @@ namespace collections {
             cnt[key] = value;
         }
 
-        SInt32 u_count() override {
+        SInt32 u_count() const override {
             return cnt.size();
         }
 

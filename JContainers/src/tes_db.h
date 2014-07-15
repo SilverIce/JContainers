@@ -40,13 +40,12 @@ JDB.solveObj(\".frostfall.arrayC\") will return array containing [\"stringValue\
             for ex. JDB.solveFltSetter(\".frostfall.exposureRate\", 1.0) assigns 1.0 to \".frostfall.exposureRate\" path");
         REGISTERF(solveSetter<SInt32>, "solveIntSetter", "path value", NULL);
         REGISTERF(solveSetter<const char*>, "solveStrSetter", "path value", NULL);
-        REGISTERF(solveSetter<object_base*>, "solveObjSetter", "path value", NULL);
+        REGISTERF(solveSetter<object_stack_ref&>, "solveObjSetter", "path value", NULL);
         REGISTERF(solveSetter<TESForm*>, "solveFormSetter", "path value", NULL);
 
 
-        static void setObj(const char *path, object_base *obj) {
-            object_base *db = tes_context::instance().database();
-            map *dbMap = db ? db->as<map>() : nullptr;
+        static void setObj(const char *path, object_stack_ref& obj) {
+            map *dbMap = tes_context::instance().database();
 
             if (!dbMap) {
                 return;
