@@ -50,7 +50,7 @@ namespace collections {
             auto root = json_deserializer::object_from_file(ctx, jdb_file());
             EXPECT_NOT_NIL( root );
             ctx.setDataBase(root);
-            auto data = ctx.saveToArray();
+            auto data = ctx.write_to_string();
             ctx.clearState();
 
             return data;
@@ -83,7 +83,7 @@ namespace collections {
 
             tes_context ctx;
 
-            ctx.loadAll(snapshot, kJSerializationCurrentVersion);
+            ctx.read_from_string(snapshot, kJSerializationCurrentVersion);
             auto jvalue = json_serializer::create_json_value(*ctx.database());
             EXPECT_NOT_NIL(jvalue);
 
