@@ -6,7 +6,7 @@
 namespace reflection {
 
     void function_info::bind(VMClassRegistry *registry, const char *className) const {
-        registrator(registry, name, className);
+        registrator(registry, className, name);
         registry->SetFunctionFlags(className, name, VMClassRegistry::kFunctionFlag_NoWait);
     }
     

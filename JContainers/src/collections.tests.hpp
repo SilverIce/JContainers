@@ -363,17 +363,17 @@ namespace collections {
 
         EXPECT_TRUE(allExist());
 
-        string data = context.saveToArray();
+        string data = context.write_to_string();
         EXPECT_TRUE(allExist());
         EXPECT_FALSE(data.empty());
 
         context.clearState();
         EXPECT_TRUE(allAbsent());
 
-        context.loadAll(data, kJSerializationCurrentVersion);
+        context.read_from_string(data, kJSerializationCurrentVersion);
         EXPECT_TRUE(allExist());
 
-        string newData = context.saveToArray();
+        string newData = context.write_to_string();
         EXPECT_TRUE(data.size() == newData.size());
     }
 

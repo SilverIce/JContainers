@@ -1,5 +1,8 @@
 
 #include <chrono>
+#include <exception>
+
+#include <boost/iostreams/stream.hpp>
 #include <ShlObj.h>
 
 #include "skse.h"
@@ -11,9 +14,9 @@
 #include "skse/GameForms.h"
 
 #include "gtest.h"
+#include "reflection.h"
 #include "jcontainers_constants.h"
 #include "tes_context.h"
-#include "reflection.h"
 
 class VMClassRegistry;
 
@@ -32,6 +35,9 @@ namespace collections { namespace {
         try {
             func();
         }
+        catch (const std::exception& e) {
+            assert(false);
+        }
         catch (...) {
             assert(false);
         }
@@ -49,42 +55,73 @@ namespace collections { namespace {
     }
 
     void save(SKSESerializationInterface * intfc) {
+
+        namespace io = boost::iostreams;
+
+        struct skse_data_sink {
+            typedef char      char_type;
+            typedef io::sink_tag  category;
+
+            std::streamsize write(const char* s, std::streamsize n) const {
+                (void)_sink->WriteRecordData(s, n); // always returns true
+                return n;
+            }
+
+            SKSESerializationInterface* _sink;
+        };
+
+
         float diff = do_with_timing([intfc]() {
             _DMESSAGE("Save started");
 
             if (intfc->OpenRecord(kJStorageChunk, kJSerializationCurrentVersion)) {
-                auto data = collections::tes_context::instance().saveToArray();
-                intfc->WriteRecordData(data.data(), data.size());
-                _DMESSAGE("%lu bytes saved", data.size());
-            } else {
+                io::stream<skse_data_sink> stream(skse_data_sink{ intfc });
+                collections::tes_context::instance().write_to_stream(stream);
+                //_DMESSAGE("%lu bytes saved", stream.tellp());
+            }
+            else {
                 _DMESSAGE("Unable open JC record");
             }
         });
 
-        _DMESSAGE("Save finished in %f", diff);
+        _DMESSAGE("Save finished in %f sec", diff);
     }
 
     void load(SKSESerializationInterface * intfc) {
 
+        namespace io = boost::iostreams;
+
+        class skse_data_source {
+        public:
+            typedef char char_type;
+            typedef io::source_tag  category;
+
+            explicit skse_data_source(SKSESerializationInterface* src = nullptr) : _source(src){}
+
+            std::streamsize read(char* buffer, std::streamsize n) const {
+                return _source ? _source->ReadRecordData(buffer, n) : 0;
+            }
+
+        private:
+            SKSESerializationInterface* _source;
+        };
+
         float diff = do_with_timing([intfc]() {
 
-            UInt32	type;
-            UInt32	version;
-            UInt32	length;
+            _DMESSAGE("Load started");
 
-            std::string data;
+            UInt32 type = 0;
+            UInt32 version = 0;
+            UInt32 length = 0;
 
             while (intfc->GetNextRecordInfo(&type, &version, &length)) {
-
-                if (type == kJStorageChunk && length > 0) {
-                    data.resize(length, '\0');
-                    intfc->ReadRecordData((void *)data.data(), data.size());
+                if (type == kJStorageChunk) {
                     break;
                 }
             }
 
-            _DMESSAGE("Load started. %lu bytes in archive", data.size());
-            collections::tes_context::instance().loadAll(data, version);
+            io::stream<skse_data_source> stream(skse_data_source(type == kJStorageChunk ? intfc : nullptr));
+            collections::tes_context::instance().read_from_stream(stream, version);
         });
 
         _DMESSAGE("Load finished in %f sec", diff);

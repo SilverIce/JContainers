@@ -71,14 +71,15 @@ namespace collections
         return aqueue->count();
     }
 
-    void shared_state::loadAll(const std::string & data, int version) {
+    void shared_state::read_from_string(const std::string & data, int version) {
+        namespace io = boost::iostreams;
+        io::stream<io::array_source> stream( io::array_source(data.c_str(), data.size()) );
+        read_from_stream(stream, version);
+    }
 
-        if (data.empty()) {
-            return;
-        }
+    void shared_state::read_from_stream(std::istream & stream, int version) {
 
-        std::istringstream stream(data);
-        boost::archive::binary_iarchive archive(stream);
+        stream.flags(stream.flags() | std::ios::binary);
 
         aqueue->stop();
         {
@@ -87,11 +88,12 @@ namespace collections
 
             u_clearState();
 
-            if (!data.empty()) {
+            if (stream.peek() != std::istream::traits_type::eof()) {
+                boost::archive::binary_iarchive archive(stream);
 
                 if (kJSerializationCurrentVersion < version) {
-                     _FATALERROR("plugin can not be compatible with future save version %u. plugin save vesrion is %u", version, kJSerializationCurrentVersion);
-                     assert(false);
+                    _FATALERROR("plugin can not be compatible with future save version %u. plugin save vesrion is %u", version, kJSerializationCurrentVersion);
+                    assert(false);
                 }
 
                 try {
@@ -115,7 +117,6 @@ namespace collections
                     // force whole app to crash
                     assert(false);
                 }
-
             }
 
             u_applyUpdates(version);
@@ -128,8 +129,16 @@ namespace collections
         aqueue->start();
     }
 
-    std::string shared_state::saveToArray() {
+    std::string shared_state::write_to_string() {
         std::ostringstream stream;
+        write_to_stream(stream);
+        return stream.str();
+    }
+
+    void shared_state::write_to_stream(std::ostream& stream) {
+
+        stream.flags(stream.flags() | std::ios::binary);
+
         boost::archive::binary_oarchive arch(stream);
 
         aqueue->stop();
@@ -150,13 +159,8 @@ namespace collections
             }
             _DMESSAGE("%lu objects total", registry->u_container().size());
             _DMESSAGE("%lu objects in aqueue", aqueue->u_count());
-
         }
         aqueue->start();
-
-        std::string data(stream.str());
-
-        return data;
     }
 
     //////////////////////////////////////////////////////////////////////////

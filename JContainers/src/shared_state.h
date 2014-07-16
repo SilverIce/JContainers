@@ -68,9 +68,11 @@ namespace collections {
         void clearState();
         void u_clearState();
 
-        void loadAll(const std::string & data, int version);
+        void read_from_string(const std::string & data, int version);
+        void read_from_stream(std::istream & data, int version);
 
-        std::string saveToArray();
+        std::string write_to_string();
+        void write_to_stream(std::ostream& stream);
 
 
     };
