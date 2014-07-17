@@ -50,7 +50,8 @@ namespace collections
     void object_base::release_counter(std::atomic_int32_t& counter) {
 
         // publicly accessible tes_counter allowed to receive redundant release calls
-        jc_assert(&counter == &_tes_refCount || counter > 0);
+        // _refCounter can be simultaneously released in diff. threads twice (example - tes_context.setDatabase) -- assertion disabled
+        //jc_assert(&counter == &_tes_refCount || counter > 0);
 
         if (counter > 0) {
             --counter;
