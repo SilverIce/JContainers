@@ -71,7 +71,7 @@ namespace collections {
                 return nullptr;
             }
 
-            auto& root = make_placeholder(ref, true);
+            auto& root = make_placeholder(ref);
 
             while (_toFill.empty() == false) {
                 objects_to_fill toFill;
@@ -118,18 +118,18 @@ namespace collections {
             }
         }
 
-        object_base& make_placeholder(json_ref val, bool is_root_object) {
+        object_base& make_placeholder(json_ref val) {
             object_base *object = nullptr;
             auto type = json_typeof(val);
 
             if (type == JSON_ARRAY) {
-                object = is_root_object ? array::object(_context) : array::make(_context);
+                object = array::object(_context);
             }
             else if (type == JSON_OBJECT) {
                 if (!json_object_get(val, form_handling::kFormData)) {
-                    object = is_root_object ? map::object(_context) : map::make(_context);
+                    object = map::object(_context);
                 } else {
-                    object = is_root_object ? form_map::object(_context) : form_map::make(_context);
+                    object = form_map::object(_context);
                 }
             }
 
@@ -144,7 +144,7 @@ namespace collections {
             auto type = json_typeof(val);
 
             if (type == JSON_ARRAY || type == JSON_OBJECT) {
-                item = &make_placeholder(val, false);
+                item = &make_placeholder(val);
             }
             else if (type == JSON_STRING) {
 
