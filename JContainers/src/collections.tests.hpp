@@ -195,7 +195,6 @@ namespace collections {
         EXPECT_NOT_NIL( json_deserializer::object_from_json_data(context, jsonTestString()) );
     }
 
-
     // load json file into tes_context -> serialize into json again -> compare with original json
     struct json_loading_test : testing::Fixture {
 
@@ -375,6 +374,26 @@ namespace collections {
 
         string newData = context.write_to_string();
         EXPECT_TRUE(data.size() == newData.size());
+    }
+
+    JC_TEST(tes_context, backward_compatibility)
+    {
+        namespace fs = boost::filesystem;
+
+        fs::path dir("test_data/backward_compatibility");
+        fs::directory_iterator end;
+        bool atLeastOneTested = false;
+
+        for (fs::directory_iterator itr(dir); itr != end; ++itr) {
+            if (fs::is_regular_file(*itr)) {
+                atLeastOneTested = true;
+
+                std::ifstream file(itr->path().generic_string(), std::ios::in | std::ios::binary);
+                context.read_from_stream(file, kJSerializationCurrentVersion);
+            }
+        }
+
+        EXPECT_TRUE(atLeastOneTested);
     }
 
     JC_TEST(autorelease_queue, over_release)

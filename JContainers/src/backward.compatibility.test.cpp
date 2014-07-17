@@ -1,3 +1,4 @@
+#if 0
 #include <fstream>
 #include "gtest.h"
 
@@ -98,3 +99,5 @@ namespace collections {
 
     TEST_F_CUSTOM_CLASS(testing_compatibility, t);
 }
+
+#endif
