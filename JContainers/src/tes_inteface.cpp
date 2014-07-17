@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <errno.h>
 
+#include <sstream>
 #include <set>
 #include <thread>
 

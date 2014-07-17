@@ -11,7 +11,7 @@ namespace collections
 
     class tes_context : public shared_state, public shared_state_delegate
     {
-        Handle _databaseId;
+        std::atomic<Handle> _databaseId;
         std::atomic_uint_fast16_t _lastError;
         spinlock _lazyDBLock;
 
@@ -40,8 +40,7 @@ namespace collections
             return st;
         }
 
-        Handle databaseId() {
-            read_lock r(_mutex);
+        Handle databaseId() const {
             return _databaseId;
         }
 
@@ -52,24 +51,20 @@ namespace collections
         }
 
         void setDataBase(object_base *db) {
-            object_base * prev = nullptr;
-            performRead([&]() {
-                prev = u_getObject(_databaseId);
-            });
+            object_base * prev = getObject(_databaseId);
 
             if (prev == db) {
                 return;
-            }
-
-            if (prev) {
-                prev->release(); // may cause deadlock in removeObject
             }
 
             if (db) {
                 db->retain();
             }
 
-            write_lock g(_mutex);
+            if (prev) {
+                prev->release();
+            }
+
             _databaseId = db ? db->uid() : HandleNull;
         }
 

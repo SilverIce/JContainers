@@ -2,11 +2,14 @@
 namespace collections {
 
     void tes_context::u_loadAdditional(boost::archive::binary_iarchive & arch) {
-        arch >> _databaseId;
+        Handle id = HandleNull;
+        arch >> id;
+        _databaseId.store(id, std::memory_order_relaxed);
     }
 
     void tes_context::u_saveAdditional(boost::archive::binary_oarchive & arch) {
-        arch << _databaseId;
+        auto id = _databaseId.load(std::memory_order_relaxed);
+        arch << id;
     }
 
     void tes_context::u_cleanup() {
@@ -16,21 +19,12 @@ namespace collections {
 
     map* tes_context::database() {
 
-        auto getDB = [&]() {
-            object_base * result = nullptr;
-            performRead([&]() {
-                result = u_getObject(_databaseId);
-            });
-
-            return result;
-        };
-
-        object_base * result = getDB();
+        object_base * result = getObject(_databaseId);
 
         if (!result) {
             _lazyDBLock.lock();
 
-            result = getDB();
+            result = getObject(_databaseId);
             if (!result) {
                 result = map::object(*this);
                 setDataBase(result);

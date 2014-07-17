@@ -1,11 +1,6 @@
 #pragma once
 
 #include <atomic>
-//#include <functional>
-
-#include "rw_mutex.h"
-
-#include "tes_error_code.h"
 #include "object_base.h"
 
 namespace boost {
@@ -32,15 +27,7 @@ namespace collections {
         void u_applyUpdates(int saveVersion);
         void u_postLoadMaintenance(int saveVersion);
 
-    protected:
-        bshared_mutex _mutex;
     public:
-
-        template<class T>
-        inline void performRead(T readFunc) {
-            read_lock r(_mutex);
-            readFunc();
-        }
 
         shared_state();
         ~shared_state();
