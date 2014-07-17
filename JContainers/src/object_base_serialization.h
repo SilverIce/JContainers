@@ -30,7 +30,6 @@ namespace boost { namespace serialization {
 
         save_atomic(ar, t._refCount);
         save_atomic(ar, t._tes_refCount);
-        ar & t._type;
         ar & t._id;
     }
 
@@ -38,7 +37,11 @@ namespace boost { namespace serialization {
     void load(Archive & ar, cl::object_base & t, unsigned int version) {
         load_atomic(ar, t._refCount);
         load_atomic(ar, t._tes_refCount);
-        ar & t._type;
+
+        if (version == 0) {
+            ar & t._type;
+        }
+
         ar & t._id;
 
         // trying detect objects with no owners
