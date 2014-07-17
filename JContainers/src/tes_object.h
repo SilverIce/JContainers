@@ -1,7 +1,7 @@
 namespace collections {
 
-    const char *kCommentObject = "creates new container object. returns container identifier (integral number).\n"
-        "identifier is the thing you will have to pass to the most of container's functions as first argument";
+    const char *kCommentObject = "creates new container object. returns container identifier (integer number).\n"
+        "identifier is the thing you will have to pass to the most of container's functions as a first argument";
 
 #define ARGS(...)   #__VA_ARGS__
 
@@ -43,7 +43,7 @@ An alternative to retain-release is store object in JDB container"
 
             return nullptr;
         }
-        REGISTERF2(release, "*", "releases the object and returns zero, so you could release and nullify with one line of code: object = JVlaue.release(object)");
+        REGISTERF2(release, "*", "releases the object and returns zero, so you can release and nullify with one line of code: object = JVlaue.release(object)");
 
         static object_base* releaseAndRetain(ref previousObject, ref newObject) {
             if (previousObject != newObject) {
