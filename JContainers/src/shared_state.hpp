@@ -53,9 +53,6 @@ namespace collections
 
         _DMESSAGE("%u bytes loaded", data.size());
 
-        std::istringstream stream(data);
-        boost::archive::binary_iarchive archive(stream);
-
         aqueue->stop();
         {
             // i have assumed that Skyrim devs are not idiots to run scripts in process of save game loading
@@ -63,12 +60,16 @@ namespace collections
 
             u_clearState();
 
-            if (!data.empty()) {
+            bool isFromFuture = kJSerializationCurrentVersion < version;
 
-                if (kJSerializationCurrentVersion < version) {
-                     _FATALERROR("plugin can not be compatible with future save version %u. plugin save vesrion is %u", version, kJSerializationCurrentVersion);
-                     assert(false);
-                }
+            if (isFromFuture) {
+                _FATALERROR("plugin can not be compatible with future save version %u. plugin save vesrion is %u", version, kJSerializationCurrentVersion);
+            }
+
+            if (!data.empty() && !isFromFuture) {
+
+                std::istringstream stream(data);
+                boost::archive::binary_iarchive archive(stream);
 
                 try {
                     archive >> *registry;
@@ -78,12 +79,13 @@ namespace collections
                         delegate->u_loadAdditional(archive);
                     }
                 }
-                catch (const boost::archive::archive_exception& exc) {
-                    _FATALERROR("caught exception during archive load - '%s'. trying to recover", exc.what());
-
-                    throw exc;
-
-                    //u_clearState();
+                catch (const std::exception& exc) {
+                    _FATALERROR("caught exception during archive load - '%s'. JContainers data will be lost", exc.what());
+                    u_clearState();
+                }
+                catch (...) {
+                    _FATALERROR("caught exception during archive load. JContainers data will be lost");
+                    u_clearState();
                 }
 
             }
