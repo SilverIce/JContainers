@@ -182,11 +182,11 @@ solveInt(objectA, ".keyA[4].keyB")
 ```
 retrieves a value which is associated with keyB of JMap, which located at 4-th index of JArray, which is associated with keyA of objectA-JMap. Huh.
 
-`solve*Setter` changes (assigns) a value. Also there is an optional `createMissingKeys` argument - if enabled, will insert any missing JMap key during path traversal. For example, calling `solveFltSetter(objectA, ".key1.key2", 3.14)` on an empty objectA will create new JMap B containing `{"key2", 3.14}` pair and associate objectA with new JMap (i.e. `{"key1", B}` pair will be created).
+`solve*Setter` changes (assigns) a value. Also there is an optional `createMissingKeys` argument - if enabled, will insert any missing JMap key during path traversal. For example, calling `solveFltSetter(objectA, ".key1.key2", 3.14, true)` on an empty objectA will create new JMap B containing `{"key2", 3.14}` pair and associate objectA with new JMap (i.e. `{"key1", B}` pair will be created). `solve*Setter` fails if `createMissingKeys` is disabled and any key in the path is missing.
 
 More examples:
 ```json
-{
+info = {
     "classicPreset" :  {
         "campfileLighting" : "Automatic"
     },
