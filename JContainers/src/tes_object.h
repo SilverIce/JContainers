@@ -202,7 +202,7 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
         REGISTERF(_resolveGetter<TESForm*>, "solveForm", "* path", nullptr);
 
         template<class T>
-        static bool solveSetter(object_base* obj, const char* path, T value) {
+        static bool solveSetter(object_base* obj, const char* path, T value, bool createMissingKeys = false) {
             if (!obj || !path)
                 return false;
 
@@ -212,20 +212,24 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
                     *itmPtr = Item((T)value);
                     succeed = true;
                 }
-            });
+            },
+                createMissingKeys);
 
             return succeed;
         }
 
         template<class T>
-        static bool _solveSetter(ref obj, const char* path, T value) {
-            return solveSetter<T>(obj.get(), path, value);
+        static bool _solveSetter(ref obj, const char* path, T value, bool createMissingKeys = false) {
+            return solveSetter<T>(obj.get(), path, value, createMissingKeys);
         }
-        REGISTERF(_solveSetter<Float32>, "solveFltSetter", "* path value", "attempts to set value.\nJValue.solveIntSetter(container, \".player.mood\", 12) will set player's mood to 12");
-        REGISTERF(_solveSetter<SInt32>, "solveIntSetter", "* path value", nullptr);
-        REGISTERF(_solveSetter<const char*>, "solveStrSetter", "* path value", nullptr);
-        REGISTERF(_solveSetter<ref>, "solveObjSetter", "* path value", nullptr);
-        REGISTERF(_solveSetter<TESForm*>, "solveFormSetter", "* path value", nullptr);
+        REGISTERF(_solveSetter<Float32>, "solveFltSetter", "* path value createMissingKeys=false",
+            "Attempts to assign value. Returns false if no such path\n"
+            "With 'createMissingKeys=true' it creates any missing path element: solveIntSetter(map, \".keyA.keyB\", 10, true) on empty JMap creates {keyA: {keyB: 10}} structure"
+            );
+        REGISTERF(_solveSetter<SInt32>, "solveIntSetter", "* path value createMissingKeys=false", nullptr);
+        REGISTERF(_solveSetter<const char*>, "solveStrSetter", "* path value createMissingKeys=false", nullptr);
+        REGISTERF(_solveSetter<ref>, "solveObjSetter", "* path value createMissingKeys=false", nullptr);
+        REGISTERF(_solveSetter<TESForm*>, "solveFormSetter", "* path value createMissingKeys=false", nullptr);
 
     };
 

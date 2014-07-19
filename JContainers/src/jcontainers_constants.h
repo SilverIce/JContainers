@@ -8,7 +8,7 @@ namespace collections {
         kJJSerializationVersionPreAQueueFix = 2,
         kJSerializationCurrentVersion = 3,
 
-        kJAPIVersion = 2,
+        kJAPIVersion = 3,
 
         kJVersionMajor = 0,
         kJVersionMinor = 68,
