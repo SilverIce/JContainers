@@ -9,9 +9,9 @@ namespace collections
 
     namespace path_resolving {
 
-        void resolvePath(Item& item, const char *cpath, std::function<void (Item *)> itemFunction);
+        void resolvePath(Item& item, const char *cpath, std::function<void(Item *)> itemFunction, bool createMissingKeys = false);
 
-        void resolvePath(object_base *collection, const char *cpath, std::function<void (Item *)> itemFunction);
+        void resolvePath(object_base *collection, const char *cpath, std::function<void(Item *)> itemFunction, bool createMissingKeys = false);
 
     }
 }

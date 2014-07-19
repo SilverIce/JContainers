@@ -139,16 +139,17 @@ namespace collections {
         REGISTERF(solveGetter<TESForm*>, "solveForm", "fKey path", nullptr);
 
         template<class T>
-        static bool solveSetter(TESForm *form, const char* path, T value) { 
+        static bool solveSetter(TESForm *form, const char* path, T value, bool createMissingKeys = false) {
             subpath_extractor sub(path, is_path);
-            return tes_object::solveSetter(findEntry(sub.storageName(), form), sub.rest(), value);
+            return tes_object::solveSetter(findEntry(sub.storageName(), form), sub.rest(), value, createMissingKeys);
         }
-        REGISTERF(solveSetter<Float32>, "solveFltSetter", "fKey path value",
-            "attempts to assign value. returns false if no such path");
-        REGISTERF(solveSetter<SInt32>, "solveIntSetter", "fKey path value", nullptr);
-        REGISTERF(solveSetter<const char*>, "solveStrSetter", "fKey path value", nullptr);
-        REGISTERF(solveSetter<object_stack_ref&>, "solveObjSetter", "fKey path value", nullptr);
-        REGISTERF(solveSetter<TESForm*>, "solveFormSetter", "fKey path value", nullptr);
+        REGISTERF(solveSetter<Float32>, "solveFltSetter", "fKey path value createMissingKeys=false",
+            "Attempts to assign value. Returns false if no such path\n"
+            "With 'createMissingKeys=true' it creates any missing path elements: JFormDB.solveIntSetter(formKey, \".frostfall.keyB\", 10, true) creates {frostfall: {keyB: 10}} structure");
+        REGISTERF(solveSetter<SInt32>, "solveIntSetter", "fKey path value createMissingKeys=false", nullptr);
+        REGISTERF(solveSetter<const char*>, "solveStrSetter", "fKey path value createMissingKeys=false", nullptr);
+        REGISTERF(solveSetter<object_stack_ref&>, "solveObjSetter", "fKey path value createMissingKeys=false", nullptr);
+        REGISTERF(solveSetter<TESForm*>, "solveFormSetter", "fKey path value createMissingKeys=false", nullptr);
 
         static bool hasPath(TESForm *form, const char* path) {
             subpath_extractor sub(path);

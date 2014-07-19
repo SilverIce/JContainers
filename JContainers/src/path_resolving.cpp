@@ -8,6 +8,7 @@
 #include <functional>
 
 #include "collections.h"
+#include "tes_context.h"
 
 #include "collection_operators.h"
 
@@ -81,20 +82,20 @@ namespace collections
             return true;
         }
 
-        void resolvePath(Item& item, const char *cpath, std::function<void (Item *)>  itemFunction) {
+        void resolvePath(Item& item, const char *cpath, std::function<void(Item *)>  itemFunction, bool createMissingKeys) {
             if (!cpath) {
                 return;
             }
 
             if (item.object()) {
-                resolvePath(item.object(), cpath, itemFunction);
+                resolvePath(item.object(), cpath, itemFunction, createMissingKeys);
             }
             else if (!*cpath) {
                 itemFunction(&item);
             }
         }
 
-        void resolvePath(object_base *collection, const char *cpath, std::function<void (Item *)>  itemFunction) {
+        void resolvePath(object_base *collection, const char *cpath, std::function<void (Item *)>  itemFunction, bool createMissingKeys) {
 
             if (!collection || !cpath) {
                 return;
@@ -112,7 +113,7 @@ namespace collections
 
             auto path = bs::make_iterator_range(cpath, cpath + strnlen_s(cpath, 1024));
 
-            auto operatorRule = [](const state &st) -> state {
+            auto operatorRule = [createMissingKeys](const state &st) -> state {
                 const auto& path = st.path;
 
                 if (!bs::starts_with(path, "@") || path.size() < 2) {
@@ -151,7 +152,7 @@ namespace collections
 
                 if (collection->as<array>()) {
 
-                    // have to copy array to prevent it modification during iteration
+                    // have to copy array to prevent its modification during iteration
                     auto array_copy = collection->as<array>()->container_copy();
 
                     for (auto &itm : array_copy) {
@@ -171,7 +172,7 @@ namespace collections
                     path_type());
             };
 
-            auto mapRule = [](const state &st) -> state {
+            auto mapRule = [createMissingKeys](const state &st) -> state {
 
                 const auto& path = st.path;
 
@@ -182,22 +183,42 @@ namespace collections
                 auto begin = path.begin() + 1;
                 auto end = bs::find_if(path_type(begin, path.end()), bs::is_any_of(".["));
 
+                if (begin == end) {
+                    return state(false, st);
+                }
+
                 object_lock lock(st.object);
                 auto node = st.nodeGetter(st.object);
+
+                if (createMissingKeys && node && node->isNull()) {
+                    *node = map::object(tes_context::instance());
+                }
+
                 auto container = node ? node->object() : nullptr;
 
-                if (begin == end || !container) {
+                if (!container) {
                     return state(false, st);
                 }
 
                 return state(   true,
                                     [=](object_base *container) {
-                                        return container->as<map>() ? container->as<map>()->u_find(ss::string(begin, end)) : nullptr;
+                                        Item *itemPtr = nullptr;
+
+                                        if (auto obj = container->as<map>()) {
+                                            ss::string key(begin, end);
+                                            itemPtr = obj->u_find(key);
+
+                                            if (!itemPtr && createMissingKeys) {
+                                                obj->u_setValueForKey(key, Item());
+                                                itemPtr = obj->u_find(key);
+                                            }
+                                        }
+
+                                        return itemPtr;
                                 },
                                 container,
                                 path_type(end, path.end()) );
             };
-
 
             auto arrayRule = [](const state &st) -> state {
 

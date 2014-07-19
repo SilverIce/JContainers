@@ -32,16 +32,16 @@ JDB.solveObj(\".frostfall.arrayC\") will return array containing [\"stringValue\
         REGISTERF(solveGetter<TESForm*>, "solveForm", "path", nullptr);
 
         template<class T>
-        static bool solveSetter(const char* path, T value) { 
-            return tes_object::solveSetter(tes_context::instance().database(), path, value);
+        static bool solveSetter(const char* path, T value, bool createMissingKeys = false) { 
+            return tes_object::solveSetter(tes_context::instance().database(), path, value, createMissingKeys);
         }
-        REGISTERF(solveSetter<Float32>, "solveFltSetter", "path value",
-            "attempts to assign value. returns false if no such path\n\
-            for ex. JDB.solveFltSetter(\".frostfall.exposureRate\", 1.0) assigns 1.0 to \".frostfall.exposureRate\" path");
-        REGISTERF(solveSetter<SInt32>, "solveIntSetter", "path value", nullptr);
-        REGISTERF(solveSetter<const char*>, "solveStrSetter", "path value", nullptr);
-        REGISTERF(solveSetter<object_stack_ref&>, "solveObjSetter", "path value", nullptr);
-        REGISTERF(solveSetter<TESForm*>, "solveFormSetter", "path value", nullptr);
+        REGISTERF(solveSetter<Float32>, "solveFltSetter", "path value createMissingKeys=false",
+            "Attempts to assign value. Returns false if no such path\n"
+            "With 'createMissingKeys=true' it creates any missing path elements: JDB.solveIntSetter(\".frostfall.keyB\", 10, true) creates {frostfall: {keyB: 10}} structure");
+        REGISTERF(solveSetter<SInt32>, "solveIntSetter", "path value createMissingKeys=false", nullptr);
+        REGISTERF(solveSetter<const char*>, "solveStrSetter", "path value createMissingKeys=false", nullptr);
+        REGISTERF(solveSetter<object_stack_ref&>, "solveObjSetter", "path value createMissingKeys=false", nullptr);
+        REGISTERF(solveSetter<TESForm*>, "solveFormSetter", "path value createMissingKeys=false", nullptr);
 
 
         static void setObj(const char *path, object_stack_ref& obj) {
