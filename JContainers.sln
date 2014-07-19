@@ -17,6 +17,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "json_validator", "json_vali
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "id_generator", "id_generator\id_generator.vcxproj", "{E2413609-7762-4B04-B5CE-9DF19ACE4CFC}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{764AED6C-3687-44A2-8FB5-88FF7799F047}"
+	ProjectSection(SolutionItems) = preProject
+		Performance1.psess = Performance1.psess
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -26,27 +31,21 @@ Global
 		{C7305D8C-5514-4C58-9ED7-04D1D7A53D8D}.Debug|Win32.ActiveCfg = Debug|Win32
 		{C7305D8C-5514-4C58-9ED7-04D1D7A53D8D}.Debug|Win32.Build.0 = Debug|Win32
 		{C7305D8C-5514-4C58-9ED7-04D1D7A53D8D}.Release|Win32.ActiveCfg = Release|Win32
-		{C7305D8C-5514-4C58-9ED7-04D1D7A53D8D}.Release|Win32.Build.0 = Release|Win32
 		{FAA39367-64F7-4552-A537-002A1FFB8365}.Debug|Win32.ActiveCfg = Debug|Win32
 		{FAA39367-64F7-4552-A537-002A1FFB8365}.Debug|Win32.Build.0 = Debug|Win32
 		{FAA39367-64F7-4552-A537-002A1FFB8365}.Release|Win32.ActiveCfg = Release|Win32
-		{FAA39367-64F7-4552-A537-002A1FFB8365}.Release|Win32.Build.0 = Release|Win32
 		{AA0365EC-47EA-45AA-BB1F-EBBCCCC466F2}.Debug|Win32.ActiveCfg = Debug|Win32
 		{AA0365EC-47EA-45AA-BB1F-EBBCCCC466F2}.Debug|Win32.Build.0 = Debug|Win32
 		{AA0365EC-47EA-45AA-BB1F-EBBCCCC466F2}.Release|Win32.ActiveCfg = Release|Win32
-		{AA0365EC-47EA-45AA-BB1F-EBBCCCC466F2}.Release|Win32.Build.0 = Release|Win32
 		{20C6411C-596F-4B85-BE4E-8BC91F59D8A6}.Debug|Win32.ActiveCfg = Debug|Win32
 		{20C6411C-596F-4B85-BE4E-8BC91F59D8A6}.Debug|Win32.Build.0 = Debug|Win32
 		{20C6411C-596F-4B85-BE4E-8BC91F59D8A6}.Release|Win32.ActiveCfg = Release|Win32
-		{20C6411C-596F-4B85-BE4E-8BC91F59D8A6}.Release|Win32.Build.0 = Release|Win32
 		{F9EF3CA7-06A8-4BB2-9232-C4251E65829B}.Debug|Win32.ActiveCfg = Debug|Win32
 		{F9EF3CA7-06A8-4BB2-9232-C4251E65829B}.Debug|Win32.Build.0 = Debug|Win32
 		{F9EF3CA7-06A8-4BB2-9232-C4251E65829B}.Release|Win32.ActiveCfg = Release|Win32
-		{F9EF3CA7-06A8-4BB2-9232-C4251E65829B}.Release|Win32.Build.0 = Release|Win32
 		{CAA7D417-1B58-48AB-A226-C7E69141772C}.Debug|Win32.ActiveCfg = Debug|Win32
 		{CAA7D417-1B58-48AB-A226-C7E69141772C}.Debug|Win32.Build.0 = Debug|Win32
 		{CAA7D417-1B58-48AB-A226-C7E69141772C}.Release|Win32.ActiveCfg = Release|Win32
-		{CAA7D417-1B58-48AB-A226-C7E69141772C}.Release|Win32.Build.0 = Release|Win32
 		{E2413609-7762-4B04-B5CE-9DF19ACE4CFC}.Debug|Win32.ActiveCfg = Debug|Win32
 		{E2413609-7762-4B04-B5CE-9DF19ACE4CFC}.Debug|Win32.Build.0 = Debug|Win32
 		{E2413609-7762-4B04-B5CE-9DF19ACE4CFC}.Release|Win32.ActiveCfg = Release|Win32
@@ -54,5 +53,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
 	EndGlobalSection
 EndGlobal
