@@ -175,7 +175,16 @@ form player = JValue.solveForm(data, ".actor")
 
 ### Path resolving
 
-This feature simplifies access to deep-located information. There is a group of `solve*` and `solve*Setter` functions. `solve*` retrieves value and `solve*Setter` changes (assigns) value. Suppose there is object info containing following information:
+This feature simplifies an access to values of nested objects via group of `solve*` and `solve*Setter` functions. Each function takes path specifier, which determines in which key to search for a value. For example:
+
+```
+solveInt(objectA, ".keyA[4].keyB")
+```
+retrieves a value which is associated with keyB of JMap, which located at 4-th index of JArray, which is associated with keyA of objectA-JMap. Huh.
+
+`solve*Setter` changes (assigns) a value. Also there is an optional `createMissingKeys` argument - if enabled, will insert any missing JMap key during path traversal. For example, calling `solveFltSetter(objectA, ".key1.key2", 3.14)` on an empty objectA will create new JMap B containing `{"key2", 3.14}` pair and associate objectA with new JMap (i.e. `{"key1", B}` pair will be created).
+
+More examples:
 ```json
 {
     "classicPreset" :  {
@@ -183,14 +192,7 @@ This feature simplifies access to deep-located information. There is a group of 
     },
     "numbers" : [0, 1, 2, 3]
 }
-```
-Access to campfileLighting in standard way would look like:
-```lua
-int preset = JMap.getObj(info, "classicPreset")
-string lightingType = JMap.getStr(preset, "campfileLighting")
-```
-But it’s possible to retrieve or change campfileLighting value, get access to numbers array in more simple way:
-```lua
+
 string lightingType = JValue.solveStr(info, ".classicPreset.campfileLighting")
 JValue.solveStrSetter(info, ".classicPreset.campfileLighting", "Non-Automatic")
 int firstNumber = JValue.solveInt(info, ".numbers[0]")
