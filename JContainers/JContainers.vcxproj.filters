@@ -144,8 +144,12 @@
     <ClInclude Include="src\boost_extras.h">
       <Filter>collections_module</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="exports.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="JContainers.rc" />
   </ItemGroup>
 </Project>
