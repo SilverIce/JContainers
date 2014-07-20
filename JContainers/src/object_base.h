@@ -4,6 +4,7 @@
 #include <atomic>
 #include <assert.h>
 #include <boost/smart_ptr/intrusive_ptr_jc.hpp>
+#include <boost/optional/optional.hpp>
 
 #include "spinlock.h"
 
@@ -49,6 +50,7 @@ namespace collections {
         CollectionType _type;
     private:
         shared_state *_context;
+        boost::optional<std::string> _tag;
 
         void release_counter(std::atomic_int32_t& counter);
 
@@ -58,7 +60,7 @@ namespace collections {
 
     public:
         typedef std::lock_guard<spinlock> lock;
-        spinlock _mutex;
+        mutable spinlock _mutex;
 
         explicit object_base(CollectionType type)
             : _refCount(0)      // for now autorelease queue owns object
@@ -69,17 +71,6 @@ namespace collections {
             , _context(nullptr)
         {
         }
-
-/*
-        object_base()
-            : _refCount(0)
-            , _tes_refCount(0)
-            , _stack_refCount(0)
-            , _id(HandleNull)
-            , _type(CollectionTypeNone)
-            , _context(nullptr)
-        {
-        }*/
 
         // for test purpose only!
         // registers (or returns already registered) identifier
@@ -185,6 +176,20 @@ namespace collections {
             u_clear();
         }
 
+        void set_tag(const char *tag) {
+            lock g(_mutex);
+            if (tag) {
+                _tag = tag;
+            } else {
+                _tag = boost::none;
+           }
+        }
+
+        bool has_equal_tag(const char *tag) const {
+            lock l(_mutex);
+            return _tag && tag ? _strcmpi(_tag.get().c_str(), tag) == 0 : false;
+        }
+
         virtual bool is_equal_to(const object_base& other) const {
             return
                 _id == other._id &&
@@ -220,11 +225,10 @@ namespace collections {
     class object_lock {
         object_base::lock _lock;
     public:
-        explicit object_lock(object_base *obj) : _lock(obj->_mutex) {}
-        explicit object_lock(object_base &obj) : _lock(obj._mutex) {}
+        explicit object_lock(const object_base *obj) : _lock(obj->_mutex) {}
+        explicit object_lock(const object_base &obj) : _lock(obj._mutex) {}
 
         template<class T, class P>
-        explicit object_lock(const boost::intrusive_ptr_jc<T, P>& ref) : _lock(static_cast<object_base&>(*ref)._mutex) {}
-        //explicit object_lock(object_base &obj) : _lock(obj._mutex) {}
+        explicit object_lock(const boost::intrusive_ptr_jc<T, P>& ref) : _lock(static_cast<const object_base&>(*ref)._mutex) {}
     };
 }

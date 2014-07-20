@@ -16,9 +16,14 @@ namespace collections {
             metaInfo.comment = "Each container (JArray, JMap & JFormMap) inherits JValue functionality";
         }
 
-        static object_base* retain(ref obj) {
+        static object_base* retain(ref obj, const char* tag = nullptr) {
             if (obj) {
                 obj->tes_retain();
+
+                if (tag) {
+                    obj->set_tag(tag);
+                }
+
                 return obj.get();
             }
 
@@ -45,22 +50,36 @@ An alternative to retain-release is store object in JDB container"
         }
         REGISTERF2(release, "*", "releases the object and returns zero, so you can release and nullify with one line of code: object = JVlaue.release(object)");
 
-        static object_base* releaseAndRetain(ref previousObject, ref newObject) {
+        static object_base* releaseAndRetain(ref previousObject, ref newObject, const char* tag = nullptr) {
             if (previousObject != newObject) {
                 if (previousObject) {
                     previousObject->tes_release();
                 }
 
-                if (newObject) {
-                    newObject->tes_retain();
-                }
+                retain(newObject, tag);
             }
 
             return newObject.get();
         }
-        REGISTERF2(releaseAndRetain, "previousObject newObject",
+        REGISTERF2(releaseAndRetain, "previousObject newObject tag=None",
 "just a union of retain-release calls. releases previousObject, retains and returns newObject.\n\
 useful for those who use Papyrus properties instead of manual (and more error-prone) release-retain object lifetime management");
+
+        static void releaseObjectsWithTag(const char *tag) {
+            if (!tag) {
+                return;
+            }
+
+            auto objects = tes_context::instance().filter_objects([tag](const object_base& obj) {
+                return obj.has_equal_tag(tag);
+            });
+
+            for (auto& ref : objects) {
+                while (ref->_tes_refCount != 0) {
+                    ref->tes_release();
+                }
+            }
+        }
 
         static bool isArray(ref obj) {
             return obj->as<array>() != nullptr;

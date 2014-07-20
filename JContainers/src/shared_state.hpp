@@ -55,6 +55,10 @@ namespace collections
         aqueue->start();
     }
 
+    std::vector<object_stack_ref> shared_state::filter_objects(std::function<bool(object_base& obj)> predicate) const {
+        return registry->filter_objects(predicate);
+    }
+
     object_base * shared_state::getObject(Handle hdl) {
         return registry->getObject(hdl);
     }

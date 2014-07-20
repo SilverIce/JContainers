@@ -2,6 +2,7 @@
 
 #include "boost\serialization\split_free.hpp"
 #include "boost\serialization\version.hpp"
+#include "boost\serialization\optional.hpp"
 
 #include "object_base.h"
 
@@ -30,7 +31,8 @@ namespace boost { namespace serialization {
 
         save_atomic(ar, t._refCount);
         save_atomic(ar, t._tes_refCount);
-        ar & t._id;
+        ar << t._id;
+        ar << t.tag;
     }
 
     template<class Archive>
@@ -42,7 +44,8 @@ namespace boost { namespace serialization {
             ar & t._type;
         }
 
-        ar & t._id;
+        ar >> t._id;
+        ar >> t.tag;
 
         // trying detect objects with no owners
         jc_assert(version == 0 || t.noOwners() == false);

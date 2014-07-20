@@ -17,7 +17,7 @@ namespace collections
         registry_container _map;
         id_generator<HandleT> _idGen;
         all_objects_set _all_objects;
-        bshared_mutex _mutex;
+        mutable bshared_mutex _mutex;
 
         object_registry(const object_registry& );
         object_registry& operator = (const object_registry& );
@@ -61,7 +61,7 @@ namespace collections
             _all_objects.erase(itr);
         }
 
-        object_base *getObject(Handle hdl) {
+        object_base *getObject(Handle hdl) const {
             if (!hdl) {
                 return nullptr;
             }
@@ -70,7 +70,21 @@ namespace collections
             return u_getObject(hdl);
         }
 
-        object_stack_ref getObjectRef(Handle hdl) {
+        std::vector<object_stack_ref> filter_objects(std::function<bool(object_base& obj)>& predicate) const {
+            read_lock r(_mutex);
+
+            std::vector<object_stack_ref> objects;
+
+            for (auto obj : _all_objects) {
+                if (predicate(*obj)) {
+                    objects.push_back(obj);
+                }
+            }
+
+            return objects;
+        }
+
+        object_stack_ref getObjectRef(Handle hdl) const {
             // had to copy&paste getObject function as we really must own an object BEFORE read lock will be released
             if (!hdl) {
                 return nullptr;
@@ -79,7 +93,7 @@ namespace collections
             return u_getObject(hdl);
         }
 
-        object_base *u_getObject(Handle hdl) {
+        object_base *u_getObject(Handle hdl) const {
             if (!hdl) {
                 return nullptr;
             }
@@ -92,13 +106,13 @@ namespace collections
         }
 
         template<class T>
-        T *getObjectOfType(Handle hdl) {
+        T *getObjectOfType(Handle hdl) const {
             auto obj = getObject(hdl);
             return obj->as<T>();
         }
 
         template<class T>
-        T *u_getObjectOfType(Handle hdl) {
+        T *u_getObjectOfType(Handle hdl) const {
             auto obj = u_getObject(hdl);
             return obj->as<T>();
         }
