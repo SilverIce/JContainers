@@ -173,6 +173,9 @@ namespace collections
     {
         for (auto& obj : registry->u_container()) {
             obj->set_context(*this);
+        }
+
+        for (auto& obj : registry->u_container()) {
             obj->u_onLoaded();
         }
     }
