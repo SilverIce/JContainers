@@ -8,14 +8,13 @@ namespace collections
     public:
         typedef std::hash_set<object_base *> all_objects_set;
         typedef std::hash_map<HandleT, object_base *> registry_container;
-        typedef id_generator<HandleT> id_generator_type;
 
     private:
 
         friend class shared_state;
 
         registry_container _map;
-        id_generator<HandleT> _idGen;
+        id_generator_type _idGen;
         all_objects_set _all_objects;
         bshared_mutex _mutex;
 
@@ -41,7 +40,7 @@ namespace collections
 
             write_lock g(_mutex);
 
-            auto id = _idGen.newId();
+            auto id = _idGen.new_id();
             jc_assert(_map.find(id) == _map.end());
             _map.insert(registry_container::value_type(id, &obj));
             obj._id = (Handle)id;
@@ -53,7 +52,7 @@ namespace collections
             auto id = obj._uid();
             if (id != HandleNull) {
                 _map.erase(id);
-                _idGen.reuseId(id);
+                _idGen.reuse_id(id);
             }
 
             auto itr = _all_objects.find(&obj);
