@@ -15,8 +15,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "jansson", "dep\jansson\jans
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "json_validator", "json_validator\json_validator.vcxproj", "{CAA7D417-1B58-48AB-A226-C7E69141772C}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "id_generator", "id_generator\id_generator.vcxproj", "{E2413609-7762-4B04-B5CE-9DF19ACE4CFC}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{764AED6C-3687-44A2-8FB5-88FF7799F047}"
 	ProjectSection(SolutionItems) = preProject
 		Performance1.psess = Performance1.psess
@@ -46,15 +44,8 @@ Global
 		{CAA7D417-1B58-48AB-A226-C7E69141772C}.Debug|Win32.ActiveCfg = Debug|Win32
 		{CAA7D417-1B58-48AB-A226-C7E69141772C}.Debug|Win32.Build.0 = Debug|Win32
 		{CAA7D417-1B58-48AB-A226-C7E69141772C}.Release|Win32.ActiveCfg = Release|Win32
-		{E2413609-7762-4B04-B5CE-9DF19ACE4CFC}.Debug|Win32.ActiveCfg = Debug|Win32
-		{E2413609-7762-4B04-B5CE-9DF19ACE4CFC}.Debug|Win32.Build.0 = Debug|Win32
-		{E2413609-7762-4B04-B5CE-9DF19ACE4CFC}.Release|Win32.ActiveCfg = Release|Win32
-		{E2413609-7762-4B04-B5CE-9DF19ACE4CFC}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
 	EndGlobalSection
 EndGlobal
