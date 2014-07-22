@@ -62,6 +62,11 @@ An alternative to retain-release is store object in JDB container"
 "just a union of retain-release calls. releases previousObject, retains and returns newObject.\n\
 useful for those who use Papyrus properties instead of manual (and more error-prone) release-retain object lifetime management");
 
+        static bool isExists(ref obj) {
+            return obj.get() != nullptr;
+        }
+        REGISTERF2(isExists, "*", "tests whether given object identifier points to existing object");
+
         static bool isArray(ref obj) {
             return obj->as<array>() != nullptr;
         }
