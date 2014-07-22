@@ -1,6 +1,10 @@
-
 namespace collections
 {
+    template<class T, class D>
+    inline std::unique_ptr<T, D> make_unique_ptr(T* data, D destr) {
+        return std::unique_ptr<T, D>(data, destr);
+    }
+
     shared_state::shared_state()
         : registry(nullptr)
         , aqueue(nullptr)
@@ -71,13 +75,46 @@ namespace collections
         return aqueue->count();
     }
 
-    void shared_state::read_from_string(const std::string & data, int version) {
+    void shared_state::read_from_string(const std::string & data, const uint32_t version) {
         namespace io = boost::iostreams;
         io::stream<io::array_source> stream( io::array_source(data.c_str(), data.size()) );
         read_from_stream(stream, version);
     }
 
-    void shared_state::read_from_stream(std::istream & stream, int version) {
+    struct header {
+
+        uint32_t updateVersion;
+
+        static header imitate_old_header() {
+            return{ kJSerializationNoHeaderVersion };
+        }
+
+        static header make() {
+            return{ kJSerializationCurrentVersion };
+        }
+
+        static header read_from_string(const std::string& str) {
+            auto js = make_unique_ptr(json_loads(str.c_str(), 0, nullptr), &json_decref);
+
+            return{ json_integer_value(json_object_get(js.get(), "commonVersion")) };
+        }
+
+        static auto write_to_json() -> decltype(make_unique_ptr((json_t *)nullptr, &json_decref)) {
+            auto header = make_unique_ptr(json_object(), &json_decref);
+
+            json_object_set(header.get(), "commonVersion", json_integer(kJSerializationCurrentVersion));
+
+            return header;
+        }
+
+        static std::string write_to_string() {
+            auto header = write_to_json();
+            auto data = make_unique_ptr(json_dumps(header.get(), 0), free);
+            return std::string(data.get());
+        }
+    };
+
+    void shared_state::read_from_stream(std::istream & stream, const uint32_t version) {
 
         stream.flags(stream.flags() | std::ios::binary);
 
@@ -88,6 +125,8 @@ namespace collections
 
             u_clearState();
 
+            auto hdr = header::make();
+
             if (stream.peek() != std::istream::traits_type::eof()) {
                 boost::archive::binary_iarchive archive(stream);
 
@@ -97,6 +136,16 @@ namespace collections
                 }
 
                 try {
+
+                    if (version <= kJSerializationNoHeaderVersion) {
+                        hdr = header::imitate_old_header();
+                    }
+                    else {
+                        std::string jsString;
+                        archive >> jsString;
+                        hdr = header::read_from_string(jsString);
+                    }
+
                     archive >> *registry;
                     archive >> *aqueue;
 
@@ -107,21 +156,22 @@ namespace collections
                 catch (const std::exception& exc) {
                     _FATALERROR("caught exception (%s) during archive load - '%s'. forcing application to crash",
                         typeid(exc).name(), exc.what());
-                    //u_clearState();
+                    u_clearState();
 
                     // force whole app to crash
                     assert(false);
                 }
                 catch (...) {
                     _FATALERROR("caught unknown (non std::*) exception. forcing application to crash");
+                    u_clearState();
+
                     // force whole app to crash
                     assert(false);
                 }
             }
 
-            u_applyUpdates(version);
-            // deadlock possible
-            u_postLoadMaintenance(version);
+            u_applyUpdates(hdr.updateVersion);
+            u_postLoadMaintenance(hdr.updateVersion);
 
             _DMESSAGE("%lu objects total", registry->u_container().size());
             _DMESSAGE("%lu objects in aqueue", aqueue->u_count());
@@ -143,14 +193,7 @@ namespace collections
 
         aqueue->stop();
         {
-            // i have assumed that Skyrim devs are not idiots to run scripts in process of saving
-            // but didn't dare to disable all that locks
-
-            // do not lock as test shows that skyrim waits for completion of any native function running.
-            // this _probably_ means that there is no any thread inside my code during save
-            //read_lock g(_mutex);
-            //all_objects_lock l(*registry);
-
+            arch << header::write_to_string();
             arch << *registry;
             arch << *aqueue;
 
@@ -165,11 +208,11 @@ namespace collections
 
     //////////////////////////////////////////////////////////////////////////
 
-    void shared_state::u_applyUpdates(int saveVersion) {
+    void shared_state::u_applyUpdates(const uint32_t saveVersion) {
 
     }
 
-    void shared_state::u_postLoadMaintenance(int saveVersion)
+    void shared_state::u_postLoadMaintenance(const uint32_t saveVersion)
     {
         for (auto& obj : registry->u_container()) {
             obj->set_context(*this);

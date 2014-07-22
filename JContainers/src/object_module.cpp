@@ -5,6 +5,9 @@
 #include <algorithm>
 #include <vector>
 #include <atomic>
+#include <memory>
+
+#include <jansson.h>
 
 #include <boost/iostreams/stream.hpp>
 #include <boost/iostreams/device/array.hpp>
@@ -15,7 +18,6 @@
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/map.hpp>
 #include <boost/serialization/set.hpp>
-
 #include <boost/serialization/deque.hpp>
 #include <boost/serialization/hash_set.hpp>
 #include <boost/serialization/hash_map.hpp>

@@ -256,7 +256,8 @@ namespace collections {
                 atLeastOneTested = true;
 
                 std::ifstream file(itr->path().generic_string(), std::ios::in | std::ios::binary);
-                context.read_from_stream(file, kJSerializationCurrentVersion);
+                // had to pass kJSerializationNoHeaderVersion - 0.67 has no header :(
+                context.read_from_stream(file, kJSerializationNoHeaderVersion);
             }
         }
 

@@ -6,7 +6,8 @@ namespace collections {
         kJStorageChunk = 'JSTR',
 
         kJJSerializationVersionPreAQueueFix = 2,
-        kJSerializationCurrentVersion = 3,
+        kJSerializationNoHeaderVersion = 3,
+        kJSerializationCurrentVersion = 4,
 
         kJAPIVersion = 3,
 

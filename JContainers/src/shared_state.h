@@ -24,8 +24,8 @@ namespace collections {
 
     class shared_state {
 
-        void u_applyUpdates(int saveVersion);
-        void u_postLoadMaintenance(int saveVersion);
+        void u_applyUpdates(const uint32_t saveVersion);
+        void u_postLoadMaintenance(const uint32_t saveVersion);
 
     public:
 
@@ -55,8 +55,8 @@ namespace collections {
         void clearState();
         void u_clearState();
 
-        void read_from_string(const std::string & data, int version);
-        void read_from_stream(std::istream & data, int version);
+        void read_from_string(const std::string & data, const uint32_t version);
+        void read_from_stream(std::istream & data, const uint32_t version);
 
         std::string write_to_string();
         void write_to_stream(std::ostream& stream);
