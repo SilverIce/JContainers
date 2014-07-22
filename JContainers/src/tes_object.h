@@ -29,11 +29,12 @@ namespace collections {
 
             return nullptr;
         }
-        REGISTERF2(retain, "*",
-"Retains and returns the object.\n\
-All containers that were created with object* or objectWith* methods are automatically destroyed after some amount of time (~10 seconds)\n\
-To keep object alive you must retain it once and you have to __release__ it when you do not need it anymore (also to not pollute save file).\n\
-An alternative to retain-release is store object in JDB container"
+        REGISTERF2(retain, "* tag=None",
+"Retains and returns the object. Purpose - extend object lifetime.\n\
+Newly created object if not retained or not referenced/contained by another container directly or indirectly gets destoyed after ~10 seconds due to absence of owners.\n\
+Retain increases amount of owners object have by 1. The retainer is responsible for releasing object later.\n\
+Object have extended lifetime if JDB or JFormDB or any other container references/owns/contains object directly or indirectly.\n\
+It's recommended to set a tag (any unique string will fit - mod name for ex.) - later you'll be able to release all objects with selected tag even if identifier has been lost")
             );
 
         template<class T>
@@ -48,7 +49,7 @@ An alternative to retain-release is store object in JDB container"
 
             return nullptr;
         }
-        REGISTERF2(release, "*", "releases the object and returns zero, so you can release and nullify with one line of code: object = JVlaue.release(object)");
+        REGISTERF2(release, "*", "releases the object and returns zero, so you can release and nullify with one line of code: object = JValue.release(object)");
 
         static object_base* releaseAndRetain(ref previousObject, ref newObject, const char* tag = nullptr) {
             if (previousObject != newObject) {
@@ -62,8 +63,8 @@ An alternative to retain-release is store object in JDB container"
             return newObject.get();
         }
         REGISTERF2(releaseAndRetain, "previousObject newObject tag=None",
-"just a union of retain-release calls. releases previousObject, retains and returns newObject.\n\
-useful for those who use Papyrus properties instead of manual (and more error-prone) release-retain object lifetime management");
+"Just a union of retain-release calls. Releases previousObject, retains and returns newObject.\n\
+It's recommended to set tag (any unique string will fit - mod name for ex.) - later you'll be able to release all objects with selected tag even if identifier was lost.");
 
         static void releaseObjectsWithTag(const char *tag) {
             if (!tag) {
@@ -80,6 +81,10 @@ useful for those who use Papyrus properties instead of manual (and more error-pr
                 }
             }
         }
+        REGISTERF2(releaseObjectsWithTag, "tag",
+"For maintanance - releases lost (and not lost) objects with given tag.\n"
+"Complements all retain calls objects with given tag received with release calls.\n"
+"See 'object lifetime management' section for more information");
 
         static bool isArray(ref obj) {
             return obj->as<array>() != nullptr;
