@@ -472,6 +472,26 @@ namespace collections {
         });
     }
 
+    TEST(tes_object, tag)
+    {
+        object_stack_ref obj = tes_object::object<map>();
+
+        object_stack_ref obj2 = tes_object::object<map>();
+        tes_object::retain(obj2);
+        EXPECT_TRUE(obj2->_tes_refCount == 1);
+
+        EXPECT_TRUE(obj->_tes_refCount == 0);
+        tes_object::retain(obj, "uniqueTag");
+        tes_object::retain(obj, "uniqueTag");
+        EXPECT_TRUE(obj->_tes_refCount == 2);
+
+        tes_object::releaseObjectsWithTag("uniqueTag");
+        EXPECT_TRUE(obj->_tes_refCount == 0);
+
+        // expect that obj2 ref. count left unmodified
+        EXPECT_TRUE(obj2->_tes_refCount == 1);
+    }
+
 }
 
 namespace collections {

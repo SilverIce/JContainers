@@ -48,9 +48,9 @@ namespace collections {
         std::atomic_int32_t _stack_refCount;
 
         CollectionType _type;
+        boost::optional<std::string> _tag;
     private:
         shared_state *_context;
-        boost::optional<std::string> _tag;
 
         void release_counter(std::atomic_int32_t& counter);
 

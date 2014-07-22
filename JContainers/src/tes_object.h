@@ -34,7 +34,7 @@ namespace collections {
 Newly created object if not retained or not referenced/contained by another container directly or indirectly gets destoyed after ~10 seconds due to absence of owners.\n\
 Retain increases amount of owners object have by 1. The retainer is responsible for releasing object later.\n\
 Object have extended lifetime if JDB or JFormDB or any other container references/owns/contains object directly or indirectly.\n\
-It's recommended to set a tag (any unique string will fit - mod name for ex.) - later you'll be able to release all objects with selected tag even if identifier has been lost")
+It's recommended to set a tag (any unique string will fit - mod name for ex.) - later you'll be able to release all objects with selected tag even if identifier has been lost"
             );
 
         template<class T>
@@ -82,7 +82,7 @@ It's recommended to set tag (any unique string will fit - mod name for ex.) - la
             }
         }
         REGISTERF2(releaseObjectsWithTag, "tag",
-"For maintanance - releases lost (and not lost) objects with given tag.\n"
+"For maintenance - releases lost (and not lost) objects with given tag.\n"
 "Complements all retain calls objects with given tag received with release calls.\n"
 "See 'object lifetime management' section for more information");
 

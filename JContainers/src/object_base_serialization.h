@@ -32,7 +32,7 @@ namespace boost { namespace serialization {
         save_atomic(ar, t._refCount);
         save_atomic(ar, t._tes_refCount);
         ar << t._id;
-        ar << t.tag;
+        ar << t._tag;
     }
 
     template<class Archive>
@@ -40,12 +40,19 @@ namespace boost { namespace serialization {
         load_atomic(ar, t._refCount);
         load_atomic(ar, t._tes_refCount);
 
-        if (version == 0) {
-            ar & t._type;
+        switch (version) {
+        case 1:
+            ar >> t._id;
+            ar >> t._tag;
+            break;
+        case 0:
+            ar >> t._type;
+            ar >> t._id;
+            break;
+        default:
+            jc_assert(false);
+            break;
         }
-
-        ar >> t._id;
-        ar >> t.tag;
 
         // trying detect objects with no owners
         jc_assert(version == 0 || t.noOwners() == false);
