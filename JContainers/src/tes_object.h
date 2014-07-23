@@ -25,7 +25,8 @@ namespace collections {
             return nullptr;
         }
         REGISTERF2(retain, "*",
-"Retains and returns the object.\n\
+"Lifetime management functionality:\n\n\
+Retains and returns the object.\n\
 All containers that were created with object* or objectWith* methods are automatically destroyed after some amount of time (~10 seconds)\n\
 To keep object alive you must retain it once and you have to __release__ it when you do not need it anymore (also to not pollute save file).\n\
 An alternative to retain-release is store object in JDB container"
@@ -65,7 +66,7 @@ useful for those who use Papyrus properties instead of manual (and more error-pr
         static bool isExists(ref obj) {
             return obj.get() != nullptr;
         }
-        REGISTERF2(isExists, "*", "tests whether given object identifier points to existing object");
+        REGISTERF2(isExists, "*", "\n\ntests whether given object identifier points to existing object");
 
         static bool isArray(ref obj) {
             return obj->as<array>() != nullptr;
@@ -103,7 +104,7 @@ useful for those who use Papyrus properties instead of manual (and more error-pr
             auto obj = json_deserializer::object_from_file(tes_context::instance(), path);
             return  obj;
         }
-        REGISTERF2(readFromFile, "filePath", "creates and returns new container object containing the contents of JSON file");
+        REGISTERF2(readFromFile, "filePath", "JSON serialization/deserialization:\n\ncreates and returns new container object containing the contents of JSON file");
 
         static object_base* readFromDirectory(const char *dirPath, const char *extension = "")
         {
@@ -178,7 +179,8 @@ useful for those who use Papyrus properties instead of manual (and more error-pr
             return hasPath(obj.get(), path);
         }
         REGISTERF(_hasPath, "hasPath", "* path",
-"returns true, if container capable resolve given path.\n\
+"Path resolving:\n\n\
+returns true, if container capable resolve given path.\n\
 for ex. JValue.hasPath(container, \".player.health\") will check if given container has 'player' which has 'health' information"
                                       );
 
