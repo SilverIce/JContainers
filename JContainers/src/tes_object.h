@@ -34,7 +34,7 @@ namespace collections {
 Newly created object if not retained or not referenced/contained by another container directly or indirectly gets destoyed after ~10 seconds due to absence of owners.\n\
 Retain increases amount of owners object have by 1. The retainer is responsible for releasing object later.\n\
 Object have extended lifetime if JDB or JFormDB or any other container references/owns/contains object directly or indirectly.\n\
-It's recommended to set a tag (any unique string will fit - mod name for ex.) - later you'll be able to release all objects with selected tag even if identifier has been lost"
+It's recommended to set a tag (any unique string will fit - mod name for ex.) - later you'll be able to release all objects with selected tag even if identifier was lost"
             );
 
         template<class T>
@@ -64,7 +64,7 @@ It's recommended to set a tag (any unique string will fit - mod name for ex.) - 
         }
         REGISTERF2(releaseAndRetain, "previousObject newObject tag=None",
 "Just a union of retain-release calls. Releases previousObject, retains and returns newObject.\n\
-It's recommended to set tag (any unique string will fit - mod name for ex.) - later you'll be able to release all objects with selected tag even if identifier was lost.");
+It's recommended to set a tag (any unique string will fit - mod name for ex.) - later you'll be able to release all objects with selected tag even if identifier was lost.");
 
         static void releaseObjectsWithTag(const char *tag) {
             if (!tag) {
@@ -82,9 +82,54 @@ It's recommended to set tag (any unique string will fit - mod name for ex.) - la
             }
         }
         REGISTERF2(releaseObjectsWithTag, "tag",
-"For maintenance - releases lost (and not lost) objects with given tag.\n"
+"For cleanup purpose only - releases lost (and not lost) objects with given tag.\n"
 "Complements all retain calls objects with given tag received with release calls.\n"
 "See 'object lifetime management' section for more information");
+
+        static object_base* addToTmpLocation(ref obj, const char *locationName) {
+            if (locationName) {
+                std::string path(".__tempLocations.");
+                path += locationName;
+
+                array::ref location;
+
+                path_resolving::resolvePath(tes_context::instance().database(), path.c_str(), [&](Item* itmPtr) {
+                    if (itmPtr) {
+                        if (auto loc = itmPtr->object()->as<array>()) {
+                            location = loc;
+                        }
+                        else {
+                            location = array::object(tes_context::instance());
+                            *itmPtr = location.get();
+                        }
+                    }
+                },
+                    true);
+
+                if (location) {
+                    location->push(Item(obj));
+                }
+            }
+
+            return obj.get();
+        }
+        REGISTERF2(addToTmpLocation, "* locationName",
+"Handly for temporary objects (objects with no owners) - location 'locationName' owns any amount of objects, preventing their destuction, extends lifetime.\n\
+Do not forget to clean location later! Typic use:\n\
+int tempMap = JValue.addToTmpLocation(JMap.object(), \"uniqueLocationName\")\n\
+anywhere later:\n\
+JValue.cleanTempLocation(\"uniqueLocationName\")"
+);
+
+        static void cleanTmpLocation(const char *locationName) {
+            if (locationName) {
+                auto locationsMap = tes_context::instance().database()->find("__tempLocations").object()->as<map>();
+                if (locationsMap) {
+                    locationsMap->erase(locationName);
+                }
+            }
+        }
+        REGISTERF2(cleanTmpLocation, "locationName", nullptr);
 
         static bool isArray(ref obj) {
             return obj->as<array>() != nullptr;
