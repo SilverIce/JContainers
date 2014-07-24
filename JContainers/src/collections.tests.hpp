@@ -237,10 +237,21 @@ namespace collections {
 
     JC_TEST(json_serializer, no_infinite_recursion)
     {
-        map *cnt = map::object(context);
-        cnt->u_setValueForKey("cycle", Item(cnt));
+        {
+            map *cnt = map::object(context);
+            cnt->u_setValueForKey("cycle", Item(cnt));
 
-        json_serializer::create_json_data(*cnt);
+            json_serializer::create_json_data(*cnt);
+        }
+        {
+            map *cnt1 = map::object(context);
+            map *cnt2 = map::object(context);
+
+            cnt1->u_setValueForKey("cnt2", Item(cnt2));
+            cnt2->u_setValueForKey("cnt1", Item(cnt1));
+
+            json_serializer::create_json_data(*cnt1);
+        }
     }
 
     JC_TEST(tes_context, backward_compatibility)
