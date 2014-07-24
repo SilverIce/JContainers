@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <functional>
 #include "object_base.h"
 
 namespace boost {
@@ -36,6 +37,8 @@ namespace collections {
         autorelease_queue* aqueue;
 
         shared_state_delegate *delegate;
+
+        std::vector<object_stack_ref> filter_objects(std::function<bool(object_base& obj)> predicate) const;
 
         template<class T>
         T * getObjectOfType(Handle hdl) {

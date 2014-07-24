@@ -375,6 +375,11 @@ namespace collections {
             return _array;
         }
 
+        void push(const Item& item) {
+            object_lock g(this);
+            u_push(item);
+        }
+
         void u_push(const Item& item) {
             _array.push_back(item);
         }
@@ -439,9 +444,20 @@ namespace collections {
             return cnt.find(key);
         }
 
+        Item find(const std::string& key) {
+            object_lock g(this);
+            Item* foudPtr = u_find(key);
+            return foudPtr ? *foudPtr : Item();
+        }
+
         Item* u_find(const std::string& key) {
             auto itr = findItr(key);
             return itr != cnt.end() ? &(itr->second) : nullptr;
+        }
+
+        bool erase(const std::string& key) {
+            object_lock g(this);
+            return u_erase(key);
         }
 
         bool u_erase(const std::string& key) {

@@ -16,20 +16,25 @@ namespace collections {
             metaInfo.comment = "Each container (JArray, JMap & JFormMap) inherits JValue functionality";
         }
 
-        static object_base* retain(ref obj) {
+        static object_base* retain(ref obj, const char* tag = nullptr) {
             if (obj) {
                 obj->tes_retain();
+
+                if (tag) {
+                    obj->set_tag(tag);
+                }
+
                 return obj.get();
             }
 
             return nullptr;
         }
-        REGISTERF2(retain, "*",
-"Lifetime management functionality:\n\n\
-Retains and returns the object.\n\
-All containers that were created with object* or objectWith* methods are automatically destroyed after some amount of time (~10 seconds)\n\
-To keep object alive you must retain it once and you have to __release__ it when you do not need it anymore (also to not pollute save file).\n\
-An alternative to retain-release is store object in JDB container"
+        REGISTERF2(retain, "* tag=None",
+"Retains and returns the object. Purpose - extend object lifetime.\n\
+Newly created object if not retained or not referenced/contained by another container directly or indirectly gets destoyed after ~10 seconds due to absence of owners.\n\
+Retain increases amount of owners object have by 1. The retainer is responsible for releasing object later.\n\
+Object have extended lifetime if JDB or JFormDB or any other container references/owns/contains object directly or indirectly.\n\
+It's recommended to set a tag (any unique string will fit - mod name for ex.) - later you'll be able to release all objects with selected tag even if identifier was lost"
             );
 
         template<class T>
@@ -44,24 +49,87 @@ An alternative to retain-release is store object in JDB container"
 
             return nullptr;
         }
-        REGISTERF2(release, "*", "releases the object and returns zero, so you can release and nullify with one line of code: object = JVlaue.release(object)");
+        REGISTERF2(release, "*", "releases the object and returns zero, so you can release and nullify with one line of code: object = JValue.release(object)");
 
-        static object_base* releaseAndRetain(ref previousObject, ref newObject) {
+        static object_base* releaseAndRetain(ref previousObject, ref newObject, const char* tag = nullptr) {
             if (previousObject != newObject) {
                 if (previousObject) {
                     previousObject->tes_release();
                 }
 
-                if (newObject) {
-                    newObject->tes_retain();
-                }
+                retain(newObject, tag);
             }
 
             return newObject.get();
         }
-        REGISTERF2(releaseAndRetain, "previousObject newObject",
-"just a union of retain-release calls. releases previousObject, retains and returns newObject.\n\
-useful for those who use Papyrus properties instead of manual (and more error-prone) release-retain object lifetime management");
+        REGISTERF2(releaseAndRetain, "previousObject newObject tag=None",
+"Just a union of retain-release calls. Releases previousObject, retains and returns newObject.\n\
+It's recommended to set a tag (any unique string will fit - mod name for ex.) - later you'll be able to release all objects with selected tag even if identifier was lost.");
+
+        static void releaseObjectsWithTag(const char *tag) {
+            if (!tag) {
+                return;
+            }
+
+            auto objects = tes_context::instance().filter_objects([tag](const object_base& obj) {
+                return obj.has_equal_tag(tag);
+            });
+
+            for (auto& ref : objects) {
+                while (ref->_tes_refCount != 0) {
+                    ref->tes_release();
+                }
+            }
+        }
+        REGISTERF2(releaseObjectsWithTag, "tag",
+"For cleanup purpose only - releases lost (and not lost) objects with given tag.\n"
+"Complements all retain calls objects with given tag received with release calls.\n"
+"See 'object lifetime management' section for more information");
+
+        static object_base* addToTmpLocation(ref obj, const char *locationName) {
+            if (locationName) {
+                std::string path(".__tempLocations.");
+                path += locationName;
+
+                array::ref location;
+
+                path_resolving::resolvePath(tes_context::instance().database(), path.c_str(), [&](Item* itmPtr) {
+                    if (itmPtr) {
+                        if (auto loc = itmPtr->object()->as<array>()) {
+                            location = loc;
+                        }
+                        else {
+                            location = array::object(tes_context::instance());
+                            *itmPtr = location.get();
+                        }
+                    }
+                },
+                    true);
+
+                if (location) {
+                    location->push(Item(obj));
+                }
+            }
+
+            return obj.get();
+        }
+        REGISTERF2(addToTmpLocation, "* locationName",
+"Handly for temporary objects (objects with no owners) - location 'locationName' owns any amount of objects, preventing their destuction, extends lifetime.\n\
+Do not forget to clean location later! Typic use:\n\
+int tempMap = JValue.addToTmpLocation(JMap.object(), \"uniqueLocationName\")\n\
+anywhere later:\n\
+JValue.cleanTempLocation(\"uniqueLocationName\")"
+);
+
+        static void cleanTmpLocation(const char *locationName) {
+            if (locationName) {
+                auto locationsMap = tes_context::instance().database()->find("__tempLocations").object()->as<map>();
+                if (locationsMap) {
+                    locationsMap->erase(locationName);
+                }
+            }
+        }
+        REGISTERF2(cleanTmpLocation, "locationName", nullptr);
 
         static bool isExists(ref obj) {
             return obj.get() != nullptr;
