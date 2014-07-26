@@ -2,11 +2,14 @@
 
 #include <set>
 #include <vector>
+#include <map>
 #include <jansson.h>
 #include <memory>
 
 #include "collections.h"
 #include "form_handling.h"
+#include "boost_extras.h"
+#include "path_resolving.h"
 
 namespace collections {
 
@@ -27,12 +30,34 @@ namespace collections {
     typedef struct json_t * json_ref;
     typedef decltype(make_unique_ptr((json_t*)nullptr, json_decref)) json_unique_ref;
 
-    class json_deserializer {
-        tes_context& _context;
+    namespace reference_serialization {
+        const char prefix[] = "__reference|";
+        const char separator = '|';
 
+        inline bool is_special_string(const char *str) {
+            char spec[] = "__";
+            return str && strncmp(str, spec, sizeof spec - 1) == 0;
+        }
+
+        inline bool is_reference(const char *str) {
+            return str && strncmp(str, prefix, sizeof prefix - 1) == 0;
+        }
+
+        inline const char* extract_path(const char *str) {
+            return is_reference(str) ? (str + sizeof(prefix) - 1) : nullptr;
+        }
+    }
+
+    class json_deserializer {
         typedef std::vector<std::pair<object_base*, json_ref> > objects_to_fill;
 
+        typedef boost::variant<size_t, std::string, FormId> key_variant;
+        // path - <container, key> pairs relationship
+        typedef std::map<std::string, std::vector<std::pair<object_base*, key_variant > > > key_info_map;
+
+        tes_context& _context;
         objects_to_fill _toFill;
+        key_info_map _toResolve;
 
         explicit json_deserializer(tes_context& context) : _context(context) {}
 
@@ -82,7 +107,53 @@ namespace collections {
                 }
             }
 
+            resolve_references(root);
+
             return &root;
+        }
+
+        void resolve_references(object_base& root) {
+
+            for (const auto& pair : _toResolve) {
+                auto& path = pair.first;
+                object_base *resolvedObject = nullptr;
+
+                path_resolving::resolvePath(&root, path.c_str(), [&resolvedObject](Item *itm) {
+                    if (itm) {
+                        resolvedObject = itm->object();
+                    }
+                });
+
+                if (!resolvedObject) {
+                    continue;
+                }
+
+                for (auto& obj2Key : pair.second) {
+                    struct value_setter : boost::static_visitor < > {
+                        object_base& obj;
+                        object_base* val;
+
+                        value_setter(object_base& o, object_base* value) : obj(o), val(value) {}
+
+                        void operator()(const std::string & key) const {
+                            obj.as<map>()->setValueForKey(key, Item(val));
+                        }
+
+                        void operator()(const size_t& key) const {
+                            obj.as<array>()->setItem(key, Item(val));
+                        }
+
+                        void operator()(const FormId& key) const {
+                            obj.as<form_map>()->setValueForKey(key, Item(val));
+                        }
+                    };
+
+                    boost::apply_visitor(
+                        value_setter(*obj2Key.first, resolvedObject),
+                        obj2Key.second);
+                }
+            }
+
         }
 
         void fill_object(object_base& object, json_ref val) {
@@ -94,7 +165,7 @@ namespace collections {
                 json_t *value = nullptr;
 
                 json_array_foreach(val, index, value) {
-                    arr->u_push(make_item(value));
+                    arr->u_push(make_item(value, object, index));
                 }
             }
             else if (map *cnt = object.as<map>()) {
@@ -102,7 +173,7 @@ namespace collections {
                 json_t *value;
 
                 json_object_foreach(val, key, value) {
-                    cnt->u_setValueForKey(key, make_item(value));
+                    cnt->u_setValueForKey(key, make_item(value, object, key));
                 }
             }
             else if (form_map *cnt = object.as<form_map>()) {
@@ -112,7 +183,7 @@ namespace collections {
                 json_object_foreach(val, key, value) {
                     auto fkey = form_handling::from_string(key);
                     if (fkey) {
-                        cnt->u_setValueForKey(*fkey, make_item(value));
+                        cnt->u_setValueForKey(*fkey, make_item(value, object, *fkey));
                     }
                 }
             }
@@ -138,7 +209,20 @@ namespace collections {
             return *object;
         }
 
-        Item make_item(json_ref val) {
+        template<class K>
+        bool schedule_ref_resolving(const char *ref_string, object_base& container, const K& item_key) {
+            const char* path = reference_serialization::extract_path(ref_string);
+
+            if (!path) {
+                return false;
+            }
+
+            _toResolve[path].push_back( std::make_pair(&container, item_key) );
+            return true;
+        }
+
+        template<class K>
+        Item make_item(json_ref val, object_base& container, const K& item_key) {
             Item item;
 
             auto type = json_typeof(val);
@@ -148,18 +232,25 @@ namespace collections {
             }
             else if (type == JSON_STRING) {
 
-                /*  having dilemma here:
-                    if string looks likes form-string and plugin name can't be resolved:
-                    a. lost info and convert it to FormZero
-                    b. save info and convert it to string
-                */
 
                 auto string = json_string_value(val);
-                if (!form_handling::is_form_string(string)) {
+
+                if (!reference_serialization::is_special_string(string)) {
                     item = string;
                 } else {
-                    item = form_handling::from_string(string).get_value_or(FormZero);
+                    if (form_handling::is_form_string(string)) {
+                        /*  having dilemma here:
+                            if string looks likes form-string and plugin name can't be resolved:
+                            a. lost info and convert it to FormZero
+                            b. save info and convert it to string
+                        */
+                        item = form_handling::from_string(string).get_value_or(FormZero);
+                    }
+                    else if (schedule_ref_resolving(string, container, item_key)) {
+                        ;
+                    }
                 }
+
             }
             else if (type == JSON_INTEGER) {
                 item = (int)json_integer_value(val);
@@ -390,7 +481,7 @@ namespace collections {
                 }
             }
 
-            path.append("__reference: ");
+            path.append(reference_serialization::prefix);
 
             for (auto& key_var : keys) {
                 boost::apply_visitor(path_appender, *key_var);

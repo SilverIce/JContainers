@@ -184,6 +184,29 @@ namespace collections {
         }
     }
 
+    TEST(reference_serialization, test) {
+
+        const char* testData[][2] = {
+            "__reference|", "",
+            "__reference|anyString", "anyString",
+            "__reference||anyString", "|anyString",
+
+            "__reference", nullptr,
+            nullptr, nullptr,
+            "", nullptr,
+            "__", nullptr,
+        };
+
+        auto pathExtract = [&](const char* refString, const char* path) {
+            auto res = reference_serialization::extract_path(refString);
+            EXPECT_TRUE((!res && !path) || strcmp(res, path) == 0);
+        };
+
+        for (auto& row : testData) {
+            pathExtract(row[0], row[1]);
+        }
+    }
+
     JC_TEST(json_deserializer, test)
     {
         EXPECT_NIL( json_deserializer::object_from_file(context, "") );
