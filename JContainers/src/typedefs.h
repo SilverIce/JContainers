@@ -7,5 +7,5 @@
 #   ifdef _DEBUG
 #       define jc_assert(expr)     if (!(expr)) { __debugbreak(); }
 #   else
-#       define jc_assert(expr)     assert(expr)
+#       define jc_assert(expr)     //assert(expr) // does nothing in release
 #   endif

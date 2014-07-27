@@ -140,7 +140,14 @@ namespace collections
 
             auto hdr = header::make();
 
-            if (stream.peek() != std::istream::traits_type::eof()) {
+            bool isFromFuture = kJSerializationCurrentVersion < version;
+
+            if (isFromFuture) {
+                _FATALERROR("plugin can not be compatible with future save version %u. plugin save vesrion is %u", version, kJSerializationCurrentVersion);
+                jc_assert(false);
+            }
+
+            if (stream.peek() != std::istream::traits_type::eof() && !isFromFuture) {
 
                 if (version <= kJSerializationNoHeaderVersion) {
                     hdr = header::imitate_old_header();
@@ -151,11 +158,6 @@ namespace collections
 
                 boost::archive::binary_iarchive archive(stream);
 
-                if (kJSerializationCurrentVersion < version) {
-                    _FATALERROR("plugin can not be compatible with future save version %u. plugin save vesrion is %u", version, kJSerializationCurrentVersion);
-                    assert(false);
-                }
-
                 try {
                     archive >> *registry;
                     archive >> *aqueue;
@@ -165,19 +167,19 @@ namespace collections
                     }
                 }
                 catch (const std::exception& exc) {
-                    _FATALERROR("caught exception (%s) during archive load - '%s'. forcing application to crash",
+                    _FATALERROR("caught exception (%s) during archive load - '%s'",
                         typeid(exc).name(), exc.what());
                     u_clearState();
 
                     // force whole app to crash
-                    assert(false);
+                    jc_assert(false);
                 }
                 catch (...) {
-                    _FATALERROR("caught unknown (non std::*) exception. forcing application to crash");
+                    _FATALERROR("caught unknown (non std::*) exception");
                     u_clearState();
 
                     // force whole app to crash
-                    assert(false);
+                    jc_assert(false);
                 }
             }
 
