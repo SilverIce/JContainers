@@ -182,7 +182,7 @@ solveInt(objectA, ".keyA[4].keyB")
 ```
 retrieves a value which is associated with keyB of JMap, which located at 4-th index of JArray, which is associated with keyA of objectA-JMap. Huh.
 
-`solve*Setter` changes (assigns) a value. Also there is an optional `createMissingKeys` argument - if enabled, will insert any missing JMap key during path traversal. For example, calling `solveFltSetter(objectA, ".key1.key2", 3.14, true)` on an empty objectA will create new JMap B containing `{"key2", 3.14}` pair and associate objectA with new JMap (i.e. `{"key1", B}` pair will be created). `solve*Setter` fails if `createMissingKeys` is disabled and any key in the path is missing.
+`solve*Setter` changes (assigns) a value. Also there is an optional `createMissingKeys` argument - if enabled, will insert any missing JMap key during path traversal. For example, calling `solveFltSetter(objectA, ".key1.key2", 3.14, true)` on an empty objectA will create new JMap B containing `{"key2", 3.14}` pair and associate objectA with new JMap B (i.e. `{"key1", {"key2": 3.14}}` structure will be created). `solve*Setter` fails if `createMissingKeys` is disabled and any key in the path is missing.
 
 More examples:
 ```json
@@ -266,21 +266,63 @@ Internally all containers are C++ objects, Skyrim knows nothing about them and u
 
 The lifetime management model is based on object ownership. Any container object may have one or more owners. As long as an object has at least one owner, it continues to exist. If an object has no owners it gets destroyed.
 
-The rules:
+#### Functionality to manage object's lifetime:
+-------------
+```lua
+int function retain(int object, string tag=None)
+int function release(int object)
+function releaseObjectsWithTag(string tag)
+```
+The lifetime model implemented using simple owner (reference) counter. Each object have a such counter. Each time the object gets inserted into another container or `JValue.retain` used object's reference counter increases. Each time object gets removed from container or released via `JValue.release` - reference counter decreases.
+When reference counter reaches zero, object temporarily owned for roughly 10 seconds, during this period of time it have a _last chance to survive_ - and gets destroyed if nobody owned it.
+Newly created object (created with `object`, `objectWith*`, `all/Keys/Values` or `readFromFile` function) also have that _last chance_.
 
-- to prevent destruction you must own container (use `JValue.retain` function)
-- when you do not need that object you must release it (use `JValue.release`)
+Illustration shows the idea: ![test][1]
 
-**The caller of `JValue.retain` is responsible for releasing object. Not released object will remain in savefile forever.**
+> **Important:** The caller of `JValue.retain` is responsible for releasing object. Not released object will remain in save file forever.
+    
+`Tag` parameter marks an object. `None` tag does nothing. Must be an unique string (mod name may fit). Why we need a tag? We all human. We may forget to release an object. Papyrus may throw an error in between `retain .. release` and in a result `release` will not be executed. By tagging an object you leave a possibility to track lost objects with specific tag and release them via `JValue.releaseObjectsWithTag` function.
+    
+> **Important:** `JValue.releaseObjectsWithTag` complements all `retain` calls with `release` that were ever made to all objects with given tag.
+    
+```lua
+int function releaseAndRetain(int previousObject, int newObject, string tag=None)
+```
+It's just a union of retain-release calls. Releases `previousObject`, retains, tags and returns `newObject`. Typical usage:
+    
+```lua
+; -- create and retain an object
+self.followers = JArray.object()
+; -- release object
+self.followers = 0
+; -- or replace with another
+self.followers = JArray.object()
 
-The lifetime model implemented using simple owner(reference) counter. Each object have a such counter. Each time object gets inserted into another container or `JValue.retain` used reference counter increases. Each time object gets removed from container or released via `JValue.release` reference counter decreases.
-If reference counter reaches zero, object temporarily owned for roughly 10 seconds, during this perod of time it have a  'last chance to survive' - and gets destroyed if nobody owned it.
+int property followers hidden
+    int function get()
+        return _followers
+    endFunction
+    function set(int value)
+        _followers = JValue.releaseAndRetain(_followers, value, "uniqueTag")
+    endFunction
+endProperty
+    
+int _followers = 0
+```
+-------------
+```lua
+int function addToTmpLocation(int object, string locationName) global native
+function cleanTmpLocation(string locationName) global native
+```
 
-Newly created object (created with `object`, `objectWith*`, `all/Keys/Values` or `readFromFile` function) also have that 'last chance'.
+Handy for temporary objects (objects with no owners) - when it's known that object's lifetime should exceed 10 seconds. Location `locationName` (must be an unique string - mod name may fit) owns any amount of objects, preventing their destruction, extends lifetime. Internally location is JArray - `addToTmpLocation` adds an object and `cleanTempLocation` clears it. Do not forget to clean location later! Typical use:
 
-Illustration shows the idea:
+```lua
+int tempMap = JValue.addToTmpLocation(JMap.object(), "uniqueLocationName")
+anywhere later:
+JValue.cleanTempLocation("uniqueLocationName")
+```
 
-![test][1]
 
 ## Tutorial
 
