@@ -177,7 +177,7 @@ form player = JValue.solveForm(data, ".actor")
 
 This feature simplifies an access to values of nested objects via group of `solve*` and `solve*Setter` functions. Each function takes path specifier, which determines in which key to search for a value. For example:
 
-```
+```lua
 solveInt(objectA, ".keyA[4].keyB")
 ```
 retrieves a value which is associated with keyB of JMap, which located at 4-th index of JArray, which is associated with keyA of objectA-JMap. Huh.
@@ -185,7 +185,8 @@ retrieves a value which is associated with keyB of JMap, which located at 4-th i
 `solve*Setter` changes (assigns) a value. Also there is an optional `createMissingKeys` argument - if enabled, will insert any missing JMap key during path traversal. For example, calling `solveFltSetter(objectA, ".key1.key2", 3.14, true)` on an empty objectA will create new JMap B containing `{"key2", 3.14}` pair and associate objectA with new JMap B (i.e. `{"key1", {"key2": 3.14}}` structure will be created). `solve*Setter` fails if `createMissingKeys` is disabled and any key in the path is missing.
 
 More examples:
-```json
+
+```lua
 info = {
     "classicPreset" :  {
         "campfileLighting" : "Automatic"
