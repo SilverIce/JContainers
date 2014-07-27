@@ -118,7 +118,7 @@ namespace collections {
                 auto& path = pair.first;
                 object_base *resolvedObject = nullptr;
 
-                path_resolving::resolvePath(&root, path.c_str(), [&resolvedObject](Item *itm) {
+                path_resolving::resolve(_context, &root, path.c_str(), [&resolvedObject](Item *itm) {
                     if (itm) {
                         resolvedObject = itm->object();
                     }
@@ -225,14 +225,13 @@ namespace collections {
         Item make_item(json_ref val, object_base& container, const K& item_key) {
             Item item;
 
-            auto type = json_typeof(val);
-
-            if (type == JSON_ARRAY || type == JSON_OBJECT) {
+            switch (json_typeof(val))
+            {
+            case JSON_OBJECT:
+            case JSON_ARRAY:
                 item = &make_placeholder(val);
-            }
-            else if (type == JSON_STRING) {
-
-
+                break;
+            case JSON_STRING:{
                 auto string = json_string_value(val);
 
                 if (!reference_serialization::is_special_string(string)) {
@@ -252,14 +251,20 @@ namespace collections {
                 }
 
             }
-            else if (type == JSON_INTEGER) {
+                break;
+            case JSON_INTEGER:
                 item = (int)json_integer_value(val);
-            }
-            else if (type == JSON_REAL) {
+                break;
+            case JSON_REAL:
                 item = json_real_value(val);
-            }
-            else if (type == JSON_TRUE || type == JSON_FALSE) {
+                break;
+            case JSON_TRUE:
+            case JSON_FALSE:
                 item = json_boolean_value(val);
+                break;
+            case JSON_NULL:
+            default:
+                break;
             }
 
             return item;

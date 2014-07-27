@@ -93,7 +93,7 @@ It's recommended to set a tag (any unique string will fit - mod name for ex.) - 
 
                 array::ref location;
 
-                path_resolving::resolvePath(tes_context::instance().database(), path.c_str(), [&](Item* itmPtr) {
+                path_resolving::resolve(tes_context::instance(), tes_context::instance().database(), path.c_str(), [&](Item* itmPtr) {
                     if (itmPtr) {
                         if (auto loc = itmPtr->object()->as<array>()) {
                             location = loc;
@@ -236,7 +236,7 @@ JValue.cleanTempLocation(\"uniqueLocationName\")"
                 return false;
 
             bool succeed = false;
-            path_resolving::resolvePath(obj, path, [&](Item* itmPtr) {
+            path_resolving::resolve(tes_context::instance(), obj, path, [&](Item* itmPtr) {
                 succeed = (itmPtr != nullptr);
             });
 
@@ -258,7 +258,7 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
                 return 0;
 
             T val((T)0);
-            path_resolving::resolvePath(obj, path, [&](Item* itmPtr) {
+            path_resolving::resolve(tes_context::instance(), obj, path, [&](Item* itmPtr) {
                 if (itmPtr) {
                     val = itmPtr->readAs<T>();
                 }
@@ -282,7 +282,7 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
                 return false;
 
             bool succeed = false;
-            path_resolving::resolvePath(obj, path, [&](Item* itmPtr) {
+            path_resolving::resolve(tes_context::instance(), obj, path, [&](Item* itmPtr) {
                 if (itmPtr) {
                     *itmPtr = Item((T)value);
                     succeed = true;
