@@ -147,6 +147,7 @@
     <ClCompile Include="src\serialization.cpp" />
     <ClCompile Include="src\skse.cpp" />
     <ClCompile Include="src\tes_inteface.cpp" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="src\autorelease_queue.h" />
     <ClInclude Include="src\boost_extras.h" />
     <ClInclude Include="src\code_producer.hpp" />
@@ -199,6 +200,9 @@
     <ProjectReference Include="..\dep\skse\skse\skse.vcxproj">
       <Project>{aa0365ec-47ea-45aa-bb1f-ebbcccc466f2}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="JContainers.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

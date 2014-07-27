@@ -168,5 +168,9 @@
     <ClInclude Include="src\code_producer.hpp">
       <Filter>reflection</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="JContainers.rc" />
   </ItemGroup>
 </Project>
