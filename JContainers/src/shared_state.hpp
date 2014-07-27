@@ -97,8 +97,14 @@ namespace collections
             return{ kJSerializationCurrentVersion };
         }
 
-        static header read_from_string(const std::string& str) {
-            auto js = make_unique_ptr(json_loads(str.c_str(), 0, nullptr), &json_decref);
+        static header read_from_stream(std::istream & stream) {
+
+            uint32_t hdrSize = 0;
+            stream >> hdrSize;
+            std::string hdrString(hdrSize, '\0');
+            stream.read((char*)hdrString.c_str(), hdrSize);
+
+            auto js = make_unique_ptr(json_loads(hdrString.c_str(), 0, nullptr), &json_decref);
 
             return{ json_integer_value(json_object_get(js.get(), "commonVersion")) };
         }
@@ -111,10 +117,13 @@ namespace collections
             return header;
         }
 
-        static std::string write_to_string() {
+        static void write_to_stream(std::ostream & stream) {
             auto header = write_to_json();
             auto data = make_unique_ptr(json_dumps(header.get(), 0), free);
-            return std::string(data.get());
+
+            uint32_t hdrSize = strlen(data.get());
+            stream << (uint32_t)hdrSize;
+            stream.write(data.get(), hdrSize);
         }
     };
 
@@ -132,6 +141,14 @@ namespace collections
             auto hdr = header::make();
 
             if (stream.peek() != std::istream::traits_type::eof()) {
+
+                if (version <= kJSerializationNoHeaderVersion) {
+                    hdr = header::imitate_old_header();
+                }
+                else {
+                    hdr = header::read_from_stream(stream);
+                }
+
                 boost::archive::binary_iarchive archive(stream);
 
                 if (kJSerializationCurrentVersion < version) {
@@ -140,16 +157,6 @@ namespace collections
                 }
 
                 try {
-
-                    if (version <= kJSerializationNoHeaderVersion) {
-                        hdr = header::imitate_old_header();
-                    }
-                    else {
-                        std::string jsString;
-                        archive >> jsString;
-                        hdr = header::read_from_string(jsString);
-                    }
-
                     archive >> *registry;
                     archive >> *aqueue;
 
@@ -193,11 +200,11 @@ namespace collections
 
         stream.flags(stream.flags() | std::ios::binary);
 
-        boost::archive::binary_oarchive arch(stream);
+        header::write_to_stream(stream);
 
         aqueue->stop();
         {
-            arch << header::write_to_string();
+            boost::archive::binary_oarchive arch(stream);
             arch << *registry;
             arch << *aqueue;
 

@@ -219,6 +219,7 @@ namespace collections {
     }
 
     // load json file into tes_context -> serialize into json again -> compare with original json
+    // also compares original json with json, loaded from serialized tex_context (do_comparison2 function)
     struct json_loading_test : testing::Fixture {
 
         void test() {
@@ -233,6 +234,7 @@ namespace collections {
                 if (fs::is_regular_file(*itr)) {
                     atLeastOneTested = true;
                     do_comparison(itr->path().generic_string().c_str());
+                    do_comparison2(itr->path().generic_string().c_str());
                 }
             }
 
@@ -253,6 +255,35 @@ namespace collections {
             EXPECT_NOT_NIL( originJson );
 
             EXPECT_TRUE( json_equal(originJson.get(), jsonOut.get()) == 1 ); 
+        }
+
+        void do_comparison2(const char *file_path) {
+            EXPECT_NOT_NIL(file_path);
+
+            auto jsonOut = make_unique_ptr((json_t*)nullptr, &json_decref);
+            {
+                tes_context ctx;
+
+                Handle rootId = HandleNull;
+                {
+                    auto root = json_deserializer::object_from_file(ctx, file_path);
+                    EXPECT_NOT_NIL(root);
+                    rootId = root->uid();
+                }
+
+                auto state = ctx.write_to_string();
+                ctx.clearState();
+
+                ctx.read_from_string(state, kJSerializationCurrentVersion);
+
+                jsonOut = json_serializer::create_json_value(*ctx.getObject(rootId));
+                ctx.clearState();
+            }
+
+            auto originJson = json_deserializer::json_from_file(file_path);
+            EXPECT_NOT_NIL(originJson);
+
+            EXPECT_TRUE(json_equal(originJson.get(), jsonOut.get()) == 1);
         }
     };
 
