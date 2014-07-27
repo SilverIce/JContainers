@@ -398,6 +398,13 @@ namespace collections {
             return index < _array.size() ? &_array[index] : nullptr;
         }
 
+        void setItem(size_t index, const Item& itm) {
+            object_lock g(this);
+            if (index < _array.size()) {
+                _array[index] = itm;
+            }
+        }
+
         iterator begin() { return _array.begin();}
         iterator end() { return _array.end(); }
 

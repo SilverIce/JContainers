@@ -184,6 +184,29 @@ namespace collections {
         }
     }
 
+    TEST(reference_serialization, test) {
+
+        const char* testData[][2] = {
+            "__reference|", "",
+            "__reference|anyString", "anyString",
+            "__reference||anyString", "|anyString",
+
+            "__reference", nullptr,
+            nullptr, nullptr,
+            "", nullptr,
+            "__", nullptr,
+        };
+
+        auto pathExtract = [&](const char* refString, const char* path) {
+            auto res = reference_serialization::extract_path(refString);
+            EXPECT_TRUE((!res && !path) || strcmp(res, path) == 0);
+        };
+
+        for (auto& row : testData) {
+            pathExtract(row[0], row[1]);
+        }
+    }
+
     JC_TEST(json_deserializer, test)
     {
         EXPECT_NIL( json_deserializer::object_from_file(context, "") );
@@ -237,10 +260,56 @@ namespace collections {
 
     JC_TEST(json_serializer, no_infinite_recursion)
     {
-        map *cnt = map::object(context);
-        cnt->u_setValueForKey("cycle", Item(cnt));
+        {
+            map *cnt = map::object(context);
+            cnt->u_setValueForKey("cycle", Item(cnt));
 
-        json_serializer::create_json_data(*cnt);
+            json_serializer::create_json_data(*cnt);
+        }
+        {
+            map *cnt1 = map::object(context);
+            map *cnt2 = map::object(context);
+
+            cnt1->u_setValueForKey("cnt2", Item(cnt2));
+            cnt2->u_setValueForKey("cnt1", Item(cnt1));
+
+            json_serializer::create_json_data(*cnt1);
+        }
+    }
+
+    JC_TEST(json_serializer, json_references)
+    {
+        array::ref root = array::object(context);
+
+        {
+            map *c2 = map::object(context);
+            map *c3 = map::object(context);
+
+            c2->setValueForKey("c3", Item(c3));
+            c3->setValueForKey("c2", Item(c2));
+
+            root->push(Item(c2));
+            root->push(Item(c3));
+            root->push(Item(root.get()));
+        }
+
+        auto data = json_serializer::create_json_data(*root);
+        auto c_string = data.get();
+
+        array::ref newRoot = json_deserializer::object_from_json_data(context, data.get())->as<array>();
+
+        EXPECT_TRUE(newRoot->s_count() == 3);
+
+        map* c2 = newRoot->u_getItem(0)->object()->as<map>();
+        EXPECT_NOT_NIL(c2);
+
+        map* c3 = newRoot->u_getItem(1)->object()->as<map>();
+        EXPECT_NOT_NIL(c3);
+
+        EXPECT_TRUE(c2 == c3->find("c2").object());
+        EXPECT_TRUE(c3 == c2->find("c3").object());
+
+        EXPECT_TRUE(newRoot.get() == newRoot->u_getItem(2)->object());
     }
 
     JC_TEST(tes_context, backward_compatibility)
@@ -349,13 +418,13 @@ namespace collections {
     TEST(path_resolving, collection_operators)
     {
         auto shouldReturnNumber = [&](object_base *obj, const char *path, float value) {
-            path_resolving::resolvePath(obj, path, [&](Item * item) {
+            path_resolving::resolve(tes_context::instance(), obj, path, [&](Item * item) {
                 EXPECT_TRUE(item && item->fltValue() == value);
             });
         };
 
         auto shouldReturnInt = [&](object_base *obj, const char *path, int value) {
-            path_resolving::resolvePath(obj, path, [&](Item * item) {
+            path_resolving::resolve(tes_context::instance(), obj, path, [&](Item * item) {
                 EXPECT_TRUE(item && item->intValue() == value);
             });
         };
@@ -403,27 +472,32 @@ namespace collections {
             "glossary": {
                 "GlossDiv": "S"
             },
-            "array" : [["NPC Head [Head]", 0, -0.330000]]
+            "array" : [["NPC Head [Head]", 0, -0.330000]],
+            "fmap" : {
+                    "__formData": null,
+                    "__formData|S|0x20": 8.0
+                }
         }
         ));
 
+        EXPECT_NOT_NIL(obj);
+
         auto shouldSucceed = [&](const char * path, bool succeed) {
-            path_resolving::resolvePath(obj, path, [&](Item * item) {
+            path_resolving::resolve(tes_context::instance(), obj, path, [&](Item * item) {
                 EXPECT_TRUE(succeed == (item != nullptr));
             });
         };
 
-        path_resolving::resolvePath(obj, ".glossary.GlossDiv", [&](Item * item) {
+        path_resolving::resolve(tes_context::instance(), obj, ".glossary.GlossDiv", [&](Item * item) {
             EXPECT_TRUE(item && item->strValue() && strcmp(item->strValue(), "S") == 0);
         });
 
-        /*      feature disabled
-        json_handling::resolvePath(obj, "glossary.GlossDiv", [&](Item * item) {
-        EXPECT_TRUE(item && strcmp(item->strValue(), "S") == 0 );
-        });*/
-
-        path_resolving::resolvePath(obj, ".array[0][0]", [&](Item * item) {
+        path_resolving::resolve(tes_context::instance(), obj, ".array[0][0]", [&](Item * item) {
             EXPECT_TRUE(item && strcmp(item->strValue(), "NPC Head [Head]") == 0);
+        });
+
+        path_resolving::resolve(tes_context::instance(), obj, ".fmap[__formData|S|0x20]", [&](Item * item) {
+            EXPECT_TRUE(item && item->isEqual(8.f));
         });
 
         shouldSucceed(".nonExistingKey", false);
@@ -441,7 +515,7 @@ namespace collections {
 
 
         float floatVal = 10.5;
-        path_resolving::resolvePath(obj, ".glossary.GlossDiv", [&](Item * item) {
+        path_resolving::resolve(tes_context::instance(), obj, ".glossary.GlossDiv", [&](Item * item) {
             EXPECT_TRUE(item != nullptr);
             *item = floatVal;
         });
@@ -464,11 +538,11 @@ namespace collections {
 
         EXPECT_TRUE(obj != nullptr);
 
-        path_resolving::resolvePath(obj, ".timesTrained", [&](Item * item) {
+        path_resolving::resolve(tes_context::instance(), obj, ".timesTrained", [&](Item * item) {
             EXPECT_TRUE(item && item->intValue() == 10);
         });
 
-        path_resolving::resolvePath(obj, ".trainers", [&](Item * item) {
+        path_resolving::resolve(tes_context::instance(), obj, ".trainers", [&](Item * item) {
             EXPECT_TRUE(item && item->object()->as<array>());
         });
     }

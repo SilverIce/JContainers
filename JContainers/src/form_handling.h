@@ -54,7 +54,7 @@ namespace collections {
             if (is_static(formId)) { // common case
                 modName = skse::modname_from_index (modID);
                 if (!modName) {
-                    return boost::make_optional(false, std::string("invalid form id"));
+                    return false;
                 }
 
                 formIdClean = local_id(formId);
@@ -81,12 +81,9 @@ namespace collections {
         }
 
         // TODO: rename me!
-        inline boost::optional<FormId> from_string(const char* source) {
-
+        inline boost::optional<FormId> from_string(boost::iterator_range<const char*>& fstring) {
             namespace bs = boost;
             namespace ss = std;
-
-            auto fstring = bs::make_iterator_range(source, source + strnlen_s(source, 1024));
 
             auto pair1 = bs::half_split(fstring, "|");
 
@@ -129,6 +126,11 @@ namespace collections {
 
             formId = construct(modIdx, formId);
             return (FormId)formId;
+        }
+
+        inline boost::optional<FormId> from_string(const char* source) {
+            auto fstring = boost::make_iterator_range(source, source + strnlen_s(source, 1024));
+            return from_string(fstring);
         }
     }
 
