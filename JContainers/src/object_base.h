@@ -176,9 +176,10 @@ namespace collections {
             u_clear();
         }
 
+        // empty string is also null tag
         void set_tag(const char *tag) {
             lock g(_mutex);
-            if (tag) {
+            if (tag && *tag) {
                 _tag = tag;
             } else {
                 _tag = boost::none;

@@ -19,17 +19,13 @@ namespace collections {
         static object_base* retain(ref obj, const char* tag = nullptr) {
             if (obj) {
                 obj->tes_retain();
-
-                if (tag) {
-                    obj->set_tag(tag);
-                }
-
+                obj->set_tag(tag);
                 return obj.get();
             }
 
             return nullptr;
         }
-        REGISTERF2(retain, "* tag=None",
+        REGISTERF2(retain, "* tag=\"\"",
 "Retains and returns the object. Purpose - extend object lifetime.\n\
 Newly created object if not retained or not referenced/contained by another container directly or indirectly gets destoyed after ~10 seconds due to absence of owners.\n\
 Retain increases amount of owners object have by 1. The retainer is responsible for releasing object later.\n\
@@ -62,7 +58,7 @@ It's recommended to set a tag (any unique string will fit - mod name for ex.) - 
 
             return newObject.get();
         }
-        REGISTERF2(releaseAndRetain, "previousObject newObject tag=None",
+        REGISTERF2(releaseAndRetain, "previousObject newObject tag=\"\"",
 "Just a union of retain-release calls. Releases previousObject, retains and returns newObject.\n\
 It's recommended to set a tag (any unique string will fit - mod name for ex.) - later you'll be able to release all objects with selected tag even if identifier was lost.");
 
