@@ -24,7 +24,9 @@ namespace collections
             shared_state::delegate = this;
         }
 
-        //~tes_context() {}
+        ~tes_context() {
+            clearState();
+        }
 
         void setLastError(JErrorCode code) {
             _lastError = code;
