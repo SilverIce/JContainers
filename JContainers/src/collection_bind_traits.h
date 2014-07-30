@@ -38,6 +38,19 @@ namespace reflection { namespace binding {
 
     //////////////////////////////////////////////////////////////////////////
 
+    template<> struct GetConv < Handle > {
+        typedef HandleT tes_type;
+
+        static HandleT convert2Tes(Handle obj) {
+            return obj;
+        }
+        static Handle convert2J(HandleT hdl) {
+            return static_cast<Handle>(hdl);
+        }
+    };
+
+    //////////////////////////////////////////////////////////////////////////
+
     template<class T, class P> struct j2Str < boost::intrusive_ptr_jc<T, P> > {
         static function_parameter typeInfo() { return j2Str<T*>::typeInfo(); }
     };
@@ -54,5 +67,7 @@ namespace reflection { namespace binding {
     template<> struct j2Str < map * > : jc_object_type_info{};
     template<> struct j2Str < array * > : jc_object_type_info{};
     template<> struct j2Str < form_map * > : jc_object_type_info{};
+    template<> struct j2Str < Handle > : jc_object_type_info{};
+
 }
 }

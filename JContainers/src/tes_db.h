@@ -11,10 +11,10 @@ Manages keys and values associations as JMap";
         }
 
         template<class T>
-        static T solveGetter(const char* path) {
-            return tes_object::resolveGetter<T>(tes_context::instance().database(), path); 
+        static T solveGetter(const char* path, T t = T(0)) {
+            return tes_object::resolveGetter<T>(tes_context::instance().database(), path, t); 
         }
-        REGISTERF(solveGetter<Float32>, "solveFlt", "path",
+        REGISTERF(solveGetter<Float32>, "solveFlt", "path default=0.0",
 "attempts to get value associated with path.\n\
 for ex. following information associated with 'frosfall' key:\n\
 \n\
@@ -26,10 +26,10 @@ for ex. following information associated with 'frosfall' key:\n\
 then JDB.solveFlt(\".frostfall.exposureRate\") will return 0.5 and\n\
 JDB.solveObj(\".frostfall.arrayC\") will return array containing [\"stringValue\", 1.5, 10, 1.14] values");
 
-        REGISTERF(solveGetter<SInt32>, "solveInt", "path", nullptr);
-        REGISTERF(solveGetter<const char*>, "solveStr", "path", nullptr);
-        REGISTERF(solveGetter<object_base*>, "solveObj", "path", nullptr);
-        REGISTERF(solveGetter<TESForm*>, "solveForm", "path", nullptr);
+        REGISTERF(solveGetter<SInt32>, "solveInt", "path default=0", nullptr);
+        REGISTERF(solveGetter<const char*>, "solveStr", "path default=\"\"", nullptr);
+        REGISTERF(solveGetter<Handle>, "solveObj", "path default=0", nullptr);
+        REGISTERF(solveGetter<TESForm*>, "solveForm", "path default=None", nullptr);
 
         template<class T>
         static bool solveSetter(const char* path, T value, bool createMissingKeys = false) { 

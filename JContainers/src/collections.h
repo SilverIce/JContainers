@@ -106,6 +106,10 @@ namespace collections {
             return boost::get<T>(&_var) != nullptr;
         }
 
+        int which() const {
+            return _var.which() + 1;
+        }
+
         template<class T> T* get() {
             return boost::get<T>(&_var);
         }
@@ -336,11 +340,11 @@ namespace collections {
         return chr ? BSFixedString(chr) : nullptr;
     }*/
 
-/*
+
     template<> inline Handle Item::readAs<Handle>() {
         auto obj = object();
         return obj ? obj->uid() : HandleNull;
-    }*/
+    }
 
     template<> inline TESForm * Item::readAs<TESForm*>() {
         return form();
@@ -442,6 +446,10 @@ namespace collections {
             return cnt;
         }
 
+        container_type& u_container() {
+            return cnt;
+        }
+
         container_type container_copy() {
             object_lock g(this);
             return cnt;
@@ -518,6 +526,10 @@ namespace collections {
     public:
 
         const container_type& u_container() const {
+            return cnt;
+        }
+
+        container_type& u_container() {
             return cnt;
         }
 

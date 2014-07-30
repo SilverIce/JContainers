@@ -164,20 +164,19 @@ if insertAtIndex >= 0 it appends values starting from insertAtIndex index");
         }
 
         template<class T>
-        static T itemAtIndex(ref obj, Index index) {
-            T t((T)0);
+        static T itemAtIndex(ref obj, Index index, T t = T(0)) {
             doReadOp(obj, index, [=, &t](uint32_t idx) {
                 t = obj->_array[idx].readAs<T>();
             });
 
             return t;
         }
-        REGISTERF(itemAtIndex<SInt32>, "getInt", "* index", "returns item at index. getObj function returns container.\n"
+        REGISTERF(itemAtIndex<SInt32>, "getInt", "* index default=0", "returns item at index. getObj function returns container.\n"
             NEGATIVE_IDX_COMMENT);
-        REGISTERF(itemAtIndex<Float32>, "getFlt", "* index", "");
-        REGISTERF(itemAtIndex<const char *>, "getStr", "* index", "");
-        REGISTERF(itemAtIndex<object_base*>, "getObj", "* index", "");
-        REGISTERF(itemAtIndex<TESForm*>, "getForm", "* index", "");
+        REGISTERF(itemAtIndex<Float32>, "getFlt", "* index default=0.0", "");
+        REGISTERF(itemAtIndex<const char *>, "getStr", "* index default=\"\"", "");
+        REGISTERF(itemAtIndex<Handle>, "getObj", "* index default=0", "");
+        REGISTERF(itemAtIndex<TESForm*>, "getForm", "* index default=None", "");
 
         template<class T>
         static SInt32 findVal(ref obj, T value, SInt32 pySearchStartIndex = 0) {
@@ -253,6 +252,17 @@ if addToIndex >= 0 it inserts value at given index. "NEGATIVE_IDX_COMMENT);
             });
         }
         REGISTERF2(eraseIndex, "* index", "erases item at index. "NEGATIVE_IDX_COMMENT);
+
+        static SInt32 valueType(ref obj, SInt32 index) {
+            SInt32 type = 0;
+            doReadOp(obj, index, [=, &type](uint32_t idx) {
+                type = obj->_array[idx].which();
+            });
+
+            return type;
+        }
+        REGISTERF2(valueType, "* index", "returns type of the value at index. "NEGATIVE_IDX_COMMENT"\n"VALUE_TYPE_COMMENT);
+
     };
 
     TES_META_INFO(tes_array);

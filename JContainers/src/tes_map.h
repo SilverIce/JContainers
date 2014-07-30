@@ -17,24 +17,24 @@ namespace collections {
         REGISTERF(tes_object::object<Cnt>, "object", "", kCommentObject);
 
         template<class T>
-        static T getItem(Cnt *obj, Key key) {
+        static T getItem(Cnt *obj, Key key, T def = T(0)) {
             if (!obj || !key) {
-                return T(0);
+                return def;
             }
 
             object_lock g(obj);
             auto item = obj->u_find(tes_hash(key));
-            return item ? item->readAs<T>() : T(0);
+            return item ? item->readAs<T>() : def;
         }
         template<class T>
-        static T _getItem(ref obj, Key key) {
+        static T _getItem(ref obj, Key key, T def) {
             return getItem<T>(obj.get(), key);
         }
-        REGISTERF(_getItem<SInt32>, "getInt", "object key", "returns value associated with key");
-        REGISTERF(_getItem<Float32>, "getFlt", "object key", "");
-        REGISTERF(_getItem<const char *>, "getStr", "object key", "");
-        REGISTERF(_getItem<object_base *>, "getObj", "object key", "");
-        REGISTERF(_getItem<TESForm*>, "getForm", "object key", "");
+        REGISTERF(_getItem<SInt32>, "getInt", "object key default=0", "returns value associated with key");
+        REGISTERF(_getItem<Float32>, "getFlt", "object key default=0.0", "");
+        REGISTERF(_getItem<const char *>, "getStr", "object key default=\"\"", "");
+        REGISTERF(_getItem<Handle>, "getObj", "object key default=0", "");
+        REGISTERF(_getItem<TESForm*>, "getForm", "object key default=None", "");
 
         template<class T>
         static void setItem(Cnt *obj, Key key, T item) {
@@ -55,15 +55,20 @@ namespace collections {
         REGISTERF(_setItem<TESForm*>, "setForm", "* key value", "");
 
         static bool hasKey(ref obj, Key key) {
+            return valueType(obj, key) != 0;
+        }
+        REGISTERF2(hasKey, "* key", "returns true, if something associated with key");
+
+        static SInt32 valueType(ref obj, Key key) {
             if (!obj || !key) {
                 return 0;
             }
 
             object_lock g(obj);
             auto item = obj->u_find(tes_hash(key));
-            return item != nullptr;
+            return item ? item->which() : 0;
         }
-        REGISTERF2(hasKey, "* key", "returns true, if something associated with key");
+        REGISTERF2(valueType, "* key", "returns type of the value associated with key.\n"VALUE_TYPE_COMMENT);
 
         static object_base* allKeys(Cnt* obj) {
             if (!obj) {
@@ -139,6 +144,25 @@ namespace collections {
             obj->s_clear();
         }
         REGISTERF2(clear, "*", "removes all items from container");
+
+        static void addPairs(ref obj, const ref source, bool overrideDuplicates) {
+            if (!obj || !source || source == obj) {
+                return;
+            }
+
+            object_lock g(obj);
+            object_lock c(source);
+
+            if (overrideDuplicates) {
+                for (const auto& pair : source->u_container()) {
+                    obj->u_container()[pair.first] = pair.second;
+                }
+            }
+            else {
+                obj->u_container().insert(source->u_container().begin(), source->u_container().end());
+            }
+        }
+        REGISTERF2(addPairs, "* source overrideDuplicates", "inserts key-value pairs from the source map");
 
         void additionalSetup();
     };

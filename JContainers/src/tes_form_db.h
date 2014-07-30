@@ -128,15 +128,15 @@ namespace collections {
         //////////////////////////////////////////////////////////////////////////
 
         template<class T>
-        static T solveGetter(TESForm *form, const char* path) {
+        static T solveGetter(TESForm *form, const char* path, T t = T(0)) {
             subpath_extractor sub(path, is_path);
-            return tes_object::resolveGetter<T>(findEntry(sub.storageName(), form), sub.rest()); 
+            return tes_object::resolveGetter<T>(findEntry(sub.storageName(), form), sub.rest(), t); 
         }
-        REGISTERF(solveGetter<Float32>, "solveFlt", "fKey path", "attempts to get value associated with path.");
-        REGISTERF(solveGetter<SInt32>, "solveInt", "fKey path", nullptr);
-        REGISTERF(solveGetter<const char*>, "solveStr", "fKey path", nullptr);
-        REGISTERF(solveGetter<object_base*>, "solveObj", "fKey path", nullptr);
-        REGISTERF(solveGetter<TESForm*>, "solveForm", "fKey path", nullptr);
+        REGISTERF(solveGetter<Float32>, "solveFlt", "fKey path default=0.0", "attempts to get value associated with path.");
+        REGISTERF(solveGetter<SInt32>, "solveInt", "fKey path default=0", nullptr);
+        REGISTERF(solveGetter<const char*>, "solveStr", "fKey path default=\"\"", nullptr);
+        REGISTERF(solveGetter<Handle>, "solveObj", "fKey path default=0", nullptr);
+        REGISTERF(solveGetter<TESForm*>, "solveForm", "fKey path default=None", nullptr);
 
         template<class T>
         static bool solveSetter(TESForm *form, const char* path, T value, bool createMissingKeys = false) {

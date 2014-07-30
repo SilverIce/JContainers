@@ -3,6 +3,9 @@ namespace collections {
     const char *kCommentObject = "creates new container object. returns container identifier (integer number).\n"
         "identifier is the thing you will have to pass to the most of container's functions as a first argument";
 
+#define VALUE_TYPE_COMMENT "0 - no value, 1 - none, 2 - int, 3 - float, 4 - form, 5 - object, 6 - string"
+
+
 #define ARGS(...)   #__VA_ARGS__
 
     class tes_object : public reflection::class_meta_mixin_t< tes_object > {
@@ -22,7 +25,7 @@ namespace collections {
                 obj->set_tag(tag);
                 return obj.get();
             }
-
+         
             return nullptr;
         }
         REGISTERF2(retain, "* tag=\"\"",
@@ -227,16 +230,22 @@ JValue.cleanTempLocation(\"uniqueLocationName\")"
         }
         REGISTERF(_writeToFile, "writeToFile", "* filePath", "writes object into JSON file");
 
+        static SInt32 solvedValueType(object_base* obj, const char *path) {
+            SInt32 type = 0;
+
+            if (obj && path) {
+                path_resolving::resolve(tes_context::instance(), obj, path, [&](Item* itmPtr) {
+                    if (itmPtr) {
+                        type = itmPtr->which();
+                    }
+                });
+            }
+
+            return type;
+        }
+
         static bool hasPath(object_base* obj, const char *path) {
-            if (!obj || !path)
-                return false;
-
-            bool succeed = false;
-            path_resolving::resolve(tes_context::instance(), obj, path, [&](Item* itmPtr) {
-                succeed = (itmPtr != nullptr);
-            });
-
-            return succeed;
+            return solvedValueType(obj, path) != 0;
         }
 
         static bool _hasPath(ref obj, const char *path) {
@@ -248,12 +257,16 @@ returns true, if container capable resolve given path.\n\
 for ex. JValue.hasPath(container, \".player.health\") will check if given container has 'player' which has 'health' information"
                                       );
 
-        template<class T>
-        static T resolveGetter(object_base *obj, const char* path) {
-            if (!obj || !path)
-                return 0;
+        static SInt32 _solvedValueType(ref obj, const char *path) {
+            return solvedValueType(obj.get(), path);
+        }
+        REGISTERF(_solvedValueType, "solvedValueType", "* path", "Returns type of resolved value. "VALUE_TYPE_COMMENT);
 
-            T val((T)0);
+        template<class T>
+        static T resolveGetter(object_base *obj, const char* path, T val = T(0)) {
+            if (!obj || !path)
+                return val;
+
             path_resolving::resolve(tes_context::instance(), obj, path, [&](Item* itmPtr) {
                 if (itmPtr) {
                     val = itmPtr->readAs<T>();
@@ -263,14 +276,14 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
             return val;
         }
         template<class T>
-        static T _resolveGetter(ref obj, const char* path) {
+        static T _resolveGetter(ref obj, const char* path, T val) {
             return resolveGetter<T>(obj.get(), path);
         }
-        REGISTERF(_resolveGetter<Float32>, "solveFlt", "* path", "attempts to get value at given path.\nJValue.solveInt(container, \".player.mood\") will return player's mood");
-        REGISTERF(_resolveGetter<SInt32>, "solveInt", "* path", nullptr);
-        REGISTERF(_resolveGetter<const char*>, "solveStr", "* path", nullptr);
-        REGISTERF(_resolveGetter<object_base*>, "solveObj", "* path", nullptr);
-        REGISTERF(_resolveGetter<TESForm*>, "solveForm", "* path", nullptr);
+        REGISTERF(_resolveGetter<Float32>, "solveFlt", "* path default=0.0", "attempts to get value at given path.\nJValue.solveInt(container, \".player.mood\") will return player's mood");
+        REGISTERF(_resolveGetter<SInt32>, "solveInt", "* path default=0", nullptr);
+        REGISTERF(_resolveGetter<const char*>, "solveStr", "* path default=\"\"", nullptr);
+        REGISTERF(_resolveGetter<Handle>, "solveObj", "* path default=0", nullptr);
+        REGISTERF(_resolveGetter<TESForm*>, "solveForm", "* path default=None", nullptr);
 
         template<class T>
         static bool solveSetter(object_base* obj, const char* path, T value, bool createMissingKeys = false) {
