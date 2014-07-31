@@ -85,10 +85,10 @@ It's recommended to set a tag (any unique string will fit - mod name for ex.) - 
 "Complements all retain calls objects with given tag received with release calls.\n"
 "See 'object lifetime management' section for more information");
 
-        static object_base* addToTmpLocation(ref obj, const char *locationName) {
-            if (locationName) {
-                std::string path(".__tempLocations.");
-                path += locationName;
+        static object_base* addToPool(ref obj, const char *poolName) {
+            if (poolName) {
+                std::string path(".__tempPools.");
+                path += poolName;
 
                 array::ref location;
 
@@ -112,23 +112,23 @@ It's recommended to set a tag (any unique string will fit - mod name for ex.) - 
 
             return obj.get();
         }
-        REGISTERF2(addToTmpLocation, "* locationName",
-"Handly for temporary objects (objects with no owners) - location 'locationName' owns any amount of objects, preventing their destuction, extends lifetime.\n\
-Do not forget to clean location later! Typic use:\n\
-int tempMap = JValue.addToTmpLocation(JMap.object(), \"uniqueLocationName\")\n\
+        REGISTERF2(addToPool, "* poolName",
+"Handly for temporary objects (objects with no owners) - pool 'locationName' owns any amount of objects, preventing their destuction, extends lifetime.\n\
+Do not forget to clean location later! Typical use:\n\
+int tempMap = JValue.addToPool(JMap.object(), \"uniquePoolName\")\n\
 anywhere later:\n\
 JValue.cleanTempLocation(\"uniqueLocationName\")"
 );
 
-        static void cleanTmpLocation(const char *locationName) {
-            if (locationName) {
-                auto locationsMap = tes_context::instance().database()->find("__tempLocations").object()->as<map>();
+        static void cleanPool(const char *poolName) {
+            if (poolName) {
+                auto locationsMap = tes_context::instance().database()->find("__tempPools").object()->as<map>();
                 if (locationsMap) {
-                    locationsMap->erase(locationName);
+                    locationsMap->erase(poolName);
                 }
             }
         }
-        REGISTERF2(cleanTmpLocation, "locationName", nullptr);
+        REGISTERF2(cleanPool, "poolName", nullptr);
 
         static bool isExists(ref obj) {
             return obj.get() != nullptr;

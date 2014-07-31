@@ -604,13 +604,13 @@ namespace collections {
 
         object_base *obj = tes_object::object<map>();
         //obj->set_tag("temp_location_test");
-        tes_object::addToTmpLocation(object_stack_ref(obj), "locationA");
+        tes_object::addToPool(object_stack_ref(obj), "locationA");
         auto id = obj->public_id();
 
         EXPECT_TRUE(obj->_refCount == 1);
         EXPECT_TRUE(obj->_stack_refCount == 0);
 
-        tes_object::cleanTmpLocation("locationA");
+        tes_object::cleanPool("locationA");
 
         std::this_thread::sleep_for(std::chrono::seconds(15));
 

@@ -312,16 +312,16 @@ int _followers = 0
 ```
 -------------
 ```lua
-int function addToTmpLocation(int object, string locationName) global native
-function cleanTmpLocation(string locationName) global native
+int function addToPool(int object, string poolName) global native
+function cleanPool(string poolName) global native
 ```
 
-Handy for temporary objects (objects with no owners) - when it's known that object's lifetime should exceed 10 seconds. Location `locationName` (must be an unique string - mod name may fit) owns any amount of objects, preventing their destruction, extends lifetime. Internally location is JArray - `addToTmpLocation` adds an object and `cleanTempLocation` clears it. Do not forget to clean location later! Typical use:
+Handy for temporary objects (objects with no owners) - when it's known that object's lifetime should exceed 10 seconds. Pool `poolName` (must be an unique string - mod name may fit) owns any amount of objects, preventing their destruction, extends lifetime. Internally location is JArray - `addToPool` adds an object and `cleanPool` clears pool. Do not forget to clean location later! Typical use:
 
 ```lua
-int tempMap = JValue.addToTmpLocation(JMap.object(), "uniqueLocationName")
-anywhere later:
-JValue.cleanTempLocation("uniqueLocationName")
+int tempMap = JValue.addToPool(JMap.object(), "uniquePoolName")
+;// anywhere later:
+JValue.cleanPool("uniquePoolName")
 ```
 
 
