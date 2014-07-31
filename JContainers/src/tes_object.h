@@ -277,7 +277,7 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
         }
         template<class T>
         static T _resolveGetter(ref obj, const char* path, T val) {
-            return resolveGetter<T>(obj.get(), path);
+            return resolveGetter<T>(obj.get(), path, val);
         }
         REGISTERF(_resolveGetter<Float32>, "solveFlt", "* path default=0.0", "attempts to get value at given path.\nJValue.solveInt(container, \".player.mood\") will return player's mood");
         REGISTERF(_resolveGetter<SInt32>, "solveInt", "* path default=0", nullptr);
