@@ -6,6 +6,11 @@ This plugin attempts to add missing functionality. Although it is not native fun
 
 Current version implements array and associative (map or dictionary) containers: JArray (array container), JMap and JFormMap (both associative containers) and few convenient wrappers: JDB and JFormDB (databases).
 
+### Table of Contents
+
+* [Reference](#Reference)
+* [Tutorial](#Tutorial)
+
 ### Reference
 
 #### What is a value?
@@ -68,18 +73,19 @@ Take it as a global entry point or database - you put information in it under a 
 
 Typical JDB usage would involve:
 
-1. Setup (during mod installation) where you specify `root key` name. In example below root key is `frostfall`. **Choose root name carefully to avoid clashes with rest of JDB root keys and with JFormDB storage names**.
-2. Access data
+1. Setup (during mod installation) where you specify `root key` name. In example below root key is `frostfall`.
+    > **Important:** Choose root name carefully to avoid clashes with rest of JDB root keys and with JFormDB storage names.
+2. Access data:
 
-```
-;// 1. Setup procedure
-int frosfallData = JValue.readFromFile("frostfall_config.json")
-JDB.setObj("frostfall", frosfallData)
+    ```
+    ;// 1. Setup procedure
+    int frosfallData = JValue.readFromFile("frostfall_config.json")
+    JDB.setObj("frostfall", frosfallData)
 
-;// 2. read/write data later in another script:
-int lighttignMode = JDB.solveInt(".frostfall.campfileLightingMode")
-JDB.solveIntSetter(".frostfall.campfileLightingMode", 1)
-```
+    ;// 2. read/write data later in another script:
+    int lighttignMode = JDB.solveInt(".frostfall.campfileLightingMode")
+    JDB.solveIntSetter(".frostfall.campfileLightingMode", 1)
+    ```
 
 
 
