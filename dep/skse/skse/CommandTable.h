@@ -129,6 +129,9 @@ public:
 
 	void	PatchEXE(const PatchSet * patches);
 
+	CommandInfo * Begin() { return &m_commands[0]; }
+	CommandInfo * End() { return &m_commands[0] + m_commands.size(); }
+
 private:
 	typedef std::vector <CommandInfo>	CommandList;
 	CommandList	m_commands;

@@ -22,6 +22,15 @@ void RegisterString(GFxValue * dst,  GFxMovieView * view, const char * name, con
 	dst->SetMember(name, &fxValue);
 }
 
+void RegisterWideString(GFxValue * dst,  GFxMovieView * view, const char * name, const wchar_t * str)
+{
+	GFxValue	fxValue;
+
+	view->CreateWideString(&fxValue, str);
+
+	dst->SetMember(name, &fxValue);
+}
+
 void RegisterNumber(GFxValue * dst, const char * name, double value)
 {
 	GFxValue	fxValue;
@@ -65,6 +74,25 @@ void RegisterKeywords(GFxValue * pFxVal, GFxMovieView * view, BGSKeywordForm * k
 
 	pFxVal->SetMember("keywords", &keywordRoot);
 }
+
+class FormListExtender : public BGSListForm::Visitor
+{
+	GFxValue		* m_array;
+	GFxMovieView	* m_movie;
+	bool	m_bExtra;
+	bool	m_bRecursive;
+	
+public:
+	FormListExtender::FormListExtender(GFxValue	* formArray, GFxMovieView * movie, bool bExtra, bool bRecursive) : m_array(formArray), m_movie(movie), m_bExtra(bExtra), m_bRecursive(bRecursive) { }
+	virtual bool Accept(TESForm * form)
+	{
+		GFxValue arrArg;
+		m_movie->CreateObject(&arrArg);
+		scaleformExtend::FormData(&arrArg, m_movie, form, m_bRecursive ? m_bExtra : false, m_bRecursive);
+		m_array->PushBack(&arrArg);
+		return false;
+	};
+};
 
 // Data extensions
 namespace scaleformExtend
@@ -194,6 +222,7 @@ namespace scaleformExtend
 		case kFormType_ScrollItem:
 		case kFormType_Ingredient:
 		case kFormType_Potion:
+		case kFormType_Enchantment:
 			{
 				MagicItem * pMagicItem = DYNAMIC_CAST(pForm, TESForm, MagicItem);
 				if(pMagicItem)
@@ -233,6 +262,22 @@ namespace scaleformExtend
 						scaleformExtend::FormData(&useSound, movieView, pAlchemyItem->itemData.useSound, bRecursive ? bExtra : false, bRecursive);
 						pFxVal->SetMember("useSound", &useSound);
 					}
+				}
+
+				EnchantmentItem * pEnchantItem = DYNAMIC_CAST(pMagicItem, MagicItem, EnchantmentItem);
+				if(pEnchantItem)
+				{
+					RegisterNumber(pFxVal, "flags", (double)pMagicItem->flags);
+
+					GFxValue baseEnchant;
+					movieView->CreateObject(&baseEnchant);
+					scaleformExtend::FormData(&baseEnchant, movieView, pEnchantItem->data.baseEnchantment, bRecursive ? bExtra : false, bRecursive);
+					pFxVal->SetMember("baseEnchant", &baseEnchant);
+
+					GFxValue restrictions;
+					movieView->CreateObject(&restrictions);
+					scaleformExtend::FormData(&restrictions, movieView, pEnchantItem->data.restrictions, bRecursive ? bExtra : false, bRecursive);
+					pFxVal->SetMember("restrictions", &restrictions);
 				}
 			}
 			break;
@@ -365,6 +410,15 @@ namespace scaleformExtend
 
 					RegisterNumber(pFxVal, "weight", pNPC->weight);
 
+					bool isLevelMult = (pNPC->actorData.flags & TESActorBaseData::kFlag_PCLevelMult) == TESActorBaseData::kFlag_PCLevelMult;
+					if(isLevelMult)
+						RegisterNumber(pFxVal, "levelMult", (double)pNPC->actorData.level / 1000.0);
+					else
+						RegisterNumber(pFxVal, "level", (double)pNPC->actorData.level);
+
+					RegisterNumber(pFxVal, "minLevel", (double)pNPC->actorData.minLevel);
+					RegisterNumber(pFxVal, "maxLevel", (double)pNPC->actorData.maxLevel);
+
 					GFxValue race;
 					movieView->CreateObject(&race);
 					scaleformExtend::FormData(&race, movieView, pNPC->race.race, bRecursive ? bExtra : false, bRecursive);
@@ -408,6 +462,8 @@ namespace scaleformExtend
 
 					scaleformExtend::FormData(&actorBase, movieView, pActor->baseForm, bRecursive ? bExtra : false, bRecursive);
 					pFxVal->SetMember("actorBase", &actorBase);
+
+					RegisterString(pFxVal, movieView, "fullName", CALL_MEMBER_FN(pActor, GetReferenceName)());
 
 					// Spells as Array
 					GFxValue addedSpells;
@@ -497,34 +553,8 @@ namespace scaleformExtend
 					GFxValue formArray;
 					movieView->CreateArray(&formArray);
 
-					// Base Added Forms
-					for(int i = 0; i < formList->forms.count; i++)
-					{
-						TESForm* childForm;
-						if(formList->forms.GetNthItem(i, childForm))
-						{
-							GFxValue arrArg;
-							movieView->CreateObject(&arrArg);
-							scaleformExtend::FormData(&arrArg, movieView, childForm, bRecursive ? bExtra : false, bRecursive);
-							formArray.PushBack(&arrArg);
-						}
-					}
-
-					// Script Added Forms
-					if(formList->addedForms) {
-						for(int i = 0; i < formList->addedForms->count; i++)
-						{
-							UInt32 formid;
-							formList->addedForms->GetNthItem(i, formid);
-							TESForm* childForm = LookupFormByID(formid);
-							if(childForm) {
-								GFxValue arrArg;
-								movieView->CreateObject(&arrArg);
-								scaleformExtend::FormData(&arrArg, movieView, childForm, bRecursive ? bExtra : false, bRecursive);
-								formArray.PushBack(&arrArg);
-							}
-						}
-					}
+					FormListExtender extender(&formArray, movieView, bExtra, bRecursive);
+					formList->Visit(extender);
 
 					pFxVal->SetMember("forms", &formArray);
 				}
@@ -593,6 +623,47 @@ namespace scaleformExtend
 					}
 
 					pFxVal->SetMember("aliases", &aliasArray);
+				}
+			}
+			break;
+		case kFormType_HeadPart:
+			{
+				BGSHeadPart * headPart = DYNAMIC_CAST(pForm, TESForm, BGSHeadPart);
+				if(headPart)
+				{
+					RegisterString(pFxVal, movieView, "fullName", headPart->fullName.name.data);
+					RegisterString(pFxVal, movieView, "partName", headPart->partName.data);
+					RegisterNumber(pFxVal, "partFlags", headPart->partFlags);
+					RegisterNumber(pFxVal, "partType", headPart->type);
+
+					RegisterString(pFxVal, movieView, "modelPath", headPart->model.GetModelName());
+					RegisterString(pFxVal, movieView, "chargenMorphPath", headPart->chargenMorph.GetModelName());
+					RegisterString(pFxVal, movieView, "raceMorphPath", headPart->raceMorph.GetModelName());
+
+					GFxValue extraParts;
+					movieView->CreateArray(&extraParts);
+					for(int i = 0; i < headPart->extraParts.count; i++)
+					{
+						BGSHeadPart* extraPart;
+						if(headPart->extraParts.GetNthItem(i, extraPart)) {
+							GFxValue arrArg;
+							movieView->CreateObject(&arrArg);
+							scaleformExtend::FormData(&arrArg, movieView, extraPart, bRecursive ? bExtra : false, bRecursive);
+							extraParts.PushBack(&arrArg);
+						}
+					}
+
+					pFxVal->SetMember("extraParts", &extraParts);
+
+					GFxValue validRaces;
+					movieView->CreateObject(&validRaces);
+					scaleformExtend::FormData(&validRaces, movieView, headPart->validRaces, bRecursive ? bExtra : false, bRecursive);
+					pFxVal->SetMember("validRaces", &validRaces);
+
+					GFxValue textureSet;
+					movieView->CreateObject(&textureSet);
+					scaleformExtend::FormData(&textureSet, movieView, headPart->textureSet, bRecursive ? bExtra : false, bRecursive);
+					pFxVal->SetMember("textureSet", &textureSet);
 				}
 			}
 			break;

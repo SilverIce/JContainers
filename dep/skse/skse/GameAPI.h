@@ -24,3 +24,20 @@ extern PlayerCharacter ** g_thePlayer;
 
 void Console_Print(const char * fmt, ...);
 bool IsConsoleMode(void);
+
+class ConsoleManager
+{
+public:
+	MEMBER_FN_PREFIX(ConsoleManager);
+	DEFINE_MEMBER_FN(Print, void, 0x008486F0, const char * fmt, va_list args);
+
+	ConsoleManager();
+	~ConsoleManager();
+
+	static ConsoleManager * GetSingleton(void)
+	{
+		return *((ConsoleManager **)0x01B10B58);
+	}
+
+	void	* scriptContext;	// 00
+};

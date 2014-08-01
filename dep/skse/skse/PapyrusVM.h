@@ -86,6 +86,7 @@ public:
 	MEMBER_FN_PREFIX(VMClassInfo);
 	DEFINE_MEMBER_FN(Destroy, void, 0x00C34ED0);
 	DEFINE_MEMBER_FN(GetVariable, SInt32, 0x00C33E30, BSFixedString * name);
+	DEFINE_MEMBER_FN(GetFunction, IFunction*, 0x00C36540, const char * fnName);
 };
 
 // This type is not fully decoded or correctly sized, just enough to use the functor
@@ -143,6 +144,190 @@ class VMUnlinkedClassList
 	UInt32	unk44;		// 44
 };
 
+// 1C?
+class VMIdentifier
+{
+public:
+	enum
+	{
+		kLockBit = 0x80000000,
+		kFastSpinThreshold = 10000
+	};
+
+	SInt32			m_refCount;	// 00
+	VMClassInfo		* m_type;	// 04
+	void			* unk08;	// 08
+	void			* unk0C;	// 0C
+	volatile UInt64	m_handle;	// 10
+	volatile SInt32	m_lock;		// 18
+
+	UInt64	GetHandle(void);
+
+	SInt32	Lock(void);
+	void	Unlock(SInt32 oldLock);
+
+	// lock and refcount?
+	void	IncrementLock(void);
+	SInt32	DecrementLock(void);
+
+	void	Destroy(void);
+
+	MEMBER_FN_PREFIX(VMIdentifier);
+	DEFINE_MEMBER_FN(Destroy_Internal, void, 0x00C30E90);
+};
+
+// 08
+// possibly BSScriptVariable
+class VMValue
+{
+public:
+	VMValue()
+		:type(kType_None) { data.u = 0; }
+	~VMValue()
+	{ CALL_MEMBER_FN(this, Destroy)(); }
+
+	enum
+	{
+		kType_None =		0,
+		kType_Identifier =	1,
+		kType_String =		2,
+		kType_Int =			3,
+		kType_Float =		4,
+		kType_Bool =		5,
+
+		kType_Unk0B =		0x0B,
+		kType_ArraysStart = 11,
+		kType_StringArray =	12,
+		kType_IntArray =	13,
+		kType_FloatArray =	14,
+		kType_BoolArray =	15,
+		kType_ArraysEnd =   16,
+
+		kNumLiteralArrays = 4
+	};
+
+	// 14+
+	struct ArrayData
+	{
+		volatile SInt32	refCount;	// 00
+		UInt32			unk04;		// 04
+		UInt32			len;		// 08
+		UInt32			unk0C;		// 0C
+		UInt32			unk10;		// 10
+		//		VMValue			data[0];	// 14
+
+		VMValue	*	GetData(void)	{ return (VMValue *)(this + 1); }
+
+		MEMBER_FN_PREFIX(ArrayData);
+		DEFINE_MEMBER_FN(Destroy, void, 0x00C3A0A0);
+	};
+
+	UInt32	type;	// 00
+
+	union
+	{
+		SInt32			i;
+		UInt32			u;
+		float			f;
+		bool			b;
+		void			* p;
+		ArrayData		* arr;
+		VMIdentifier	* id;
+		const char		* str;	// BSFixedString
+
+		BSFixedString *	GetStr(void)	{ return (BSFixedString *)(&str); }
+	} data;			// 04
+
+	MEMBER_FN_PREFIX(VMValue);
+	DEFINE_MEMBER_FN(Set, void, 0x00C329E0, VMValue * src);
+	DEFINE_MEMBER_FN(Destroy, void, 0x00C328E0);
+	DEFINE_MEMBER_FN(SetArray, void, 0x00C32CE0, ArrayData * data);
+
+	bool	IsIdentifierArray()
+	{
+		return (type >= kType_ArraysEnd && type & kType_Identifier);
+	}
+
+	bool	IsLiteralArray()
+	{
+		return type - kType_ArraysStart <= kNumLiteralArrays;
+	}
+
+	bool	IsArray()
+	{
+		return IsLiteralArray() || IsIdentifierArray();
+	}
+
+	void	SetNone(void)
+	{
+		CALL_MEMBER_FN(this, Destroy)();
+
+		type = kType_None;
+		data.u = 0;
+	}
+
+	void	SetInt(SInt32 i)
+	{
+		CALL_MEMBER_FN(this, Destroy)();
+
+		type = kType_Int;
+		data.i = i;
+	}
+
+	void	SetFloat(float f)
+	{
+		CALL_MEMBER_FN(this, Destroy)();
+
+		type = kType_Float;
+		data.f = f;
+	}
+
+	void	SetBool(bool b)
+	{
+		CALL_MEMBER_FN(this, Destroy)();
+
+		type = kType_Bool;
+		data.b = b;
+	}
+
+	void	SetIdentifier(VMClassInfo * classInfo)
+	{
+		CALL_MEMBER_FN(this, Destroy)();
+
+		type = (UInt32)classInfo;
+		data.id = NULL;
+	}
+
+	void	SetIdentifier(VMIdentifier ** identifier)
+	{
+		if(GetUnmangledType() == kType_Identifier)
+		{
+			CALL_MEMBER_FN(this, Destroy)();
+
+			if(*identifier)
+				(*identifier)->IncrementLock();
+
+			data.id = *identifier;
+		}
+	}
+
+	void	SetString(const char * str)
+	{
+		CALL_MEMBER_FN(this, Destroy)();
+
+		type = kType_String;
+		CALL_MEMBER_FN(data.GetStr(), Set)(str);
+	}
+
+	// 00-0F are untouched
+	// 10+ alternate between 0x01 and 0x0B
+	UInt32	GetUnmangledType(void);
+
+	bool	IsIdentifier(void)	{ return GetUnmangledType() == kType_Identifier; }
+};
+
+STATIC_ASSERT(sizeof(VMValue) == 0x08);
+
 // 4B04
 // this does more than hold on to class registrations, but for now that's all we care about
 class VMClassRegistry
@@ -178,7 +363,7 @@ public:
 	virtual void	Unk_NewIn16_11(void);	// ### added in 1.6.86, further indices are off by one
 	virtual void	Unk_12(void);
 	virtual bool	Unk_13(StringCache::Ref * className, VMIdentifier ** identifier);
-	virtual void	Unk_14(void);
+	virtual bool	CreateArray(VMValue * value, UInt32 size, VMValue::ArrayData ** unk1);
 	virtual void	Unk_15(void);
 	virtual void	RegisterFunction(IFunction * fn);
 	virtual void	SetFunctionFlagsEx(const char * className, UInt32 unk0, const char * fnName, UInt32 flags);
@@ -261,168 +446,6 @@ public:
 STATIC_ASSERT(offsetof(SkyrimVM, m_classRegistry) == 0x100);
 
 extern SkyrimVM	** g_skyrimVM;
-
-// 1C?
-class VMIdentifier
-{
-public:
-	enum
-	{
-		kLockBit = 0x80000000,
-		kFastSpinThreshold = 10000
-	};
-
-	SInt32			m_refCount;	// 00
-	VMClassInfo		* m_type;	// 04
-	void			* unk08;	// 08
-	void			* unk0C;	// 0C
-	volatile UInt64	m_handle;	// 10
-	volatile SInt32	m_lock;		// 18
-
-	UInt64	GetHandle(void);
-
-	SInt32	Lock(void);
-	void	Unlock(SInt32 oldLock);
-
-	// lock and refcount?
-	void	IncrementLock(void);
-	SInt32	DecrementLock(void);
-
-	void	Destroy(void);
-
-	MEMBER_FN_PREFIX(VMIdentifier);
-	DEFINE_MEMBER_FN(Destroy_Internal, void, 0x00C30E90);
-};
-
-// 08
-// possibly BSScriptVariable
-class VMValue
-{
-public:
-	VMValue()
-		:type(kType_None) { data.u = 0; }
-	~VMValue()
-		{ CALL_MEMBER_FN(this, Destroy)(); }
-
-	enum
-	{
-		kType_None =		0,
-		kType_Identifier =	1,
-		kType_String =		2,
-		kType_Int =			3,
-		kType_Float =		4,
-		kType_Bool =		5,
-
-		kType_Unk0B =		0x0B,
-
-		kType_StringArray =	12,
-		kType_IntArray =	13,
-		kType_FloatArray =	14,
-		kType_BoolArray =	15
-	};
-
-	// 14+
-	struct ArrayData
-	{
-		volatile SInt32	refCount;	// 00
-		UInt32			unk04;		// 04
-		UInt32			len;		// 08
-		UInt32			unk0C;		// 0C
-		UInt32			unk10;		// 10
-//		VMValue			data[0];	// 14
-
-		VMValue	*	GetData(void)	{ return (VMValue *)(this + 1); }
-	};
-
-	UInt32	type;	// 00
-
-	union
-	{
-		SInt32			i;
-		UInt32			u;
-		float			f;
-		bool			b;
-		void			* p;
-		ArrayData		* arr;
-		VMIdentifier	* id;
-		const char		* str;	// BSFixedString
-
-		BSFixedString *	GetStr(void)	{ return (BSFixedString *)(&str); }
-	} data;			// 04
-
-	MEMBER_FN_PREFIX(VMValue);
-	DEFINE_MEMBER_FN(Set, void, 0x00C329E0, VMValue * src);
-	DEFINE_MEMBER_FN(Destroy, void, 0x00C328E0);
-
-	void	SetNone(void)
-	{
-		CALL_MEMBER_FN(this, Destroy)();
-
-		type = kType_None;
-		data.u = 0;
-	}
-
-	void	SetInt(SInt32 i)
-	{
-		CALL_MEMBER_FN(this, Destroy)();
-
-		type = kType_Int;
-		data.i = i;
-	}
-
-	void	SetFloat(float f)
-	{
-		CALL_MEMBER_FN(this, Destroy)();
-
-		type = kType_Float;
-		data.f = f;
-	}
-
-	void	SetBool(bool b)
-	{
-		CALL_MEMBER_FN(this, Destroy)();
-
-		type = kType_Bool;
-		data.b = b;
-	}
-
-	void	SetIdentifier(VMClassInfo * classInfo)
-	{
-		CALL_MEMBER_FN(this, Destroy)();
-
-		type = (UInt32)classInfo;
-		data.id = NULL;
-	}
-
-	void	SetIdentifier(VMIdentifier ** identifier)
-	{
-		if(GetUnmangledType() == kType_Identifier)
-		{
-			CALL_MEMBER_FN(this, Destroy)();
-
-			if(*identifier)
-				(*identifier)->IncrementLock();
-
-			data.id = *identifier;
-		}
-	}
-
-	void	SetString(const char * str)
-	{
-		CALL_MEMBER_FN(this, Destroy)();
-
-		type = kType_String;
-		CALL_MEMBER_FN(data.GetStr(), Set)(str);
-	}
-
-	// 00-0F are untouched
-	// 10+ alternate between 0x01 and 0x0B
-	UInt32	GetUnmangledType(void);
-
-	bool	IsIdentifier(void)	{ return GetUnmangledType() == kType_Identifier; }
-};
-
-STATIC_ASSERT(sizeof(VMValue) == 0x08);
 
 class IFunctionArguments
 {

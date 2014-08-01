@@ -7,6 +7,7 @@ class VMState;
 class VMValue;
 class VMClassRegistry;
 struct StaticFunctionTag;
+class EffectSetting;
 
 class VMArgList
 {
@@ -26,11 +27,11 @@ class VMArray
 public:
 	VMValue::ArrayData	* arr;
 	UInt32 Length() const				{ return arr ? arr->len : 0; }
-	void Get(T * dst, const UInt32 idx)	{ UnpackValue<T>(dst, arr->GetData()+idx); }
+	void Get(T * dst, const UInt32 idx)	{ UnpackValue(dst, arr->GetData()+idx); }
 	void Set(T * src, const UInt32 idx)
 	{
 		VMClassRegistry * registry = (*g_skyrimVM)->GetClassRegistry();
-		PackValue<T>(arr->GetData()+idx, src, registry);
+		PackValue(arr->GetData()+idx, src, registry);
 	}
 };
 
@@ -55,7 +56,7 @@ void PackHandle(VMValue * dst, void * src, UInt32 typeID, VMClassRegistry * regi
 template <typename T>
 void PackValue(VMValue * dst, T ** src, VMClassRegistry * registry)
 {
-	typedef ::remove_pointer <T>::type	BaseType;
+	typedef remove_pointer <T>::type	BaseType;
 	PackHandle(dst, *src, BaseType::kTypeID, registry);
 }
 
@@ -110,15 +111,31 @@ template <> UInt32 GetTypeID <VMArray<float>>(VMClassRegistry * registry);
 template <> UInt32 GetTypeID <VMArray<bool>>(VMClassRegistry * registry);
 template <> UInt32 GetTypeID <VMArray<BSFixedString>>(VMClassRegistry * registry);
 
+template<typename T>
+struct IsArrayType
+{
+	enum { value = 0 };
+	typedef T TypedArg;
+};
+
+template<typename T>
+struct IsArrayType<VMArray<T*>>
+{
+	enum { value = 1 };
+	typedef T TypedArg;
+};
 
 template <typename T>
 UInt32 GetTypeID <T *>(VMClassRegistry * registry)
 {
 	UInt32		result;
 
-	typedef ::remove_pointer <T>::type	BaseType;
-
-	result = GetTypeIDFromFormTypeID(BaseType::kTypeID, registry);
+	typedef remove_pointer <IsArrayType<T>::TypedArg>::type	BaseType;
+	if(!IsArrayType<T>::value) {
+		result = GetTypeIDFromFormTypeID(BaseType::kTypeID, registry);
+	} else { // Arrays are ClassInfo ptr + 1
+		result = GetTypeIDFromFormTypeID(BaseType::kTypeID, registry) | VMValue::kType_Identifier;
+	}
 
 	return result;
 }
@@ -134,3 +151,33 @@ struct IsStaticType <StaticFunctionTag>
 {
 	enum { value = 1 };
 };
+
+
+#ifdef _NATIVEDUMP
+template <typename T>
+const char * GetArgumentTypeName(VMClassRegistry * registry);
+
+template <> const char * GetArgumentTypeName <void>(VMClassRegistry * registry);
+template <> const char * GetArgumentTypeName <UInt32>(VMClassRegistry * registry);
+template <> const char * GetArgumentTypeName <SInt32>(VMClassRegistry * registry);
+template <> const char * GetArgumentTypeName <int>(VMClassRegistry * registry);
+template <> const char * GetArgumentTypeName <float>(VMClassRegistry * registry);
+template <> const char * GetArgumentTypeName <bool>(VMClassRegistry * registry);
+template <> const char * GetArgumentTypeName <BSFixedString>(VMClassRegistry * registry);
+template <> const char * GetArgumentTypeName <VMArray<UInt32>>(VMClassRegistry * registry);
+template <> const char * GetArgumentTypeName <VMArray<SInt32>>(VMClassRegistry * registry);
+template <> const char * GetArgumentTypeName <VMArray<int>>(VMClassRegistry * registry);
+template <> const char * GetArgumentTypeName <VMArray<float>>(VMClassRegistry * registry);
+template <> const char * GetArgumentTypeName <VMArray<bool>>(VMClassRegistry * registry);
+template <> const char * GetArgumentTypeName <VMArray<BSFixedString>>(VMClassRegistry * registry);
+
+const char * GetTypeNameFromFormTypeID(UInt32 formTypeID, VMClassRegistry * registry);
+
+template <typename T>
+const char * GetArgumentTypeName <T *>(VMClassRegistry * registry)
+{
+	typedef remove_pointer <T>::type	BaseType;
+	
+	return GetTypeNameFromFormTypeID(BaseType::kTypeID, registry);
+}
+#endif

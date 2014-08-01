@@ -20,6 +20,13 @@ class BGSVoiceType;
 class BGSEquipSlot;
 class Actor;
 class TESObjectARMO;
+class TESIdleForm;
+class BGSPerk;
+class ActorValueInfo;
+class TESGlobal;
+class TESRegion;
+class BGSMusicType;
+class TESWeather;
 
 //// root
 
@@ -226,8 +233,8 @@ public:
 	// 08
 	struct Data
 	{
-		UInt32	unk00;		// 00
-		UInt8	unk04;		// 04
+		BGSPerk	* perk;		// 00
+		UInt8	rank;		// 04
 		UInt8	pad05[3];	// 05
 	};
 
@@ -456,7 +463,7 @@ class TESFullName : public BaseFormComponent
 {
 public:
 	virtual UInt32	Unk_04(void);
-	virtual UInt32	Unk_05(void);
+	virtual const char *	GetName(void);
 
 	StringCache::Ref	name;	// 04
 };
@@ -474,15 +481,18 @@ class TESLeveledList : public BaseFormComponent
 public:
 	struct Entry
 	{
-		UInt32	unk0;	// 00 - init'd to 0
-		UInt16	unk4;	// 04 - init'd to 1
-		UInt16	unk6;	// 06 - init'd to 1
+		TESForm * form;	// 00 - init'd to 0
+		UInt16	count;	// 04 - init'd to 1
+		UInt16	level;	// 06 - init'd to 1
 		UInt32	unk8;	// 08 - init'd to 0
 	};
 
 	enum
 	{
-		kFlag_0 =	1 << 0,
+		kFlagCalculateFromAllLevelsLTPCLevel =	1 << 0,
+		kFlagCalculateForEachItemInCount	 =	1 << 1,
+		kFlagUseAll							 =	1 << 2,
+		kFlagSpecialLoot					 =	1 << 3
 	};
 
 	virtual bool	Unk_04(void);
@@ -491,12 +501,12 @@ public:
 	virtual void	Unk_07(void);	// pure
 
 	Entry	* entries;	// 04
-	UInt8	unk08;		// 08
+	UInt8	chanceValue;		// 08
 	UInt8	flags;		// 09
 	UInt8	length;		// 0A
 	UInt8	unk0B;		// 0B
 	void	* unk0C;	// 0C
-	UInt32	unk10;		// 10
+	TESGlobal * chanceGlobal;		// 10
 };
 
 // 14
@@ -938,8 +948,13 @@ STATIC_ASSERT(sizeof(Condition) == 0x20);
 class TintMask
 {
 public:
-	TintMask();
-	~TintMask();
+	TintMask()
+	{
+		alpha = 0.0;
+		tintType = 0;
+		texture = NULL;
+	};
+	~TintMask() { };
 
 #ifdef PAPYRUS_CUSTOM_CLASS
 	enum { kTypeID = 300 };
@@ -1001,8 +1016,163 @@ public:
 	ActorWeightData * weightData;
 };
 
+class BSFixedStringCI;
+
+template<class A>
+class DoNothingUnhandledPolicy
+{
+public:
+	virtual ~DoNothingUnhandledPolicy();
+};
+
+// 2C
+template<class A, class B, class C, class D>
+class BSResponse : public BSIntrusiveRefCounted, public DoNothingUnhandledPolicy<C>
+{
+public:
+	UInt32	unk08;	// 08
+	UInt32	unk0C;	// 0C
+	UInt32	unk10;	// 10 - NiNode?
+	UInt32	unk14;	// 14 - NiNode?
+	UInt32	unk18;	// 18 - NiNode?
+	UInt32	unk1C;	// 1C
+	UInt32	unk20;	// 20 - NiNode?
+	UInt32	unk24;	// 24
+	UInt32	unk28;	// 28
+};
+STATIC_ASSERT(sizeof(BSResponse<BSFixedStringCI, Actor, BSFixedStringCI, DoNothingUnhandledPolicy<BSFixedStringCI>>) == 0x2C);
+
+class MiddleProcess
+{
+public:
+	// 8
+	struct EffectListNode
+	{
+		ActiveEffect	* effect;	// 0
+		EffectListNode	* next;		// 4
+	};
+
+	UInt32	unk00;	// 00
+	UInt32	unk04;	// 04
+	UInt32	unk08;	// 08
+	UInt32	unk0C;	// 0C
+	UInt32	unk10;	// 10
+	UInt32	unk14;	// 14
+	UInt32	unk18;	// 18
+	UInt32	unk1C;	// 1C
+	UInt32	unk20;	// 20
+	UInt32	unk24;	// 24
+	UInt32	unk28;	// 28
+	float	unk2C;	// 2C
+
+	struct Data30
+	{
+		UInt32	unk00;	// 00
+		UInt32	unk04;	// 04
+		UInt32	unk08;	// 08
+		UInt32	unk0C;	// 0C
+		UInt32	unk10;	// 10
+		UInt32	unk14;	// 14
+		UInt32	unk18;	// 18 - (AggroRadius Violated - 14)
+	};
+
+	Data30	* unk30;	// 30
+	UInt32	unk34;	// 34
+	UInt32	unk38;	// 38
+	UInt32	unk3C;	// 3C
+	float	unk40;	// 40
+	UInt32	unk44;	// 44
+	UInt32	unk48;	// 48
+	UInt32	unk4C;	// 4C
+	UInt32	unk50;	// 50
+	UInt32	unk54;	// 54
+	UInt32	unk58;	// 58
+	UInt32	unk5C;	// 5C
+	float	unk60;	// 60
+	UInt32	unk64;	// 64
+	UInt32	unk68;	// 68
+	UInt32	unk6C;	// 6C
+	UInt32	unk70;	// 70
+	UInt32	unk74;	// 74
+	UInt32	unk78;	// 78
+	UInt32	unk7C;	// 7C
+	UInt32	unk80;	// 80
+	float	unk84;	// 84
+	float	unk88;	// 88
+	float	unk8C;	// 8C
+	float	unk90;	// 90
+	float	unk94;	// 94
+	float	unk98;	// 98
+	UInt32	unk9C;	// 9C
+	UInt32	unkA0;	// A0
+	BSResponse<BSFixedStringCI, Actor, BSFixedStringCI, DoNothingUnhandledPolicy<BSFixedStringCI>>	unkA4;	// A4
+	UInt32	unkD0;	// D0
+	void *	unkD4;	// D4 - NiNode?
+	void *	unkD8;	// D8 - NiNode?
+	UInt32	unkDC;	// D8
+	void *	unkE0;	// E0 - BSFaceGenNiNode?
+	void *	unkE4;	// E4
+	UInt32	unkE8;	// E8
+	UInt32	unkEC;	// EC
+	UInt32	unkF0;	// F0
+	UInt32	unkF4;	// F4
+	EffectListNode *	effectList;	// F8
+	void * unkFC;	// FC
+	void * unk100;	// 100
+	void * unk104;	// 104
+	UInt32	unk108;	// 108
+	UInt32	unk10C;	// 10C
+	UInt32	unk110;	// 110
+	UInt32	unk114;	// 114
+	UInt32	unk118;	// 118
+	UInt32	unk11C;	// 11C
+	UInt32	unk120;	// 120
+	UInt32	unk124;	// 124
+	UInt32	unk128;	// 128
+	UInt32	unk12C;	// 12C - FFFFFFFF
+	UInt32	unk130;	// 130
+	UInt32	unk134;	// 134 - FF7FFFFF
+	UInt32	furnitureHandle;	// 138
+	UInt32	unk13C;	// 13C
+	UInt32	unk140;	// 140
+	UInt32	unk144;	// 144
+	TESIdleForm	* currentIdle;	// 148
+	UInt32	unk14C; // 14C
+	UInt32	unk150;	// 150
+	UInt32	unk154;	// 154
+	UInt32	unk158;	// 158
+	void *	unk15C;	// 15C - hkCharacterProxy?
+	void *	unk160;	// 160
+	UInt32	unk164;	// 164
+	UInt32	unk168;	// 168
+	UInt32	unk16C;	// 16C
+	UInt32	unk170;	// 170
+	UInt32	unk174;	// 174
+	void *	unk178;	// 178
+	UInt32	unk17C;	// 17C
+	UInt32	unk180;	// 180
+	UInt32	unk184;	// 184
+	UInt32	unk188;	// 188
+	UInt32	unk18C;	// 18C
+	UInt32	unk190;	// 190
+	UInt32	unk194;	// 194
+	UInt32	unk198;	// 198
+	UInt32	unk19C;	// 19C
+	UInt32	unk1A0;	// 1A0
+	UInt32	unk1A4;	// 1A4
+	float	unk1A8;	// 1A8
+	UInt32	unk1AC;	// 1AC
+	UInt32	unk1B0;	// 1B0
+	float	actorAlpha;	// 1B4
+	// More?...
+};
+
+STATIC_ASSERT(offsetof(MiddleProcess, currentIdle) == 0x148);
+STATIC_ASSERT(offsetof(MiddleProcess, furnitureHandle) == 0x138);
+STATIC_ASSERT(offsetof(MiddleProcess, actorAlpha) == 0x1B4);
+
 // A0
-class ActorEquipData
+class ActorProcessManager
 {
 public:
 	enum {
@@ -1019,9 +1189,11 @@ public:
 		kFlags_Reset = 32
 	};
 	UInt32	unk00;						// 00
-	void	* unk04;					// 04
+	MiddleProcess	* middleProcess;	// 04
 	void	* unk08;					// 08
-	UInt32	unk0C[(0x68 - 0x0C) >> 2];	// 0C
+	UInt32	unk0C[(0x54 - 0x0C) >> 2];	// 0C
+	float	timeOfDeath;				// 54 - GetTimeDead = (GameDaysPassed*24) - timeOfDeath
+	UInt32	unk58[(0x68 - 0x58) >> 2];	// 58
 	TESForm	* equippedObject[2];		// 68
 	UInt32	unk70[(0x98 - 0x70) >> 2];	// 70
 	UInt8	unk98;						// 98
@@ -1029,14 +1201,55 @@ public:
 	SInt8	unk9B;						// 9B
 	UInt8	unk9C[(0xA0 - 0x9C)];		// 9C
 
-	MEMBER_FN_PREFIX(ActorEquipData);
+	MEMBER_FN_PREFIX(ActorProcessManager);
 	DEFINE_MEMBER_FN(SetEquipFlag, void, 0x0071F520, UInt8 flags);
 	DEFINE_MEMBER_FN(UpdateEquipment, void, 0x007031A0, Actor * actor);
 	DEFINE_MEMBER_FN(SetDataFlag, void, 0x006FD1A0, UInt32 flag); // Sets a number on the 0x08 object
 };
 
-STATIC_ASSERT(offsetof(ActorEquipData, equippedObject) == 0x68);
-STATIC_ASSERT(sizeof(ActorEquipData) == 0xA0);
+STATIC_ASSERT(offsetof(ActorProcessManager, equippedObject) == 0x68);
+STATIC_ASSERT(sizeof(ActorProcessManager) == 0xA0);
+
+// 3C
+class BGSSkillPerkTreeNode
+{
+public:
+	virtual ~BGSSkillPerkTreeNode();
+
+	UInt32	index;		// 04
+	tArray<BGSSkillPerkTreeNode*> connections;	// 08
+	tArray<BGSSkillPerkTreeNode*> connectees;	// 14
+	BGSPerk	* perk;		// 20
+	UInt32	unk24;		// 24
+	UInt32	gridX;		// 28
+	UInt32	gridY;		// 2C
+	ActorValueInfo	* skill;	// 30
+	float	horizontalPos;		// 34
+	float	verticalPos;		// 38
+
+	class PerkVisitor
+	{
+	public:
+		virtual bool Accept(BGSPerk * node) = 0;
+	};
+
+	bool VisitPerks(PerkVisitor & visitor)
+	{
+		if(visitor.Accept(perk))
+			return true;
+
+		for(UInt32 i = 0; i < connections.count; i++)
+		{
+			BGSSkillPerkTreeNode* connector = NULL;
+			connections.GetNthItem(i, connector);
+
+			if(connector->VisitPerks(visitor))
+				return true;
+		}
+
+		return false;
+	}
+};
 
 class PlayerSkills
 {
@@ -1049,24 +1262,152 @@ public:
 
 	struct StatData {
 		struct LevelData {
-			float points;
-			float pointsMax;
-			float level;
+			float level;		// 00
+			float points;		// 04
+			float pointsMax;	// 08
 		};
 
-		LevelData	levelData[kNumAdvanceableSkills];
-		UInt32		unkD8;
-		UInt32		unkDC;
-		UInt32		legendaryLevel[kNumAdvanceableSkills];
+		float		levelPoints;							// 00
+		float		levelPointsMax;							// 04
+		LevelData	levelData[kNumAdvanceableSkills];		// 08
+		UInt32		legendaryLevel[kNumAdvanceableSkills];	// 90
 	};
 
 	StatData * data;
 
 	SInt32 ResolveAdvanceableSkillId(SInt32 actorValue);
 
+	float GetSkillPoints(BSFixedString actorValue);
+	void SetSkillPoints(BSFixedString actorValue, float points);
+
 	SInt32 GetSkillLegendaryLevel(BSFixedString actorValue);
 	void SetSkillLegendaryLevel(BSFixedString actorValue, UInt32 level);
 
 	MEMBER_FN_PREFIX(PlayerSkills);
+	DEFINE_MEMBER_FN(GetSkillData, UInt32, 0x00760150, UInt32 actorValue, float * level, float * points, float * pointsMax, UInt32 * unk6);
 	DEFINE_MEMBER_FN(IncrementLegendary, UInt32, 0x00760110, UInt32 actorValue);
+};
+
+// 08
+class TESRegionData
+{
+public:
+	virtual ~TESRegionData();
+
+	virtual void Unk_01(void);
+	virtual void Unk_02(void);
+	virtual SInt32 GetType(void); // pure
+	virtual void Unk_04(void); // pure - Init?
+	virtual void Unk_05(void); // pure
+	virtual void Unk_06(void); // pure
+	virtual void Unk_07(void); // pure
+
+	UInt8	unk04;	// 04
+	UInt8	unk05;	// 05
+	UInt8	unk06;	// 06
+	UInt8	pad07;	// 07
+};
+
+class TESRegionObjectBase
+{
+public:
+	virtual ~TESRegionObjectBase();
+
+	virtual void Unk_01(void); // pure
+	virtual void Unk_02(void); // pure
+};
+
+// 0C
+class TESRegionGrassObject : public TESRegionObjectBase
+{
+public:
+	virtual ~TESRegionGrassObject();
+
+	virtual void Unk_03(void);
+	virtual void Unk_04(void);
+	virtual void Unk_05(void);
+	virtual void Unk_06(void);
+
+	UInt32	unk04;	// 04
+	UInt32	unk08;	// 08
+};
+
+// 14
+class TESRegionGrassObjectList : public tList<TESRegionGrassObject*>
+{
+public:
+	virtual ~TESRegionGrassObjectList();
+
+	UInt32	unk0C;	// 0C
+	UInt32	unk10;	// 10
+};
+
+// 10
+class TESRegionList : public tList<TESRegion*>
+{
+public:
+	virtual ~TESRegionList();
+
+	UInt32	unk0C;	// 0C
+};
+
+// 0C
+class TESRegionDataGrass : public TESRegionData
+{
+public:
+	virtual ~TESRegionDataGrass();
+
+	TESRegionGrassObjectList * grassObjectList;	// 0C
+};
+
+// 18
+class TESRegionDataSound : public TESRegionData
+{
+public:
+	virtual ~TESRegionDataSound();
+
+	BGSMusicType	* musicType;	// 08
+
+	struct SoundData
+	{
+		BGSSoundDescriptorForm	* soundDescriptor;	// 00
+		UInt32					flags;				// 04
+		float					chance;				// 08
+	};
+
+	tArray<SoundData*>	soundData;	// 0C
+};
+
+// 0C
+class TESRegionDataLandscape : public TESRegionData
+{
+public:
+	virtual ~TESRegionDataLandscape();
+
+	UInt32	unk08;	// 08
+};
+
+// 0C
+class TESRegionDataMap : public TESRegionData
+{
+public:
+	virtual ~TESRegionDataMap();
+
+	UInt32	unk08;	// 08
+};
+
+// 10
+class TESRegionDataWeather : public TESRegionData
+{
+public:
+	virtual ~TESRegionDataWeather();
+
+	struct WeatherData
+	{
+		TESWeather	* weather;		// 00
+		UInt32		chance;			// 04
+		TESGlobal	* globalChance;	// 08
+	};
+
+	tList<WeatherData*> weatherData;	// 08
 };

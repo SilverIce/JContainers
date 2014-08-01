@@ -2,18 +2,22 @@
 #include "PapyrusVM.h"
 #include "ScaleformCallbacks.h"
 #include "ScaleformMovie.h"
+#include "ScaleformAPI.h"
 #include "ScaleformExtendedData.h"
 #include "GameMenus.h"
 #include "GameEvents.h"
 #include "GameForms.h"
 #include "GameInput.h"
 #include "common/IMemPool.h"
+#include "CustomMenu.h"
+#include <float.h>
 
 namespace papyrusUI
 {
 	template <> void SetGFxValue<bool> (GFxValue * val, bool arg)						{ val->SetBool(arg); }
 	template <> void SetGFxValue<float> (GFxValue * val, float arg)						{ val->SetNumber(arg); }
-	template <> void SetGFxValue<UInt32> (GFxValue * val, UInt32 arg)							{ val->SetNumber(arg); }
+	template <> void SetGFxValue<UInt32> (GFxValue * val, UInt32 arg)					{ val->SetNumber(arg); }
+	template <> void SetGFxValue<SInt32> (GFxValue * val, SInt32 arg)					{ val->SetNumber(arg); }
 	template <> void SetGFxValue<BSFixedString> (GFxValue * val, BSFixedString arg)
 	{
 		// lifetime of this string will not be managed by the scaleform runtime
@@ -23,7 +27,8 @@ namespace papyrusUI
 
 	template <> bool GetGFxValue<bool> (GFxValue * val)						{ return (val->GetType() == GFxValue::kType_Bool ? val->GetBool() : false); }
 	template <> float GetGFxValue<float> (GFxValue * val)					{ return (val->GetType() == GFxValue::kType_Number ? val->GetNumber() : 0); }
-	template <> UInt32 GetGFxValue<UInt32> (GFxValue * val)						{ return (val->GetType() == GFxValue::kType_Number ? (UInt32)val->GetNumber() : 0); }
+	template <> UInt32 GetGFxValue<UInt32> (GFxValue * val)					{ return (val->GetType() == GFxValue::kType_Number ? (UInt32)val->GetNumber() : 0); }
+	template <> SInt32 GetGFxValue<SInt32> (GFxValue * val)					{ return (val->GetType() == GFxValue::kType_Number ? (SInt32)val->GetNumber() : 0); }
 	template <> BSFixedString GetGFxValue<BSFixedString> (GFxValue * val)
 	{
 		return (val->GetType() == GFxValue::kType_String ? BSFixedString(val->GetString()) : BSFixedString());
@@ -99,9 +104,17 @@ namespace papyrusUI
 		if (!view)
 			return;
 
+		// Precision problems here while in release mode and this isn't wrapped with controlfp
+		unsigned int newValue;
+		unsigned int currentState;
+		_controlfp_s(&newValue, 0, 0);
+		_controlfp_s(&currentState, _PC_53, _MCW_PC);
+
 		GFxValue args;
 		view->CreateObject(&args);
 		scaleformExtend::FormData(&args, view, form, false, false);
+
+		_controlfp_s(&currentState, newValue, _MCW_PC);
 
 		view->Invoke(target.c_str(), NULL, &args, 1);
 	}
@@ -154,6 +167,20 @@ namespace papyrusUI
 
 		return inputManager->allowTextInput != 0;
 	}
+
+	void OpenCustomMenu(StaticFunctionTag* thisInput, BSFixedString swfPath, SInt32 flags)
+	{
+		CustomMenuCreator::SetSwfPath(swfPath.data);
+
+		BSFixedString s("CustomMenu");
+		CALL_MEMBER_FN(UIManager::GetSingleton(), AddMessage)(&s, UIMessage::kMessage_Open, NULL);
+	}
+
+	void CloseCustomMenu(StaticFunctionTag* thisInput)
+	{
+		BSFixedString s("CustomMenu");
+		CALL_MEMBER_FN(UIManager::GetSingleton(), AddMessage)(&s, UIMessage::kMessage_Close, NULL);
+	}
 };
 
 #include "PapyrusVM.h"
@@ -161,6 +188,10 @@ namespace papyrusUI
 
 void papyrusUI::RegisterFuncs(VMClassRegistry* registry)
 {
+	MenuManager * mm = MenuManager::GetSingleton();
+	if (mm)
+		mm->Register("CustomMenu", CustomMenuCreator::Create);
+
 	registry->RegisterFunction(
 		new NativeFunction3 <StaticFunctionTag, void, BSFixedString, BSFixedString, bool> ("SetBool", "UI", papyrusUI::SetT<bool>, registry));
 	
@@ -218,6 +249,12 @@ void papyrusUI::RegisterFuncs(VMClassRegistry* registry)
 	registry->RegisterFunction(
 		new NativeFunction0 <StaticFunctionTag, bool> ("IsTextInputEnabled", "UI", papyrusUI::IsTextInputEnabled, registry));
 
+	registry->RegisterFunction(
+		new NativeFunction2 <StaticFunctionTag, void, BSFixedString, SInt32> ("OpenCustomMenu", "UI", papyrusUI::OpenCustomMenu, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction0 <StaticFunctionTag, void> ("CloseCustomMenu", "UI", papyrusUI::CloseCustomMenu, registry));
+
 	registry->SetFunctionFlags("UI", "InvokeBool", VMClassRegistry::kFunctionFlag_NoWait);
 	registry->SetFunctionFlags("UI", "InvokeInt", VMClassRegistry::kFunctionFlag_NoWait);
 	registry->SetFunctionFlags("UI", "InvokeFloat", VMClassRegistry::kFunctionFlag_NoWait);
@@ -228,4 +265,6 @@ void papyrusUI::RegisterFuncs(VMClassRegistry* registry)
 	registry->SetFunctionFlags("UI", "InvokeStringA", VMClassRegistry::kFunctionFlag_NoWait);
 	registry->SetFunctionFlags("UI", "InvokeForm", VMClassRegistry::kFunctionFlag_NoWait);
 	registry->SetFunctionFlags("UI", "IsTextInputEnabled", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("UI", "OpenCustomMenu", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("UI", "CloseCustomMenu", VMClassRegistry::kFunctionFlag_NoWait);
 }

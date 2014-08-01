@@ -16,6 +16,7 @@ namespace papyrusIngredient
 	UInt32 GetNthEffectDuration(IngredientItem* thisMagic, UInt32 index);
 	EffectSetting* GetNthEffectMagicEffect(IngredientItem* thisMagic, UInt32 index);
 	UInt32 GetCostliestEffectIndex(IngredientItem* thisMagic);
+	bool GetIsNthEffectKnown(IngredientItem* thisMagic, UInt32 index);
 
 	void SetNthEffectMagnitude(IngredientItem* thisMagic, UInt32 index, float value);
 	void SetNthEffectArea(IngredientItem* thisMagic, UInt32 index, UInt32 value);

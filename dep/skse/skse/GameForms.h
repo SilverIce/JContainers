@@ -21,6 +21,9 @@ class BGSExplosion;
 class BGSDualCastData;
 class TESImageSpaceModifier;
 class TESWordOfPower;
+class BGSHazard;
+class TESNPC;
+class TESWorldSpace;
 
 typedef TESForm * (* _LookupFormByID)(UInt32 id);
 extern const _LookupFormByID LookupFormByID;
@@ -335,13 +338,17 @@ class TESForm : public BaseFormComponent
 public:
 	enum { kTypeID = 0 };	// special-case
 
+	enum {
+		kFlagPlayerKnows = 0x40
+	};
+
 	virtual void			Unk_04(void);		// reset/init? would leak pointers if called on a live object
 	virtual void			Unk_05(void);		// release pointers?
 	virtual bool			LoadForm(UInt32 arg);
 	virtual bool			Unk_07(UInt32 arg);
 	virtual bool			Unk_08(UInt32 arg);	// calls LoadForm
 	virtual TESForm *		Unk_09(UInt32 arg1, void * arg2);
-	virtual bool			Unk_0A(UInt32 changed);	// mark as changed?
+	virtual bool			MarkChanged(UInt32 changed);	// mark as changed?
 	virtual void			Unk_0B(UInt32 arg);
 	virtual bool			Unk_0C(UInt32 arg);
 	virtual void			Unk_0D(UInt32 arg);
@@ -356,7 +363,7 @@ public:
 	virtual void			GetFormDesc(char * buf, UInt32 bufLen);
 	virtual bool			GetFlag00000040(void);
 	virtual bool			GetFlag00010000(void);
-	virtual bool			GetFlag00020000(void);
+	virtual bool			IsPlayable(void);
 	virtual bool			GetFlag00080000(void);
 	virtual bool			GetFlag02000000(void);
 	virtual bool			Unk_1B(void);
@@ -415,6 +422,13 @@ public:
 	TESDescription		description;	// 1C
 	TESIcon				icon;			// 28
 
+	enum {
+		kSkillUseMult = 0,
+		kSkillOffsetMult,
+		kSkillImproveMult,
+		kSkillImproveOffset
+	};
+
 	// members
 	const char *		name;			// 30 - second ctor argument
 	StringCache::Ref	unk34;			// 34
@@ -425,10 +439,10 @@ public:
 	UInt32				unk48[0x0F];	// 48 - init'd to 0xA4
 	UInt32				numSubTypes;			// 84
 	const char *		subTypes[0x0A];	// 88 - init'd to 0
-	void				* unkB0;		// B0
+	float *				skillUsages;	// B0
 	UInt32				unkB4;			// B4
 	UInt32				unkB8;			// B8
-	UInt32				unkBC;			// BC - BGSSkillPerkTreeNode
+	BGSSkillPerkTreeNode *	perkTree;			// BC - BGSSkillPerkTreeNode
 
 	UInt8	padC0[8];	// C0 - ? not initialized
 };
@@ -647,9 +661,13 @@ public:
 class BGSDefaultObjectManager : public TESForm
 {
 public:
+	enum { kTypeID = kFormType_DOBJ };
+
 	// cleared to 0 in ctor
-	TESForm	* objects[0xD9];			// 14
-	UInt8	pad[0x4BC - (0xD9 * 4)];	// just pad out the rest of the space
+	TESForm	* objects[0x15A];			// 14
+	UInt8	pad[0x15A];					// just pad out the rest of the space
+
+	static BGSDefaultObjectManager *	GetSingleton(void);
 };
 
 // 24
@@ -718,7 +736,7 @@ public:
 	TESModelTextureSwap		model;          // 1C
 
 	// members
-	UInt8					unk38;          // 38 // Flag Inconsistencies (Is Extra Part?) (Use Solid Tint?)
+	UInt8					partFlags;          // 38 // Flag Inconsistencies (Is Extra Part?) (Use Solid Tint?)
 	UInt8					pad39[3];       // 39
 	enum {
 		kTypeMisc = 0,
@@ -727,7 +745,17 @@ public:
 		kTypeHair,
 		kTypeFacialHair,
 		kTypeScar,
-		kTypeBrows
+		kTypeBrows,
+		kNumTypes
+	};
+
+	enum 
+	{
+		kFlagPlayable	= 1 << 0,
+		kFlagMale		= 1 << 1,
+		kFlagFemale		= 1 << 2,
+		kFlagExtraPart	= 1 << 3,
+		kFlagSolidTint	= 1 << 4
 	};
 
 	UInt32					type;			// 3C
@@ -739,6 +767,8 @@ public:
 	UInt32					unk8C;          // 8C
 	BGSListForm *			validRaces;		// 90
 	StringCache::Ref		partName;		// 94
+
+	bool IsExtraPart() { return (partFlags & kFlagExtraPart) == kFlagExtraPart; }
 };
 
 // 78
@@ -773,14 +803,34 @@ public:
 	UInt32	unk38;			// 38 - init'd to 1
 	UInt8	pad3C[4];		// 3C - init'd to 0 via memset (block from 28-40)
 
-	TESForm	* textures[2];	// 40 - texture set
-	TESForm	* sounds[2];	// 48 - sound
-	TESForm	* hazard;		// 50 - hazard
+	BGSTextureSet			* textures[2];	// 40 - texture set
+	BGSSoundDescriptorForm	* sounds[2];	// 48 - sound
+	BGSHazard				* hazard;		// 50 - hazard
 
 	Data54	unk54;			// 54
 	
 	UInt32	pad74;			// 74
 };
+
+// 38
+class BGSImpactDataSet : public TESForm
+{
+public:
+	enum { kTypeID = kFormType_ImpactDataSet };
+
+	BGSPreloadable	preloadable;	// 14
+
+	UInt32	unk18;	// 18
+	UInt32	unk1C;	// 1C
+	UInt32	unk20;	// 20
+	UInt32	unk24;	// 24
+	UInt32	unk28;	// 28
+	UInt32	unk2C;	// 2C
+	UInt32	unk30;	// 30
+	UInt32	unk34;	// 34
+};
+
+STATIC_ASSERT(sizeof(BGSImpactDataSet) == 0x38);
 
 // 1C
 class BGSKeyword : public TESForm
@@ -860,6 +910,18 @@ public:
 	tArray<TESForm*>	forms;	// 14
 	tArray<UInt32> *	addedForms;	// 20
 	UInt32				unk24;	// 24
+
+	MEMBER_FN_PREFIX(BGSListForm);
+	DEFINE_MEMBER_FN(AddFormToList, void, 0x004FB380, TESForm * form);
+
+	class Visitor
+	{
+	public:
+		virtual bool Accept(TESForm * form) = 0;
+	};
+
+	bool Visit(BGSListForm::Visitor & visitor);
+	UInt32 GetSize();
 };
 
 // 88
@@ -973,19 +1035,34 @@ class BGSMovementType : public TESForm
 public:
 	enum { kTypeID = kFormType_MovementType };
 
-	// 8
-	struct Data
-	{
-		UInt32	unk0;
-		UInt32	unk4;
+	enum {
+		kType_Walk = 0,
+		kType_Run,
+		kType_Max
 	};
 
-	StringCache::Ref	unk14;	// 14
-	Data	unk18[4];	// 18
-	float	unk38;		// 38 - init'd to pi
-	float	unk3C;		// 3C - init'd to pi
-	float	unk40;		// 40 - init'd to pi
-	UInt32	unk44[3];	// 44 - read from INAM chunk
+	enum
+	{
+		kDefaultData_Left = 0,
+		kDefaultData_Right,
+		kDefaultData_Forward,
+		kDefaultData_Back,
+		kDefaultData_RotateInPlace,
+		kDefaultData_Max
+	};
+
+	enum
+	{
+		kAnimChangeThresholds_Direction = 0,
+		kAnimChangeThresholds_MovementSpeed,
+		kAnimChangeThresholds_RotationSpeed,
+		kAnimChangeThresholds_Max
+	};
+
+	StringCache::Ref	typeId;									// 14
+	float				data[kDefaultData_Max][kType_Max];		// 18
+	float				rotateWhileMoving;						// 40 - init'd to pi
+	float				thresholds[kAnimChangeThresholds_Max];	// 44 - read from INAM chunk
 };
 
 // 20
@@ -1045,7 +1122,7 @@ public:
 	UInt8							pad35[3];	// 35
 	Condition						* conditions;	// 38
 	tArray<BGSPerkEntry*>			perkEntries;	// 3C
-	UInt32							unk48;		// 48
+	BGSPerk *						nextPerk;		// 48
 };
 
 // 124
@@ -1480,6 +1557,9 @@ public:
 	UInt32		unk144;		// 144
 	UInt32		unk148;		// 148
 	UnkArray	unk14C;		// 14C
+
+	MEMBER_FN_PREFIX(TESQuest);
+	DEFINE_MEMBER_FN(ForceRefTo, UInt32, 0x005728C0, UInt32 aliasId, TESObjectREFR * reference);	
 };
 
 STATIC_ASSERT(sizeof(TESQuest) == 0x158);
@@ -1784,7 +1864,9 @@ public:
 	// 24
 	struct Data30
 	{
-		UInt8	unk00[0x6];		// 00
+		UInt8	unk00[0x4];		// 00
+		UInt8	trainSkill;		// 04 (AV-6)
+		UInt8	maxTrainingLevel;	// 05
 		UInt8	oneHanded;		// 06
 		UInt8	twoHanded;		// 07
 		UInt8	archery;
@@ -2201,16 +2283,40 @@ public:
 		UInt32	unk4;
 	};
 
+	struct TVDT
+	{
+		struct TVDT1
+		{
+			UInt32	* unk00;	// array?
+			UInt32	* unk04;	// array?
+			UInt32	unk08;		// size?
+		};
+
+		struct TVDT0
+		{
+			TVDT1	* unk00;
+			UInt32	unk04;
+			UInt32	unk08;	// skip TVDT1 if > 1
+		};
+
+		UInt32	unk00;
+		UInt32	unk04;
+		UInt32	unk08;
+		TVDT0	* unk0C;
+		// ...
+	};
+
+
 	Data						unk1C;		// 1C
 	Data						unk24;		// 24
-	UInt16						unk2C;		// 2C
+	UInt16						unk2C;		// 2C	1 - no 3C
 	UInt16						unk2E;		// 2E
 	UInt8						unk30;		// 30
 	UInt8						unk31;		// 31
 	UInt8						unk32;		// 32
 	UInt8						pad33;		// 33
 	TESAIForm::Data				unk34;		// 34 - ExtraDataList
-	void						* unk3C;	// 3C
+	TVDT						* unk3C;	// 3C
 	UInt32						unk40;		// 40
 	UInt32						unk44;		// 44
 	UInt32						unk48;		// 48
@@ -2223,6 +2329,9 @@ public:
 	UInt32						unk80;		// 80
 	UInt32						unk84;		// 84
 	UInt32						unk88;		// 88
+
+	MEMBER_FN_PREFIX(TESObjectCELL);
+	DEFINE_MEMBER_FN(GetNorthRotation, double, 0x004C0FC0);
 };
 STATIC_ASSERT(offsetof(TESObjectCELL, objectList) == 0x4C);
 
@@ -2526,12 +2635,12 @@ public:
 	TESModel					models[2];			// 058
 	Data						data;				// 080
 	BGSTextureModel				textureModel[2];	// 12C
-	BGSBehaviorGraphModel		behaviorGraph[2];	// 154 - Offsets following this are not named correctly
-	StringCache::Ref			unk15C[2];			
-	StringCache::Ref			unk164[2];
-	BGSVoiceType				* voiceTypes[2];
-	BGSBodyPartData				* bodyPartData;
-	TESForm						* decapitateArmor[2];
+	BGSBehaviorGraphModel		behaviorGraph[2];	// 154
+	StringCache::Ref			behaviorPath[2];	// 17C
+	StringCache::Ref			behaviorName[2];	// 184
+	BGSVoiceType				* voiceTypes[2];	// 18C
+	BGSBodyPartData				* bodyPartData;		// 190
+	TESForm						* decapitateArmor[2];	// 194
 	UnkArray					unk180[2];
 	void						* unk198[4];
 	void						* unk1A8[2]; // AttackAnimationArrayMap
@@ -2545,14 +2654,36 @@ public:
 	tArray<BGSEquipSlot*>		slotRestrictions;
 	UInt32						unk274;
 	BGSEquipSlot				* unarmedEquipSlot;
-	UInt32						unk27C;
-	UInt32						unk280;
+	TESRace						* morphRace;
+	TESRace						* armorRace;
 	UnkArray					unk284;
 	UnkArray					unk290;
 	UInt8						unk29C[0x18];
-	void						* unk2B4;
-	void						* unk2B8;
+
+	struct CharGenData
+	{
+		struct TintOption
+		{
+			UInt32					unk00;			// 00
+			TESTexture				texture;		// 04
+			BGSColorForm			* defaultColor;	// 0C
+			tArray<BGSColorForm*>	colors;			// 10
+			tArray<float>			alpha;			// 14
+			tArray<UInt32>			unk18;			// 18
+		};
+		UInt32	unk00[0x90 >> 2];					// 00 - Don't know what this is yet, mostly FFFFFFFF
+		tArray<TintOption*>		* tintData;			// 90
+		tArray<BGSTextureSet*>	* textureSet;		// 94
+		BGSTextureSet			* defaultTexture;	// 98
+		tArray<TESNPC*>			* presets;			// 9C
+		tArray<BGSColorForm*>	* colors;			// A0
+		BGSColorForm			* defaultColor;		// A4
+		tArray<BGSHeadPart*>	* headParts;		// A8
+	};
+
+	CharGenData					* chargenData[2];
 };
+STATIC_ASSERT(offsetof(TESRace::CharGenData, tintData) == 0x90);
 
 //STATIC_ASSERT(offsetof(TESRace, unk1B0) == 0x1B0);
 //STATIC_ASSERT(sizeof(TESRace) == 0x29C);
@@ -2591,7 +2722,7 @@ public:
 
 	Data14	* unk14;	// 14
 	Data18	* unk18;	// 18
-	UInt32	unk1C;		// 1C
+	TESWorldSpace	* worldSpace;		// 1C
 	UInt32	unk20;		// 20
 	Data24	unk24;		// 24
 };

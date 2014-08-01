@@ -3,17 +3,17 @@
 #include "skse/NiTextures.h"
 #include "skse/GameTypes.h"
 
-class BSTextureSet;
+MAKE_NI_POINTER(BSTextureSet);
 
 class BSShaderMaterial
 {
 public:
 	virtual ~BSShaderMaterial();
-	virtual void Unk_01(void);
-	virtual void Unk_02(void);
-	virtual void Unk_03(void);
-	virtual void Unk_04(void);
-	virtual void Unk_05(void);
+	virtual BSShaderMaterial * Create(void);
+	virtual void Copy(BSShaderMaterial * source); // Must be same type
+	virtual bool Unk_03(void * unk1);
+	virtual SInt32 Unk_04(void * unk1);
+	virtual void * Unk_05(void);
 	virtual UInt32 GetShaderType(void);
 	virtual UInt32 Unk_07(void);	// Always seems to be 2
 
@@ -49,12 +49,12 @@ class BSShaderMaterialBase : public BSShaderMaterial
 public:
 	virtual ~BSShaderMaterialBase();
 
-	virtual void SetTexturePath(UInt32 index, const char * meshPath);
+	virtual void SetTexture(UInt32 index, BSTextureSet * texture, SInt32 unk1);
 	virtual void ReleaseTextures(void); // ReleaseRefs
 	virtual void Unk_0A(UInt8 unk1, UInt8 unk2, UInt8 unk3, UInt8 unk4, UInt8 unk5, UInt32 unk6, UInt32 unk7); // AddRefs
-	virtual void Unk_0B(UInt32 unk1);
-	virtual void Unk_0C(UInt32 unk1);
-	virtual UInt32 Unk_0D(UInt32 unk1);
+	virtual void Unk_0B(void * unk1, UInt32 unk2);
+	virtual void * Unk_0C(void * unk1);
+	virtual void * Unk_0D(void * unk1);
 
 	UInt32	unk2C;	// 2C flags?
 
@@ -91,7 +91,7 @@ public:
 	NiSourceTexture	* heightMap;	// 44 inited to 0
 	NiSourceTexture	* specular;	// 48 inited to 0
 	UInt32	unk4C;				// 4C inited to 3
-	BSTextureSet *	textureSet;		// 50 inited to 0
+	BSTextureSetPtr	textureSet;		// 50 inited to 0
 	float	alpha;				// 54 inited to 1.0
 	float	unk58;				// 58 inited to 0
 	float	glossiness;			// 5C inited to 1.0
@@ -99,6 +99,8 @@ public:
 	float	lightingEffect1;	// 64 inited to 0
 	float	lightingEffect2;	// 68 inited to 0
 	UInt32	unk6C;				// 6C inited to 0
+
+	void SetTextureSet(BSTextureSet * textureSet);
 
 	MEMBER_FN_PREFIX(BSLightingShaderMaterial);
 	DEFINE_MEMBER_FN(CopyFrom, void, 0x00C97AC0, BSLightingShaderMaterial * other);

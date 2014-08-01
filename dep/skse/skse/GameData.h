@@ -4,6 +4,7 @@
 #include "GameForms.h"
 #include "GameObjects.h"
 #include "GameReferences.h"
+#include "GameResources.h"
 
 class BSFile;
 
@@ -96,6 +97,82 @@ struct ModList
 	UInt32				loadedModCount;
 	ModInfo*			loadedMods[0xFF];
 };
+
+// E8
+class TES
+{
+public:
+	virtual ~TES();
+
+	UInt32 unk04;
+	UInt32 unk08;
+	UInt32 unk0C;
+	UInt32 unk10;
+	UInt32 unk14;
+	UInt32 unk18;
+	UInt32 unk1C;
+	UInt32 unk20;
+	UInt32 unk24;
+	UInt32 unk28;
+	UInt32 unk2C;
+	UInt32 unk30;
+	UInt32 unk34;
+	UInt32 unk38;
+	UInt32 unk3C;
+	UInt32 gridCellArray; //40 GridCellArray 0x24
+	NiNode * objectLODRoot; // 44
+	NiNode * landLOD; // 48
+	NiNode * waterLOD; // 4C
+	UInt32 tempNodeManager;//BSTempNodeManager
+	UInt32 unk54;
+	UInt32 unk58;
+	UInt32 unk5C; // 7FFFFFFF
+	UInt32 unk60; // 7FFFFFFF
+	UInt32 unk64; // 7FFFFFFF
+	UInt32 unk68; // 7FFFFFFF
+	TESObjectCELL * currentCell;
+	TESObjectCELL **  interiorCellBuffer; // idk, visited cells perhaps?
+	UInt32 unk74;
+	UInt32 unk78; // 0
+	UInt32 unk7C; // 0
+	UInt32 unk80; // 7FFFFFFF
+	UInt32 unk84; // 7FFFFFFF
+	UInt32 unk88;
+	UInt32 unk8C;
+	UInt32 unk90;
+	UInt32 sky; // Sky
+	UInt32 imageSpaceModifier; // ImageSpaceModifierInstanceForm
+	UInt32 unk9C; // ImageSpaceModifierInstanceDOF ** ??
+	UInt32 unkA0;
+	UInt32 unkA4;
+	UInt8  unkA8;
+	UInt8  unkA9;
+	UInt8  unkAA;
+	UInt8  unkAB;
+	UInt8  unkAC;
+	UInt8  unkAD;
+	UInt8  unkAE;
+	UInt8  unkAF;
+	UInt8  unkB0;
+	UInt8  padB1[3];
+	UInt32 unkB4; // 4579A000
+	UInt32 unkB8; // 457D2000
+	UInt32 worldSpace; // TESWorldSpace
+	UInt32 npcs; // TESNPC ** ??
+	UInt32 unkC4; // TESNPC next?
+	UInt32 queuedFile; // QueuedFile
+	NiSourceTexture* someTexture;
+	UInt32 queuedFile1; // QueuedFile
+	UInt32 queuedFile2;
+	UInt32 unkD8; // BSFadeNode ** ??
+	UInt32 unkDC;
+	UInt32 navMeshInfoMap; // NavMeshInfoMap
+	LoadedAreaBound * loadedAreaBound;
+};
+STATIC_ASSERT(sizeof(TES) == 0xE8);
+STATIC_ASSERT(offsetof(TES, loadedAreaBound)  == 0xE4);
+
+extern TES ** g_TES;
 
 class DataHandler
 {
@@ -386,9 +463,30 @@ public:
 	static ActorValueList * GetSingleton(void);
 	ActorValueInfo * GetActorValue(UInt32 id);
 
+	static UInt32 ResolveActorValueByName(const char * name);
+
 private:
 	UInt32 unk04;
 	ActorValueInfo * actorValues[kNumActorValues];
+};
+
+class DefaultObjectList
+{
+public:
+	enum {
+		kNumDefaultObjects = 0x15A
+	};
+	struct DefaultObject
+	{
+		const char	* description;	// 00
+		UInt32		unk04;			// 04
+		UInt32		key;			// 08
+		UInt32		unk0C;			// 0C
+	};
+
+	static DefaultObjectList * GetSingleton(void);
+
+	DefaultObject	objects[kNumDefaultObjects];
 };
 
 class FaceMorphList
@@ -407,6 +505,7 @@ public:
 		kMorph_CheeksDownUp,
 		kMorph_CheeksInOut,
 		kMorph_EyesMoveDownUp,
+		kMorph_EyesMoveInOut,
 		kMorph_BrowDownUp,
 		kMorph_BrowInOut,
 		kMorph_BrowBackForward,
@@ -415,7 +514,8 @@ public:
 		kMorph_ChinThinWide,
 		kMorph_ChinMoveUpDown,
 		kMorph_OverbiteUnderbite,
-		kMorph_EyesBackForward
+		kMorph_EyesBackForward,
+		kMorph_Vampire
 	};
 
 	static FaceMorphList * GetSingleton(void);
@@ -480,15 +580,30 @@ public:
 		float	delta;
 	};
 
-	UInt32	unk00[0x3C >> 2];	// 00
-	UInt8	unk3C;				// 3C
-	UInt8	pad3D[3];			// 3D
+	class MorphDatabase
+	{
+	public:
+		MEMBER_FN_PREFIX(MorphDatabase);
+		DEFINE_MEMBER_FN(GetFaceGenModelMapEntry, bool, 0x005A6230, const char * meshPath, BSFaceGenModelMap ** entry);
+		DEFINE_MEMBER_FN(SetFaceGenModelMapEntry, void, 0x005A6540, const char * meshPath, BSFaceGenModel * model);
+
+		UInt32 unk00;	// 00 - Doesn't seem to be anything here?
+	};
+
+	UInt32			unk00;						// 00
+	UInt32			unk04;						// 04
+	UInt32			unk08;						// 08
+	UInt32			unk0C;						// 0C
+	MorphDatabase	morphDatabase;				// 10
+	UInt32			unk14[(0x3C - 0x14) >> 2];	// 14
+	UInt8			isReset;					// 3C
+	UInt8			pad3D[3];					// 3D
 
 	MEMBER_FN_PREFIX(FaceGen);
 	DEFINE_MEMBER_FN(RegenerateHead, void, 0x005A4B80, BSFaceGenNiNode * headNode, BGSHeadPart * head, TESNPC * npc);
 	DEFINE_MEMBER_FN(ApplyMorph, void, 0x005A4070, BSFaceGenNiNode * faceGenNode, BGSHeadPart * headPart, BSFixedString * morphName, float relative);
 };
-STATIC_ASSERT(offsetof(FaceGen, unk3C) == 0x3C);
+STATIC_ASSERT(offsetof(FaceGen, isReset) == 0x3C);
 
 // Changes one HeadPart to another
 typedef void (* _ChangeActorHeadPart)(Actor*, BGSHeadPart* oldPart, BGSHeadPart* newPart);
@@ -504,14 +619,23 @@ extern const _GetActorBaseOverlays GetActorBaseOverlays;
 typedef UInt32 (* _GetNumActorBaseOverlays)(TESNPC * npc);
 extern const _GetNumActorBaseOverlays GetNumActorBaseOverlays;
 
-typedef bool (* _ApplyMasksToRenderTarget)(tArray<TintMask*> * tintMask, NiRenderTarget ** renderTarget);
+typedef bool (* _ApplyMasksToRenderTarget)(tArray<TintMask*> * tintMask, BSRenderTargetGroup ** renderTarget);
 extern const _ApplyMasksToRenderTarget ApplyMasksToRenderTarget;
+
+typedef UInt32 (* _UpdateModelSkin)(NiNode*, NiColorA**);
+extern const _UpdateModelSkin UpdateModelSkin;
+
+typedef UInt32 (* _UpdateModelHair)(NiNode*, NiColorA**);
+extern const _UpdateModelHair UpdateModelHair;
+
+typedef UInt32 (* _UpdateModelFace)(NiNode*);
+extern const _UpdateModelFace UpdateModelFace;
 
 // Loads a TRI file into the FaceGenDB, parameters are unknown ptrs
 // unk1 seems to be inited to zero before calling however
 // unk2 is a numeric value from some other object it seems
 // making it zero seems to cache anyway
-typedef bool (* _CacheTRIFile)(const char * filePath, UInt32 * unk1, UInt32 * unk2);
+typedef bool (* _CacheTRIFile)(const char * filePath, BSFaceGenDB::TRI::DBTraits::MorphSet ** morphSet, UInt32 * unk1);
 extern const _CacheTRIFile CacheTRIFile;
 
 // 20
@@ -535,3 +659,430 @@ public:
 		return *((MagicFavorites **)0x01B2E39C);
 	}
 };
+
+// 84?
+class PersistentFormManager
+{
+public:
+	struct EnchantData
+	{
+		EnchantmentItem *	enchantment;	// 00
+		volatile SInt32		refCount;		// 04
+	};
+
+	UInt32	unk00;	// 00
+	tArray<EnchantData>	weaponEnchants;	// 04
+	tArray<EnchantData>	armorEnchants;	// 10
+	UInt32	unk1C;	// 1C
+	UInt32	unk20;	// 20
+	UInt32	unk24[(0x80 - 0x24) >> 2];	// 24
+
+	static PersistentFormManager * GetSingleton(void)
+	{
+		return *((PersistentFormManager **)0x012E3300);
+	}
+
+	void IncRefEnchantment(EnchantmentItem * enchantment)
+	{
+		if(enchantment && enchantment->formID >= 0xFF000000) {
+			for(UInt32 i = 0; i < weaponEnchants.count; i++) {
+				EnchantData foundData;
+				weaponEnchants.GetNthItem(i, foundData);
+				if(foundData.enchantment == enchantment) {
+					InterlockedIncrement(&weaponEnchants[i].refCount);
+					break;
+				}
+			}
+			for(UInt32 i = 0; i < armorEnchants.count; i++) {
+				EnchantData foundData;
+				armorEnchants.GetNthItem(i, foundData);
+				if(foundData.enchantment == enchantment) {
+					InterlockedIncrement(&armorEnchants[i].refCount);
+					break;
+				}
+			}
+		}
+	}
+
+	// The game doesn't bother to dec ref or even delete custom enchants
+	// when they are no longer used, maybe we can fix this?
+	void DecRefEnchantment(EnchantmentItem * enchantment)
+	{
+		if(enchantment && enchantment->formID >= 0xFF000000) {
+			for(UInt32 i = 0; i < weaponEnchants.count; i++) {
+				EnchantData foundData;
+				weaponEnchants.GetNthItem(i, foundData);
+				if(foundData.enchantment == enchantment) {
+					if(!InterlockedDecrement(&weaponEnchants[i].refCount))
+						CALL_MEMBER_FN(this, ScheduleForDeletion)(enchantment);
+					break;
+				}
+			}
+			for(UInt32 i = 0; i < armorEnchants.count; i++) {
+				EnchantData foundData;
+				armorEnchants.GetNthItem(i, foundData);
+				if(foundData.enchantment == enchantment) {
+					if(!InterlockedDecrement(&armorEnchants[i].refCount))
+						CALL_MEMBER_FN(this, ScheduleForDeletion)(enchantment);
+					break;
+				}
+			}
+		}
+	}
+
+	MEMBER_FN_PREFIX(PersistentFormManager);
+	DEFINE_MEMBER_FN(CreateOffensiveEnchantment, EnchantmentItem *, 0x00689D30, tArray<MagicItem::EffectItem> * effectArray);
+	DEFINE_MEMBER_FN(CreateDefensiveEnchantment, EnchantmentItem *, 0x00689D80, tArray<MagicItem::EffectItem> * effectArray);
+	DEFINE_MEMBER_FN(CreatePotion, void, 0x0068ACB0, AlchemyItem ** potion, tArray<MagicItem::EffectItem> * effectArray);
+	//DEFINE_MEMBER_FN(AddPersistentForm, void, 0x0068A0F0, TESForm *);
+	DEFINE_MEMBER_FN(ScheduleForDeletion, void, 0x0068A1B0, TESForm *);
+};
+
+class AnimationSpeedData
+{
+public:
+	virtual ~AnimationSpeedData();
+
+	class SpeedData
+	{
+	public:
+		UInt32	unk00;
+		UInt32	unk04;	// 8?
+		UInt32	unk08;	// 5?
+		UInt32	unk0C;	// 8?
+		void	* unk10;	// DEADBEEF
+		UInt32	unk14;
+		UInt32	unk18;
+	};
+
+	UInt32	unk04;
+	UInt32	unk08;
+	SpeedData	unk0C;
+	UInt32	unk28;
+	UInt32	unk2C;
+};
+
+class GarbageCollector
+{
+public:
+	virtual ~GarbageCollector();
+
+	static GarbageCollector * GetSingleton(void);
+
+	MEMBER_FN_PREFIX(GarbageCollector);
+	DEFINE_MEMBER_FN(AddNiAVObject, UInt32, 0x0068FCF0, NiAVObject * object);
+};
+
+class MenuTopicManager
+{
+public:
+	virtual ~MenuTopicManager();
+	virtual void Unk_01(void);
+
+	TESObjectREFR * GetDialogueTarget();
+
+	static MenuTopicManager * GetSingleton(void);
+
+	BSTEventSink<void>	playerPositionEvent;	// 04
+	UInt32	unk08[(0x38 - 0x08) >> 2];			// 08
+	UInt32	talkingHandle;						// 38
+	UInt32	handle2;							// 3C
+	UInt32	unk40[(0x60 - 0x40) >> 2];			// 40
+	UInt8	unk60;
+	UInt8	unk61;
+	UInt8	unk62;
+	UInt8	unk63;
+	UInt8	unk64;
+	UInt8	unk65;
+	UInt8	unk66;
+	UInt8	unk67;
+	UInt8	unk68;
+	UInt8	unk69;
+	UInt8	unk6A;
+	UInt8	unk6B;
+};
+STATIC_ASSERT(offsetof(MenuTopicManager, talkingHandle) == 0x38);
+
+// 04
+class SkyObject
+{
+public:
+	virtual ~SkyObject();
+	virtual void Unk_01(void);
+	virtual void Unk_02(void);
+	virtual void Unk_03(void);
+
+	UInt32	m_refCount;	// 04
+};
+
+// 1C
+class Atmosphere : public SkyObject
+{
+public:
+	virtual ~Atmosphere();
+	virtual void Unk_04(void);
+
+	UInt32	unk08;	// 08
+	UInt32	unk0C;	// 0C
+	UInt32	unk10;	// 10
+	UInt32	unk14;	// 14
+	UInt32	unk18;	// 18
+};
+
+// 10
+class Stars : public SkyObject
+{
+public:
+	virtual ~Stars();
+
+	UInt32	unk08;	// 08
+	UInt32	unk0C;	// 0C
+};
+
+// 30
+class Sun : public SkyObject
+{
+public:
+	virtual ~Sun();
+
+	UInt32	unk08;	// 08
+	UInt32	unk0C;	// 0C
+	UInt32	unk10;	// 10
+	UInt32	unk14;	// 14
+	UInt32	unk18;	// 18
+	UInt32	unk1C;	// 1C
+	UInt32	unk20;	// 20
+	UInt32	unk24;	// 24
+	UInt8	unk28;	// 28
+	UInt8	pad29[3];	// 29
+	UInt32	unk2C;	// 2C - BSShaderAccumulator
+};
+
+// 38C
+class Clouds : public SkyObject
+{
+public:
+	virtual ~Clouds();
+
+	UInt32	unk08[(0x38C - 0x08) >> 2];		// 08
+};
+STATIC_ASSERT(sizeof(Clouds) == 0x38C);
+
+// 7C
+class Moon : public SkyObject
+{
+public:
+	virtual ~Moon();
+
+	UInt32	unk08;			// 08 - NiNode?
+	UInt32	unk0C;			// 0C - NiNode?
+	UInt32	unk10;			// 10 - NiNode?
+	UInt32	unk14;			// 14 - NiNode?
+	char	* unk18;		// 18 - Data/Textures/Sky/%s_full.dds
+	UInt32	unk1C;			// 1C
+	char	* unk20;		// 20 - Data/Textures/Sky/%s_three_wan.dds
+	UInt32	unk24;			// 24
+	char	* unk28;		// 28 - Data/Textures/Sky/%s_half_wan.dds
+	UInt32	unk2C;			// 3C
+	char	* unk30;		// 30 - Data/Textures/Sky/%s_one_wan.dds
+	UInt32	unk34;			// 34
+	UInt32	unk38;			// 38
+	UInt32	unk3C;			// 3C
+	char	* unk40;		// 40 - Data/Textures/Sky/%s_one_wax.dds
+	UInt32	unk44;			// 44
+	char	* unk48;		// 48 - Data/Textures/Sky/%s_half_wax.dds
+	UInt32	unk4C;			// 4C
+	char	* unk50;		// 50 - Data/Textures/Sky/%s_three_wax.dds
+	UInt32	unk54;			// 54
+	UInt32	unk58;			// 58
+	UInt32	unk7C[(0x7C - 0x58) >> 2];		// 08
+};
+
+// 1C
+class Precipitation : public SkyObject
+{
+public:
+	virtual ~Precipitation();
+
+	UInt32	unk08;	// 08
+	float	unk0C;	// 0C
+	float	unk10;	// 10
+	float	unk14;	// 14
+	float	unk18;	// 18
+};
+STATIC_ASSERT(sizeof(Precipitation) == 0x1C);
+
+// 238
+class Sky
+{
+public:
+	virtual ~Sky();
+
+	void			* unk04;			// 04 - BSMultiBoundNode
+	NiNode			* unk08;			// 08
+	UInt32			unk0C;				// 0C
+	UInt32			unk10;				// 10
+	UInt32			unk14;				// 14
+	UInt32			unk18;				// 18
+	UInt32			unk1C;				// 1C
+	UInt32			unk20;				// 20
+	UInt32			unk24;				// 24
+	TESClimate		* climate;			// 28
+	TESWeather		* weather;			// 2C
+	UInt32			unk30;				// 30
+	UInt32			unk34;				// 34
+	UInt32			unk38;				// 38
+	TESRegion		* region;			// 3C
+	Atmosphere		* atmosphere;		// 40
+	Stars			* stars;			// 44
+	Sun				* sun;				// 48
+	Clouds			* clouds;			// 4C
+	Moon			* masser;			// 50
+	Moon			* secunda;			// 54
+	Precipitation	* precipitation;	// 58
+	float			unk5C[6];			// 5C
+	UInt32			unk74[3];			// 74
+	float			unk80[6];			// 80
+	UInt32			unk98[6];			// 98
+	float			unkB0[9];			// B0
+	UInt32			unkD4[6];			// D4
+	float			unkEC[9];			// EC
+	UInt32			unk110[9];			// 110
+	float			unk134[7];			// 134
+	UInt32			unk150[3];			// 150
+	float			unk15C[5];			// 15C
+	UInt32			unk170;				// 170
+	void			* unk174;			// 174
+	UInt32			unk178[3];			// 178
+	float			unk184;				// 184
+	UInt32			unk188[6];			// 188
+	float			unk1A0[(0x210 - 0x1A0) >> 2];	// 1A0
+	void			* skyEffectController;			// 210
+	UInt32			unk214[(0x238 - 0x214) >> 2];	// 214
+
+	MEMBER_FN_PREFIX(Sky);
+	DEFINE_MEMBER_FN(IsSnowing, bool, 0x00504350);
+};
+STATIC_ASSERT(sizeof(Sky) == 0x238);
+
+typedef Sky * (* _GetSky)();
+extern const _GetSky GetSky;
+
+typedef bool (* _HasLOS)(Actor* source, TESObjectREFR* target, UInt8 * unk1);
+extern const _HasLOS HasLOS;
+
+class PerkEntryPoints
+{
+public:
+	static PerkEntryPoints * GetSingleton(void);
+
+	enum
+	{
+		kEntryPoint_Calculate_Weapon_Damage,
+		kEntryPoint_Calculate_My_Critical_Hit_Chance,
+		kEntryPoint_Calculate_My_Critical_Hit_Damage,
+		kEntryPoint_Calculate_Mine_Explode_Chance,
+		kEntryPoint_Adjust_Limb_Damage,
+		kEntryPoint_Adjust_Book_Skill_Points,
+		kEntryPoint_Modify_Recovered_Health,
+		kEntryPoint_Get_Should_Attack,
+		kEntryPoint_Modify_Buy_Prices,
+		kEntryPoint_Add_Leveled_List_On_Death,
+		kEntryPoint_Get_Max_Carry_Weight,
+		kEntryPoint_Modify_Addiction_Chance,
+		kEntryPoint_Modify_Addiction_Duration,
+		kEntryPoint_Modify_Positive_Chem_Duration,
+		kEntryPoint_Activate,
+		kEntryPoint_Ignore_Running_During_Detection,
+		kEntryPoint_Ignore_Broken_Lock,
+		kEntryPoint_Modify_Enemy_Critical_Hit_Chance,
+		kEntryPoint_Modify_Sneak_Attack_Mult,
+		kEntryPoint_Modify_Max_Placeable_Mines,
+		kEntryPoint_Modify_Bow_Zoom,
+		kEntryPoint_Modify_Recover_Arrow_Chance,
+		kEntryPoint_Modify_Skill_Use,
+		kEntryPoint_Modify_Telekinesis_Distance,
+		kEntryPoint_Modify_Telekinesis_Damage_Mult,
+		kEntryPoint_Modify_Telekinesis_Damage,
+		kEntryPoint_Mod_Bashing_Damage,
+		kEntryPoint_Mod_Power_Attack_Stamina,
+		kEntryPoint_Mod_Power_Attack_Damage,
+		kEntryPoint_Mod_Spell_Magnitude,
+		kEntryPoint_Mod_Spell_Duration,
+		kEntryPoint_Mod_Secondary_Value_Weight,
+		kEntryPoint_Mod_Armor_Weight,
+		kEntryPoint_Mod_Incoming_Stagger,
+		kEntryPoint_Mod_Target_Stagger,
+		kEntryPoint_Mod_Attack_Damage,
+		kEntryPoint_Mod_Incoming_Damage,
+		kEntryPoint_Mod_Target_Damage_Resistance,
+		kEntryPoint_Mod_Spell_Cost,
+		kEntryPoint_Mod_Percent_Blocked,
+		kEntryPoint_Mod_Shield_Deflect_Arrow_Chance,
+		kEntryPoint_Mod_Incoming_Spell_Magnitude,
+		kEntryPoint_Mod_Incoming_Spell_Duration,
+		kEntryPoint_Mod_Player_Intimidation,
+		kEntryPoint_Mod_Player_Reputation,
+		kEntryPoint_Mod_Favor_Points,
+		kEntryPoint_Mod_Bribe_Amount,
+		kEntryPoint_Mod_Detection_Light,
+		kEntryPoint_Mod_Detection_Movement,
+		kEntryPoint_Mod_Soul_Gem_Recharge,
+		kEntryPoint_Set_Sweep_Attack,
+		kEntryPoint_Apply_Combat_Hit_Spell,
+		kEntryPoint_Apply_Bashing_Spell,
+		kEntryPoint_Apply_Reanimate_Spell,
+		kEntryPoint_Set_Boolean_Graph_Variable,
+		kEntryPoint_Mod_Spell_Casting_Sound_Event,
+		kEntryPoint_Modify_Pickpocket_Chance,
+		kEntryPoint_Modify_Detection_Sneak_Skill,
+		kEntryPoint_Modify_Falling_Damage,
+		kEntryPoint_Modify_Lockpick_Sweet_Spot,
+		kEntryPoint_Modify_Sell_Prices,
+		kEntryPoint_Can_Pickpocket_Equipped_Item,
+		kEntryPoint_Modify_Lockpick_level_allowed,
+		kEntryPoint_Set_Lockpick_Starting_Arc,
+		kEntryPoint_Set_Progression_Picking,
+		kEntryPoint_Make_lockpicks_unbreakable_,
+		kEntryPoint_Modify_Alchemy_Effectiveness,
+		kEntryPoint_Apply_Weapon_Swing_Spell,
+		kEntryPoint_Modify_Commanded_Actor_Limit,
+		kEntryPoint_Apply_Sneaking_Spell,
+		kEntryPoint_Modify_Player_Magic_Slowdown,
+		kEntryPoint_Modify_Ward_Magicka_Absorption_Pct,
+		kEntryPoint_Modify_Initial_Ingredient_Effects_Learned,
+		kEntryPoint_Purify_Alchemy_Ingredients,
+		kEntryPoint_Filter_Activation,
+		kEntryPoint_Can_dual_cast_spell,
+		kEntryPoint_Modify_Tempering_Health,
+		kEntryPoint_Modify_Enchantment_Power,
+		kEntryPoint_Modify_Soul_Pct_Captured_to_Weapon,
+		kEntryPoint_Mod_Soul_Gem_Enchanting,
+		kEntryPoint_Mod_applied_enchantments_allowed,
+		kEntryPoint_Set_Activate_Label,
+		kEntryPoint_Mod_Shout_OK,
+		kEntryPoint_Mod_Poison_Dose_Count,
+		kEntryPoint_Should_Apply_Placed_Item,
+		kEntryPoint_Modify_Armor_Rating,
+		kEntryPoint_Modify_lockpicking_crime_chance,
+		kEntryPoint_Modify_ingredients_harvested,
+		kEntryPoint_Modify_Spell_Range_Target_Loc,
+		kEntryPoint_Modify_Potions_Created,
+		kEntryPoint_Modify_lockpicking_key_reward_chance,
+		kEntryPoint_Allow_Mount_Actor,
+		kNumPerkEntryPoints
+	};
+
+	struct Data
+	{
+		const char	* name;	// 00
+		UInt32		unk04;	// 04
+		UInt32		unk08;	// 08
+		UInt32		unk0C;	// 0C
+	};
+
+	Data	entryPoints[kNumPerkEntryPoints];
+};
+
+typedef bool (* _CalculatePerkData)(UInt32 entryPointType, TESObjectREFR* source, ...);
+extern const _CalculatePerkData CalculatePerkData;

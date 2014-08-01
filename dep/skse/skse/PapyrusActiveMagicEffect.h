@@ -12,6 +12,7 @@ namespace papyrusActiveMagicEffect
 
 	float GetTimeElapsed(ActiveEffect* effect);
 	float GetDuration(ActiveEffect* effect);
+	float GetMagnitude(ActiveEffect* effect);
 
 	void RegisterForKey(ActiveEffect * effect, UInt32 key);
 	void UnregisterForKey(ActiveEffect * effect, UInt32 key);
@@ -29,7 +30,7 @@ namespace papyrusActiveMagicEffect
 	void UnregisterForModEvent(ActiveEffect * effect, BSFixedString eventName);
 	void UnregisterForAllModEvents(ActiveEffect * effect);
 
-	void SendModEvent(TESForm * thisForm, BSFixedString eventName, BSFixedString strArg, float numArg);
+	void SendModEvent(ActiveEffect * thisForm, BSFixedString eventName, BSFixedString strArg, float numArg);
 
 	void RegisterForCameraState(ActiveEffect * thisForm);
 	void UnregisterForCameraState(ActiveEffect * thisForm);

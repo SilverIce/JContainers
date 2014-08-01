@@ -34,7 +34,7 @@ namespace Serialization
 	void	SetRevertCallback(PluginHandle plugin, SKSESerializationInterface::EventCallback callback);
 	void	SetSaveCallback(PluginHandle plugin, SKSESerializationInterface::EventCallback callback);
 	void	SetLoadCallback(PluginHandle plugin, SKSESerializationInterface::EventCallback callback);
-	void	SetFormDeleteCallback(PluginHandle plugin, SKSESerializationInterface::EventCallback callback);
+	void	SetFormDeleteCallback(PluginHandle plugin, SKSESerializationInterface::FormDeleteCallback callback);
 
 	void	SetSaveName(const char * name);
 	bool	WriteRecord(UInt32 type, UInt32 version, const void * buf, UInt32 length);
@@ -52,6 +52,7 @@ namespace Serialization
 	void	HandleLoadGlobalData(void);
 
 	void	HandleDeleteSave(std::string saveName);
+	void	HandleDeletedForm(UInt64 handle);
 
 	// template helper functions
 	template <typename T>

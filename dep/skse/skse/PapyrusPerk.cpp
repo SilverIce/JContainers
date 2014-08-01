@@ -6,6 +6,11 @@
 
 namespace papyrusPerk
 {
+	BGSPerk * GetNextPerk(BGSPerk * perk)
+	{
+		return (perk) ? perk->nextPerk : NULL;
+	}
+
 	UInt32 GetNumEntries(BGSPerk * perk)
 	{
 		return (perk) ? perk->perkEntries.count : 0;
@@ -346,6 +351,9 @@ namespace papyrusPerk
 
 void papyrusPerk::RegisterFuncs(VMClassRegistry* registry)
 {
+	registry->RegisterFunction(
+		new NativeFunction0<BGSPerk, BGSPerk*>("GetNextPerk", "Perk", papyrusPerk::GetNextPerk, registry));
+
 	registry->RegisterFunction(
 		new NativeFunction0<BGSPerk, UInt32>("GetNumEntries", "Perk", papyrusPerk::GetNumEntries, registry));
 

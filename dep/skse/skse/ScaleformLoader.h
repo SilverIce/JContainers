@@ -3,17 +3,22 @@
 #include "skse/ScaleformState.h"
 
 class NiTexture;
+class IMenu;
+class GImageInfoBase;
+
+extern bool g_logScaleform;
 
 class GFxImageLoader : public GFxState
 {
 public:
+	virtual GImageInfoBase*	LoadImage(const char * url) = 0;
 };
 
 class BSScaleformImageLoader : public GFxImageLoader
 {
 public:
 	virtual ~BSScaleformImageLoader();
-	virtual UInt32	Unk_01(UInt32 unk1);
+	virtual GImageInfoBase*	LoadImage(const char * url);
 
 	MEMBER_FN_PREFIX(BSScaleformImageLoader);
 	DEFINE_MEMBER_FN(AddVirtualImage, UInt8, 0x00A65710, NiTexture ** texture);
@@ -31,8 +36,13 @@ public:
 
 	static GFxLoader * GetSingleton();	
 
+
+
 	MEMBER_FN_PREFIX(GFxLoader);
 	DEFINE_MEMBER_FN(ctor, UInt32, 0x00A60FE0);
+
+	// Note: Probably in subclass
+	DEFINE_MEMBER_FN(LoadMovie, bool, 0xA60C80, IMenu* menu, GFxMovieView** viewOut, const char* name, int arg4, float arg5);
 
 	enum { kCtorHookAddress = 0x0069D1D0 + 0x07D7 };
 

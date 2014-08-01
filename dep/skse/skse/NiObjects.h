@@ -25,6 +25,17 @@ class NiRenderTargetGroup;
 class NiProperty;
 class NiSourceTexture;
 
+class TESObjectCELL;
+
+class TESModelTri;
+class BSFaceGenMorphData;
+
+extern float * g_worldToCamMatrix;
+extern NiRect<float> * g_viewPort;
+
+typedef bool (* _WorldPtToScreenPt3_Internal)(float * worldToCamMatrix, NiRect<float> * port, NiPoint3 * p_in, float * x_out, float * y_out, float * z_out, float zeroTolerance);
+extern const _WorldPtToScreenPt3_Internal WorldPtToScreenPt3_Internal;
+
 // 08
 class NiRefObject
 {
@@ -113,6 +124,12 @@ public:
 	NiExtraData	** m_extraData;			// 10 extra data
 	UInt16		m_extraDataLen;			// 14 max valid entry
 	UInt16		m_extraDataCapacity;	// 16 array len
+
+	// UNTESTED
+	void AddExtraData(NiExtraData * extraData);
+	bool RemoveExtraData(NiExtraData * extraData);
+	SInt32 GetIndexOf(NiExtraData * extraData);
+	NiExtraData * GetExtraData(const char * name);
 };
 
 STATIC_ASSERT(sizeof(NiObjectNET) == 0x18);
@@ -176,49 +193,118 @@ public:
 	UInt8		unkA5;				// A5 - bitfield
 
 	MEMBER_FN_PREFIX(NiAVObject);
-	DEFINE_MEMBER_FN(UpdateNode, void, 0x00AAF320, NiAVObject * node);
+	DEFINE_MEMBER_FN(UpdateNode, void, 0x00AAF320, ControllerUpdateContext * ctx);
 };
 STATIC_ASSERT(sizeof(NiAVObject) == 0xA8);
 
+MAKE_NI_POINTER(NiAVObject);
+
 // Bethesda class, unknown name
-class NiRenderTarget : public NiObject
+class BSRenderTargetGroup : public NiObject
 {
 public:
-	virtual ~NiRenderTarget();
+	virtual ~BSRenderTargetGroup();
 
-	NiRenderTargetGroup * unk08;
-	UInt32	unk0C;
-	UInt32	unk10;
-	UInt32	unk14;
-	UInt32	unk18;
-	UInt32	unk1C;
-	UInt32	unk20;
-	UInt32	unk24;
-	UInt32	unk28;
-	UInt32	unk2C;	// inited to FFFFFFFF
-	NiRenderedTexture * renderedTexture;
+	NiRenderTargetGroup * unk08[6];			// 08
+	UInt32	unk20;							// 20
+	UInt32	unk24;							// 24
+	UInt32	unk28;							// 28
+	UInt32	unk2C;							// 2C inited to FFFFFFFF
+	NiRenderedTexture * renderedTexture[4];	// 30
 
-	static NiRenderTarget *	GetPlayerFaceMask(void)
+	static BSRenderTargetGroup *	GetPlayerFaceMask(void)
 	{
-		return *((NiRenderTarget **)0x01B3FD54);
+		return *((BSRenderTargetGroup **)0x01B3FD54);
 	}
+};
+
+// 10
+class BSFaceGenModel : public NiRefObject
+{
+public:
+	struct Data08
+	{
+		UInt32				unk00;		// 00
+		NiAVObject			* unk04;	// 04
+		NiAVObject			* unk08;	// 08
+		UInt32				unk0C;		// 0C
+		BSFaceGenMorphData	* unk10;	// 10
+	};
+
+	Data08	* unk08;	// 08
+	UInt32	unk0C;		// 0C
+
+	MEMBER_FN_PREFIX(BSFaceGenModel);
+	DEFINE_MEMBER_FN(ctor, void, 0x005A5D40);
+	DEFINE_MEMBER_FN(CopyFrom, void, 0x005A5D80, BSFaceGenModel * other);
+	DEFINE_MEMBER_FN(SetModelData, bool, 0x005A60D0, const char * meshPath, void * unk1, UInt8 unk2);
+	DEFINE_MEMBER_FN(ApplyMorph, UInt8, 0x005A5B70, const char ** morphName, TESModelTri * triModel, NiAVObject ** headNode, float relative, UInt8 unk1);
 };
 
 // ??
 class BSFaceGenMorphData : public NiRefObject
 {
 public:
-	void	* unk08;
-	UInt32	unk0C;
+	void	* unk08;	// 08
+	UInt32	unk0C;		// 0C
+
+	//MEMBER_FN_PREFIX(BSFaceGenMorphData);
+	//DEFINE_MEMBER_FN(ApplyMorph, UInt8, 0x005A75F0, const char ** morphName, NiAVObject * faceTrishape, float relative, UInt8 unk2);
 };
 
+// 10
+class BSFaceGenModelMap : public NiRefObject
+{
+public:
+	struct Entry
+	{
+		BSFaceGenModel	* unk00;	// 00
+		UInt32			unk04;		// 04
+	};
+
+	Entry	unk08;	// 08
+};
+
+// 6C
+class LoadedAreaBound : public NiRefObject
+{
+public:
+	virtual ~LoadedAreaBound();
+
+	UInt32 unk08;
+	UInt32 unk0C;
+	UInt32 unk10;
+	UInt32 unk14;
+	UInt32 unk18;
+	UInt32 unk1C;
+	UInt32 unk20;
+	TESObjectCELL * cell; // 24
+	UInt32 unk28;
+	UInt32 unk2C;
+	UInt32 unk30;
+	UInt32 unk34;
+	UInt32 unk38; // inited 0xDEADBEEF
+	UInt32 unk3C;
+	UInt32 unk40;
+	NiPoint3 boundsMax; // 44
+	NiPoint3 boundsMin;	// 50
+	UInt32 unk5C;
+	UInt32 unk60;
+	UInt32 unk64;
+	UInt32 unk68;
+};
+STATIC_ASSERT(sizeof(LoadedAreaBound) == 0x6C);
+STATIC_ASSERT(offsetof(LoadedAreaBound, boundsMax) == 0x44);
 
 // 4C
 class BSFaceGenMorphDataHead : public BSFaceGenMorphData
 {
 public:
-	UInt32	unk10[(0x4C - 0x10) >> 2];
+	UInt32	unk10[(0x48 - 0x10) >> 2];
+	UInt32	unk48;
 };
+
+STATIC_ASSERT(offsetof(BSFaceGenMorphDataHead, unk48) == 0x48);
 STATIC_ASSERT(sizeof(BSFaceGenMorphDataHead) == 0x4C);
 
 
@@ -228,3 +314,18 @@ class BSFaceGenMorphDataHair : public BSFaceGenMorphData
 public:
 };
 STATIC_ASSERT(sizeof(BSFaceGenMorphDataHair) == 0x10);
+
+class NiCamera : public NiAVObject
+{
+public:
+	float			m_aafWorldToCam[4][4];	// A8
+	NiFrustum		m_frustum;				// E8
+	float			m_fMinNearPlaneDist;	// 104
+	float			m_fMaxFarNearRatio;		// 108
+	NiRect<float>	m_kPort;				// 10C
+	float			m_fLODAdjust;			// 11C
+
+	bool WorldPtToScreenPt3(NiPoint3 * p_in, float * x_out, float * y_out, float * z_out, float zeroTolerance = 1e-5);
+};
+STATIC_ASSERT(offsetof(NiCamera, m_frustum) == 0xE8);
+STATIC_ASSERT(offsetof(NiCamera, m_fLODAdjust) == 0x11C);

@@ -13,4 +13,5 @@ namespace papyrusMath
 	UInt32 LogicalOr(StaticFunctionTag* base, UInt32 arg1, UInt32 arg2);
 	UInt32 LogicalXor(StaticFunctionTag* base, UInt32 arg1, UInt32 arg2);
 	UInt32 LogicalNot(StaticFunctionTag* base, UInt32 arg1);
+	float Log(StaticFunctionTag* base, float arg1);
 }

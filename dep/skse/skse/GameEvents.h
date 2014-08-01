@@ -383,11 +383,56 @@ struct ShoutMastered
 	};
 };
 
+struct TESCombatEvent 
+{
+	TESObjectREFR	* source;	// 00
+	TESObjectREFR	* target;	// 04
+	UInt32			state;		// 08
+};
+
+struct TESDeathEvent
+{
+	TESObjectREFR	* source;	// 00
+};
+
 struct TESHitEvent
 {
-	TESObjectREFR	* target;
-	TESObjectREFR	* caster;
-	void			* unk08[10];
+	TESObjectREFR	* target;			// 00
+	TESObjectREFR	* caster;			// 04
+	UInt32			sourceFormID;		// 08
+	UInt32			projectileFormID;	// 0C
+
+	enum
+	{
+		kFlag_PowerAttack = (1 << 0),
+		kFlag_SneakAttack = (1 << 1),
+		kFlag_Bash		  = (1 << 2),
+		kFlag_Blocked	  = (1 << 3)
+	};
+
+	UInt32			flags;				// 10
+	void			* unk14[7];			// 14
+};
+
+struct BGSFootstepEvent
+{
+	UInt32	actorHandle;
+};
+
+template <>
+class BSTEventSink <TESCombatEvent>
+{
+public:
+	virtual ~BSTEventSink() {}; // todo?
+	virtual	EventResult ReceiveEvent(TESCombatEvent * evn, EventDispatcher<TESCombatEvent> * dispatcher) = 0;
+};
+
+template <>
+class BSTEventSink <TESDeathEvent>
+{
+public:
+	virtual ~BSTEventSink() {}; // todo?
+	virtual	EventResult ReceiveEvent(TESDeathEvent * evn, EventDispatcher<TESDeathEvent> * dispatcher) = 0;
 };
 
 template <>
@@ -440,6 +485,9 @@ public:
 
 // For testing
 //extern EventDispatcher<TESSleepStartEvent> * g_sleepStartEventDispatcher;
+extern EventDispatcher<TESCombatEvent> * g_combatEventDispatcher;
+extern EventDispatcher<TESDeathEvent> * g_deathEventDispatcher;
+extern EventDispatcher<BGSFootstepEvent> * g_footstepEventDispatcher;
 extern EventDispatcher<TESQuestStageEvent> * g_questStageEventDispatcher;
 extern EventDispatcher<TESHarvestEvent::ItemHarvested> * g_harvestEventDispatcher;
 extern EventDispatcher<LevelIncrease::Event> * g_levelIncreaseEventDispatcher;

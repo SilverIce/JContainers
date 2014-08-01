@@ -15,6 +15,9 @@
 #include "NiNodes.h"
 #include "Colors.h"
 
+#include "Hooks_Gameplay.h"
+#include "Hooks_UI.h"
+
 namespace papyrusGame
 {
 	UInt32 GetPerkPoints(StaticFunctionTag*)
@@ -42,6 +45,42 @@ namespace papyrusGame
 			nuPerkPoints = 255;
 
 		pPC->numPerkPoints = nuPerkPoints;
+	}
+
+	void SetPlayerExperience(StaticFunctionTag*, float points)
+	{
+		PlayerCharacter* pPC = (*g_thePlayer);
+		if(pPC->skills) {
+			pPC->skills->data->levelPoints = points;
+		}
+	}
+
+	float GetPlayerExperience(StaticFunctionTag*)
+	{
+		PlayerCharacter* pPC = (*g_thePlayer);
+		if(pPC->skills)
+			return pPC->skills->data->levelPoints;
+
+		return 0.0;
+	}
+
+	float GetExperienceForLevel(StaticFunctionTag*, UInt32 level)
+	{
+		// fXPLevelUpMult * level + fXPLevelUpBase
+		double fXPLevelUpMult = 0.0;
+		double fXPLevelUpBase = 0.0;
+		SettingCollectionMap	* settings = *g_gameSettingCollection;
+		if(settings)
+		{
+			Setting	* levelUpBase = settings->Get("fXPLevelUpBase");
+			if(levelUpBase)
+				levelUpBase->GetDouble(&fXPLevelUpBase);
+			Setting	* levelUpMult = settings->Get("fXPLevelUpMult");
+			if(levelUpMult)
+				levelUpMult->GetDouble(&fXPLevelUpMult);
+		}
+
+		return fXPLevelUpBase + fXPLevelUpMult * level;
 	}
 
 	UInt32 GetModCount(StaticFunctionTag*)
@@ -291,22 +330,15 @@ namespace papyrusGame
 		if(alpha < 0.0)
 			alpha = 0.0;
 
-		// Skin tones must have full alpha, use the alpha channel for saturation instead
+		tintMask->color.red = color.GetRed();
+		tintMask->color.green = color.GetGreen();
+		tintMask->color.blue = color.GetBlue();
+		tintMask->alpha = alpha;
+
+		// Compute skintone
 		if(tintMask->tintType == TintMask::kMaskType_SkinTone) {
-			double saturation = color.GetSaturation();
-			color.SetSaturation(alpha * saturation);
-			tintMask->color.red = color.GetRed();
-			tintMask->color.green = color.GetGreen();
-			tintMask->color.blue = color.GetBlue();
-			actorBase->color.red = tintMask->color.red;
-			actorBase->color.green = tintMask->color.green;
-			actorBase->color.blue = tintMask->color.blue;
-			tintMask->alpha = 1.0;
-		} else {
-			tintMask->color.red = color.GetRed();
-			tintMask->color.green = color.GetGreen();
-			tintMask->color.blue = color.GetBlue();
-			tintMask->alpha = alpha;
+			NiColorA colorResult;
+			CALL_MEMBER_FN(actorBase, SetSkinFromTint)(&colorResult, tintMask, 1, 0);
 		}
 	}
 
@@ -472,24 +504,6 @@ namespace papyrusGame
 		}
 	}
 
-	SInt32 GetSkillLegendaryLevel(StaticFunctionTag * base, BSFixedString actorValue)
-	{
-		PlayerCharacter* pPC = (*g_thePlayer);
-		if(pPC && pPC->skills) {
-			return pPC->skills->GetSkillLegendaryLevel(actorValue);
-		}
-
-		return -1;
-	}
-
-	void SetSkillLegendaryLevel(StaticFunctionTag * base, BSFixedString actorValue, UInt32 level)
-	{
-		PlayerCharacter* pPC = (*g_thePlayer);
-		if(pPC && pPC->skills) {
-			return pPC->skills->SetSkillLegendaryLevel(actorValue, level);
-		}
-	}
-
 	bool GetPlayerMovementMode(StaticFunctionTag * base)
 	{
 		PlayerControls * controls = PlayerControls::GetSingleton();
@@ -580,6 +594,22 @@ namespace papyrusGame
 			return result;
 		}
 	}
+
+	TESForm* GetFormEx(StaticFunctionTag * base, UInt32 formId)
+	{
+		return LookupFormByID(formId);
+	}
+
+	TESObjectREFR * GetDialogueTarget(StaticFunctionTag * base)
+	{
+		MenuTopicManager * topicManager = MenuTopicManager::GetSingleton();
+		return topicManager ? topicManager->GetDialogueTarget() : NULL;
+	}
+
+	TESObjectREFR * GetCurrentCrosshairRef(StaticFunctionTag * base)
+	{
+		return Hooks_Gameplay_GetCrosshairRef();
+	}	
 }
 
 #include "PapyrusVM.h"
@@ -596,6 +626,17 @@ void papyrusGame::RegisterFuncs(VMClassRegistry* registry)
 
 	registry->RegisterFunction(
 		new NativeFunction1 <StaticFunctionTag, void, SInt32>("ModPerkPoints", "Game", papyrusGame::ModPerkPoints, registry));
+
+
+	registry->RegisterFunction(
+		new NativeFunction0 <StaticFunctionTag, float>("GetPlayerExperience", "Game", papyrusGame::GetPlayerExperience, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction1 <StaticFunctionTag, void, float>("SetPlayerExperience", "Game", papyrusGame::SetPlayerExperience, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction1 <StaticFunctionTag, float, UInt32>("GetExperienceForLevel", "Game", papyrusGame::GetExperienceForLevel, registry));
+
 
 	// Mods
 	registry->RegisterFunction(
@@ -699,6 +740,9 @@ void papyrusGame::RegisterFuncs(VMClassRegistry* registry)
 	registry->RegisterFunction(
 		new NativeFunction0 <StaticFunctionTag, void>("UpdateThirdPerson", "Game", papyrusGame::UpdateThirdPerson, registry));
 
+	registry->RegisterFunction(
+		new NativeFunction1 <StaticFunctionTag, TESForm*, UInt32>("GetFormEx", "Game", papyrusGame::GetFormEx, registry));
+
 	// Hotkeys
 	registry->RegisterFunction(
 		new NativeFunction1 <StaticFunctionTag, void, SInt32>("UnbindObjectHotkey", "Game", papyrusGame::UnbindObjectHotkey, registry));
@@ -709,12 +753,13 @@ void papyrusGame::RegisterFuncs(VMClassRegistry* registry)
 	registry->RegisterFunction(
 		new NativeFunction1 <StaticFunctionTag, bool, TESForm*>("IsObjectFavorited", "Game", papyrusGame::IsObjectFavorited, registry));
 
-	// Skills
+	// Dialogue
 	registry->RegisterFunction(
-		new NativeFunction1 <StaticFunctionTag, SInt32, BSFixedString>("GetSkillLegendaryLevel", "Game", papyrusGame::GetSkillLegendaryLevel, registry));
+		new NativeFunction0 <StaticFunctionTag, TESObjectREFR*>("GetDialogueTarget", "Game", papyrusGame::GetDialogueTarget, registry));
 
+	// Crosshair ref
 	registry->RegisterFunction(
-		new NativeFunction2 <StaticFunctionTag, void, BSFixedString, UInt32>("SetSkillLegendaryLevel", "Game", papyrusGame::SetSkillLegendaryLevel, registry));
+		new NativeFunction0 <StaticFunctionTag, TESObjectREFR*>("GetCurrentCrosshairRef", "Game", papyrusGame::GetCurrentCrosshairRef, registry));
 
 	// Mod
 	registry->SetFunctionFlags("Game", "GetModCount", VMClassRegistry::kFunctionFlag_NoWait);
@@ -756,11 +801,14 @@ void papyrusGame::RegisterFuncs(VMClassRegistry* registry)
 	registry->SetFunctionFlags("Game", "SetMiscStat", VMClassRegistry::kFunctionFlag_NoWait);
 	registry->SetFunctionFlags("Game", "GetCameraState", VMClassRegistry::kFunctionFlag_NoWait);
 	registry->SetFunctionFlags("Game", "SetPlayersLastRiddenHorse", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Game", "GetFormEx", VMClassRegistry::kFunctionFlag_NoWait);
+
+	registry->SetFunctionFlags("Game", "GetPlayerExperience", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Game", "SetPlayerExperience", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Game", "GetExperienceForLevel", VMClassRegistry::kFunctionFlag_NoWait);
+
+	registry->SetFunctionFlags("Game", "GetDialogueTarget", VMClassRegistry::kFunctionFlag_NoWait);
 
 	//registry->SetFunctionFlags("Game", "UpdateTintMaskColors", VMClassRegistry::kFunctionFlag_NoWait);
 	//registry->SetFunctionFlags("Game", "UpdateHairColor", VMClassRegistry::kFunctionFlag_NoWait);
-
-	// Skills
-	registry->SetFunctionFlags("Game", "GetSkillLegendaryLevel", VMClassRegistry::kFunctionFlag_NoWait);
-	registry->SetFunctionFlags("Game", "SetSkillLegendaryLevel", VMClassRegistry::kFunctionFlag_NoWait);
 }

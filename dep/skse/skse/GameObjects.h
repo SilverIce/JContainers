@@ -299,6 +299,18 @@ public:
 
 	enum
 	{
+		kTextureDiffuse = 0,
+		kTextureNormal,
+		kTextureEnvironmentMask,
+		kTextureSubsurfaceTint = kTextureEnvironmentMask,
+		kTextureGlowMap,
+		kTextureDetailMap = kTextureGlowMap,
+		kTextureHeight,
+		kTextureEnvironment,
+		kTextureMultilayer,
+		kTextureBacklightMask,
+		kTextureSpecular = kTextureBacklightMask,
+		kTextureUnused08,
 		kNumTextures = 9
 	};
 };
@@ -316,6 +328,11 @@ public:
 	UInt32	unk20;
 	UInt32	unk24;
 	UInt32	unk28;
+
+	static BSShaderTextureSet * Create();
+
+	MEMBER_FN_PREFIX(BSShaderTextureSet);
+	DEFINE_MEMBER_FN(ctor, BSShaderTextureSet *, 0x00501EA0);
 };
 STATIC_ASSERT(sizeof(BSShaderTextureSet) == 0x2C);
 
@@ -338,8 +355,20 @@ public:
 		UInt32	unk08;	// 08
 	};
 
-	enum {
-		kNumTextures = 8
+	enum
+	{
+		kTextureDiffuse = 0,
+		kTextureNormal,
+		kTextureEnvironmentMask,
+		kTextureSubsurfaceTint = kTextureEnvironmentMask,
+		kTextureGlowMap,
+		kTextureDetailMap = kTextureGlowMap,
+		kTextureHeight,
+		kTextureEnvironment,
+		kTextureMultilayer,
+		kTextureBacklightMask,
+		kTextureSpecular = kTextureBacklightMask,
+		kNumTextures
 	};
 
 	TESTexture		texturePaths[kNumTextures];	// 28
@@ -391,21 +420,33 @@ public:
 	// members
 	struct EffectItem
 	{
-		float	magnitude;
-		UInt32	area;
-		UInt32	duration;
-		EffectSetting* mgef;
-		//float	cost;  - maybe?
+		float	magnitude;		// 00
+		UInt32	area;			// 04
+		UInt32	duration;		// 08
+		EffectSetting* mgef;	// 0C
+		float	cost;			// 10 - ?
+		UInt32	unk14;			// 14 - ?
+
+		EffectItem()
+		{
+			magnitude = 0;
+			area = 0;
+			duration = 0;
+			mgef = NULL;
+			cost = 0.0;
+			unk14 = 0;
+		}
 	};
 
 	tArray<EffectItem*> effectItemList;	// 34
-	UInt32				unk40;	// 40
+	UInt32				hostile;	// 40
 	EffectSetting*		unk44;	// 44
 	UInt32				unk48;	// 48
 	UInt32				unk4C;	// 4C
 
 	MEMBER_FN_PREFIX(MagicItem);
 	DEFINE_MEMBER_FN(GetCostliestEffectItem, EffectItem *, 0x00407860, int arg1, bool arg2);
+	DEFINE_MEMBER_FN(GetEffectiveMagickaCost, double, 0x00406EF0, Character* caster);
 };
 
 STATIC_ASSERT(sizeof(MagicItem) == 0x50);
@@ -449,6 +490,7 @@ public:
 	TESIcon	unkB8;		// B8
 
 	bool IsFood() { return (itemData.flags & kFlag_Food) != 0; }
+	bool IsPoison() { return (itemData.flags & kFlag_Poison) != 0; }
 };
 
 // 74
@@ -457,23 +499,28 @@ class EnchantmentItem : public MagicItem
 public:
 	enum { kTypeID = kFormType_Enchantment };
 
+	enum
+	{
+		kFlag_ManualCalc =	0x00000001,
+	};
+
 	// 24
 	struct Data
 	{
-		struct Data0
+		struct Calculations
 		{
-			UInt32	unk00;	// 00
-			UInt32	unk04;	// 04
+			UInt32	cost;	// 00
+			UInt32	flags;	// 04
 		};
 
-		Data0	unk00;	// 00
-		UInt32	unk08;	// 08
-		UInt32	unk0C;	// 0C
-		UInt32	unk10;	// 10
-		UInt32	unk14;	// 14
-		UInt32	unk18;	// 18
-		UInt32	unk1C;	// 1C
-		UInt32	unk20;	// 20
+		Calculations	calculations;	// 00
+		UInt32	unk08;					// 08
+		UInt32	unk0C;					// 0C
+		UInt32	deliveryType;			// 10
+		UInt32	unk14;					// 14
+		UInt32	unk18;					// 18
+		EnchantmentItem	* baseEnchantment;	// 1C
+		BGSListForm		* restrictions;	// 20
 	};
 
 	Data	data;	// 50
@@ -497,18 +544,29 @@ public:
 	// members
 	struct DataA0
 	{
-		UInt32	unk00;	// 00
-		UInt32	unk04;	// 04
+		UInt32 unk00; // 00
+		UInt32 unk04; // 04
 	};
+	DataA0 unkA0;
 
-	struct DataA8
+	// ahzaab 8-25-13
+	enum   // type - these are flags
 	{
-		UInt16	unk00;	// 00
-		UInt16	unk02;	// 02
+		kType_NoEffect =     0,
+		kType_FirstEffect =  1 << 0,
+		kType_SecondEffect = 1 << 1,
+		kType_ThirdEffect =  1 << 2,
+		kType_FourthEffect = 1 << 3
+	};
+	UInt8  knownEffects;        //The lower nibble contains the known effects, the upper nibble is unknown
+
+	struct DataA9
+	{
+		UInt8  unk00; // 00
+		UInt16 unk01; // 01
 	};
 
-	DataA0	unkA0;
-	DataA8	unkA8;
+	DataA9 unkA9;
 };
 
 class Character;
@@ -526,19 +584,31 @@ public:
 
 	// members
 
+	enum
+	{
+		kTypeSpell = 0,
+		kTypeDisease,
+		kTypePower,
+		kTypeLesserPower,
+		kTypeAbility,
+		kTypePoison,
+		kTypeAddition,
+		kTypeVoice
+	};
+
 	// 24
 	struct Data
 	{
 		struct Data0
 		{
 			UInt32	cost;	// 00
-			UInt32	unk04;	// 04
+			UInt32	flags;	// 04
 		};
 
 		Data0	unk00;	// 00
 		UInt32	type;	// 08
 		float	castTime;	// 0C
-		UInt32	unk10;	// 10
+		UInt32	castType;	// 10
 		UInt32	unk14;	// 14
 		UInt32	unk18;	// 18
 		UInt32	unk1C;	// 1C
@@ -548,9 +618,6 @@ public:
 	Data	data;	// 6C
 
 	UInt32	GetMagickaCost() { return data.unk00.cost; }
-
-	MEMBER_FN_PREFIX(SpellItem);
-	DEFINE_MEMBER_FN(GetEffectiveMagickaCost, double, 0x00406EF0, Character* caster);
 };
 
 // D0
@@ -594,22 +661,14 @@ public:
 		float			damage;
 	};
 
-	/*
-		6 - None
-		2 - Bolt
-		4 - Playable
-		7 - Ignores Resist
-		0 - Playable Bolt
-		1 - Ignores Resist, Playable, Bolt
-		5 - Ignores Resist, Playable
-		3 - Ignores Resist, Bolt
-	*/
-
 	enum {
-		kFlag_Bolt = 0x04
+		kIgnoreNormalResist = (1 << 0),
+		kNotPlayable		= (1 << 1),
+		kNotBolt			= (1 << 2)
 	};
 
-	bool isBolt() { return (settings.flags >= 0 && settings.flags <= 3); }
+	bool isBolt() { return (settings.flags & kNotBolt) != kNotBolt; }
+	bool isPlayable() { return (settings.flags & kNotPlayable) != kNotPlayable; }
 
 	AmmoSettings		settings;	// 8C
 	StringCache::Ref	unk98;	// 98
@@ -708,7 +767,7 @@ public:
 	UInt8		unk151;			// 151
 	UInt8		unk152;			// 152
 	UInt8		unk153;			// 153
-	struct Color {
+	struct Color { // 797979 Transparent
 		UInt8   red, green, blue; // 154 - 156 - Skin Color
 	} color;
 	UInt8		pad157;			// 157
@@ -718,10 +777,12 @@ public:
 	UInt32		unk160;			// 160
 
 	MEMBER_FN_PREFIX(TESNPC);
-	DEFINE_MEMBER_FN(GetHeadPartByType, BGSHeadPart *, 0x00561270, UInt32);
+	//DEFINE_MEMBER_FN(GetHeadPartByType, BGSHeadPart *, 0x00561270, UInt32);
 	DEFINE_MEMBER_FN(GetSex, char, 0x0055B510);
-	DEFINE_MEMBER_FN(ChangeHeadPart, void, 0x00567CE0, BGSHeadPart *);
 	DEFINE_MEMBER_FN(HasOverlays, bool, 0x005681C0);
+
+	// Swaps a headPart of the same type as target with target
+	DEFINE_MEMBER_FN(ChangeHeadPart, void, 0x00567CE0, BGSHeadPart * target);
 
 	struct MorphAction {
 		BSFaceGenNiNode * faceNode;
@@ -730,10 +791,21 @@ public:
 		float	value;
 	};
 	
+	// Applies a morph to all parts of a head
 	DEFINE_MEMBER_FN(ApplyMorph, void, 0x005A4870, MorphAction * morphAction);
+
+	// Updates the neck seam when weight changed
 	DEFINE_MEMBER_FN(UpdateNeck, void, 0x00567C30, BSFaceGenNiNode * faceNode);
 
+	// Computes RGB SkinTone from RGBA TintMask
+	DEFINE_MEMBER_FN(SetSkinFromTint, void, 0x005643C0, NiColorA * result, TintMask * tintMask, UInt32 compute, UInt32 unk1);
+
+	void SetFaceTexture(BGSTextureSet * textureSet);
+	void SetHairColor(BGSColorForm * hairColor);
+
+	BGSHeadPart * GetHeadPartByType(UInt32 type);
 	BGSHeadPart * GetHeadPartOverlayByType(UInt32 type);
+	BGSHeadPart * GetCurrentHeadPartByType(UInt32 type);
 	TESNPC * GetRootTemplate();
 };
 
@@ -1312,7 +1384,7 @@ public:
 	BGSSoundDescriptorForm	* unequipSound;		// 11C
 	BGSImpactDataSet	* impactDataSet;	// 120
 	TESObjectSTAT	* model;				// 124
-	TESForm	* templateForm;					// 128
+	TESObjectWEAP	* templateForm;			// 128 - Non-weapon templates don't make sense here and would probably crash anyway so assume it
 	BSFixedString	embeddedNode;			// 12C
 	UInt32	pad130;							// 130
 
@@ -1364,6 +1436,7 @@ public:
 	BGSFootstepSet				* footstepSet;			// C0
 	UInt32						unkC4;					// C4
 
+	bool isValidRace(TESRace * race) const;
 	void GetNodeName(char * dstBuff, TESObjectREFR * refr, TESObjectARMO * armor, float weightOverride);
 };
 
@@ -1400,7 +1473,7 @@ public:
 	MagicItem				* item;			// 30
 	MagicItem::EffectItem	* effect;		// 34
 	TESObjectREFR			* reference;	// 38
-	UInt32					unk3C;			// 3C
+	TESForm					* sourceItem;	// 3C
 	UInt32					unk40;			// 40
 	UInt32					unk44;			// 44
 	float					elapsed;		// 48

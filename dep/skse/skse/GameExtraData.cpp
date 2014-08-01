@@ -198,6 +198,9 @@ static const UInt32 s_ExtraOwnershipVtbl =			0x01079188;
 static const UInt32 s_ExtraAliasInstanceArrayVtbl = 0x01079AB8;
 static const UInt32 s_ExtraCannotWearVtbl =			0x010791E8;
 static const UInt32 s_ExtraHotkeyVtbl =				0x01079258;
+static const UInt32 s_ExtraForcedTargetVtbl =		0x010797C0;
+static const UInt32 s_ExtraReferenceHandleVtbl =	0x01079740;
+static const UInt32 s_ExtraEnchantmentVtbl =		0x01079318;
 
 BSExtraData* BaseExtraList::GetByType(UInt32 type) const {
 	if (!HasType(type)) return NULL;
@@ -301,6 +304,15 @@ ExtraCharge* ExtraCharge::Create()
 	return xCharge;
 }
 
+ExtraEnchantment* ExtraEnchantment::Create()
+{
+	ExtraEnchantment* xEnchantment = (ExtraEnchantment*)BSExtraData::Create(sizeof(ExtraEnchantment), s_ExtraEnchantmentVtbl);
+	xEnchantment->enchant = NULL;
+	xEnchantment->maxCharge = 0;
+	xEnchantment->unk0E = 0;
+	return xEnchantment;
+}
+
 ExtraCannotWear* ExtraCannotWear::Create() 
 {
 	ExtraCannotWear* xCannotWear = (ExtraCannotWear*)BSExtraData::Create(sizeof(ExtraCannotWear), s_ExtraCannotWearVtbl);
@@ -327,6 +339,13 @@ ExtraSoul* ExtraSoul::Create()
 	return xSoul;
 }
 
+ExtraForcedTarget* ExtraForcedTarget::Create()
+{
+	ExtraForcedTarget* xForcedTarget = (ExtraForcedTarget*)BSExtraData::Create(sizeof(ExtraForcedTarget), s_ExtraForcedTargetVtbl);
+	xForcedTarget->handle = (*g_invalidRefHandle);
+	return xForcedTarget;
+}
+
 ExtraTextDisplayData* ExtraTextDisplayData::Create()
 {
 	ExtraTextDisplayData* xText = (ExtraTextDisplayData*)BSExtraData::Create(sizeof(ExtraTextDisplayData), s_ExtraTextDisplayVtbl);
@@ -335,12 +354,46 @@ ExtraTextDisplayData* ExtraTextDisplayData::Create()
 	return xText;
 }
 
+ExtraReferenceHandle* ExtraReferenceHandle::Create()
+{
+	ExtraReferenceHandle* xReference = (ExtraReferenceHandle*)BSExtraData::Create(sizeof(ExtraReferenceHandle), s_ExtraReferenceHandleVtbl);
+	return xReference;
+}
+
+TESObjectREFR * ExtraReferenceHandle::GetReference()
+{
+	TESObjectREFR * reference = NULL;
+	if(handle == (*g_invalidRefHandle) || handle == 0)
+		return NULL;
+
+	LookupREFRByHandle(&handle, &reference);
+	return reference;
+}
+
+TESObjectREFR * ExtraEnableStateParent::GetReference()
+{
+	TESObjectREFR * reference = NULL;
+	if(handle == (*g_invalidRefHandle) || handle == 0)
+		return NULL;
+
+	LookupREFRByHandle(&handle, &reference);
+	return reference;
+}
+
+TESObjectREFR * ExtraForcedTarget::GetReference()
+{
+	TESObjectREFR * reference = NULL;
+	if(handle == (*g_invalidRefHandle) || handle == 0)
+		return NULL;
+
+	LookupREFRByHandle(&handle, &reference);
+	return reference;
+}
+
 const char* ExtraTextDisplayData::GenerateName(TESForm * form, float extraHealthValue)
 {
 	return CALL_MEMBER_FN(this, GenerateName_Internal)(form, extraHealthValue);
 }
-
-	
 
 struct GetMatchingEquipped
 {

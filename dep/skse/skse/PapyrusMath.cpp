@@ -1,4 +1,5 @@
 #include "PapyrusMath.h"
+#include <math.h>
 
 namespace papyrusMath
 {
@@ -31,6 +32,11 @@ namespace papyrusMath
 	{
 		return ~arg1;
 	}
+
+	float Log(StaticFunctionTag* base, float arg1)
+	{
+		return log(arg1);
+	}
 }
 
 #include "PapyrusVM.h"
@@ -56,10 +62,14 @@ void papyrusMath::RegisterFuncs(VMClassRegistry* registry)
 	registry->RegisterFunction(
 		new NativeFunction1 <StaticFunctionTag, UInt32, UInt32>("LogicalNot", "Math", papyrusMath::LogicalNot, registry));
 
+	registry->RegisterFunction(
+		new NativeFunction1 <StaticFunctionTag, float, float>("Log", "Math", papyrusMath::Log, registry));
+
 	registry->SetFunctionFlags("Math", "LeftShift", VMClassRegistry::kFunctionFlag_NoWait);
 	registry->SetFunctionFlags("Math", "RightShift", VMClassRegistry::kFunctionFlag_NoWait);
 	registry->SetFunctionFlags("Math", "LogicalAnd", VMClassRegistry::kFunctionFlag_NoWait);
 	registry->SetFunctionFlags("Math", "LogicalOr", VMClassRegistry::kFunctionFlag_NoWait);
 	registry->SetFunctionFlags("Math", "LogicalXor", VMClassRegistry::kFunctionFlag_NoWait);
 	registry->SetFunctionFlags("Math", "LogicalNot", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Math", "Log", VMClassRegistry::kFunctionFlag_NoWait);
 }
