@@ -148,6 +148,7 @@ namespace reflection {
     typedef class_info (*class_info_creator)();
 
     const std::map<std::string, class_info, string_icomparison>& class_database();
+    void* find_tes_function_of_class(const char * functionName, const char *className);
 
     template<class T>
     inline void foreach_metaInfo_do(T& func) {

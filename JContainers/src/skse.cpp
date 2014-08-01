@@ -1,11 +1,10 @@
+#include "skse.h"
 
 #include <chrono>
 #include <exception>
 
 #include <boost/iostreams/stream.hpp>
 #include <ShlObj.h>
-
-#include "skse.h"
 
 #include "skse/PluginAPI.h"
 #include "skse/skse_version.h"
@@ -14,18 +13,24 @@
 #include "skse/GameForms.h"
 
 #include "gtest.h"
+#include "jc_interface.h"
 #include "reflection.h"
 #include "jcontainers_constants.h"
 #include "tes_context.h"
 
 class VMClassRegistry;
 
+namespace jc {
+    extern const root_interface root;
+}
+
 namespace collections { namespace {
 
     static PluginHandle					g_pluginHandle = kPluginHandle_Invalid;
 
-    static SKSESerializationInterface	* g_serialization = NULL;
-    static SKSEPapyrusInterface			* g_papyrus = NULL;
+    static SKSESerializationInterface	* g_serialization = nullptr;
+    static SKSEPapyrusInterface			* g_papyrus = nullptr;
+    static SKSEMessagingInterface       * g_messaging = nullptr;
 
     template<class T>
     float do_with_timing(T& func) {
@@ -171,6 +176,18 @@ namespace collections { namespace {
             if (!g_papyrus) {
                 _MESSAGE("couldn't get papyrus interface");
                 return false;
+            }
+
+            auto messaging = (SKSEMessagingInterface *)skse->QueryInterface(kInterface_Messaging);
+
+            if (messaging && messaging->interfaceVersion >= SKSEMessagingInterface::kInterfaceVersion) {
+                g_messaging = messaging;
+
+                messaging->RegisterListener(g_pluginHandle, "SKSE", [](SKSEMessagingInterface::Message* msg) {
+                    if (msg && strcmp(msg->sender, "SKSE") == 0 && msg->type == SKSEMessagingInterface::kMessage_PostLoad) {
+                        g_messaging->Dispatch(g_pluginHandle, jc::message_root_interface, (void *)&jc::root, sizeof(void*), nullptr);
+                    }
+                });
             }
 
             return true;

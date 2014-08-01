@@ -33,6 +33,23 @@ namespace reflection {
         static std::map<std::string, class_info, string_icomparison> classDB = makeDB();
         return classDB;
     }
+
+    void* find_tes_function_of_class(const char * functionName, const char *className) {
+
+        void * functionPtr = nullptr;
+
+        auto& db = class_database();
+        auto itr = db.find(className);
+        if (itr != db.end()) {
+            auto& cls = itr->second;
+
+            if (const function_info* fInfo = cls.find_function(functionName)) {
+                functionPtr = fInfo->tes_func;
+            }
+        }
+
+        return functionPtr;
+    }
     
     extern "C" {
 
