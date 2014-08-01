@@ -263,6 +263,7 @@ namespace reflection { namespace binding {
              metaF.argument_names = (_args);\
              metaF.setComment(_comment);\
              metaF.name = (_funcname);\
+             metaF.tes_func = &binder::tes_func;\
              binding::metaInfoFromFieldAndOffset(this, offsetof(__Type, CONCAT(_mem_, __LINE__))).addFunction(metaF);\
          }\
     } CONCAT(_mem_, __LINE__);

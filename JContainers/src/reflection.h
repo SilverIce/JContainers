@@ -22,6 +22,8 @@ namespace reflection {
 
     typedef function_parameter (*type_info_func)();
 
+    typedef void* tes_api_function;
+
     struct function_info {
         typedef std::string (*comment_generator)();
         typedef  void (*tes_function_binder)(VMClassRegistry* registry, const char* className, const char* funcName);
@@ -29,6 +31,7 @@ namespace reflection {
 
         tes_function_binder registrator = nullptr;
         parameter_list_creator param_list_func = nullptr;
+        tes_api_function tes_func = nullptr;
         const char *argument_names = nullptr;
         const char *name = nullptr;
 
@@ -59,6 +62,20 @@ namespace reflection {
         void bind(VMClassRegistry *registry, const char *className) const;
     };
 
+    struct string_icomparison {
+        bool operator () (const std::string& left, const std::string& right) const {
+            return _strcmpi(left.c_str(), right.c_str()) < 0;
+        }
+    };
+
+    inline bool string_iequal(const std::string& str, const std::string& other) {
+        return _strcmpi(str.c_str(), other.c_str()) == 0;
+    }
+
+    inline bool string_iequal(const std::string& str, const char* other) {
+        return other && _strcmpi(str.c_str(), other) == 0;
+    }
+
     struct class_info {
 
         std::vector<function_info > methods;
@@ -70,8 +87,8 @@ namespace reflection {
             className = "NoClassName";
         }
 
-        function_info * find_function(const char* func_name) {
-            auto itr = std::find_if(methods.begin(), methods.end(), [&](const function_info& fi) { return _strcmpi(func_name, fi.name) == 0; });
+        const function_info * find_function(const char* func_name) const {
+            auto itr = std::find_if(methods.begin(), methods.end(), [&](const function_info& fi) { return string_iequal(func_name, fi.name); });
             return itr != methods.end() ? &*itr : nullptr;
         }
 
@@ -130,24 +147,12 @@ namespace reflection {
 
     typedef class_info (*class_info_creator)();
 
+    const std::map<std::string, class_info, string_icomparison>& class_database();
+
     template<class T>
     inline void foreach_metaInfo_do(T& func) {
 
-        std::map<std::string, class_info> classDB;
-
-        for (auto & item : meta<class_info_creator>::getListConst()) {
-            class_info& info = item();
-
-            auto found = classDB.find(info.className);
-            if (found != classDB.end()) {
-                found->second.merge_with_extension(info);
-            }
-            else {
-                classDB[info.className] = info;
-            }
-        }
-
-        for (auto & pair : classDB) {
+        for (auto & pair : class_database()) {
             func(pair.second);
         }
     }
