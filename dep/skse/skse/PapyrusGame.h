@@ -4,9 +4,10 @@ struct StaticFunctionTag;
 class VMClassRegistry;
 class Setting;
 class Actor;
+class TESForm;
+class TESObjectREFR;
 
 #include "GameTypes.h"
-#include "Hooks_UI.h"
 
 namespace papyrusGame
 {
@@ -15,6 +16,10 @@ namespace papyrusGame
 	UInt32 GetPerkPoints(StaticFunctionTag*);
 	void SetPerkPoints(StaticFunctionTag*, UInt32 perkPoints);
 	void ModPerkPoints(StaticFunctionTag*, SInt32 modPerkPointsBy);
+
+	void SetPlayerLevelPoints(StaticFunctionTag*, float points);
+	float GetPlayerLevelPoints(StaticFunctionTag*);
+	float GetPointsForLevel(StaticFunctionTag*, UInt32 level);
 
 	UInt32 GetModCount(StaticFunctionTag*);
 	UInt32 GetModByName(StaticFunctionTag*, BSFixedString name);
@@ -58,4 +63,8 @@ namespace papyrusGame
 	void SetSkillLegendaryLevel(StaticFunctionTag * base, BSFixedString actorValue, UInt32 level);
 
 	bool IsObjectFavorited(StaticFunctionTag * base, TESForm * form);
+
+	TESForm* GetFormEx(StaticFunctionTag * base, UInt32 formId);
+
+	TESObjectREFR* GetCurrentCrosshairRef(StaticFunctionTag * base);
 };

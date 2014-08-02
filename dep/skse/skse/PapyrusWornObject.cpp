@@ -45,6 +45,46 @@ public:
 
 namespace referenceUtils
 {
+
+	bool HasItemAbility(Actor * actor, TESForm* baseForm, BaseExtraList * extraData)
+	{
+		if(actor && baseForm) {
+			tList<ActiveEffect> * effects = actor->magicTarget.GetActiveEffects();
+			for(UInt32 i = 0; i < effects->Count(); i++) {
+				ActiveEffect* effect = effects->GetNthItem(i);
+				if(effect->sourceItem == baseForm) { // Check the item
+					EnchantmentItem * enchantment = NULL;
+					TESEnchantableForm * enchantable = DYNAMIC_CAST(baseForm, TESForm, TESEnchantableForm);
+					if(enchantable) { // Check the item for a base enchantment
+						enchantment = enchantable->enchantment;
+					}
+					if(extraData) { // Check the extra data for enchantment
+						ExtraEnchantment* extraEnchant = static_cast<ExtraEnchantment*>(extraData->GetByType(kExtraData_Enchantment));
+						if(extraEnchant) {
+							enchantment = extraEnchant->enchant;
+						}
+					}
+
+					if(effect->item == enchantment) {
+						return true;
+					}
+				}
+			}
+		}
+
+		return false;
+	}
+
+	void UpdateItemAbility(Actor * actor, TESForm* baseForm, BaseExtraList * extraData, bool bLeftHand)
+	{
+		if(actor && baseForm) {
+			if(baseForm->formType == TESObjectWEAP::kTypeID)
+				CALL_MEMBER_FN(actor, UpdateWeaponAbility)(baseForm, extraData, bLeftHand);
+			else if(baseForm->formType == TESObjectARMO::kTypeID)
+				CALL_MEMBER_FN(actor, UpdateArmorAbility)(baseForm, extraData);
+		}
+	}
+
 	float GetItemHealthPercent(TESForm * baseForm, BaseExtraList* extraData)
 	{
 		// Object must be a weapon, or armor
@@ -138,7 +178,17 @@ namespace referenceUtils
 
 	BSFixedString GetDisplayName(TESForm * baseForm, BaseExtraList* extraData)
 	{
-		return baseForm ? extraData->GetDisplayName(baseForm) : "";
+		const char * displayName = NULL;
+		if(baseForm) {
+			displayName = extraData->GetDisplayName(baseForm);
+			if(!displayName) {
+				TESFullName* pFullName = DYNAMIC_CAST(baseForm, TESForm, TESFullName);
+				if (pFullName)
+					displayName = pFullName->name.data;
+			}
+		}
+
+		return displayName;
 	}
 
 	bool SetDisplayName(BaseExtraList* extraData, BSFixedString value, bool force)
@@ -251,6 +301,12 @@ namespace referenceUtils
 		}
 	}
 
+	AlchemyItem * GetPoison(BaseExtraList * extraData)
+	{
+		ExtraPoison* extraPoison = static_cast<ExtraPoison*>(extraData->GetByType(kExtraData_Poison));
+		return extraPoison ? extraPoison->poison : NULL;
+	}
+
 	UInt32 GetNumReferenceAliases(BaseExtraList * extraData)
 	{
 		ExtraAliasInstanceArray* xAliases = static_cast<ExtraAliasInstanceArray*>(extraData->GetByType(kExtraData_AliasInstanceArray));
@@ -285,7 +341,7 @@ namespace referenceUtils
 		MatchByEquipSlot matcher(actor, weaponSlot, slotMask);
 		ExtraContainerChanges* pContainerChanges = static_cast<ExtraContainerChanges*>(actor->extraData.GetByType(kExtraData_ContainerChanges));
 		if (pContainerChanges) {
-			foundData = pContainerChanges->FindEquipped(matcher, weaponSlot == MatchByEquipSlot::kSlotID_Right, weaponSlot == MatchByEquipSlot::kSlotID_Left);
+			foundData = pContainerChanges->FindEquipped(matcher, weaponSlot == MatchByEquipSlot::kSlotID_Right || slotMask != 0, weaponSlot == MatchByEquipSlot::kSlotID_Left);
 			return foundData;
 		}
 
@@ -382,7 +438,7 @@ namespace papyrusWornObject
 		if(equipData.pForm && equipData.pExtraData) {
 			referenceUtils::CreateEnchantment(equipData.pForm, equipData.pExtraData, maxCharge, effects, magnitudes, areas, durations);
 			if(actor)
-				actor->UpdateItemAbility(equipData.pForm, equipData.pExtraData, weaponSlot == MatchByEquipSlot::kSlotID_Left);
+				referenceUtils::UpdateItemAbility(actor, equipData.pForm, equipData.pExtraData, weaponSlot == MatchByEquipSlot::kSlotID_Left);
 		}
 	}
 
@@ -392,8 +448,18 @@ namespace papyrusWornObject
 		if(equipData.pForm && equipData.pExtraData) {
 			referenceUtils::SetEnchantment(equipData.pForm, equipData.pExtraData, enchantment, maxCharge);
 			if(actor)
-				actor->UpdateItemAbility(equipData.pForm, equipData.pExtraData, weaponSlot == MatchByEquipSlot::kSlotID_Left);
+				referenceUtils::UpdateItemAbility(actor, equipData.pForm, equipData.pExtraData, weaponSlot == MatchByEquipSlot::kSlotID_Left);
 		}
+	}
+
+	AlchemyItem * GetPoison(WORNOBJECT_PARAMS)
+	{
+		EquipData equipData = referenceUtils::ResolveEquippedObject(actor, weaponSlot, slotMask);
+		if(equipData.pForm && equipData.pExtraData) {
+			return referenceUtils::GetPoison(equipData.pExtraData);
+		}
+
+		return NULL;
 	}
 
 	UInt32 GetNumReferenceAliases(WORNOBJECT_PARAMS)
@@ -448,6 +514,9 @@ void papyrusWornObject::RegisterFuncs(VMClassRegistry* registry)
 
 	registry->RegisterFunction(
 		new NativeFunction8<StaticFunctionTag, void, WORNOBJECT_TEMPLATE, float, VMArray<EffectSetting*>, VMArray<float>, VMArray<UInt32>, VMArray<UInt32>>("CreateEnchantment", "WornObject", papyrusWornObject::CreateEnchantment, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction3<StaticFunctionTag, AlchemyItem*, WORNOBJECT_TEMPLATE>("GetPoison", "WornObject", papyrusWornObject::GetPoison, registry));
 
 	registry->RegisterFunction(
 		new NativeFunction3<StaticFunctionTag, BSFixedString, WORNOBJECT_TEMPLATE>("GetDisplayName", "WornObject", papyrusWornObject::GetDisplayName, registry));

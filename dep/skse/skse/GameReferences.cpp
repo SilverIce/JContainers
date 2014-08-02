@@ -1,11 +1,14 @@
 #include "GameReferences.h"
 #include "GameObjects.h"
 #include "GameForms.h"
+#include "GameExtraData.h"
 #include "GameRTTI.h"
+#include "GameData.h"
 #include "NiNodes.h"
 
 const _CreateRefHandleByREFR	CreateRefHandleByREFR = (_CreateRefHandleByREFR)0x0065CC00;
 const _LookupREFRByHandle		LookupREFRByHandle = (_LookupREFRByHandle)0x004A9180;
+const _LookupREFRObjectByHandle		LookupREFRObjectByHandle = (_LookupREFRObjectByHandle)0x004951F0;
 
 const UInt32 * g_invalidRefHandle = (UInt32*)0x01310630;
 
@@ -25,13 +28,13 @@ UInt32 TESObjectREFR::CreateRefHandle(void)
 
 TESForm * Actor::GetEquippedObject(bool abLeftHand)
 {
-	if(!equipData) 
+	if(!processManager) 
 		return NULL;
 
 	if(abLeftHand)
-		return equipData->equippedObject[ActorEquipData::kEquippedHand_Left];
+		return processManager->equippedObject[ActorProcessManager::kEquippedHand_Left];
 	else
-		return equipData->equippedObject[ActorEquipData::kEquippedHand_Right];
+		return processManager->equippedObject[ActorProcessManager::kEquippedHand_Right];
 
 	return NULL;
 }
@@ -59,11 +62,11 @@ TintMask * PlayerCharacter::GetOverlayTintMask(TintMask * original)
 	return NULL;
 }
 
-void PlayerCharacter::UpdateHairColor()
+void Actor::UpdateHairColor()
 {
 	TESNPC* npc = DYNAMIC_CAST(baseForm, TESForm, TESNPC);
 	if(npc && npc->headData) {
-		BGSColorForm * hairColor = npc->headData->hairColor;
+		BGSColorForm * hairColor = npc->headData->hairColor; // Non-player actors won't have this
 		if(hairColor) {
 			NiColorA val;
 			val.r = hairColor->color.red / 128.0;
@@ -71,27 +74,31 @@ void PlayerCharacter::UpdateHairColor()
 			val.b = hairColor->color.blue / 128.0;
 			NiColorA * color = &val;
 
-			if(loadedState && loadedState->node) {
-				UpdateModelHair(loadedState->node, &color);
+			NiNode * model = GetNiRootNode(0);
+			if(model) {
+				UpdateModelHair(model, &color);
 			}
 		}
 	}
 }
 
-void PlayerCharacter::UpdateSkinColor()
+void Actor::UpdateSkinColor()
 {
-	TintMask * tintMask = CALL_MEMBER_FN(this, GetTintMask)(TintMask::kMaskType_SkinTone, 0);
-	if(tintMask) {
+	TESNPC* npc = DYNAMIC_CAST(baseForm, TESForm, TESNPC);
+	if(npc) {
 		NiColorA val;
-		val.r = tintMask->color.red / 255.0;
-		val.g = tintMask->color.green / 255.0;
-		val.b = tintMask->color.blue / 255.0;
+		val.r = npc->color.red / 255.0;
+		val.g = npc->color.green / 255.0;
+		val.b = npc->color.blue / 255.0;
 		NiColorA * color = &val;
-		if(loadedState && loadedState->node) {
-			UpdateModelSkin(loadedState->node, &color); // Update for 3rd Person
+
+		NiNode * thirdPerson = GetNiRootNode(0);
+		NiNode * firstPerson = GetNiRootNode(1);
+		if(thirdPerson) {
+			UpdateModelSkin(thirdPerson, &color); // Update for 3rd Person
 		}
-		if(firstPersonSkeleton) {
-			UpdateModelSkin(firstPersonSkeleton, &color); // Update for 1st Person
+		if(firstPerson) {
+			UpdateModelSkin(firstPerson, &color); // Update for 1st Person
 		}
 	}
 }

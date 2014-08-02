@@ -17,6 +17,11 @@ namespace papyrusActiveMagicEffect
 		return (effect) ? effect->duration : 0.0;
 	}
 
+	float GetMagnitude(ActiveEffect* effect)
+	{
+		return (effect) ? effect->magnitude : 0.0;
+	}
+
 	void RegisterForKey(ActiveEffect * effect, UInt32 key)
 	{
 		if(!effect)
@@ -107,7 +112,7 @@ namespace papyrusActiveMagicEffect
 		g_modCallbackRegs.UnregisterAll<ActiveEffect>(ActiveEffect::kTypeID, effect);
 	}
 
-	void SendModEvent(TESForm * thisForm, BSFixedString eventName, BSFixedString strArg, float numArg)
+	void SendModEvent(ActiveEffect * thisForm, BSFixedString eventName, BSFixedString strArg, float numArg)
 	{
 		if (!eventName.data)
 			return;
@@ -177,6 +182,9 @@ void papyrusActiveMagicEffect::RegisterFuncs(VMClassRegistry* registry)
 		new NativeFunction0 <ActiveEffect, float>("GetDuration", "ActiveMagicEffect", papyrusActiveMagicEffect::GetDuration, registry));
 
 	registry->RegisterFunction(
+		new NativeFunction0 <ActiveEffect, float>("GetMagnitude", "ActiveMagicEffect", papyrusActiveMagicEffect::GetMagnitude, registry));
+
+	registry->RegisterFunction(
 		new NativeFunction1 <ActiveEffect, void, UInt32> ("RegisterForKey", "ActiveMagicEffect", papyrusActiveMagicEffect::RegisterForKey, registry));
 
 	registry->RegisterFunction(
@@ -204,7 +212,7 @@ void papyrusActiveMagicEffect::RegisterFuncs(VMClassRegistry* registry)
 		new NativeFunction0 <ActiveEffect, void> ("UnregisterForAllModEvents", "ActiveMagicEffect", papyrusActiveMagicEffect::UnregisterForAllModEvents, registry));
 
 	registry->RegisterFunction(
-		new NativeFunction3 <TESForm, void, BSFixedString, BSFixedString, float> ("SendModEvent", "ActiveMagicEffect", papyrusActiveMagicEffect::SendModEvent, registry));
+		new NativeFunction3 <ActiveEffect, void, BSFixedString, BSFixedString, float> ("SendModEvent", "ActiveMagicEffect", papyrusActiveMagicEffect::SendModEvent, registry));
 
 	registry->RegisterFunction(
 		new NativeFunction1 <ActiveEffect, void, BSFixedString> ("RegisterForControl", "ActiveMagicEffect", papyrusActiveMagicEffect::RegisterForControl, registry));

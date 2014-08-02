@@ -251,3 +251,25 @@ void * IObjectHandlePolicy::Resolve_Hook(UInt32 typeID, UInt64 handle)
 	return CALL_MEMBER_FN(this, Resolve_Origin)(typeID, handle);
 }
 #endif
+
+/* // 00C644E0
+bool VMClassRegistry::CreateArrayVariable(VMValue * value, UInt32 size)
+{
+	bool ret = false;
+	if(CALL_MEMBER_FN(value, IsArray)()) {
+		VMValue::ArrayData * arrayData = NULL;
+		if(CreateArray(value, size, arrayData) && arrayData)
+		{
+			ret = true;
+			VMValue tempValue = *value;
+			CALL_MEMBER_FN(value, Set)(&tempValue);
+			CALL_MEMBER_FN(&tempValue, Destroy)();
+			CALL_MEMBER_FN(value, DestroyArray)(arrayData);
+		}
+
+		arrayData->Destroy();
+		CALL_MEMBER_FN(value, Destroy)();
+	}
+
+	return ret;
+}*/

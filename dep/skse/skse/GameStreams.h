@@ -19,8 +19,40 @@ public:
 	virtual bool	IsValid(void) = 0;
 	virtual void	Seek(SInt32 delta) = 0;
 	virtual UInt32	GetOffset(void) { return 0; }
-	virtual void	Unk_04(void) { }
-	virtual void	EnableEndianSwap(bool swap) = 0;
+
+	//	void	** _vtbl;	// 00
+	UInt32	pad04;		// 04 - align for UInt64
+	void	* readFn;	// 08
+	void	* writeFn;	// 0C
+};
+
+class NiMemStream : public NiBinaryStream
+{
+public:
+	NiMemStream();
+	virtual ~NiMemStream();
+
+	virtual bool	IsValid(void) { return true; };
+	virtual void	Seek(SInt32 delta);
+	virtual UInt32	GetOffset(void);
+	virtual void	CopyFrom(void * other);
+	virtual void	FunctionSwap(bool swap);
+
+	MEMBER_FN_PREFIX(NiMemStream);
+	DEFINE_MEMBER_FN(Construct, NiMemStream *, 0x00B2BBC0);
+	DEFINE_MEMBER_FN(Destroy, void, 0x00B2B8B0);
+	DEFINE_MEMBER_FN(Seek, void, 0x00B2B910, SInt32);
+	DEFINE_MEMBER_FN(GetOffset, UInt32, 0x00B2A390, void);
+	DEFINE_MEMBER_FN(CopyFrom, UInt32, 0x00B2B930, void *);
+	DEFINE_MEMBER_FN(FunctionSwap, UInt32, 0x00B2BB50, bool);
+
+	void	* data;	// 10
+	UInt32	offset;	// 14
+	UInt32	unk18;	// 18
+	UInt32	unk1C;	// 1C - Inited to 0x400
+	UInt8	flag1;	// 20
+	UInt8	flag2;	// 21
+	UInt16	pad22;	// 22
 };
 
 class BSResourceNiBinaryStream : public NiBinaryStream
@@ -37,10 +69,6 @@ public:
 	virtual void	Unk_04(void) { }
 	virtual void	EnableEndianSwap(bool swap);
 
-//	void	** _vtbl;	// 00
-	UInt32	pad04;		// 04 - align for UInt64
-	void	* readFn;	// 08
-	void	* writeFn;	// 0C
 	void	* unk10;	// 10
 	void	* unk14;	// 14
 	UInt64	offset;		// 18

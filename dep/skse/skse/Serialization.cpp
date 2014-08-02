@@ -285,7 +285,7 @@ namespace Serialization
 			return false;
 
 		// fixup ID, success
-		*handleOut = (loadedModID << 24) | (handle & 0xFFFFFFFF00FFFFFF);
+		*handleOut = (handle & 0xFFFFFFFF00FFFFFF) | (((UInt64)loadedModID) << 24);
 
 		return true;
 	}
@@ -477,6 +477,13 @@ namespace Serialization
 		{
 			_MESSAGE("skipped delete of co-save %s", coSavePath.c_str());	
 		}
+	}
+
+	void HandleDeletedForm(UInt64 handle)
+	{
+		for(UInt32 i = 0; i < s_pluginCallbacks.size(); i++)
+			if(s_pluginCallbacks[i].formDelete)
+				s_pluginCallbacks[i].formDelete(handle);
 	}
 
 	template <>

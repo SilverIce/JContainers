@@ -126,7 +126,18 @@ public:
  //	ExtraPackage
  //	ExtraTresPassPackage
  //	ExtraRunOncePacks
- //	ExtraReferenceHandle
+class ExtraReferenceHandle : public BSExtraData
+{
+public:
+	ExtraReferenceHandle();
+	virtual ~ExtraReferenceHandle();
+
+	UInt32	handle;		// 08
+
+	TESObjectREFR * GetReference();
+	static ExtraReferenceHandle* Create();
+};
+
 class ExtraFollower : public BSExtraData
 {
 public:
@@ -174,7 +185,16 @@ public:
 
 	static ExtraHealth* Create();
 };
- //	ExtraTimeLeft
+
+class ExtraTimeLeft : public BSExtraData
+{
+public:
+	ExtraTimeLeft();
+	virtual ~ExtraTimeLeft();
+
+	float time;
+};
+
 class ExtraCharge : public BSExtraData
 {
 public:
@@ -191,11 +211,28 @@ public:
  //	ExtraMapMarker
  //	ExtraLeveledCreature
  //	ExtraLeveledItem
- //	ExtraScale
+class ExtraScale : public BSExtraData
+{
+public:
+	ExtraScale();
+	virtual ~ExtraScale();
+
+	float scale;
+};
  //	ExtraSeed
  //	ExtraMagicCaster
  //	ExtraPlayerCrimeList
- //	ExtraEnableStateParent
+class ExtraEnableStateParent : public BSExtraData
+{
+public:
+	ExtraEnableStateParent();
+	virtual ~ExtraEnableStateParent();
+
+	UInt32	unk08;	// 08
+	UInt32	handle;	// 0C handle?
+
+	TESObjectREFR * GetReference();
+};
  //	ExtraEnableStateChildren
  //	ExtraItemDropper
  //	ExtraDroppedItemList
@@ -211,7 +248,17 @@ public:
 
 	static ExtraCannotWear* Create();
 };
- //	ExtraPoison
+
+class ExtraPoison : public BSExtraData
+{
+public:
+	ExtraPoison();
+	virtual ~ExtraPoison();
+
+	UInt32			unk08;		// 08
+	AlchemyItem*	poison;		// 0C
+};
+
  //	ExtraLastFinishedSequence
  //	ExtraSavedAnimation
  //	ExtraNorthRotation
@@ -350,7 +397,7 @@ public:
 		tArray<TESPackage*>	* packages;
 	};
 
-	tArray<AliasInfo*> aliases;
+	tArray<AliasInfo*> aliases;	// 08
 };
 
 class ExtraLocation : public BSExtraData
@@ -373,7 +420,19 @@ public:
 };
  //	ExtraOutfitItem
  //	ExtraLeveledItemBase
- //	ExtraLightData
+class ExtraLightData : public BSExtraData
+{
+public:
+	ExtraLightData();
+	virtual ~ExtraLightData();
+
+	float	unk08;
+	UInt32	unk0C;
+	UInt32	unk10;
+	float	unk14;
+	UInt8	unk18;
+	UInt8	pad19[3];
+};
  //	ExtraSceneData
  //	ExtraBadPosition
  //	ExtraHeadTrackingWeight
@@ -390,15 +449,17 @@ public:
 	BSFixedString	name;				// 08
 	BGSMessage		* message;			// 0C
 	TESQuest		* owner;			// 10
-	UInt32			unk14;				// 14
+	SInt32			unk14;				// 14 -1 default -2 explicit name?
 	float			extraHealthValue;	// 18
+	UInt16			unk1C;				// 1C
+	UInt16			pad1E;				// 1E
 
 	const char* GenerateName(TESForm * form, float extraHealthValue);
 
 	static ExtraTextDisplayData* Create();
 
-private:
 	MEMBER_FN_PREFIX(ExtraTextDisplayData);
+	DEFINE_MEMBER_FN(SetName_Internal, void, 0x00423140, const char * name);	
 	DEFINE_MEMBER_FN(GenerateName_Internal, const char*, 0x00428CA0, TESForm * form, float extraHealthValue);	
 };
  //	ExtraAlphaCutoff
@@ -408,10 +469,12 @@ public:
 	ExtraEnchantment();
 	virtual ~ExtraEnchantment();
 
-	EnchantmentItem*	enchant;
-	UInt32				maxCharge;
+	EnchantmentItem*	enchant;		// 08
+	UInt16				maxCharge;		// 0C
+	UInt8				unk0E;			// 0E - usually 0
+	UInt8				pad0F;			// 0F
 
-	//static ExtraEnchantment* Create();
+	static ExtraEnchantment* Create();
 };
 
 class ExtraSoul : public BSExtraData
@@ -424,7 +487,16 @@ public:
 
 	static ExtraSoul* Create();
 };
- //	ExtraForcedTarget
+
+class ExtraForcedTarget : public BSExtraData
+{
+public:
+	UInt32	handle;	// 08
+
+	static ExtraForcedTarget* Create();
+	TESObjectREFR * GetReference();
+};
+STATIC_ASSERT(sizeof(ExtraForcedTarget) == 0x0C);
  //	ExtraUniqueID
  //	ExtraFlags
 class ExtraFlags : public BSExtraData

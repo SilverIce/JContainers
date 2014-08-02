@@ -1,13 +1,11 @@
 #include "GameStreams.h"
 
 BSResourceNiBinaryStream::BSResourceNiBinaryStream()
-:readFn(NULL), writeFn(NULL), unk10(NULL), unk14(NULL), offset(0)
 {
 	//
 }
 
 BSResourceNiBinaryStream::BSResourceNiBinaryStream(const char * path)
-:readFn(NULL), writeFn(NULL), unk10(NULL), unk14(NULL), offset(0)
 {
 	CALL_MEMBER_FN(this, Construct)(path, 0, 0);
 }
@@ -76,4 +74,31 @@ UInt32 BSResourceNiBinaryStream::Read(void * dst, UInt32 len)
 UInt32 BSResourceNiBinaryStream::Write(void * src, UInt32 len)
 {
 	return CALL_MEMBER_FN(this, Write)(src, len);
+}
+
+NiMemStream::NiMemStream()
+{
+	CALL_MEMBER_FN(this, Construct)();
+}
+
+NiMemStream::~NiMemStream()
+{
+	CALL_MEMBER_FN(this, Destroy)();
+}
+
+void NiMemStream::Seek(SInt32 delta)
+{
+	CALL_MEMBER_FN(this, Seek)(delta);
+}
+UInt32 NiMemStream::GetOffset(void)
+{
+	return CALL_MEMBER_FN(this, GetOffset)();
+}
+void NiMemStream::CopyFrom(void * other)
+{
+	CALL_MEMBER_FN(this, CopyFrom)(other);
+}
+void NiMemStream::FunctionSwap(bool swap)
+{
+	CALL_MEMBER_FN(this, FunctionSwap)(swap);
 }

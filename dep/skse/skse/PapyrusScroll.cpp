@@ -101,4 +101,18 @@ void papyrusScroll::RegisterFuncs(VMClassRegistry* registry)
 
 	registry->RegisterFunction(
 		new NativeFunction1 <ScrollItem, void, BGSEquipSlot*>("SetEquipType", "Scroll", papyrusScroll::SetEquipType, registry));
+
+	registry->SetFunctionFlags("Scroll", "GetCastTime", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Scroll", "GetNumEffects", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Scroll", "GetNthEffectMagnitude", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Scroll", "GetNthEffectArea", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Scroll", "GetNthEffectDuration", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Scroll", "GetNthEffectMagicEffect", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Scroll", "GetCostliestEffectIndex", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Scroll", "GetEquipType", VMClassRegistry::kFunctionFlag_NoWait);
+
+	registry->SetFunctionFlags("Scroll", "SetNthEffectMagnitude", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Scroll", "SetNthEffectArea", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Scroll", "SetNthEffectDuration", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Scroll", "SetEquipType", VMClassRegistry::kFunctionFlag_NoWait);
 }

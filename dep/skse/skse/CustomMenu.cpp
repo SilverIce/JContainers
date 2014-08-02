@@ -29,7 +29,9 @@ CustomMenu::CustomMenu(const char* swfPath)
 	unk0C = 0xA;
 	unk14 = 1;
 
-	flags |= 0x404;
+	if(!(*g_inputEventDispatcher)->IsGamepadEnabled())
+		flags |= 0x404; // Shows the cursor when no gamepad is enabled
+
 #ifdef _CUSTOMMENU_ITEMDISPLAY
 	flags |= 0x1000;
 #endif
@@ -61,12 +63,13 @@ void CustomMenu::Accept(CallbackProcessor * processor)
 #endif
 }
 
-#ifdef _CUSTOMMENU_ITEMDISPLAY
+
 void CustomMenu::Render()
 {
 	if(view) {
 		view->Render();
+#ifdef _CUSTOMMENU_ITEMDISPLAY
 		CALL_MEMBER_FN(Inventory3DManager::GetSingleton(), Render)();
+#endif
 	}
 }
-#endif

@@ -1,12 +1,15 @@
 #pragma once
 
-#include "skse/ScaleformCallbacks.h"
 #include "skse/GameTypes.h"
 #include "skse/GameEvents.h"
-#include "skse/Utilities.h"
-#include "skse/Hooks_UI.h"
 #include "skse/GameCamera.h"
 #include "skse/GameReferences.h"
+
+#include "skse/ScaleformCallbacks.h"
+#include "skse/ScaleformMovie.h"
+
+#include "skse/Utilities.h"
+#include "skse/Hooks_UI.h"
 #include "skse/NiNodes.h"
 
 class TESObjectREFR;
@@ -17,29 +20,61 @@ class TESFullName;
 // 1C+
 class IMenu : public FxDelegateHandler
 {
+	struct BSUIScaleformData
+	{
+		virtual ~BSUIScaleformData() {}
+
+		//	void	** _vtbl;		// 00
+		UInt32				unk04; // 04
+		void*				unk08; // 08
+	};
+
+	struct UnkData1
+	{
+		BSFixedString		name;	// 00
+		UInt32				unk04;	// 04
+		BSUIScaleformData*	data;	// 08 - BSUIScaleformData
+	};
+
 public:
 	IMenu();
-	virtual ~IMenu();
-	
-	virtual void	InstallCallbacks(AddCallbackVisitor * visitor);
-	virtual void	Unk_02(void);
-	virtual void	Unk_03(void);
-	virtual UInt32	Unk_04(void * arg);
-	virtual void	Unk_05(UInt32 arg0, UInt32 arg1);	// CurrentTime
-	virtual void	Unk_06(void);
+	virtual ~IMenu() { CALL_MEMBER_FN(this, dtor)(); } // TODO
+
+	enum {
+		kType_PauseGame = 1,
+		kType_ShowCursor = 2
+	};
+
+	virtual void	Accept(CallbackProcessor * processor) {}
+	virtual void	Unk_02(void) {}
+	virtual void	Unk_03(void) {}
+	virtual UInt32	ProcessUnkData1(UnkData1* data);
+	virtual void	NextFrame(UInt32 arg0, UInt32 arg1)	{ CALL_MEMBER_FN(this, NextFrame_internal)(arg0, arg1); }
+	virtual void	Render(void);
+	virtual void	Unk_07(void) {}
+	virtual void	InitMovie(void)		{ CALL_MEMBER_FN(this,InitMovie_internal)(view); }
 
 	GFxMovieView	* view;	// 08 - init'd to 0, a class, virtual fn 0x114 called in dtor
 	UInt8			unk0C;		// 0C - init'd to 3
 	UInt8			pad0D[3];	// 0D
-	UInt32			unk10;		// 10 - init'd to 0
+	UInt32			flags;		// 10 - init'd to 0
 	UInt32			unk14;		// 14 - init'd to 0x12
 	GRefCountBase	* unk18;	// 18 - holds a reference
+
+	MEMBER_FN_PREFIX(IMenu);
+	DEFINE_MEMBER_FN(InitMovie_internal, void, 0xA64A50, GFxMovieView* view);
+	DEFINE_MEMBER_FN(NextFrame_internal, void, 0xA64980, UInt32 arg0, UInt32 arg1);
+	DEFINE_MEMBER_FN(dtor, void, 0x00A64A10);
 };
 
 // 34
 class Console : public IMenu
 {
 public:
+	// unk0C - 0x0C
+	// Flags - 0x807
+	// unk14 - 2
+
 	// C+
 	struct Unk20
 	{
@@ -67,6 +102,9 @@ public:
 // 68
 class BarterMenu : public IMenu
 {
+	// unk0C - 0
+	// Flags - 0xA489
+	// unk14 - 3
 	GFxValue	* root;		// 1C
 	// ...
 	UInt8		unk34;		// 34
@@ -80,6 +118,20 @@ class RaceMenuSlider
 public:
 	RaceMenuSlider::RaceMenuSlider() {};
 	RaceMenuSlider::RaceMenuSlider(UInt32 filterFlag, const char * sliderName, const char * callbackName, UInt32 sliderId, UInt32 index, UInt32 type, UInt8 unk8, float min, float max, float value, float interval, UInt32 unk13);
+
+	enum {
+		kTypeHeadPart = 0,
+		kTypeUnk1,
+		kTypeDoubleMorph,
+		kTypePreset,
+		kTypeTintingMask,
+		kTypeHairColorPreset,
+		kTypeUnk6,
+		kTypeUnused7,
+		kTypeUnk8,
+		kTypeUnk9,
+		kTypeUnk10
+	};
 
 	float	min;	// 00
 	float	max;	// 04
@@ -103,16 +155,30 @@ public:
 class RaceSexMenu : public IMenu
 {
 public:
+	// unk0C - 3
+	// Flags - 0x709
+	// unk14 - 3
 	void					* menuHandler;	// 1C
 	UInt32					unk20;			// 20
 	UInt32					unk24;			// 24
-	tArray<BGSHeadPart*>	hairline;		// 28
+	enum {
+		kHeadPartsHairLine = 0,
+		kHeadPartsHead,
+		kHeadPartsEyes,
+		kHeadPartsHair,
+		kHeadPartsBeard,
+		kHeadPartsScars,
+		kHeadPartsBrows,
+		kNumHeadPartLists
+	};
+	tArray<BGSHeadPart*>	headParts[kNumHeadPartLists];	// 28 - 70
+	/*tArray<BGSHeadPart*>	hairline;		// 28
 	tArray<BGSHeadPart*>	head;			// 34
 	tArray<BGSHeadPart*>	eyes;			// 40
 	tArray<BGSHeadPart*>	hair;			// 4C
 	tArray<BGSHeadPart*>	beard;			// 58
 	tArray<BGSHeadPart*>	scars;			// 64
-	tArray<BGSHeadPart*>	brows;			// 70
+	tArray<BGSHeadPart*>	brows;			// 70*/
 	RaceSexCamera			camera;			// 7C
 
 	float					unkA4[0x07];	// A4
@@ -129,6 +195,9 @@ public:
 	UInt32					unkDC;			// DC
 	UInt32					unkE0;			// E0
 	UInt32					raceIndex;		// E4
+
+	MEMBER_FN_PREFIX(RaceSexMenu);
+	DEFINE_MEMBER_FN(LoadSliders, void *, 0x00882290, UInt32 unk1, UInt8 unk2);
 };
 
 STATIC_ASSERT(offsetof(RaceSexMenu, sliderData) == 0xC0);
@@ -137,6 +206,9 @@ STATIC_ASSERT(offsetof(RaceSexMenu, raceIndex) == 0xE4);
 class MapMenu : public IMenu
 {
 public:
+	// unk0C - 3
+	// Flags - 0x9005
+	// unk14 - 7
 	enum
 	{
 		kMarkerType_Location = 0
@@ -196,6 +268,205 @@ STATIC_ASSERT(offsetof(MapMenu::LocalMap, cullingProcess) == 0x30);
 STATIC_ASSERT(offsetof(MapMenu::LocalMap, renderedLocalMapTexture) == 0x26C);
 STATIC_ASSERT(offsetof(MapMenu, markers) == 0x2F0);
 
+// 18
+class HUDObject
+{
+public:
+	HUDObject::HUDObject(GFxMovieView* movie)
+	{
+		if(movie)
+			InterlockedIncrement(&movie->refCount);
+		view = movie;
+	}
+	virtual ~HUDObject(void)
+	{
+		object.CleanManaged();
+
+		GFxMovieView * thisView = view;
+		if(thisView)
+			thisView->ForceCollectGarbage();
+	}
+
+	virtual void Update(void) = 0;	// Called per-frame
+	virtual UInt8 Unk_02(void * unk1) { return 0; };
+	virtual void * Unk_03(void * unk1) { return CALL_MEMBER_FN(this, Impl_Fn03)(unk1); };
+	virtual void Unk_04(void) { }; // No implementation?
+
+	UInt32			unk04;		// 04
+	GFxMovieView	* view;		// 08
+	UInt32			unk0C;		// 0C
+	GFxValue		object;		// 10
+	
+	MEMBER_FN_PREFIX(HUDObject);
+	DEFINE_MEMBER_FN(dtor, void, 0x0085FF10);
+	DEFINE_MEMBER_FN(Impl_Fn03, void *, 0x0085F030, void * unk1);
+
+	// redirect to formheap
+	static void * operator new(std::size_t size)
+	{
+		return FormHeap_Allocate(size);
+	}
+
+	static void * operator new(std::size_t size, const std::nothrow_t &)
+	{
+		return FormHeap_Allocate(size);
+	}
+
+	// placement new
+	static void * operator new(std::size_t size, void * ptr)
+	{
+		return ptr;
+	}
+
+	static void operator delete(void * ptr)
+	{
+		FormHeap_Free(ptr);
+	}
+
+	static void operator delete(void * ptr, const std::nothrow_t &)
+	{
+		FormHeap_Free(ptr);
+	}
+
+	static void operator delete(void *, void *)
+	{
+		// placement delete
+	}
+};
+STATIC_ASSERT(sizeof(HUDObject) == 0x20);
+
+// 30
+class Compass : public HUDObject
+{
+public:
+	UInt32	unk20;	// 20
+	UInt32	unk24;	// 24
+	UInt32	unk28;	// 28
+	UInt32	unk2C;	// 2C
+};
+STATIC_ASSERT(sizeof(Compass) == 0x30);
+
+// A0
+class FloatingQuestMarker : public HUDObject
+{
+public:
+	
+};
+
+// 58
+class HUDNotifications : public HUDObject
+{
+public:
+
+};
+
+// 68
+class EnemyHealth : public HUDObject
+{
+public:
+	UInt32			handle;			// 20
+	UInt32			unk24;			// 24
+	UInt32			unk28;			// 28
+	UInt32			unk2C;			// 2C
+	GFxValue		unk30;			// 30
+	GFxValue		unk40;			// 40
+	GFxValue		text;			// 50
+	UInt32			unk5C;			// 5C
+	UInt32			unk60;			// 60
+	UInt32			unk64;			// 64
+
+	TESObjectREFR	* GetTarget() const;
+};
+STATIC_ASSERT(offsetof(EnemyHealth, handle) == 0x20);
+
+// 70
+class StealthMeter : public HUDObject
+{
+public:
+
+};
+
+// 28
+class HUDChargeMeter : public HUDObject
+{
+public:
+
+};
+
+// 38?
+class HUDMeter : public HUDObject
+{
+public:
+	virtual double GetMaxValue(void);
+	
+	char	* setMeterPercent;	// 20
+	char	* startBlinking;	// 24
+	char	* fadeOut;			// 28
+	float	unk28;				// 2C
+	UInt32	unk2C;				// 30
+	UInt32	unk34;				// 34
+};
+STATIC_ASSERT(sizeof(HUDMeter) == 0x38);
+
+// 38
+class ActorValueMeter : public HUDMeter
+{
+public:
+	
+};
+
+// 38
+class ShoutMeter : public HUDMeter
+{
+public:
+	
+};
+
+// 58
+class HUDMenu : public IMenu
+{
+public:
+	BSTEventSink<void>	unk1C;	// UserEventEnabledEvent
+	tArray<HUDObject*>	hudComponents;	// 20
+	UInt32	unk2C;
+	UInt32	unk30;
+	UInt32	unk34;
+	UInt32	unk38;
+	UInt32	unk3C;
+	UInt32	unk40;
+	UInt32	unk44;
+	UInt32	unk48;
+	UInt32	unk4C;
+	UInt32	unk50;
+	UInt32	unk54;
+};
+STATIC_ASSERT(sizeof(HUDMenu) == 0x58);
+
+// HUDMenu
+// unk0C - 2
+// Flags - 0x18902
+// unk14 - 0x12
+
+// DialogueMenu
+// unk0C - 3
+// Flags - 0x4400
+// unk14 - 1
+
+// MainMenu
+// unk0C - 9
+// Flags - 0x581
+// unk14 - 1
+
+// MagicMenu
+// unk0C - 0
+// Flags - 0xA489
+// unk14 - 3
+
+// InventoryMenu
+// unk0C - 0
+// Flags - 0x4400
+// unk14 - 0x12
+
 //// menu management
 
 // 08
@@ -238,7 +509,8 @@ public:
 	{
 		kMessage_Refresh = 0,	// used after ShowAllMapMarkers
 		kMessage_Open,
-		kMessage_Close,
+		kMessage_PreviouslyKnownAsClose,
+		kMessage_Close
 	};
 
 	StringCache::Ref	strData;	// 00
@@ -462,6 +734,7 @@ public:
 	DEFINE_MEMBER_FN(UpdateItem3D, void, 0x00867C00, PlayerCharacter::ObjDesc * objDesc);
 	DEFINE_MEMBER_FN(UpdateMagic3D, void, 0x00867930, TESForm * form, UInt32 unk1);
 	DEFINE_MEMBER_FN(Clear3D, void, 0x008668C0);
+	DEFINE_MEMBER_FN(Render, UInt32, 0x00867730);
 
 	/*DEFINE_MEMBER_FN(Unk1, void, 0x008667E0, UInt32 unk1);
 	DEFINE_MEMBER_FN(Unk2, void, 0x00867110);
@@ -528,7 +801,6 @@ class MenuManager
 	STATIC_ASSERT(sizeof(Unknown3) == 0x30);
 
 private:
-
 	UInt32					unk_000;	// 000
 
 	EventDispatcher<MenuOpenCloseEvent>		menuOpenCloseEventDispatcher;	// 004
@@ -553,9 +825,13 @@ private:
 	bool					unk_119;	// 119 (= 0)
 	char					pad[2];
 
+public:
+	typedef IMenu*	(*CreatorFunc)(void);
+
+private:
 	MEMBER_FN_PREFIX(MenuManager);
 	DEFINE_MEMBER_FN(IsMenuOpen, bool, 0x00A5CE90, BSFixedString * menuName);
-	//DEFINE_MEMBER_FN(Register, void, 0x00A5D2A0, const char * name, void * ctorFunc);
+	DEFINE_MEMBER_FN(Register_internal, void, 0x00A5D2A0, const char * name, CreatorFunc creator);
 
 public:
 
@@ -572,5 +848,12 @@ public:
 	bool				IsMenuOpen(BSFixedString * menuName);
 	IMenu *				GetMenu(BSFixedString * menuName);
 	GFxMovieView *		GetMovieView(BSFixedString * menuName);
+
+	typedef IMenu* (*CreatorFunc)(void);
+
+	void Register(const char* name, CreatorFunc creator)
+	{
+		CALL_MEMBER_FN(this, Register_internal)(name, creator);
+	}
 };
 STATIC_ASSERT(sizeof(MenuManager) == 0x11C);

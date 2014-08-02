@@ -17,3 +17,8 @@ BSMaskedShaderMaterial * BSMaskedShaderMaterial::CreateFromLightingShader(BSLigh
 	return material;
 }
 */
+
+void BSLightingShaderMaterial::SetTextureSet(BSTextureSet * newSet)
+{
+	textureSet = newSet;
+}

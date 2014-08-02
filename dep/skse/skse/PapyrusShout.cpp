@@ -58,4 +58,11 @@ void papyrusShout::RegisterFuncs(VMClassRegistry* registry)
 
 	registry->RegisterFunction(
 		new NativeFunction2<TESShout, void, UInt32, float>("SetNthRecoveryTime", "Shout", papyrusShout::SetNthRecoveryTime, registry));
+
+	registry->SetFunctionFlags("Shout", "GetNthWordOfPower", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Shout", "GetNthSpell", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Shout", "GetNthRecoveryTime", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Shout", "SetNthWordOfPower", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Shout", "SetNthSpell", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Shout", "SetNthRecoveryTime", VMClassRegistry::kFunctionFlag_NoWait);
 }

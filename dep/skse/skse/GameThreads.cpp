@@ -6,6 +6,7 @@
 #include "GameRTTI.h"
 
 #include "NiNodes.h"
+#include "NiExtraData.h"
 
 #include "common/IMemPool.h"
 
@@ -14,6 +15,8 @@ IThreadSafeBasicMemPool<SKSETaskUpdateHairColor,10>		s_updateHairColorDelegatePo
 IThreadSafeBasicMemPool<SKSETaskUpdateWeight,10>		s_updateWeightDelegatePool;
 IThreadSafeBasicMemPool<SKSETaskRegenHead,10>			s_regenHeadDelegatePool;
 IThreadSafeBasicMemPool<SKSETaskChangeHeadPart,10>		s_changeHeadPartDelegatePool;
+IThreadSafeBasicMemPool<SKSETaskUpdateWorldData,10>		s_updateWorldDataDelegatePool;
+IThreadSafeBasicMemPool<SKSETaskUpdateExpression,10>	s_updateExpressionDelegatePool;
 
 void BSTaskPool::UpdateTintMasks()
 {
@@ -47,13 +50,30 @@ void BSTaskPool::ChangeHeadPart(Actor * actor, BGSHeadPart * oldPart, BGSHeadPar
 	}
 }
 
-void BSTaskPool::UpdateWeight(Actor * actor, float delta)
+void BSTaskPool::UpdateWeight(Actor * actor, float delta, UInt32 updateFlags, bool redrawWeapon)
 {
-	SKSETaskUpdateWeight * cmd = SKSETaskUpdateWeight::Create(actor, delta);
+	SKSETaskUpdateWeight * cmd = SKSETaskUpdateWeight::Create(actor, delta, updateFlags, redrawWeapon);
 	if(cmd) {
 		QueueTask(cmd);
 	}
 }
+
+void BSTaskPool::UpdateWorldData(NiAVObject * object)
+{
+	SKSETaskUpdateWorldData * cmd = SKSETaskUpdateWorldData::Create(object);
+	if(cmd) {
+		QueueTask(cmd);
+	}
+}
+
+void BSTaskPool::UpdateExpression(Actor * actor, UInt8 type, UInt16 index, float value)
+{
+	SKSETaskUpdateExpression * cmd = SKSETaskUpdateExpression::Create(actor, type, index, value);
+	if(cmd) {
+		QueueTask(cmd);
+	}
+}
+
 
 void SKSETaskUpdateTintMasks::Dispose(void)
 {
@@ -95,12 +115,7 @@ void SKSETaskRegenHead::Run()
 {
 	TESNPC * npc = DYNAMIC_CAST(m_actor->baseForm, TESForm, TESNPC);
 	BSFaceGenNiNode * faceNode = m_actor->GetFaceGenNiNode();
-	BGSHeadPart * facePart = NULL;
-	if(CALL_MEMBER_FN(npc, HasOverlays)()) {
-		facePart = npc->GetHeadPartOverlayByType(BGSHeadPart::kTypeFace);
-	} else {
-		facePart = CALL_MEMBER_FN(npc, GetHeadPartByType)(BGSHeadPart::kTypeFace);
-	}
+	BGSHeadPart * facePart = npc->GetCurrentHeadPartByType(BGSHeadPart::kTypeFace);
 	if(npc && faceNode && facePart) {
 		CALL_MEMBER_FN(FaceGen::GetSingleton(), RegenerateHead)(faceNode, facePart, npc);
 	}
@@ -131,13 +146,15 @@ void SKSETaskChangeHeadPart::Run()
 	}
 }
 
-SKSETaskUpdateWeight * SKSETaskUpdateWeight::Create(Actor * actor, float delta)
+SKSETaskUpdateWeight * SKSETaskUpdateWeight::Create(Actor * actor, float delta, UInt32 updateFlags, bool redrawWeapon)
 {
 	SKSETaskUpdateWeight * cmd = s_updateWeightDelegatePool.Allocate();
 	if (cmd)
 	{
 		cmd->m_actor = actor;
 		cmd->m_delta = delta;
+		cmd->m_updateFlags = updateFlags;
+		cmd->m_redraw = redrawWeapon;
 	}
 	return cmd;
 }
@@ -153,10 +170,12 @@ void SKSETaskUpdateWeight::Run()
 		TESNPC * npc = DYNAMIC_CAST(m_actor->baseForm, TESForm, TESNPC);
 		if(npc) {
 			BSFaceGenNiNode * faceNode = m_actor->GetFaceGenNiNode();
-			CALL_MEMBER_FN(faceNode, AdjustHeadMorph)(BSFaceGenNiNode::kAdjustType_Neck, 0, m_delta);
-			UpdateModelFace(faceNode);
+			if(faceNode) {
+				CALL_MEMBER_FN(faceNode, AdjustHeadMorph)(BSFaceGenNiNode::kAdjustType_Neck, 0, m_delta);
+				UpdateModelFace(faceNode);
+			}
 
-			ActorWeightModel * lowModel = m_actor->GetWeightModel(ActorWeightModel::kWeightModel_Small);
+			/*ActorWeightModel * lowModel = m_actor->GetWeightModel(ActorWeightModel::kWeightModel_Small);
 			if(lowModel && lowModel->weightData)
 				CALL_MEMBER_FN(lowModel->weightData, UpdateWeightData)();
 
@@ -164,21 +183,86 @@ void SKSETaskUpdateWeight::Run()
 			if(highModel && highModel->weightData)
 				CALL_MEMBER_FN(highModel->weightData, UpdateWeightData)();
 
-			UInt32 updateFlags = ActorEquipData::kFlags_Unk01 | ActorEquipData::kFlags_Unk02 | ActorEquipData::kFlags_Unk03 | ActorEquipData::kFlags_Mobile;
+			//UInt32 updateFlags = ActorEquipData::kFlags_Unk01 | ActorEquipData::kFlags_Unk02 | ActorEquipData::kFlags_Mobile;
 			 // Resets ActorState
 			//updateFlags |= ActorEquipData::kFlags_DrawHead | ActorEquipData::kFlags_Reset;
-			
+			UInt32 updateFlags = m_updateFlags;
 
-			CALL_MEMBER_FN(m_actor->equipData, SetEquipFlag)(updateFlags);
-			CALL_MEMBER_FN(m_actor->equipData, UpdateEquipment)(m_actor);
+			CALL_MEMBER_FN(m_actor->processManager, SetEquipFlag)(updateFlags);
+			CALL_MEMBER_FN(m_actor->processManager, UpdateEquipment)(m_actor);*/
 
 			// Force redraw weapon, weight model update causes weapon position to be reset
 			// Looking at DrawSheatheWeapon there is a lot of stuff going on, hard to find
 			// out how to just manually move the weapon to its intended position
-			if(m_actor->actorState.IsWeaponDrawn()) {
+			if(m_redraw && m_actor->actorState.IsWeaponDrawn()) {
 				m_actor->DrawSheatheWeapon(false);
 				m_actor->DrawSheatheWeapon(true);
 			}
 		}
+	}
+}
+
+SKSETaskUpdateWorldData * SKSETaskUpdateWorldData::Create(NiAVObject * object)
+{
+	SKSETaskUpdateWorldData * cmd = s_updateWorldDataDelegatePool.Allocate();
+	if (cmd)
+	{
+		cmd->m_object = object;
+	}
+	return cmd;
+}
+
+void SKSETaskUpdateWorldData::Dispose(void)
+{
+	s_updateWorldDataDelegatePool.Free(this);
+}
+
+void SKSETaskUpdateWorldData::Run()
+{
+	NiAVObject::ControllerUpdateContext ctx;
+	m_object->UpdateWorldData(&ctx);
+}
+
+SKSETaskUpdateExpression * SKSETaskUpdateExpression::Create(Actor * actor, UInt8 type, UInt16 index, float value)
+{
+	SKSETaskUpdateExpression * cmd = s_updateExpressionDelegatePool.Allocate();
+	if (cmd)
+	{
+		cmd->m_actor = actor;
+		cmd->m_type = type;
+		cmd->m_index = index;
+		if(value < 0.0f)
+			value = 0.0f;
+		if(value > 1.0f)
+			value = 1.0f;
+		cmd->m_value = value;
+	}
+	return cmd;
+}
+
+void SKSETaskUpdateExpression::Dispose(void)
+{
+	s_updateExpressionDelegatePool.Free(this);
+}
+
+void SKSETaskUpdateExpression::Run()
+{
+	BSFaceGenAnimationData * animationData = m_actor->GetFaceGenAnimationData();
+	if(animationData) {
+		if(m_type != BSFaceGenAnimationData::kKeyframeType_Reset) {
+			FaceGen::GetSingleton()->isReset = 0;
+			BSFaceGenKeyframeMultiple * keyframe = &animationData->keyFrames[m_type];
+			if(m_index >= keyframe->count)
+				return;
+			keyframe->values[m_index] = m_value;
+			keyframe->isUpdated = 0;
+		} else {
+			animationData->overrideFlag = 0;
+			CALL_MEMBER_FN(animationData, Reset)(1.0, 1, 1, 0, 0);
+			FaceGen::GetSingleton()->isReset = 1;
+		}
+		NiNode * face = m_actor->GetFaceGenNiNode();
+		if(face)
+			UpdateModelFace(face);
 	}
 }

@@ -1,6 +1,7 @@
 #include "PapyrusForm.h"
 
 #include "GameForms.h"
+#include "GameObjects.h"
 #include "GameRTTI.h"
 #include "PapyrusVM.h"
 #include "PapyrusEvents.h"
@@ -72,6 +73,11 @@ namespace papyrusForm
 		TESValueForm* pValue = DYNAMIC_CAST(thisForm, TESForm, TESValueForm);
 		if (pValue)
 			return pValue->value;
+		else {
+			AlchemyItem* alchemyItem = DYNAMIC_CAST(thisForm, TESForm, AlchemyItem);
+			if(alchemyItem && (alchemyItem->itemData.flags & AlchemyItem::kFlag_ManualCalc) == AlchemyItem::kFlag_ManualCalc)
+				return alchemyItem->itemData.value;
+		}
 		return 0;
 	}
 
@@ -81,7 +87,12 @@ namespace papyrusForm
 			return;
 		TESValueForm* pValue = DYNAMIC_CAST(thisForm, TESForm, TESValueForm);
 		if (pValue)
-			pValue->value = value;		
+			pValue->value = value;
+		else {
+			AlchemyItem* alchemyItem = DYNAMIC_CAST(thisForm, TESForm, AlchemyItem);
+			if(alchemyItem && (alchemyItem->itemData.flags & AlchemyItem::kFlag_ManualCalc) == AlchemyItem::kFlag_ManualCalc)
+				alchemyItem->itemData.value = value;
+		}
 	}
 
 	UInt32 GetNumKeywords(TESForm* thisForm)
@@ -103,6 +114,14 @@ namespace papyrusForm
 			return pKeywords->keywords[index];
 		}
 		return NULL;
+	}
+
+	void SetPlayerKnows(TESForm * thisForm, bool knows)
+	{
+		if(!thisForm)
+			return;
+
+		knows ? thisForm->flags |= TESForm::kFlagPlayerKnows : thisForm->flags &= ~TESForm::kFlagPlayerKnows;
 	}
 
 	void RegisterForKey(TESForm * thisForm, UInt32 key)
@@ -312,6 +331,82 @@ namespace papyrusForm
 
 		return result;
 	}
+
+	bool HasWorldModel(TESForm * thisForm)
+	{
+		if(thisForm) {
+			TESModel* pWorldModel = DYNAMIC_CAST(thisForm, TESForm, TESModel);
+			if (pWorldModel)
+				return true;
+		}
+
+		return false;
+	}
+
+	BSFixedString GetWorldModelPath(TESForm * thisForm)
+	{
+		if(!thisForm)
+			return NULL;
+
+		TESModel* pWorldModel = DYNAMIC_CAST(thisForm, TESForm, TESModel);
+		if (!pWorldModel)
+			return NULL;
+
+		return pWorldModel->GetModelName();
+	}
+
+	void SetWorldModelPath(TESForm * thisForm, BSFixedString nuPath)
+	{
+		if(thisForm) {
+			TESModel* pWorldModel = DYNAMIC_CAST(thisForm, TESForm, TESModel);
+			if(pWorldModel)
+				pWorldModel->SetModelName(nuPath.data);
+		}
+	}
+
+	UInt32 GetWorldModelNumTextureSets(TESForm * thisForm)
+	{
+		if(!thisForm)
+			return 0;
+
+		TESModelTextureSwap* pTextSwap = DYNAMIC_CAST(thisForm, TESForm, TESModelTextureSwap);
+		if (!pTextSwap)
+			return 0;
+
+		return pTextSwap->count;
+	}
+
+	BGSTextureSet* GetWorldModelNthTextureSet(TESForm * thisForm, UInt32 n)
+	{
+		if(!thisForm)
+			return NULL;
+
+		TESModelTextureSwap* pTextSwap = DYNAMIC_CAST(thisForm, TESForm, TESModelTextureSwap);
+		if (!pTextSwap)
+			return NULL;
+
+		if(!pTextSwap->swaps || n >= pTextSwap->count)
+			return NULL;
+
+		return pTextSwap->swaps[n].textureSet;
+	}
+
+	void SetWorldModelNthTextureSet(TESForm * thisForm, BGSTextureSet* textureSet, UInt32 n)
+	{
+		if(thisForm && thisForm) {
+			TESModelTextureSwap* pTextSwap = DYNAMIC_CAST(thisForm, TESForm, TESModelTextureSwap);
+			if (pTextSwap) {
+				if(pTextSwap->swaps && n < pTextSwap->count) {
+					pTextSwap->swaps[n].textureSet = textureSet;
+				}
+			}
+		}
+	}
+
+	bool IsPlayable(TESForm * thisForm)
+	{
+		return (thisForm) ? thisForm->IsPlayable() : false;
+	}
 }
 
 #include "PapyrusVM.h"
@@ -342,6 +437,9 @@ void papyrusForm::RegisterFuncs(VMClassRegistry* registry)
 
 	registry->RegisterFunction(
 		new NativeFunction1 <TESForm, BGSKeyword *, UInt32> ("GetNthKeyword", "Form", papyrusForm::GetNthKeyword, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction1 <TESForm, void, bool> ("SetPlayerKnows", "Form", papyrusForm::SetPlayerKnows, registry));
 
 	registry->RegisterFunction(
 		new NativeFunction1 <TESForm, void, UInt32> ("RegisterForKey", "Form", papyrusForm::RegisterForKey, registry));
@@ -403,6 +501,28 @@ void papyrusForm::RegisterFuncs(VMClassRegistry* registry)
 	registry->RegisterFunction(
 		new NativeFunction1 <TESForm, void, UInt32> ("UnregisterForActorAction", "Form", papyrusForm::UnregisterForActorAction, registry));
 
+	registry->RegisterFunction(
+		new NativeFunction0 <TESForm, bool> ("HasWorldModel", "Form", papyrusForm::HasWorldModel, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction0 <TESForm, BSFixedString> ("GetWorldModelPath", "Form", papyrusForm::GetWorldModelPath, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction1 <TESForm, void, BSFixedString> ("SetWorldModelPath", "Form", papyrusForm::SetWorldModelPath, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction0 <TESForm, UInt32> ("GetWorldModelNumTextureSets", "Form", papyrusForm::GetWorldModelNumTextureSets, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction1 <TESForm, BGSTextureSet*, UInt32> ("GetWorldModelNthTextureSet", "Form", papyrusForm::GetWorldModelNthTextureSet, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction2 <TESForm, void, BGSTextureSet*, UInt32> ("SetWorldModelNthTextureSet", "Form", papyrusForm::SetWorldModelNthTextureSet, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction0 <TESForm, bool> ("IsPlayable", "Form", papyrusForm::IsPlayable, registry));
+
+	registry->SetFunctionFlags("Form", "SetPlayerKnows", VMClassRegistry::kFunctionFlag_NoWait);
 	registry->SetFunctionFlags("Form", "RegisterForKey", VMClassRegistry::kFunctionFlag_NoWait);
 	registry->SetFunctionFlags("Form", "UnregisterForKey", VMClassRegistry::kFunctionFlag_NoWait);
 	registry->SetFunctionFlags("Form", "UnregisterForAllKeys", VMClassRegistry::kFunctionFlag_NoWait);
@@ -421,4 +541,5 @@ void papyrusForm::RegisterFuncs(VMClassRegistry* registry)
 	registry->SetFunctionFlags("Form", "UnregisterForCrosshairRef", VMClassRegistry::kFunctionFlag_NoWait);
 	registry->SetFunctionFlags("Form", "RegisterForActorAction", VMClassRegistry::kFunctionFlag_NoWait);
 	registry->SetFunctionFlags("Form", "UnregisterForActorAction", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Form", "HasWorldModel", VMClassRegistry::kFunctionFlag_NoWait);
 }

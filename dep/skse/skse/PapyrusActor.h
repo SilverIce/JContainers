@@ -7,6 +7,7 @@ class SpellItem;
 class ActiveEffect;
 class VMClassRegistry;
 class BGSHeadPart;
+class TESObjectREFR;
 
 namespace papyrusActor
 {
@@ -25,6 +26,7 @@ namespace papyrusActor
 	void EquipItemEx(Actor* thisActor, TESForm* item, SInt32 slotId, bool preventUnequip, bool equipSound);
 	void UnequipItemEx(Actor* thisActor, TESForm* item, SInt32 slotId, bool preventEquip);
 
+	void ReplaceHeadPart(Actor * thisActor, BGSHeadPart * oldPart, BGSHeadPart* newPart);
 	void ChangeHeadPart(Actor * thisActor, BGSHeadPart * newPart);
 	void RegenerateHead(Actor * thisActor);
 	void UpdateWeight(Actor * thisActor, float neckDelta);
@@ -34,4 +36,5 @@ namespace papyrusActor
 	void SheatheWeapon(Actor * thisActor);
 
 	void EquipItemById(Actor* thisActor, TESForm* item, SInt32 itemId, SInt32 slotId, bool preventUnequip, bool equipSound);
+	TESObjectREFR * GetFurnitureReference(Actor * thisActor);
 }

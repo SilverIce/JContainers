@@ -5,6 +5,7 @@
 #include "GameInput.h"
 #include "GameMenus.h"
 #include "PapyrusEvents.h"
+#include "PluginManager.h"
 
 PlayerControls * PlayerControls::ctor_Hook(void)
 {
@@ -27,6 +28,8 @@ PlayerControls * PlayerControls::ctor_Hook(void)
 	} else {
 		_MESSAGE("Failed to register SKSE inputEventHandler");
 	}
+
+	PluginManager::Dispatch_Message(0, SKSEMessagingInterface::kMessage_InputLoaded, NULL, 0, NULL);
 
 	return result;
 }

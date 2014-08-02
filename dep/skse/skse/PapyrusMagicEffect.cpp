@@ -81,10 +81,8 @@ namespace papyrusMagicEffect
 	void SetAssociatedSkill(EffectSetting* thisEffect, BSFixedString school)
 	{
 		if (thisEffect) {
-			UInt32 actorValue = LookupActorValueByName(school.data);
-			if(actorValue <= ActorValueList::kNumActorValues) {
-				thisEffect->properties.school = actorValue;
-			}
+			UInt32 actorValue = ActorValueList::ResolveActorValueByName(school.data);
+			thisEffect->properties.school = actorValue;
 		}
 	}
 
@@ -107,10 +105,8 @@ namespace papyrusMagicEffect
 	void SetResistance(EffectSetting* thisEffect, BSFixedString resistance)
 	{
 		if (thisEffect) {
-			UInt32 actorValue = LookupActorValueByName(resistance.data);
-			if(actorValue <= ActorValueList::kNumActorValues) {
-				thisEffect->properties.resistance = actorValue;
-			}
+			UInt32 actorValue = ActorValueList::ResolveActorValueByName(resistance.data);
+			thisEffect->properties.resistance = actorValue;
 		}
 	}
 
@@ -244,6 +240,16 @@ namespace papyrusMagicEffect
 	{
 		if(thisEffect)
 			thisEffect->properties.perk = obj;
+	}
+
+	UInt32 GetCastingType(EffectSetting* thisEffect)
+	{
+		return (thisEffect) ? thisEffect->properties.castType : 0;
+	}
+
+	UInt32 GetDeliveryType(EffectSetting* thisEffect)
+	{
+		return (thisEffect) ? thisEffect->properties.deliveryType : 0;
 	}
 }
 
@@ -391,6 +397,12 @@ void papyrusMagicEffect::RegisterFuncs(VMClassRegistry* registry)
 	registry->RegisterFunction(
 		new NativeFunction1<EffectSetting, void, BGSPerk*>("SetPerk", "MagicEffect", papyrusMagicEffect::SetPerk, registry));
 
+	registry->RegisterFunction(
+		new NativeFunction0<EffectSetting, UInt32>("GetCastingType", "MagicEffect", papyrusMagicEffect::GetCastingType, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction0<EffectSetting, UInt32>("GetDeliveryType", "MagicEffect", papyrusMagicEffect::GetDeliveryType, registry));
+
 
 	registry->SetFunctionFlags("MagicEffect", "IsEffectFlagSet", VMClassRegistry::kFunctionFlag_NoWait);
 	registry->SetFunctionFlags("MagicEffect", "SetEffectFlag", VMClassRegistry::kFunctionFlag_NoWait);
@@ -433,4 +445,6 @@ void papyrusMagicEffect::RegisterFuncs(VMClassRegistry* registry)
 	registry->SetFunctionFlags("MagicEffect", "SetImageSpaceMod", VMClassRegistry::kFunctionFlag_NoWait);
 	registry->SetFunctionFlags("MagicEffect", "GetPerk", VMClassRegistry::kFunctionFlag_NoWait);
 	registry->SetFunctionFlags("MagicEffect", "SetPerk", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("MagicEffect", "GetCastingType", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("MagicEffect", "GetDeliveryType", VMClassRegistry::kFunctionFlag_NoWait);
 }

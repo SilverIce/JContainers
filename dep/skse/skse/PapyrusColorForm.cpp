@@ -168,4 +168,7 @@ void papyrusColorForm::RegisterFuncs(VMClassRegistry* registry)
 
 	registry->RegisterFunction(
 		new NativeFunction1 <BGSColorForm, void, UInt32>("SetColor", "ColorForm", papyrusColorForm::SetColor, registry));
+
+	registry->SetFunctionFlags("ColorForm", "GetColor", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("ColorForm", "SetColor", VMClassRegistry::kFunctionFlag_NoWait);
 }

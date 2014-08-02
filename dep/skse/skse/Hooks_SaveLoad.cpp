@@ -6,6 +6,7 @@
 #include "GameData.h"
 #include "GameMenus.h"
 #include "PapyrusVM.h"
+#include "PluginManager.h"
 
 void BGSSaveLoadManager::SaveGame_Hook(const char * saveName)
 {
@@ -14,6 +15,7 @@ void BGSSaveLoadManager::SaveGame_Hook(const char * saveName)
 #endif
 
 	Serialization::SetSaveName(saveName);
+	PluginManager::Dispatch_Message(0, SKSEMessagingInterface::kMessage_SaveGame, (void*)saveName, strlen(saveName), NULL);
 	CALL_MEMBER_FN(this, SaveGame_HookTarget)(saveName);
 	Serialization::SetSaveName(NULL);
 
@@ -31,7 +33,9 @@ bool BGSSaveLoadManager::LoadGame_Hook(const char * saveName, bool unk1)
 	g_loadGameLock.Enter();
 
 	Serialization::SetSaveName(saveName);
+	PluginManager::Dispatch_Message(0, SKSEMessagingInterface::kMessage_PreLoadGame, (void*)saveName, strlen(saveName), NULL);
 	bool result = CALL_MEMBER_FN(this, LoadGame_HookTarget)(saveName, unk1);
+	PluginManager::Dispatch_Message(0, SKSEMessagingInterface::kMessage_PostLoadGame, (void*)result, 1, NULL);
 	Serialization::SetSaveName(NULL);
 
 	g_loadGameLock.Leave();
@@ -97,8 +101,8 @@ void __stdcall DeleteSavegame_Hook(const char * saveNameIn, UInt32 unk1)
 {
 	std::string saveName = saveNameIn;
 
+	PluginManager::Dispatch_Message(0, SKSEMessagingInterface::kMessage_DeleteGame, (void*)saveName.c_str(), strlen(saveName.c_str()), NULL);
 	DeleteSavegame_Hooked(saveNameIn, unk1);
-
 	Serialization::HandleDeleteSave(saveName);
 }
 

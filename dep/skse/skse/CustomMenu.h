@@ -20,7 +20,5 @@ class CustomMenu : public IMenu
 public:
 	CustomMenu(const char* swfPath);
 	virtual void Accept(CallbackProcessor * processor);
-#ifdef _CUSTOMMENU_ITEMDISPLAY
 	virtual void Render(void);
-#endif
 };

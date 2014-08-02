@@ -23,7 +23,7 @@ public:
 
 	bool operator<(const EventRegistration & rhs) const	{ return handle < rhs.handle; }
 
-	bool Save(SKSESerializationInterface * intfc, UInt32 version)
+	bool Save(SKSESerializationInterface * intfc, UInt32 version) const
 	{
 		if (! intfc->WriteRecordData(&handle, sizeof(handle)))
 			return false;
@@ -53,7 +53,7 @@ public:
 class NullParameters
 {
 public:
-	bool Save(SKSESerializationInterface * intfc, UInt32 version) { return true; }
+	bool Save(SKSESerializationInterface * intfc, UInt32 version) const { return true; }
 	bool Load(SKSESerializationInterface * intfc, UInt32 version) { return true; }
 	void Dump(void) {}
 };
@@ -63,7 +63,7 @@ class ModCallbackParameters
 public:
 	BSFixedString callbackName;
 
-	bool Save(SKSESerializationInterface * intfc, UInt32 version)
+	bool Save(SKSESerializationInterface * intfc, UInt32 version) const
 	{
 		return Serialization::WriteData<BSFixedString>(intfc, &callbackName);
 	}
@@ -238,7 +238,7 @@ public:
 			intfc->WriteRecordData(&numRegs, sizeof(numRegs));
 			// Regs
 			for (RegSet::iterator elems = iter->second.begin(); elems != iter->second.end(); ++elems)
-				const_cast<EventRegistration<D>&>(*elems).Save(intfc, version);
+				elems->Save(intfc, version);
 		}
 
 		intfc->OpenRecord('REGE', version);
@@ -432,7 +432,7 @@ public:
 			
 		// Regs
 		for (RegSet::iterator iter = m_data.begin(); iter != m_data.end(); ++iter)
-			const_cast<EventRegistration<D>&>(*iter).Save(intfc, version);
+			iter->Save(intfc, version);
 
 		Release();
 

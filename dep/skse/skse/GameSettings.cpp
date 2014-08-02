@@ -5,6 +5,9 @@ extern SettingCollectionList	** g_iniSettingCollection = (SettingCollectionList 
 extern SettingCollectionList	** g_iniPrefSettingCollection = (SettingCollectionList **)0x01B8FAF8;
 extern SettingCollectionMap		** g_gameSettingCollection = (SettingCollectionMap **)0x012E7164;
 
+const float	* g_mapLocalHeight = *(float **)0x0124166C;
+const float	* g_localMapMinFrustumWidth = *(float **)0x012B5B80;
+
 // sLanguage:General
 // ### if you were using g_gameLanguage, just look it up in g_iniSettingCollection
 

@@ -164,6 +164,65 @@ public:
 #else
 		m_retnType = GetTypeID <T_Result>(registry);
 #endif
+
+#ifdef _NATIVEDUMP
+		std::string functionOut;
+
+#if VOID_SPEC
+		functionOut += GetArgumentTypeName<void>(registry);
+		functionOut += " ";
+#else
+		functionOut += GetArgumentTypeName<T_Result>(registry);
+		functionOut += " ";
+#endif
+		functionOut += className;
+		functionOut += "::";
+		functionOut += fnName;
+		functionOut += "(";
+
+#if NUM_PARAMS >= 1
+		functionOut += GetArgumentTypeName<T_Arg0>(registry);
+#endif
+#if NUM_PARAMS >= 2
+		functionOut += ", ";
+		functionOut += GetArgumentTypeName<T_Arg1>(registry);
+#endif
+#if NUM_PARAMS >= 3
+		functionOut += ", ";
+		functionOut += GetArgumentTypeName<T_Arg2>(registry);
+#endif
+#if NUM_PARAMS >= 4
+		functionOut += ", ";
+		functionOut += GetArgumentTypeName<T_Arg3>(registry);
+#endif
+#if NUM_PARAMS >= 5
+		functionOut += ", ";
+		functionOut += GetArgumentTypeName<T_Arg4>(registry);
+#endif
+#if NUM_PARAMS >= 6
+		functionOut += ", ";
+		functionOut += GetArgumentTypeName<T_Arg5>(registry);
+#endif
+#if NUM_PARAMS >= 7
+		functionOut += ", ";
+		functionOut += GetArgumentTypeName<T_Arg6>(registry);
+#endif
+#if NUM_PARAMS >= 8
+		functionOut += ", ";
+		functionOut += GetArgumentTypeName<T_Arg7>(registry);
+#endif
+#if NUM_PARAMS >= 9
+		functionOut += ", ";
+		functionOut += GetArgumentTypeName<T_Arg8>(registry);
+#endif
+#if NUM_PARAMS >= 10
+		functionOut += ", ";
+		functionOut += GetArgumentTypeName<T_Arg9>(registry);
+#endif
+		functionOut += ")";
+
+		_MESSAGE("%s", functionOut.c_str());
+#endif
 	}
 
 	virtual ~CLASS_NAME()	{ }

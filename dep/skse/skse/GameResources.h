@@ -41,11 +41,17 @@ struct BSFaceGenDB
 	{
 		struct DBTraits
 		{
+			struct MorphVertex
+			{
+				SInt16 x;
+				SInt16 y;
+				SInt16 z;
+			};
 			struct MorphData
 			{
-				char	* morphName;		// 00
+				const char	* morphName;	// 00
 				UInt32 unk04;				// 04
-				char	* diffData;			// 08 - Looks like a tArray?
+				MorphVertex	* diffData;		// 08
 				UInt32	unk0C;				// 0C
 				UInt32	unk10;				// 10
 				float	baseDiff;			// 14
@@ -57,7 +63,7 @@ struct BSFaceGenDB
 			struct MorphSet
 			{
 				UInt32	unk00;					// 00
-				char	* fileName;				// 04
+				const char	* fileName;			// 04
 				tArray<MorphData>	morphData;	// 08
 				UInt32	unk14;					// 14
 				UInt32	unk18;					// 18
@@ -65,7 +71,7 @@ struct BSFaceGenDB
 				UInt32	unk20;					// 20
 				UInt32	unk24;					// 24
 				UInt32	unk28;					// 28
-				BSFaceGenMorphData	* niData;	// 2C - BSFaceGenMorphDataHead
+				BSFaceGenMorphData	* faceMorphData;	// 2C - BSFaceGenMorphDataHead
 			};
 
 			struct Data

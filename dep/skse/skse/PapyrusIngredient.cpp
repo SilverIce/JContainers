@@ -31,6 +31,32 @@ namespace papyrusIngredient
 
 	void SetNthEffectDuration(IngredientItem* thisMagic, UInt32 index, UInt32 value)
 	{ magicItemUtils::SetNthEffectDuration(thisMagic, index, value); }
+
+	// ahzaab 8-25-13
+	bool GetIsNthEffectKnown(IngredientItem* thisMagic, UInt32 index)
+	{
+		bool isKnown = false;
+		if (!thisMagic)
+			return false;
+		switch (index)
+		{
+		case 0:
+			isKnown = ((thisMagic->knownEffects & IngredientItem::kType_FirstEffect) == IngredientItem::kType_FirstEffect);
+			break;
+		case 1:
+			isKnown = ((thisMagic->knownEffects & IngredientItem::kType_SecondEffect) == IngredientItem::kType_SecondEffect);
+			break;
+		case 2:
+			isKnown = ((thisMagic->knownEffects & IngredientItem::kType_ThirdEffect) == IngredientItem::kType_ThirdEffect);
+			break;
+		case 3:
+			isKnown = ((thisMagic->knownEffects & IngredientItem::kType_FourthEffect) == IngredientItem::kType_FourthEffect);
+			break;
+		default:
+			break;
+		}
+		return isKnown;
+	}
 }
 
 #include "PapyrusVM.h"
@@ -56,6 +82,9 @@ void papyrusIngredient::RegisterFuncs(VMClassRegistry* registry)
 	registry->RegisterFunction(
 		new NativeFunction0<IngredientItem, UInt32>("GetCostliestEffectIndex", "Ingredient", papyrusIngredient::GetCostliestEffectIndex, registry));
 
+	registry->RegisterFunction(
+		new NativeFunction1<IngredientItem, bool, UInt32>("GetIsNthEffectKnown", "Ingredient", papyrusIngredient::GetIsNthEffectKnown, registry));
+
 	// Sets
 	registry->RegisterFunction(
 		new NativeFunction2<IngredientItem, void, UInt32, float>("SetNthEffectMagnitude", "Ingredient", papyrusIngredient::SetNthEffectMagnitude, registry));
@@ -65,4 +94,16 @@ void papyrusIngredient::RegisterFuncs(VMClassRegistry* registry)
 
 	registry->RegisterFunction(
 		new NativeFunction2<IngredientItem, void, UInt32, UInt32>("SetNthEffectDuration", "Ingredient", papyrusIngredient::SetNthEffectDuration, registry));
+
+	registry->SetFunctionFlags("Ingredient", "GetNumEffects", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Ingredient", "GetNthEffectMagnitude", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Ingredient", "GetNthEffectArea", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Ingredient", "GetNthEffectDuration", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Ingredient", "GetNthEffectMagicEffect", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Ingredient", "GetCostliestEffectIndex", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Ingredient", "GetIsNthEffectKnown", VMClassRegistry::kFunctionFlag_NoWait);
+
+	registry->SetFunctionFlags("Ingredient", "SetNthEffectMagnitude", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Ingredient", "SetNthEffectArea", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Ingredient", "SetNthEffectDuration", VMClassRegistry::kFunctionFlag_NoWait);
 }
