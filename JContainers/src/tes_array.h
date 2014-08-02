@@ -1,4 +1,5 @@
 #include <boost/optional.hpp>
+#include <array>
 
 namespace collections {
 
@@ -128,9 +129,28 @@ if insertAtIndex >= 0 it appends values starting from insertAtIndex index");
                                 index);
         }
 
+        template<class Index, size_t N>
+        static boost::optional<std::array<uint32_t, N> > convertReadIndex(array *ar, const Index(&pyIndexes)[N]) {
+            auto count = ar->u_count();
+
+            if (count == 0) {
+                return false;
+            }
+
+            std::array<uint32_t, N> indexes;
+            for (size_t i = 0; i < N; ++i) {
+                indexes[i] = ( pyIndexes[i] >= 0 ? pyIndexes[i] : (count + pyIndexes[i]) );
+
+                if (indexes[i] >= count) {
+                    return false;
+                }
+            }
+
+            return indexes;
+        }
 
         template<class Op>
-        static void doReadOp(ref obj, int pyIndex, Op& operation) {
+        static void doReadOp(ref obj, SInt32 pyIndex, Op& operation) {
             if (!obj) {
                 return;
             }
@@ -145,6 +165,25 @@ if insertAtIndex >= 0 it appends values starting from insertAtIndex index");
                 onOutOfBoundAccess();
             }
         }
+
+        template<class Op, class Index, size_t N>
+        static void doReadOp(ref obj, const Index (&pyIndex)[N], Op& operation) {
+            if (!obj) {
+                return;
+            }
+
+            object_lock g(obj);
+
+            auto idx = convertReadIndex(obj.get(), pyIndex);
+
+            if (idx) {
+                operation(*idx);
+            }
+            else {
+                onOutOfBoundAccess();
+            }
+        }
+
 
         template<class Op>
         static void doWriteOp(ref obj, int pyIndex, Op& operation) {
@@ -262,6 +301,18 @@ if addToIndex >= 0 it inserts value at given index. "NEGATIVE_IDX_COMMENT);
             return type;
         }
         REGISTERF2(valueType, "* index", "returns type of the value at index. "NEGATIVE_IDX_COMMENT"\n"VALUE_TYPE_COMMENT);
+
+        static void swapItems(ref obj, SInt32 idx, SInt32 idx2) {
+
+            SInt32 pyIndexes[] = { idx, idx2 };
+            doReadOp(obj, pyIndexes, [=](const std::array<uint32_t, 2>& indices) {
+
+                if (indices[0] != indices[1]) {
+                    std::swap(obj->u_container()[indices[0]], obj->u_container()[indices[1]]);
+                }
+            });
+        }
+        REGISTERF2(swapItems, "* index1 index2", "Exchanges the items at index1 and index2. "NEGATIVE_IDX_COMMENT);
 
     };
 

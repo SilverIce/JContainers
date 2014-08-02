@@ -33,7 +33,7 @@ namespace jc {
 
         enum {
             type_id = 1,
-            version = 1s,
+            version = 1,
         };
 
         uint32_t current_version;

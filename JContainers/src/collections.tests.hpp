@@ -425,6 +425,10 @@ namespace collections {
         //{0,1,2,3,4,5,8}
         EXPECT_TRUE( tes_array::itemAtIndex<SInt32>(obj, -2) == 5);
 
+        tes_array::swapItems(obj, 0, -1);
+        //{8,1,2,3,4,5,0}
+        EXPECT_TRUE(tes_array::itemAtIndex<SInt32>(obj, 0) == 8 && tes_array::itemAtIndex<SInt32>(obj, -1) == 0);
+
     }
 
     TEST(tes_jcontainers, tes_jcontainers)
