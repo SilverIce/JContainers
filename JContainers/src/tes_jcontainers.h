@@ -35,6 +35,26 @@ namespace collections {
         }
         REGISTERF2(fileExistsAtPath, "path", "returns true if file at path exists");
 
+        static std::string userDirectory() {
+            char path[MAX_PATH];
+            if (!SUCCEEDED(SHGetFolderPath(NULL, CSIDL_MYDOCUMENTS, NULL, SHGFP_TYPE_CURRENT, path))) {
+                return std::string();
+            }
+
+            strcat_s(path, sizeof(path), JC_USER_FILES);
+
+            if (!boost::filesystem::exists(path) && (boost::filesystem::create_directories(path), !boost::filesystem::exists(path))) {
+                return std::string();
+            }
+
+            return path;
+        }
+
+        static BSFixedString _userDirectory() {
+            return userDirectory().c_str();
+        }
+        REGISTERF(_userDirectory, "userDirectory", "", "A path to user-specific directory - "JC_USER_FILES);
+
         static SInt32 lastError() {
             return tes_context::instance().lastError();
         }
@@ -54,4 +74,15 @@ namespace collections {
     };
 
     TES_META_INFO(tes_jcontainers);
+
+    TEST(tes_jcontainers, userDirectory)
+    {
+        auto path = tes_jcontainers::userDirectory();
+        EXPECT_TRUE(!path.empty());
+        EXPECT_TRUE(boost::filesystem::is_directory(path));
+
+        auto path2 = tes_jcontainers::userDirectory() + "/MyMod/settings.json";
+        tes_object::writeToFile(tes_object::object<map>(), path2.c_str());
+        EXPECT_TRUE(boost::filesystem::is_regular(path2));
+    }
 }

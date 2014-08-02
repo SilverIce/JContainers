@@ -7,8 +7,12 @@
 #include <sstream>
 #include <set>
 #include <thread>
+#include <array>
 
 #include <boost/filesystem.hpp>
+#include <boost/optional.hpp>
+
+#include <shlobj.h>
 
 #include "gtest.h"
 #include "jcontainers_constants.h"

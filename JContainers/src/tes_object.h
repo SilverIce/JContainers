@@ -215,14 +215,22 @@ JValue.cleanTempLocation(\"uniqueLocationName\")"
         }
         REGISTERF2(objectFromPrototype, "prototype", "creates new container object using given JSON string-prototype");
 
-        static void writeToFile(object_base *obj, const char * path) {
-            if (!path || !obj) {
+        static void writeToFile(object_base *obj, const char * cpath) {
+            if (!cpath || !obj) {
+                return;
+            }
+
+            boost::filesystem::path path(cpath);
+            auto& dir = path.remove_filename();
+            if (!boost::filesystem::exists(dir) &&
+                (boost::filesystem::create_directories(dir), !boost::filesystem::exists(dir)))
+            {
                 return;
             }
 
             auto json = json_serializer::create_json_value(*obj);
             if (json) {
-                json_dump_file(json.get(), path, JSON_INDENT(2));
+                json_dump_file(json.get(), cpath, JSON_INDENT(2));
             }
         }
         static void _writeToFile(ref obj, const char * path) {
