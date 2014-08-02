@@ -16,11 +16,16 @@ namespace jc {
 
         uint32_t current_version;
 
-        const void * (*query_interface)(uint32_t id);
+        const void * (*_query_interface)(uint32_t id);
 
         template<class Intrfc>
         const Intrfc * query_interface() const {
-            return (const Intrfc *)query_interface(Intrfc::type_id);
+            auto intr = (const Intrfc *)_query_interface(Intrfc::type_id);
+            return intr->current_version == Intrfc::version ? intr : nullptr;
+        }
+
+        static const root_interface * from_void(void * root) {
+            return ((root_interface *)root)->current_version == version ? (root_interface *)root : nullptr;
         }
     };
 

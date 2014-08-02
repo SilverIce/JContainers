@@ -8,7 +8,7 @@ namespace jc { namespace {
         reflection::find_tes_function_of_class,
     };
 
-    const void * _query_interface(uint32_t id) {
+    const void * query_interface(uint32_t id) {
         switch (id) {
         case reflection_interface::type_id:
             return &refl;
@@ -18,8 +18,8 @@ namespace jc { namespace {
 
 }
 
-    const root_interface root = {
+    root_interface root = {
         root_interface::version,
-        _query_interface,
+        query_interface,
     };
 }
