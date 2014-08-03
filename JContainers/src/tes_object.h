@@ -222,7 +222,7 @@ JValue.cleanTempLocation(\"uniqueLocationName\")"
 
             boost::filesystem::path path(cpath);
             auto& dir = path.remove_filename();
-            if (!boost::filesystem::exists(dir) &&
+            if (!dir.empty() && !boost::filesystem::exists(dir) &&
                 (boost::filesystem::create_directories(dir), !boost::filesystem::exists(dir)))
             {
                 return;

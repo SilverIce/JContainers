@@ -77,12 +77,30 @@ namespace collections {
 
     TEST(tes_jcontainers, userDirectory)
     {
+        auto write_file = [&](const boost::filesystem::path& path) {
+            boost::filesystem::remove_all(path);
+
+            EXPECT_FALSE(boost::filesystem::is_regular(path));
+
+            object_stack_ref obj = tes_object::object<map>();
+            tes_object::writeToFile(obj.get(), path.string().c_str());
+
+            EXPECT_TRUE(boost::filesystem::is_regular(path));
+
+            boost::filesystem::remove_all(path);
+        };
+
         auto path = tes_jcontainers::userDirectory();
         EXPECT_TRUE(!path.empty());
         EXPECT_TRUE(boost::filesystem::is_directory(path));
 
-        auto path2 = tes_jcontainers::userDirectory() + "/MyMod/settings.json";
-        tes_object::writeToFile(tes_object::object<map>(), path2.c_str());
-        EXPECT_TRUE(boost::filesystem::is_regular(path2));
+        write_file(tes_jcontainers::userDirectory() + "/MyMod/123/settings.json");
+        write_file(tes_jcontainers::userDirectory() + "/settings.json");
+        write_file(tes_jcontainers::userDirectory() + "settings2.json");
+        write_file("obj3");
+        write_file("path/obj3");
+        write_file("/path2/obj3");
+        write_file("path3\\obj3");
+        write_file("\\path4\\obj3");
     }
 }
