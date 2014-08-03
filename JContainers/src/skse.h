@@ -14,5 +14,7 @@ namespace collections {
 
         uint32_t resolve_handle(uint32_t handle);
         TESForm* lookup_form(uint32_t handle);
+
+        bool is_fake();
     }
 }

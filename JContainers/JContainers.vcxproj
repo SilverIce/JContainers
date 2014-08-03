@@ -199,6 +199,9 @@
     <ProjectReference Include="..\dep\jansson\jansson.vcxproj">
       <Project>{f9ef3ca7-06a8-4bb2-9232-c4251e65829b}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\dep\lua\lua.vcxproj">
+      <Project>{f74a8ebf-e8f7-42d3-bcf9-65daa7119171}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\dep\skse\skse\skse.vcxproj">
       <Project>{aa0365ec-47ea-45aa-bb1f-ebbcccc466f2}</Project>
     </ProjectReference>

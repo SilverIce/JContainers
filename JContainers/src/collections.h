@@ -409,6 +409,11 @@ namespace collections {
             }
         }
 
+        Item getItem(size_t index) {
+            object_lock lock(this);
+            return index < _array.size() ? _array[index] : Item();
+        }
+
         iterator begin() { return _array.begin();}
         iterator end() { return _array.end(); }
 
@@ -455,14 +460,14 @@ namespace collections {
             return cnt;
         }
 
-        container_type::iterator findItr(const std::string& key) {
-            return cnt.find(key);
-        }
-
         Item find(const std::string& key) {
             object_lock g(this);
-            Item* foudPtr = u_find(key);
-            return foudPtr ? *foudPtr : Item();
+            auto result = u_find(key);
+            return result ? *result : Item();
+        }
+
+        container_type::iterator findItr(const std::string& key) {
+            return cnt.find(key);
         }
 
         Item* u_find(const std::string& key) {
@@ -540,6 +545,12 @@ namespace collections {
 
         Item& operator [] (FormId key) {
             return cnt[key];
+        }
+
+        Item find(FormId key) {
+            object_lock g(this);
+            auto itr = cnt.find(key);
+            return itr != cnt.end() ? (itr->second) : Item();
         }
 
         Item* u_find(FormId key) {
