@@ -323,6 +323,17 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
         REGISTERF(_solveSetter<ref>, "solveObjSetter", "* path value createMissingKeys=false", nullptr);
         REGISTERF(_solveSetter<TESForm*>, "solveFormSetter", "* path value createMissingKeys=false", nullptr);
 
+        template<class T>
+        static T evalLua(ref obj, const char* luaCode, T def = T(0)) {
+            auto item = lua_apply::process_apply_func(obj.get(), luaCode);
+            return !item.isNull() ? item.readAs<T>() : def;
+        }
+        REGISTERF(evalLua<Float32>, "evalLuaFlt", "* luaCode default=0.0", "Evaluates piece of lua code. Lua support is experimental");
+        REGISTERF(evalLua<SInt32>, "evalLuaInt", "* luaCode default=0", nullptr);
+        REGISTERF(evalLua<const char*>, "evalLuaStr", "* luaCode default=\"\"", nullptr);
+        REGISTERF(evalLua<Handle>, "evalLuaObj", "* luaCode default=0", nullptr);
+        REGISTERF(evalLua<TESForm*>, "evalLuaForm", "* luaCode default=None", nullptr);
+
     };
 
     TES_META_INFO(tes_object);

@@ -1,13 +1,13 @@
 #pragma once
 
+#include "lua_stuff.h"
+
 #include <lua.hpp>
 #include <utility>
 #include <string>
-#include <typeinfo>
-#include <functional>
 #include <boost/optional.hpp>
 #include <boost/noncopyable.hpp>
-#include <fstream>
+#include <boost/filesystem.hpp>
 
 #include "meta.h"
 #include "gtest.h"
@@ -15,6 +15,7 @@
 #include "collections.h"
 #include "json_handling.h"
 #include "skse.h"
+#include "tes_context.h"
 
 namespace collections { namespace lua_traits {
 
@@ -26,6 +27,13 @@ namespace collections { namespace lua_traits {
 
         static const char *table_name() {
             return typeid(self_type).name();
+        }
+    };
+
+    template<>
+    struct trait < std::string > {
+        static void push(lua_State *l, const std::string& str) {
+            lua_pushlstring(l, str.c_str(), str.size());
         }
     };
 
@@ -158,16 +166,6 @@ namespace collections { namespace lua_traits {
         }
     };
 
-    template<>
-    struct trait < std::string > {
-
-        static void push(lua_State *l, const std::string& str) {
-            lua_pushlstring(l, str.c_str(), str.size());
-        }
-
-    };
-
-
     void trait<Item>::push(lua_State *l, const Item& item) {
 
         struct t : public boost::static_visitor<> {
@@ -185,7 +183,7 @@ namespace collections { namespace lua_traits {
                 lua_pushnil(l);
             }
 
-            void operator ()(const object_ref& val) {
+            void operator ()(const collections::internal_object_ref& val) {
                 trait<object_base>::push(l, val.get());
             }
 
@@ -245,6 +243,8 @@ namespace collections { namespace lua_traits {
 
         typedef std::pair<K, V> self_type;
 
+        typedef typename std::remove_const<K>::type first;
+
         static const char *table_name() {
             return typeid(self_type).name();
         }
@@ -263,11 +263,11 @@ namespace collections { namespace lua_traits {
             lua_createtable(l, 2, 0);
 
             lua_pushstring(l, "key");
-            traits<K>::push(l, pair.first);
+            trait<first>::push(l, pair.first);
             lua_settable(l, -3);
 
             lua_pushstring(l, "value");
-            traits<V>::push(l, pair.second);
+            trait<V>::push(l, pair.second);
             lua_settable(l, -3);
         }
     };
@@ -308,6 +308,9 @@ namespace collections {
             : l(luaL_newstate())
         {
             luaopen_base(l);
+            luaopen_math(l);
+            luaopen_bit32(l);
+            luaopen_string(l);
 
             using namespace std;
             using namespace lua_traits;
@@ -338,7 +341,7 @@ namespace collections { namespace lua_apply {
     void printLuaError(lua_State *l) {
         if (lua_gettop(l) > 0 && lua_isstring(l, -1)) {
             const char *str = lua_tostring(l, -1);
-            _MESSAGE("Error during lua code load: %s", str ? str : "");
+            _MESSAGE("lua error: %s", str ? str : "");
         }
     }
 
@@ -380,7 +383,7 @@ namespace collections { namespace lua_apply {
             for (const auto& itm : container_copy) {
 
                 lua_pushvalue(l, predicate);
-                trait< std::remove_const<std::remove_reference<decltype(itm)>::type>::type >::push(l, itm);
+                lua_traits::trait< std::remove_const<std::remove_reference<decltype(itm)>::type>::type >::push(l, itm);
 
                 if (lua_pcall(l, 1, 1, 0) != 0) {
                     luaL_error(l, "error running function `f': %s", lua_tostring(l, -1));
@@ -412,13 +415,12 @@ namespace collections { namespace lua_apply {
             if (object->as<array>()) {
                 apply_helper(l, object->as<array>(), functor);
             }
-/*
             else if (object->as<map>()) {
                 apply_helper(l, object->as<map>(), functor);
             }
             else if (object->as<form_map>()) {
                 apply_helper(l, object->as<form_map>(), functor);
-            }*/
+            }
             else {
                 assert(false);
             }
@@ -429,6 +431,10 @@ namespace collections { namespace lua_apply {
         static int lua_filter_func(lua_State *l) {
             // TODO: lua may panic at any time -> array memory will leak =\
 
+            auto object = trait<object_base>::check(l, 1)->as<array>();
+            luaL_argcheck(l, object != nullptr, 1, "JArray expected");
+            luaL_argcheck(l, lua_isfunction(l, 2), 2, "function expected");
+
             array *obj = array::object(tes_context::instance());
 
             auto func = [=](const Item& item, bool predicateResult) {
@@ -438,18 +444,22 @@ namespace collections { namespace lua_apply {
                 return false;
             };
 
-            apply(l,func);
+            apply_helper(l, object, func);
 
             trait<object_base>::push(l, obj);
 
             return 1;
         }
 
+        struct lua_apply_func_functor{
+            template<class T> bool operator () (const T&, bool lResult) const {
+                return lResult;
+            }
+        };
+
         static int lua_apply_func(lua_State *l) {
 
-            apply(l, [=](const Item& item, bool predicateResult) {
-                return predicateResult;
-            });
+            apply(l, lua_apply_func_functor());
 
             return 0;
         }
@@ -469,18 +479,33 @@ namespace collections { namespace lua_apply {
             lua_setglobal(l, object_to_apply_key);
         }
 
+        const char * lua_directory() {
+            return (skse::is_fake() ? "JContainersLua/" : "Data/SKSE/Plugins/JContainersLua/");
+        }
+
         void load_lua_code(lua_State *l) {
 
-            std::ifstream t(skse::is_fake() ? "JContainers.lua" : "Data//SKSE//Plugins//JContainers.lua");
-            assert(t.eof() == false);
-            std::string str((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+            namespace fs = boost::filesystem;
+
+            if (!fs::is_directory(lua_directory())) {
+                return;
+            }
+
+            fs::recursive_directory_iterator itr(lua_directory()), end;
+            for (; itr != end; ++itr) {
+                const auto& path = itr->path();
+
+                if (!fs::is_regular_file(path) || fs::extension(path) != ".lua") {
+                    continue;
+                }
+
+                int failed = luaL_dofile(l, path.generic_string().c_str());
+                if (failed) {
+                    printLuaError(l);
+                }
+            }
 
             lua_settop(l, 0);
-            int failed = luaL_dostring(l, str.c_str());
-
-            if (failed) {
-                printLuaError(l);
-            }
         }
 
         void register_apply_functions(lua_State *l)
@@ -520,19 +545,19 @@ namespace collections { namespace lua_apply {
         root->setValueForKey("aKey", Item(obj));
 
         auto result = process_apply_func(obj, STR(
-            return find(jobject, less(3))
+            return find(jobject, greater(2))
             ));
 
-        EXPECT_TRUE(result.intValue() == 1);
+        EXPECT_TRUE(result.intValue() == 2);
 
         result = process_apply_func(root, STR(
-            return find(jobject.aKey, less(3))
+            return find(jobject.aKey, greater(1))
             ));
         
         EXPECT_TRUE(result.intValue() == 1);
 
         result = process_apply_func(root, STR(
-            return count(jobject.aKey, less(3))
+            return count(jobject.aKey, greater(1))
             ));
 
         EXPECT_TRUE(result.intValue() == 2);
@@ -553,10 +578,10 @@ namespace collections { namespace lua_apply {
         ));
 
         auto result = process_apply_func(obj, STR(
-            return find(jobject, function(x) return x.theSearchString == 'a' end)
+            return find(jobject, function(x) return x.theSearchString == 'b' end)
             ));
 
-        EXPECT_TRUE(result.intValue() == 0);
+        EXPECT_TRUE(result.intValue() == 1);
     }
 
 }
