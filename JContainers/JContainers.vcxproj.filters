@@ -61,6 +61,7 @@
     <ClCompile Include="src\jc_interface.cpp">
       <Filter>plugin_interface</Filter>
     </ClCompile>
+    <ClCompile Include="src\hotfix_boost.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\collections.h">

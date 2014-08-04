@@ -14,5 +14,15 @@ namespace collections
 
         void resolve(tes_context& ctx, object_base *collection, const char *cpath, std::function<void(Item *)> itemFunction, bool createMissingKeys = false);
 
+        template<class T>
+        inline T _resolve(tes_context& ctx, object_base *collection, const char *cpath, T def = T(0)) {
+            resolve(ctx, collection, cpath, [&](Item *itm) {
+                if (itm) {
+                    def = itm->readAs<T>();
+                }
+            });
+
+            return def;
+        }
     }
 }

@@ -470,15 +470,15 @@ namespace collections {
             } path_appender = {path};
 
             std::deque<const key_variant*> keys;
-            const object_base *cnt = &obj;
+            const object_base *child = &obj;
 
-            while (cnt != &_root) {
+            while (child != &_root) {
 
-                auto itr = _keyInfo.find(&obj);
+                auto itr = _keyInfo.find(child);
 
                 if (itr != _keyInfo.end()) {
                     auto& pair = itr->second;
-                    cnt = pair.first;
+                    child = pair.first;
                     keys.push_front(&pair.second);
                 }
                 else {

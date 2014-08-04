@@ -135,6 +135,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\backward.compatibility.test.cpp" />
+    <ClCompile Include="src\hotfix_boost.cpp" />
     <ClCompile Include="src\jc_interface.cpp" />
     <ClCompile Include="src\object_module.cpp" />
     <ClCompile Include="src\gtest.cpp" />

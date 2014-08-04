@@ -308,39 +308,56 @@ namespace collections {
         }
     }
 
-    JC_TEST(json_serializer, json_references)
+    JC_TEST(json_handling, object_references)
     {
-        array::ref root = array::object(context);
+        object_base* root = json_deserializer::object_from_json_data(context, STR(
+            {
+                "parentArray": [
+                    {
+                        "objChildArrayOfChildJMap1": [],
+                        "rootRef" : "__reference|"
+                    },
+                    {
+                        "objChildArrayOfChildJMap2": [],
+                        "referenceToChildJMap1" : "__reference|.parentArray[0]",
+                        "referenceToFormMapValue" : "__reference|.parentArray[2][__formData|D|0x4]"
+                    },
+                    {
+                        "__formData": null,
+                        "__formData|D|0x4" : []
+                    }
+                ]
+            }
+        ));
 
-        {
-            map *c2 = map::object(context);
-            map *c3 = map::object(context);
+        auto compareRefs = [&](object_base *root, const char *path1, const char *path2) {
+            auto o1 = path_resolving::_resolve<object_base*>(context, root, path1);
+            auto o2 = path_resolving::_resolve<object_base*>(context, root, path2);
+            EXPECT_TRUE(o1 && o2 && o1 == o2);
+        };
 
-            c2->setValueForKey("c3", Item(c3));
-            c3->setValueForKey("c2", Item(c2));
+        auto validateGraph = [&](object_base *root) {
 
-            root->push(Item(c2));
-            root->push(Item(c3));
-            root->push(Item(root.get()));
-        }
+            EXPECT_NOT_NIL(root);
 
-        auto data = json_serializer::create_json_data(*root);
-        auto c_string = data.get();
+            const char *equalPaths[][2] = {
+                ".parentArray[0]", ".parentArray[1].referenceToChildJMap1",
+                ".parentArray[0]", ".parentArray[1].referenceToChildJMap1",
+                ".parentArray[0].rootRef", "",
+                ".parentArray[2][__formData|D|0x4]", ".parentArray[1].referenceToFormMapValue"
+            };
 
-        array::ref newRoot = json_deserializer::object_from_json_data(context, data.get())->as<array>();
+            for (auto& pair : equalPaths) {
+                compareRefs(root, pair[0], pair[1]);
+            }
+        };
 
-        EXPECT_TRUE(newRoot->s_count() == 3);
 
-        map* c2 = newRoot->u_getItem(0)->object()->as<map>();
-        EXPECT_NOT_NIL(c2);
+        validateGraph(root);
 
-        map* c3 = newRoot->u_getItem(1)->object()->as<map>();
-        EXPECT_NOT_NIL(c3);
-
-        EXPECT_TRUE(c2 == c3->find("c2").object());
-        EXPECT_TRUE(c3 == c2->find("c3").object());
-
-        EXPECT_TRUE(newRoot.get() == newRoot->u_getItem(2)->object());
+        auto jvalue = json_serializer::create_json_value(*root);
+        auto root2 = json_deserializer::object_from_json(context, jvalue.get());
+        validateGraph(root2);
     }
 
     JC_TEST(tes_context, backward_compatibility)
@@ -543,17 +560,6 @@ namespace collections {
 
         shouldSucceed(".array.key", false);
         shouldSucceed("[0].key", false);
-        /*
-        json_handling::resolvePath(obj, ".nonExistingKey", [&](Item * item) {
-        EXPECT_TRUE(!item);
-        });*/
-
-
-        float floatVal = 10.5;
-        path_resolving::resolve(tes_context::instance(), obj, ".glossary.GlossDiv", [&](Item * item) {
-            EXPECT_TRUE(item != nullptr);
-            *item = floatVal;
-        });
     }
 
     TEST(path_resolving, explicit_key_construction)
@@ -633,45 +639,6 @@ namespace collections {
 
         EXPECT_TRUE(db != nullptr);
         EXPECT_TRUE(db == context.database());
-    }
-
-    JC_TEST(tes_context, serialization)
-    {
-        using namespace std;
-
-        vector<Handle> identifiers;
-
-        auto allExist = [&]() {
-            return std::all_of(identifiers.begin(), identifiers.end(), [&](Handle id) {
-                return context.getObject(id) != nullptr;
-            });
-        };
-
-        auto allAbsent = [&]() {
-            return std::all_of(identifiers.begin(), identifiers.end(), [&](Handle id) {
-                return context.getObject(id) == nullptr;
-            });
-        };
-
-        for (int i = 0; i < 10; ++i) {
-            auto obj = map::object(context);
-            identifiers.push_back(obj->uid());
-        }
-
-        EXPECT_TRUE(allExist());
-
-        string data = context.write_to_string();
-        EXPECT_TRUE(allExist());
-        EXPECT_FALSE(data.empty());
-
-        context.clearState();
-        EXPECT_TRUE(allAbsent());
-
-        context.read_from_string(data, kJSerializationCurrentVersion);
-        EXPECT_TRUE(allExist());
-
-        string newData = context.write_to_string();
-        EXPECT_TRUE(data.size() == newData.size());
     }
 
     JC_TEST(autorelease_queue, over_release)
