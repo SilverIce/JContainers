@@ -28,6 +28,9 @@
     <Filter Include="plugin_interface">
       <UniqueIdentifier>{14edfebb-ae9f-4369-bd9f-3b374e3a73ba}</UniqueIdentifier>
     </Filter>
+    <Filter Include="collections_module\lua">
+      <UniqueIdentifier>{bc4ac5ac-882f-4d98-a11d-e0f0d63cb96f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\serialization.cpp">
@@ -62,6 +65,9 @@
       <Filter>plugin_interface</Filter>
     </ClCompile>
     <ClCompile Include="src\hotfix_boost.cpp" />
+    <ClCompile Include="src\lua_stuff.cpp">
+      <Filter>collections_module\lua</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\collections.h">
@@ -178,6 +184,12 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\jc_interface.h">
       <Filter>plugin_interface</Filter>
+    </ClInclude>
+    <ClInclude Include="src\tes_lua.h">
+      <Filter>collections_module\tes_api</Filter>
+    </ClInclude>
+    <ClInclude Include="src\lua_stuff.h">
+      <Filter>collections_module\lua</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -23,6 +23,7 @@
 #include "shared_state.h"
 #include "json_handling.h"
 #include "path_resolving.h"
+#include "lua_stuff.h"
 
 #include "collection_bind_traits.h"
 
@@ -33,6 +34,7 @@
 #include "tes_jcontainers.h"
 #include "tes_string.h"
 #include "tes_form_db.h"
+#include "tes_lua.h"
 
 #include "collections.tests.hpp"
 
