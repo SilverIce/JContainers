@@ -210,10 +210,8 @@ namespace papyrusWeapon
 	void SetSkill(TESObjectWEAP* thisWeapon, BSFixedString skill)
 	{
 		if(thisWeapon) {
-			UInt32 actorValue = LookupActorValueByName(skill.data);
-			if(actorValue <= ActorValueList::kNumActorValues) {
-				thisWeapon->gameData.skill = actorValue;
-			}
+			UInt32 actorValue = ActorValueList::ResolveActorValueByName(skill.data);
+			thisWeapon->gameData.skill = actorValue;
 		}
 	}
 
@@ -236,10 +234,8 @@ namespace papyrusWeapon
 	void SetResist(TESObjectWEAP* thisWeapon, BSFixedString resist)
 	{
 		if(thisWeapon) {
-			UInt32 actorValue = LookupActorValueByName(resist.data);
-			if(actorValue <= ActorValueList::kNumActorValues) {
-				thisWeapon->gameData.resist = actorValue;
-			}
+			UInt32 actorValue = ActorValueList::ResolveActorValueByName(resist.data);
+			thisWeapon->gameData.resist = actorValue;
 		}
 	}
 
@@ -278,6 +274,11 @@ namespace papyrusWeapon
 			thisWeapon->critData.critMult = critMult;
 		}
 	}
+
+	TESObjectWEAP* GetTemplate(TESObjectWEAP* thisWeapon)
+	{
+		return (thisWeapon) ? thisWeapon->templateForm : NULL;
+	}
 }
 
 #include "PapyrusVM.h"
@@ -285,6 +286,9 @@ namespace papyrusWeapon
 
 void papyrusWeapon::RegisterFuncs(VMClassRegistry* registry)
 {
+	registry->RegisterFunction(
+		new NativeFunction0 <TESObjectWEAP, TESObjectWEAP*>("GetTemplate", "Weapon", papyrusWeapon::GetTemplate, registry));
+
 	registry->RegisterFunction(
 		new NativeFunction0 <TESObjectWEAP, UInt32>("GetWeaponType", "Weapon", papyrusWeapon::GetWeaponType, registry));
 

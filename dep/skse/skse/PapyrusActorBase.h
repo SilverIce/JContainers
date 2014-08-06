@@ -25,10 +25,16 @@ namespace papyrusActorBase {
 	void SetHeight(TESNPC* thisNPC, float height);
 	float GetWeight(TESNPC* thisNPC);
 	void SetWeight(TESNPC* thisNPC, float weight);
+
 	UInt32 GetNumHeadParts(TESNPC* thisNPC);
 	BGSHeadPart* GetNthHeadPart(TESNPC* thisNPC, UInt32 n);
 	void SetNthHeadPart(TESNPC* thisNPC, BGSHeadPart* headPart, UInt32 n );
-	UInt32 GetIndexOfHeadPartByType(TESNPC* thisNPC, UInt32 type);
+	SInt32 GetIndexOfHeadPartByType(TESNPC* thisNPC, UInt32 type);
+
+	UInt32 GetNumOverlayHeadParts(TESNPC* thisNPC);
+	BGSHeadPart* GetNthOverlayHeadPart(TESNPC* thisNPC, UInt32 n);
+	SInt32 GetIndexOfOverlayHeadPartByType(TESNPC* thisNPC, UInt32 type);
+
 	float GetFaceMorph(TESNPC* thisNPC, UInt32 index);
 	void SetFaceMorph(TESNPC* thisNPC, float value, UInt32 index);
 	BGSTextureSet * GetFaceTextureSet(TESNPC* thisNPC);

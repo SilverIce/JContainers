@@ -1,6 +1,7 @@
 #include "PapyrusArgs.h"
 #include "PapyrusNativeFunctions.h"
 #include "PapyrusVM.h"
+#include "GameForms.h"
 
 //// type -> VMValue
 
@@ -235,6 +236,12 @@ template <> void UnpackValue <VMArray<BSFixedString>>(VMArray<BSFixedString> * d
 	UnpackArray(dst, src, VMValue::kType_StringArray);
 }
 
+// This should be templated
+template <> void UnpackValue(VMArray<EffectSetting*> * dst, VMValue * src)
+{
+	UnpackArray(dst, src, GetTypeIDFromFormTypeID(EffectSetting::kTypeID, (*g_skyrimVM)->GetClassRegistry()) | VMValue::kType_Identifier);
+}
+
 void * UnpackHandle(VMValue * src, UInt32 typeID)
 {
 	if(!src->IsIdentifier()) return NULL;
@@ -282,3 +289,30 @@ UInt32 GetTypeIDFromFormTypeID(UInt32 formTypeID, VMClassRegistry * registry)
 
 	return result;
 }
+
+#ifdef _NATIVEDUMP
+const char * GetTypeNameFromFormTypeID(UInt32 formTypeID, VMClassRegistry * registry)
+{
+	VMClassInfo * classInfo = NULL;
+	if(registry->GetFormClass(formTypeID, &classInfo))
+	{
+		return classInfo->name.data;
+	}
+
+	return "";
+}
+
+template <> const char * GetArgumentTypeName <void>(VMClassRegistry * registry){return "void";}
+template <> const char * GetArgumentTypeName <UInt32>(VMClassRegistry * registry){return "int";}
+template <> const char * GetArgumentTypeName <SInt32>(VMClassRegistry * registry){return "int";}
+template <> const char * GetArgumentTypeName <int>(VMClassRegistry * registry){return "int";}
+template <> const char * GetArgumentTypeName <float>(VMClassRegistry * registry){return "float";}
+template <> const char * GetArgumentTypeName <bool>(VMClassRegistry * registry){return "bool";}
+template <> const char * GetArgumentTypeName <BSFixedString>(VMClassRegistry * registry){return "string";}
+template <> const char * GetArgumentTypeName <VMArray<UInt32>>(VMClassRegistry * registry){return "int[]";}
+template <> const char * GetArgumentTypeName <VMArray<SInt32>>(VMClassRegistry * registry){return "int[]";}
+template <> const char * GetArgumentTypeName <VMArray<int>>(VMClassRegistry * registry){return "int[]";}
+template <> const char * GetArgumentTypeName <VMArray<float>>(VMClassRegistry * registry){return "float[]";}
+template <> const char * GetArgumentTypeName <VMArray<bool>>(VMClassRegistry * registry){return "bool[]";}
+template <> const char * GetArgumentTypeName <VMArray<BSFixedString>>(VMClassRegistry * registry){return "string[]";}
+#endif

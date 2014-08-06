@@ -143,8 +143,10 @@ namespace papyrusActorValueInfo
 	{
 		if(info) {
 			UInt32 actorValue = LookupActorValueByName(info->name);
-			PlayerCharacter* pPC = (*g_thePlayer);
-			pPC->AdvanceSkill(actorValue, points, 0, 0);
+			if(actorValue < ActorValueList::kNumActorValues) {
+				PlayerCharacter* pPC = (*g_thePlayer);
+				pPC->AdvanceSkill(actorValue, points, 0, 0);
+			}
 		}
 	}
 

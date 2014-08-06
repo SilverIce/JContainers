@@ -13,6 +13,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "common", "dep\common\common
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "jansson", "dep\jansson\jansson.vcxproj", "{F9EF3CA7-06A8-4BB2-9232-C4251E65829B}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "json_validator", "json_validator\json_validator.vcxproj", "{CAA7D417-1B58-48AB-A226-C7E69141772C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lua", "dep\lua\lua.vcxproj", "{F74A8EBF-E8F7-42D3-BCF9-65DAA7119171}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -28,17 +32,21 @@ Global
 		{FAA39367-64F7-4552-A537-002A1FFB8365}.Release|Win32.ActiveCfg = Release|Win32
 		{FAA39367-64F7-4552-A537-002A1FFB8365}.Release|Win32.Build.0 = Release|Win32
 		{AA0365EC-47EA-45AA-BB1F-EBBCCCC466F2}.Debug|Win32.ActiveCfg = Debug|Win32
-		{AA0365EC-47EA-45AA-BB1F-EBBCCCC466F2}.Debug|Win32.Build.0 = Debug|Win32
 		{AA0365EC-47EA-45AA-BB1F-EBBCCCC466F2}.Release|Win32.ActiveCfg = Release|Win32
 		{AA0365EC-47EA-45AA-BB1F-EBBCCCC466F2}.Release|Win32.Build.0 = Release|Win32
 		{20C6411C-596F-4B85-BE4E-8BC91F59D8A6}.Debug|Win32.ActiveCfg = Debug|Win32
-		{20C6411C-596F-4B85-BE4E-8BC91F59D8A6}.Debug|Win32.Build.0 = Debug|Win32
 		{20C6411C-596F-4B85-BE4E-8BC91F59D8A6}.Release|Win32.ActiveCfg = Release|Win32
 		{20C6411C-596F-4B85-BE4E-8BC91F59D8A6}.Release|Win32.Build.0 = Release|Win32
 		{F9EF3CA7-06A8-4BB2-9232-C4251E65829B}.Debug|Win32.ActiveCfg = Debug|Win32
-		{F9EF3CA7-06A8-4BB2-9232-C4251E65829B}.Debug|Win32.Build.0 = Debug|Win32
 		{F9EF3CA7-06A8-4BB2-9232-C4251E65829B}.Release|Win32.ActiveCfg = Release|Win32
 		{F9EF3CA7-06A8-4BB2-9232-C4251E65829B}.Release|Win32.Build.0 = Release|Win32
+		{CAA7D417-1B58-48AB-A226-C7E69141772C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{CAA7D417-1B58-48AB-A226-C7E69141772C}.Release|Win32.ActiveCfg = Release|Win32
+		{CAA7D417-1B58-48AB-A226-C7E69141772C}.Release|Win32.Build.0 = Release|Win32
+		{F74A8EBF-E8F7-42D3-BCF9-65DAA7119171}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F74A8EBF-E8F7-42D3-BCF9-65DAA7119171}.Debug|Win32.Build.0 = Debug|Win32
+		{F74A8EBF-E8F7-42D3-BCF9-65DAA7119171}.Release|Win32.ActiveCfg = Release|Win32
+		{F74A8EBF-E8F7-42D3-BCF9-65DAA7119171}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

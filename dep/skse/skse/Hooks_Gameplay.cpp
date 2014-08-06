@@ -11,6 +11,8 @@ static const UInt32 kHook_ContainerMode_Categories = kHook_ContainerMode_Base + 
 static const UInt32 kHook_ContainerMode_NoCategories = kHook_ContainerMode_Base + 0x63;
 static UInt32 ** g_containerMode = (UInt32 **)0x01B3E6FC;
 
+TESObjectREFR*	g_curCrosshairRef = NULL;
+
 static void __declspec(naked) Hook_ContainerMode(void)
 {
 	__asm
@@ -88,11 +90,22 @@ bool __cdecl Hook_Crosshair_LookupREFRByHandle(UInt32 * refHandle, TESObjectREFR
 
 	if (refrOut)
 	{
+		g_curCrosshairRef = *refrOut;
+
 		SKSECrosshairRefEvent evn(*refrOut);
 		g_crosshairRefEventDispatcher.SendEvent(&evn);
 	}
+	else
+	{
+		g_curCrosshairRef = NULL;
+	}
 
 	return result;
+}
+
+TESObjectREFR* Hooks_Gameplay_GetCrosshairRef()
+{
+	return g_curCrosshairRef;
 }
 
 static UInt8 s_disableMapMenuMouseWheel = 1;

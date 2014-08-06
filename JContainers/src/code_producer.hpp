@@ -1,28 +1,24 @@
-﻿#include "code_producer.h"
-
+﻿
 #include <boost/algorithm/string.hpp>
 #include <assert.h>
 #include <vector>
 
 #include "gtest.h"
-#include "tes_meta_info.h"
+#include "reflection.h"
 
-
-namespace collections {
+namespace reflection {
 
     namespace code_producer {
 
-        using namespace tes_binding;
-
-        void _pushArgStr(const FunctionMetaInfo& self, int paramIdx, std::string& str) {
+        void _pushArgStr(const function_info& self, int paramIdx, std::string& str) {
             std::vector<std::string> strings;
-            boost::split( strings, std::string(self.args), boost::is_space() );
+            boost::split( strings, std::string(self.argument_names), boost::is_space() );
 
             if (paramIdx < strings.size() && strings[paramIdx] != "*") {
                 str += strings[paramIdx];
             }
             else {
-                auto types = self.typeStrings();
+                auto types = self.param_list_func();
 
                 auto argName = types[paramIdx + 1]().tes_arg_name; 
                 if (argName.empty() == false) {
@@ -47,11 +43,11 @@ namespace collections {
             str += "\n/;\n";
         }
 
-        std::string function_string(const FunctionMetaInfo& self) {
+        std::string function_string(const function_info& self) {
             std::string str;
-            auto types = self.typeStrings();
+            auto types = self.param_list_func();
 
-            _pushComment(self.commentFunc(), str);
+            _pushComment(self.comment(), str);
 
             if (types[0]().tes_type_name != "void") {
                 str += types[0]().tes_type_name;
@@ -59,7 +55,7 @@ namespace collections {
             }
 
             str += "function ";
-            str += self.funcName;
+            str += self.name;
             str += '(';
             for (int i = 1; i < types.size(); ++i) {
                 str += types[i]().tes_type_name;
@@ -76,7 +72,7 @@ namespace collections {
             return str;
         }
 
-        std::string produceClassCode(const class_meta_info& self) {
+        std::string produceClassCode(const class_info& self) {
 
             std::string str;
 
@@ -99,7 +95,7 @@ namespace collections {
             return str;
         }
 
-        void produceClassToFile(const class_meta_info& self) {
+        void produceClassToFile(const class_info& self) {
             auto file = fopen((std::string(self.className) + ".psc").c_str(), "w");
             assert(file);
             if (file) {

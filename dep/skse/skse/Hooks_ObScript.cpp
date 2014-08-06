@@ -20,9 +20,11 @@ static bool IsEmptyStr(const char * data)
 
 void DumpCommands(const CommandInfo * start, const CommandInfo * end)
 {
-	for(const CommandInfo * iter = start; iter <= end; ++iter)
+	for(const CommandInfo * iter = start; iter < end; ++iter)
 	{
 		std::string	line;
+
+		if(!iter->eval || IsEmptyStr(iter->longName)) continue;
 
 		line = iter->longName;
 
@@ -52,25 +54,25 @@ void DumpCommands(const CommandInfo * start, const CommandInfo * end)
 			}
 		}
 
-		_MESSAGE("%04X %04X %s", iter->opcode, iter->execute, line.c_str());
+		if(iter->flags)
+			line += " [cond]";
 
+		_MESSAGE("%04X %s", iter->opcode, line.c_str());
+
+#if 0
 		if(!IsEmptyStr(iter->helpText))
 		{
 			gLog.Indent();
 			_MESSAGE("%s", iter->helpText);
 			gLog.Outdent();
 		}
+#endif
 	}
 }
 
 void ObScript_DumpCommands(void)
 {
-	_MESSAGE("block types:");
-	DumpCommands(g_blockTypeStart, g_blockTypeEnd);
-	_MESSAGE("console commands");
-	DumpCommands(g_consoleCommandsStart, g_consoleCommandsEnd);
-	_MESSAGE("script commands");
-	DumpCommands(g_scriptCommandsStart, g_scriptCommandsEnd);
+	DumpCommands(g_commandTable.Begin(), g_commandTable.End());
 }
 
 static const CommandTable::PatchLocation kPatch_ScriptCommands_Start[] =

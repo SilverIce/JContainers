@@ -1,0 +1,6 @@
+
+function myUsefulFunction
+
+end
+
+require "MyMod.fileA"

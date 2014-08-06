@@ -8,6 +8,8 @@
 #include <functional>
 
 #include "collections.h"
+#include "form_handling.h"
+#include "tes_context.h"
 
 #include "collection_operators.h"
 
@@ -44,7 +46,7 @@ namespace collections
         };
 
         template<class T, class V>
-        static bool _map_visit_helper(T *container, path_type path, const V& func)
+        static bool _map_visit_helper(tes_context& context, T *container, path_type path, const V& func)
         {
             if (!container || path.empty()) {
                 return false;
@@ -70,31 +72,31 @@ namespace collections
             if (isKeyVisit) {
                 for (auto &pair : copy) {
                     Item itm(pair.first);
-                    resolvePath(itm, rightPath, func);
+                    resolve(context, itm, rightPath, func);
                 }
             } else { // is value visit
                 for (auto &pair : copy) {
-                    resolvePath(pair.second, rightPath, func);
+                    resolve(context, pair.second, rightPath, func);
                 }
             }
 
             return true;
         }
 
-        void resolvePath(Item& item, const char *cpath, std::function<void (Item *)>  itemFunction) {
+        void resolve(tes_context& context, Item& item, const char *cpath, std::function<void(Item *)>  itemFunction, bool createMissingKeys) {
             if (!cpath) {
                 return;
             }
 
             if (item.object()) {
-                resolvePath(item.object(), cpath, itemFunction);
+                resolve(context, item.object(), cpath, itemFunction, createMissingKeys);
             }
             else if (!*cpath) {
                 itemFunction(&item);
             }
         }
 
-        void resolvePath(object_base *collection, const char *cpath, std::function<void (Item *)>  itemFunction) {
+        void resolve(tes_context& context, object_base *collection, const char *cpath, std::function<void(Item *)>  itemFunction, bool createMissingKeys) {
 
             if (!collection || !cpath) {
                 return;
@@ -112,7 +114,7 @@ namespace collections
 
             auto path = bs::make_iterator_range(cpath, cpath + strnlen_s(cpath, 1024));
 
-            auto operatorRule = [](const state &st) -> state {
+            auto operatorRule = [createMissingKeys, &context](const state &st) -> state {
                 const auto& path = st.path;
 
                 if (!bs::starts_with(path, "@") || path.size() < 2) {
@@ -151,18 +153,18 @@ namespace collections
 
                 if (collection->as<array>()) {
 
-                    // have to copy array to prevent it modification during iteration
+                    // have to copy array to prevent its modification during iteration
                     auto array_copy = collection->as<array>()->container_copy();
 
                     for (auto &itm : array_copy) {
-                        resolvePath(itm, rightPath.begin(), itemVisitFunc);
+                        resolve(context, itm, rightPath.begin(), itemVisitFunc);
                     }
                 }
                 else if (collection->as<map>()) {
-                    _map_visit_helper(collection->as<map>(), rightPath, itemVisitFunc);
+                    _map_visit_helper(context, collection->as<map>(), rightPath, itemVisitFunc);
                 }
                 else if (collection->as<form_map>()) {
-                    _map_visit_helper(collection->as<form_map>(), rightPath, itemVisitFunc);
+                    _map_visit_helper(context, collection->as<form_map>(), rightPath, itemVisitFunc);
                 }
 
                 return state(true,
@@ -171,7 +173,7 @@ namespace collections
                     path_type());
             };
 
-            auto mapRule = [](const state &st) -> state {
+            auto mapRule = [createMissingKeys, &context](const state &st) -> state {
 
                 const auto& path = st.path;
 
@@ -182,22 +184,42 @@ namespace collections
                 auto begin = path.begin() + 1;
                 auto end = bs::find_if(path_type(begin, path.end()), bs::is_any_of(".["));
 
+                if (begin == end) {
+                    return state(false, st);
+                }
+
                 object_lock lock(st.object);
                 auto node = st.nodeGetter(st.object);
+
+                if (createMissingKeys && node && node->isNull()) {
+                    *node = map::object(context);
+                }
+
                 auto container = node ? node->object() : nullptr;
 
-                if (begin == end || !container) {
+                if (!container) {
                     return state(false, st);
                 }
 
                 return state(   true,
                                     [=](object_base *container) {
-                                        return container->as<map>() ? container->as<map>()->u_find(ss::string(begin, end)) : nullptr;
+                                        Item *itemPtr = nullptr;
+
+                                        if (auto obj = container->as<map>()) {
+                                            ss::string key(begin, end);
+                                            itemPtr = obj->u_find(key);
+
+                                            if (!itemPtr && createMissingKeys) {
+                                                obj->u_setValueForKey(key, Item());
+                                                itemPtr = obj->u_find(key);
+                                            }
+                                        }
+
+                                        return itemPtr;
                                 },
                                 container,
                                 path_type(end, path.end()) );
             };
-
 
             auto arrayRule = [](const state &st) -> state {
 
@@ -216,14 +238,25 @@ namespace collections
                 }
 
                 UInt32 indexOrFormId = 0;
-                try {
-                    indexOrFormId = std::stoul(ss::string(indexRange.begin(), indexRange.end()), nullptr, 0);
+
+                if (!form_handling::is_form_string(indexRange.begin())) {
+                    try {
+                        indexOrFormId = std::stoul(ss::string(indexRange.begin(), indexRange.end()), nullptr, 0);
+                    }
+                    catch (const std::invalid_argument& ) {
+                        return state(false, st);
+                    }
+                    catch (const std::out_of_range& ) {
+                        return state(false, st);
+                    }
                 }
-                catch (const std::invalid_argument& ) {
-                    return state(false, st);
-                }
-                catch (const std::out_of_range& ) {
-                    return state(false, st);
+                else {
+                    auto fId = form_handling::from_string(indexRange);
+                    if (!fId) {
+                        return state(false, st);
+                    }
+
+                    indexOrFormId = *fId;
                 }
 
                 object_lock lock(st.object);
@@ -282,6 +315,5 @@ namespace collections
                 }
             }
         }
-
     }
 }

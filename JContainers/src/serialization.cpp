@@ -15,61 +15,53 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 
-//#include <boost/iostreams/device/array.hpp>
-//#include <boost/iostreams/stream.hpp>
-//#include <boost/iostreams/device/back_inserter.hpp>
+#include "boost/smart_ptr/intrusive_ptr.hpp"
+#include "boost_serialization_intrusive_ptr_jc.h"
 
 #include <fstream>
 #include <sstream>
 #include <set>
 
-#include "skse/PluginAPI.h"
+#include "boost_serialization_atomic.h"
 
 #include "gtest.h"
-#include "plugin_info.h"
 
 #include "collections.h"
 #include "tes_context.h"
 #include "form_handling.h"
+#include "object_base_serialization.h"
 
 #include "tes_context.hpp"
 
-extern SKSESerializationInterface	* g_serialization;
-
-//BOOST_CLASS_EXPORT_GUID(collections::object_base, "kJValue");
 BOOST_CLASS_EXPORT_GUID(collections::array, "kJArray");
 BOOST_CLASS_EXPORT_GUID(collections::map, "kJMap");
 BOOST_CLASS_EXPORT_GUID(collections::form_map, "kJFormMap");
 
-BOOST_SERIALIZATION_SPLIT_FREE(collections::object_ref);
+BOOST_CLASS_VERSION(collections::Item, 2)
 
-BOOST_CLASS_VERSION(collections::Item, 1)
-
-namespace boost {
-    namespace serialization {
-
-        template<class Archive>
-        void serialize(Archive & ar, blank & g, const unsigned int version) {}
-
-        template<class Archive>
-        void save(Archive & ar, const collections::object_ref & ptr, const unsigned int version) {
-            collections::object_base *obj = ptr.get();
-            ar & obj;
-        }
-
-        template<class Archive>
-        void load(Archive & ar, collections::object_ref & ptr, const unsigned int version) {
-            collections::object_base *obj = nullptr;
-            ar & obj;
-            ptr = collections::object_ref(obj, false);
-        }
-
-    } // namespace serialization
-} // namespace boost
+BOOST_CLASS_IMPLEMENTATION(boost::blank, boost::serialization::primitive_type);
 
 namespace collections {
 
 #ifndef TEST_COMPILATION_DISABLED
+
+    template<class T>
+    void do_serialization_and_comparison(testing::State& testState, const T& sourceObj) {
+        std::ostringstream data;
+        ::boost::archive::binary_oarchive arch(data);
+
+        arch << sourceObj;
+
+        // reading
+        std::string string = data.str();
+        std::istringstream istr(string);
+        boost::archive::binary_iarchive ia(istr);
+
+        T clone;
+        ia >> clone;
+
+        EXPECT_TRUE(clone.is_equal_to(sourceObj));
+    }
 
     TEST(Item, serialization)
     {
@@ -106,58 +98,30 @@ namespace collections {
         }
     }
 
-/*
-    TEST(autorelease_queue, serialization)
+    TEST(map, serialization)
     {
-        bshared_mutex mt;
-        autorelease_queue queue(mt);
-        //  queue.start();
-        queue.push(10);
-        queue.push(20);
+        map sourceObj;
+        sourceObj.tes_retain();
+        sourceObj.tes_retain();
+        sourceObj.retain();
+        sourceObj.u_setValueForKey("test", Item(10.0));
 
-        std::ostringstream str;
-        ::boost::archive::binary_oarchive arch(str);
-        arch << queue;
+        do_serialization_and_comparison(testState, sourceObj);
+    }
 
-        bshared_mutex mt2;
-        autorelease_queue queue2(mt2);
-        // reading
-        std::string string = str.str();
-        std::istringstream istr(string);
-        boost::archive::binary_iarchive ia(istr);
+    TEST(array, serialization)
+    {
+        array sourceObj;
+        sourceObj.tes_retain();
+        sourceObj.tes_retain();
+        sourceObj.u_push(Item(10.0));
 
-        ia >> queue2;
-
-        EXPECT_TRUE(queue.count() == queue2.count());
-        ;
-    }*/
+        do_serialization_and_comparison(testState, sourceObj);
+    }
 
 #endif
 
-    static FormId convertOldFormIdToNew(FormId oldId) {
-        if (form_handling::is_static(oldId)) {
-            UInt64 newId = 0;
-            g_serialization->ResolveHandle(oldId, &newId);
-            return (FormId)newId;
-        }
-        else {
-            return oldId;
-        }
-    }
-
-    template<class Archive>
-    static FormId readOldFormIdToNew(Archive& ar) {
-        UInt32 oldId = 0;
-        ar & oldId;
-        return convertOldFormIdToNew((FormId)oldId);
-    }
-
-    template<class Archive>
-    void Item::save(Archive & ar, const unsigned int version) const {
-        ar & _var;
-    }
-
-    // deprecate:
+    // deprecate in 0.67:
     enum ItemType : unsigned char
     {
         ItemTypeNone = 0,
@@ -168,18 +132,66 @@ namespace collections {
         ItemTypeForm = 5,
     };
 
+    // 0.67 to 0.68:
+    namespace conv_1_to_2 {
+
+        struct old_blank {
+            template<class Archive>
+            void serialize(Archive & ar, const unsigned int version) {}
+        };
+
+        struct object_ref_old {
+            object_base *px = nullptr;
+
+            template<class Archive>
+            void serialize(Archive & ar, const unsigned int version) {
+                ar & px;
+            }
+        };
+
+        struct item_converter : boost::static_visitor < > {
+            Item::variant& varNew;
+        
+            explicit item_converter(Item::variant& var) : varNew(var) {}
+
+            template<class T> void operator() (T& val) {
+                varNew = val;
+            }
+
+            void operator()(old_blank& val) {}
+
+            void operator()(object_ref_old& val) {
+                varNew = internal_object_ref(val.px, false);
+            }
+        };
+
+        template<class A> void do_conversion(A& ar, Item::variant& varNew) {
+            typedef boost::variant<old_blank, SInt32, Float32, FormId, object_ref_old, std::string> variant_old;
+            variant_old varOld;
+            ar >> varOld;
+
+            item_converter converter(varNew);
+            boost::apply_visitor(converter, varOld);
+        }
+    }
+    
+
     template<class Archive>
     void Item::load(Archive & ar, const unsigned int version)
     {
-        if (version >= 1) {
+        switch (version)
+        {
+        default:
+            BOOST_ASSERT(false);
+            break;
+        case 2:
             ar & _var;
-
-            if (is_type<FormId>()) {
-                *this = convertOldFormIdToNew(formId());
-            }
+            break;
+        case 1: {
+            conv_1_to_2::do_conversion(ar, _var);
+            break;
         }
-        else {
-
+        case 0: {
             ItemType type = ItemTypeNone;
             ar & type;
 
@@ -206,16 +218,30 @@ namespace collections {
             case ItemTypeObject: {
                 object_base *object = nullptr;
                 ar & object;
-                _var = collections::object_ref(object, false);
+                _var = internal_object_ref(object, false);
                 break;
             }
-            case ItemTypeForm:
-                *this = readOldFormIdToNew(ar);
+            case ItemTypeForm: {
+                UInt32 oldId = 0;
+                ar & oldId;
+                *this = (FormId)oldId;
                 break;
+            }
             default:
                 break;
             }
         }
+            break;
+        }
+
+        if (auto fId = get<FormId>()) {
+            *this = form_handling::resolve_handle(*fId);
+        }
+    }
+
+    template<class Archive>
+    void Item::save(Archive & ar, const unsigned int version) const {
+        ar & _var;
     }
 
     template<class Archive>
@@ -252,8 +278,8 @@ namespace collections {
             keys.push_back(pair.first);
         }
 
-        for(auto& oldKey : keys) {
-            FormId newKey = static_cast<FormId>(convertOldFormIdToNew(oldKey));
+        for(const auto& oldKey : keys) {
+			FormId newKey = form_handling::resolve_handle(oldKey);
 
             if (oldKey == newKey) {
                 ;
@@ -287,37 +313,4 @@ namespace collections {
             pair.second.u_nullifyObject();
         }
     }
-}
-
-void Serialization_Revert(SKSESerializationInterface * intfc)
-{
-    collections::tes_context::instance().clearState();
-}
-
-void Serialization_Save(SKSESerializationInterface * intfc)
-{
-    if (intfc->OpenRecord(kJStorageChunk, kJSerializationCurrentVersion)) {
-        auto data = collections::tes_context::instance().saveToArray();
-        intfc->WriteRecordData(data.data(), data.size());
-    }
-}
-
-void Serialization_Load(SKSESerializationInterface * intfc)
-{
-    UInt32	type;
-    UInt32	version;
-    UInt32	length;
-
-    std::string data;
-
-    while (intfc->GetNextRecordInfo(&type, &version, &length)) {
-
-        if (type == kJStorageChunk && length > 0) {
-            data.resize(length, '\0');
-            intfc->ReadRecordData((void *)data.data(), data.size());
-            break;
-        }
-    }
-
-    collections::tes_context::instance().loadAll(data, version);
 }

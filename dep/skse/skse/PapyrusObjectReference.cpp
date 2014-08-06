@@ -1,4 +1,6 @@
 #include "PapyrusObjectReference.h"
+#include "PapyrusWornObject.h"
+#include "PapyrusForm.h"
 
 #include "GameAPI.h"
 #include "GameFormComponents.h"
@@ -6,6 +8,7 @@
 #include "GameRTTI.h"
 #include "GameObjects.h"
 #include "GameExtraData.h"
+#include "GameData.h"
 
 #include "NiNodes.h"
 
@@ -87,19 +90,32 @@ public:
 		return count;
 	}
 
-	// returns the count of items left in the vector
-	//UInt32 GetTotalWeight() {
-	//	ExtraDataVec::iterator itEnd = m_vec.end();
-	//	ExtraDataVec::iterator it = m_vec.begin();
-	//	while (it != itEnd) {
-	//		ExtraContainerChanges::EntryData* extraData = (*it);
-	//		if (extraData && (extraData->countDelta > 0)) {
-	//			
-	//		}
-	//		++it;
-	//	}
-	//	return count;
-	//}
+	// returns the weight of items left in the vector
+	float GetTotalWeight() {
+		float weight = 0.0;
+		ExtraDataVec::iterator itEnd = m_vec.end();
+		ExtraDataVec::iterator it = m_vec.begin();
+		while (it != itEnd) {
+			ExtraContainerChanges::EntryData* extraData = (*it);
+			if (extraData && (extraData->countDelta > 0)) {
+				weight += papyrusForm::GetWeight(extraData->type);
+			}
+			++it;
+		}
+		return weight;
+	}
+
+	void GetRemainingForms(BGSListForm * list) {
+		ExtraDataVec::iterator itEnd = m_vec.end();
+		ExtraDataVec::iterator it = m_vec.begin();
+		while (it != itEnd) {
+			ExtraContainerChanges::EntryData* extraData = (*it);
+			if (extraData && (extraData->countDelta > 0)) {
+				CALL_MEMBER_FN(list, AddFormToList)(extraData->type);
+			}
+			++it;
+		}
+	}
 
 
 	ExtraContainerChanges::EntryData* GetNth(UInt32 n, UInt32 count) {
@@ -158,17 +174,43 @@ public:
 	UInt32 GetCurIdx() { return m_curIndex; }
 };
 
-//class ContainerTotalWeight
-//{
-//	ExtraContainerInfo& m_info;
-//	float totalWeight;
-//public:
-//	ContainerTotalWeight(ExtraContainerInfo& info) : m_info(info), totalWeight(0.0) { }
-//
-//	bool Accept(TESCOntainer::Entry* pEntry)
-//
-//
-//}
+class ContainerTotalWeight
+{
+	ExtraContainerInfo& m_info;
+	float m_totalWeight;
+public:
+	ContainerTotalWeight(ExtraContainerInfo& info) : m_info(info), m_totalWeight(0.0) { }
+
+	bool Accept(TESContainer::Entry* pEntry)
+	{
+		SInt32 numObjects = 0;
+		if (m_info.IsValidEntry(pEntry, numObjects)) {
+			m_totalWeight += papyrusForm::GetWeight(pEntry->form) * numObjects;
+		}
+
+		return true;
+	}
+
+	float GetTotalWeight() { return m_totalWeight; }
+};
+
+class ContainerFormFiller
+{
+	ExtraContainerInfo& m_info;
+	BGSListForm * m_formList;
+public:
+	ContainerFormFiller(ExtraContainerInfo& info, BGSListForm * formList) : m_info(info), m_formList(formList) { }
+
+	bool Accept(TESContainer::Entry* pEntry)
+	{
+		SInt32 numObjects = 0;
+		if (m_info.IsValidEntry(pEntry, numObjects)) {
+			CALL_MEMBER_FN(m_formList, AddFormToList)(pEntry->form);
+		}
+
+		return true;
+	}
+};
 
 namespace papyrusObjectReference
 {
@@ -253,8 +295,29 @@ namespace papyrusObjectReference
 		if (pContainerRef == *g_thePlayer)
 			return pXContainerChanges->data->totalWeight;
 
-		// but not so much for anything else - so we need to calculate
-		return 0.0;
+		// Compute the weight for non-players
+		float weight = 0.0;
+		TESContainer* pContainer = NULL;
+		TESForm* pBaseForm = pContainerRef->baseForm;
+		if (pBaseForm) {
+			pContainer = DYNAMIC_CAST(pBaseForm, TESForm, TESContainer);
+		}
+
+		if (!pContainer)
+			return 0;
+
+		ExtraContainerInfo info(pXContainerChanges ? pXContainerChanges->data->objList : NULL);
+
+		// first walk the base container
+		if (pContainer) {
+			ContainerTotalWeight weightCounter(info);
+			pContainer->Visit(weightCounter);
+			weight = weightCounter.GetTotalWeight();
+		}
+
+		// now sum the remaining weight
+		weight += info.GetTotalWeight();
+		return weight;
 	}
 
 	float GetTotalArmorWeight(TESObjectREFR* pContainerRef)
@@ -289,16 +352,7 @@ namespace papyrusObjectReference
 	{
 		// Object must be a weapon, or armor
 		if(object) {
-			if(DYNAMIC_CAST(object->baseForm, TESForm, TESObjectWEAP) || DYNAMIC_CAST(object->baseForm, TESForm, TESObjectARMO)) {
-				ExtraHealth* xHealth = static_cast<ExtraHealth*>(object->extraData.GetByType(kExtraData_Health));
-				if(xHealth) {
-					xHealth->health = value;
-				} else  {
-					ExtraHealth* newHealth = ExtraHealth::Create();
-					newHealth->health = value;
-					object->extraData.Add(kExtraData_Health, newHealth);
-				}
-			}
+			referenceUtils::SetItemHealthPercent(object->baseForm, &object->extraData, value);
 		}
 	}
 
@@ -306,45 +360,63 @@ namespace papyrusObjectReference
 	{
 		if (!object)
 			return 0.0;
-		TESObjectWEAP * weapon = DYNAMIC_CAST(object->baseForm, TESForm, TESObjectWEAP);
-		if(!weapon) // Object is not a weapon
-			return 0.0;
-		float maxCharge = 0;
-		if(weapon->enchantable.enchantment != NULL) // Base enchant
-			maxCharge = (float)weapon->enchantable.maxCharge;
-		else if(ExtraEnchantment* extraEnchant = static_cast<ExtraEnchantment*>(object->extraData.GetByType(kExtraData_Enchantment))) // Enchanted
-			maxCharge = (float)extraEnchant->maxCharge;
-		return maxCharge;
+		
+		return referenceUtils::GetItemMaxCharge(object->baseForm, &object->extraData);
+	}
+
+	void SetItemMaxCharge(TESObjectREFR* object, float maxCharge)
+	{
+		if (object) {
+			referenceUtils::SetItemMaxCharge(object->baseForm, &object->extraData, maxCharge);
+		}
 	}
 
 	float GetItemCharge(TESObjectREFR* object)
 	{
 		if (!object)
 			return 0.0;
-		TESObjectWEAP * weapon = DYNAMIC_CAST(object->baseForm, TESForm, TESObjectWEAP);
-		if(!weapon) // Object is not a weapon
-			return 0.0;
-		ExtraCharge* xCharge = static_cast<ExtraCharge*>(object->extraData.GetByType(kExtraData_Charge));
-		return (xCharge) ? xCharge->charge : GetItemMaxCharge(object); // When charge value is not present on an enchanted weapon, maximum charge is assumed
+
+		return referenceUtils::GetItemCharge(object->baseForm, &object->extraData);
 	}
 
 	void SetItemCharge(TESObjectREFR* object, float value)
 	{
 		// Object must be an enchanted weapon
 		if(object) {
-			TESObjectWEAP * weapon = DYNAMIC_CAST(object->baseForm, TESForm, TESObjectWEAP);
-			if(weapon && ((object->extraData.GetByType(kExtraData_Enchantment) || weapon->enchantable.enchantment != NULL))) {
-				ExtraCharge* xCharge = static_cast<ExtraCharge*>(object->extraData.GetByType(kExtraData_Charge));
-				if(xCharge) {
-					xCharge->charge = value;
-				} else {
-					ExtraCharge* newCharge = ExtraCharge::Create();
-					newCharge->charge = value;
-					object->extraData.Add(kExtraData_Charge, newCharge);
-				}
-			}
+			referenceUtils::SetItemCharge(object->baseForm, &object->extraData, value);
 		}
 	}
+
+	EnchantmentItem * GetEnchantment(TESObjectREFR* object)
+	{
+		if (!object)
+			return NULL;
+
+		return referenceUtils::GetEnchantment(&object->extraData);
+	}
+
+	void CreateEnchantment(TESObjectREFR* object, float maxCharge, VMArray<EffectSetting*> effects, VMArray<float> magnitudes, VMArray<UInt32> areas, VMArray<UInt32> durations)
+	{
+		if(object) {
+			referenceUtils::CreateEnchantment(object->baseForm, &object->extraData, maxCharge, effects, magnitudes, areas, durations);
+		}
+	}
+
+	void SetEnchantment(TESObjectREFR* object, EnchantmentItem * enchantment, float maxCharge)
+	{
+		if(object) {
+			referenceUtils::SetEnchantment(object->baseForm, &object->extraData, enchantment, maxCharge);
+		}
+	}
+
+	AlchemyItem * GetPoison(TESObjectREFR* object)
+	{
+		if (!object)
+			return NULL;
+
+		return referenceUtils::GetPoison(&object->extraData);
+	}
+
 
 	void ResetInventory(TESObjectREFR * obj)
 	{
@@ -354,6 +426,66 @@ namespace papyrusObjectReference
 	bool IsOffLimits(TESObjectREFR * obj)
 	{
 		return CALL_MEMBER_FN(obj, IsOffLimits)();
+	}
+
+	BSFixedString GetDisplayName(TESObjectREFR* object)
+	{
+		return (object) ? CALL_MEMBER_FN(object, GetReferenceName)() : "";
+	}
+
+	bool SetDisplayName(TESObjectREFR* object, BSFixedString value, bool force)
+	{
+		return referenceUtils::SetDisplayName(&object->extraData, value, force);
+	}
+
+	TESObjectREFR * GetEnableParent(TESObjectREFR* object)
+	{
+		if(!object)
+			return NULL;
+
+		ExtraEnableStateParent* xEnableParent = static_cast<ExtraEnableStateParent*>(object->extraData.GetByType(kExtraData_EnableStateParent));
+		if(!xEnableParent)
+			return NULL;
+
+		return xEnableParent->GetReference();
+	}
+
+	UInt32 GetNumReferenceAliases(TESObjectREFR* object)
+	{
+		if(!object)
+			return 0;
+
+		return referenceUtils::GetNumReferenceAliases(&object->extraData);
+	}
+
+	BGSRefAlias * GetNthReferenceAlias(TESObjectREFR* object, UInt32 n)
+	{
+		if(!object)
+			return 0;
+
+		return referenceUtils::GetNthReferenceAlias(&object->extraData, n);
+	}
+
+	void GetAllForms(TESObjectREFR* pContainerRef, BGSListForm * list)
+	{
+		if(pContainerRef && list) {
+			ExtraContainerChanges* pXContainerChanges = static_cast<ExtraContainerChanges*>(pContainerRef->extraData.GetByType(kExtraData_ContainerChanges));
+			if (pXContainerChanges) {
+				TESContainer* pContainer = NULL;
+				TESForm* pBaseForm = pContainerRef->baseForm;
+				if (pBaseForm)
+					pContainer = DYNAMIC_CAST(pBaseForm, TESForm, TESContainer);
+
+				ExtraContainerInfo info(pXContainerChanges ? pXContainerChanges->data->objList : NULL);
+				// first walk the base container
+				if (pContainer) {
+					ContainerFormFiller formFiller(info, list);
+					pContainer->Visit(formFiller);
+				}
+
+				info.GetRemainingForms(list);
+			}
+		}
 	}
 };
 
@@ -388,14 +520,48 @@ void papyrusObjectReference::RegisterFuncs(VMClassRegistry* registry)
 		new NativeFunction0<TESObjectREFR, float>("GetItemMaxCharge", "ObjectReference", papyrusObjectReference::GetItemMaxCharge, registry));
 
 	registry->RegisterFunction(
+		new NativeFunction1<TESObjectREFR, void, float>("SetItemMaxCharge", "ObjectReference", papyrusObjectReference::SetItemMaxCharge, registry));
+
+	registry->RegisterFunction(
 		new NativeFunction0<TESObjectREFR, float>("GetItemCharge", "ObjectReference", papyrusObjectReference::GetItemCharge, registry));
 
 	registry->RegisterFunction(
 		new NativeFunction1<TESObjectREFR, void, float>("SetItemCharge", "ObjectReference", papyrusObjectReference::SetItemCharge, registry));
 
 	registry->RegisterFunction(
+		new NativeFunction0<TESObjectREFR, EnchantmentItem*>("GetEnchantment", "ObjectReference", papyrusObjectReference::GetEnchantment, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction2<TESObjectREFR, void, EnchantmentItem*, float>("SetEnchantment", "ObjectReference", papyrusObjectReference::SetEnchantment, registry));
+	
+	registry->RegisterFunction(
+		new NativeFunction5<TESObjectREFR, void, float, VMArray<EffectSetting*>, VMArray<float>, VMArray<UInt32>, VMArray<UInt32>>("CreateEnchantment", "ObjectReference", papyrusObjectReference::CreateEnchantment, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction0<TESObjectREFR, AlchemyItem*>("GetPoison", "ObjectReference", papyrusObjectReference::GetPoison, registry));
+
+
+	registry->RegisterFunction(
+		new NativeFunction0<TESObjectREFR, BSFixedString>("GetDisplayName", "ObjectReference", papyrusObjectReference::GetDisplayName, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction2<TESObjectREFR, bool, BSFixedString, bool>("SetDisplayName", "ObjectReference", papyrusObjectReference::SetDisplayName, registry));
+
+	registry->RegisterFunction(
 		new NativeFunction0<TESObjectREFR, void>("ResetInventory", "ObjectReference", papyrusObjectReference::ResetInventory, registry));
 
 	registry->RegisterFunction(
 		new NativeFunction0<TESObjectREFR, bool>("IsOffLimits", "ObjectReference", papyrusObjectReference::IsOffLimits, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction0<TESObjectREFR, TESObjectREFR*>("GetEnableParent", "ObjectReference", papyrusObjectReference::GetEnableParent, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction0<TESObjectREFR, UInt32>("GetNumReferenceAliases", "ObjectReference", papyrusObjectReference::GetNumReferenceAliases, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction1<TESObjectREFR, BGSRefAlias*, UInt32>("GetNthReferenceAlias", "ObjectReference", papyrusObjectReference::GetNthReferenceAlias, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction1<TESObjectREFR, void, BGSListForm*>("GetAllForms", "ObjectReference", papyrusObjectReference::GetAllForms, registry));
 }

@@ -1,46 +1,66 @@
+#include <hash_set>
+#include <hash_map>
+
 namespace collections
 {
     class object_registry
     {
     public:
-        typedef std::map<HandleT, object_base *> registry_container;
-        typedef id_generator<HandleT> id_generator_type;
+        typedef std::hash_set<object_base *> all_objects_set;
+        typedef std::hash_map<HandleT, object_base *> registry_container;
 
     private:
 
         friend class shared_state;
 
-
         registry_container _map;
-        id_generator<HandleT> _idGen;
-        bshared_mutex& _mutex;
+        id_generator_type _idGen;
+        all_objects_set _all_objects;
+        mutable bshared_mutex _mutex;
 
         object_registry(const object_registry& );
         object_registry& operator = (const object_registry& );
 
     public:
 
-        explicit object_registry(bshared_mutex &mt)
-            : _mutex(mt)
+        explicit object_registry()
+            : _mutex()
         {
         }
 
-        Handle registerObject(object_base *collection);
-
-        void removeObject(HandleT hdl) {
-            if (!hdl) {
-                return;
-            }
-
-            object_registry& me = *this;
-            write_lock g(me._mutex);
-            auto itr = me._map.find(hdl);
-            assert(itr != me._map.end());
-            me._map.erase(itr);
-            me._idGen.reuseId(hdl);
+        void registerNewObject(object_base& obj) {
+            write_lock g(_mutex);
+            auto itr = _all_objects.find(&obj);
+            jc_assert(itr == _all_objects.end());
+            _all_objects.insert(&obj);
         }
 
-        object_base *getObject(HandleT hdl) {
+        void registerNewObjectId(object_base& obj) {
+            jc_assert(obj._uid() == HandleNull);
+
+            write_lock g(_mutex);
+
+            auto id = _idGen.new_id();
+            jc_assert(_map.find(id) == _map.end());
+            _map.insert(registry_container::value_type(id, &obj));
+            obj._id = (Handle)id;
+        }
+
+        void removeObject(object_base& obj) {
+            write_lock g(_mutex);
+
+            auto id = obj._uid();
+            if (id != HandleNull) {
+                _map.erase(id);
+                _idGen.reuse_id(id);
+            }
+
+            auto itr = _all_objects.find(&obj);
+            jc_assert(itr != _all_objects.end());
+            _all_objects.erase(itr);
+        }
+
+        object_base *getObject(Handle hdl) const {
             if (!hdl) {
                 return nullptr;
             }
@@ -49,79 +69,106 @@ namespace collections
             return u_getObject(hdl);
         }
 
-        object_base *u_getObject(HandleT hdl) {
+        std::vector<object_stack_ref> filter_objects(std::function<bool(object_base& obj)>& predicate) const {
+            read_lock r(_mutex);
+
+            std::vector<object_stack_ref> objects;
+
+            for (auto obj : _all_objects) {
+                if (predicate(*obj)) {
+                    objects.push_back(obj);
+                }
+            }
+
+            return objects;
+        }
+
+        object_stack_ref getObjectRef(Handle hdl) const {
+            // had to copy&paste getObject function as we really must own an object BEFORE read lock will be released
+            if (!hdl) {
+                return nullptr;
+            }
+            read_lock g(_mutex);
+            return u_getObject(hdl);
+        }
+
+        object_base *u_getObject(Handle hdl) const {
             if (!hdl) {
                 return nullptr;
             }
 
-            object_registry& me = *this;
-            auto itr = me._map.find(hdl);
-            if (itr != me._map.end())
+            auto itr = _map.find(hdl);
+            if (itr != _map.end())
                 return itr->second;
 
             return nullptr;
         }
 
         template<class T>
-        T *getObjectOfType(HandleT hdl) {
+        T *getObjectOfType(Handle hdl) const {
             auto obj = getObject(hdl);
-            return (obj && obj->_type == T::TypeId) ? static_cast<T*>(obj) : nullptr;
+            return obj->as<T>();
         }
 
         template<class T>
-        T *u_getObjectOfType(HandleT hdl) {
+        T *u_getObjectOfType(Handle hdl) const {
             auto obj = u_getObject(hdl);
-            return (obj && obj->_type == T::TypeId) ? static_cast<T*>(obj) : nullptr;
+            return obj->as<T>();
         }
 
-        static object_registry& instance();
+        void u_clear() {
+            _map.clear();
+            _idGen.u_clear();
+            _all_objects.clear();
+        }
 
-        void u_clear();
+        all_objects_set& u_container() {
+            return _all_objects;
+        }
 
-        registry_container& u_container() {
-            return _map;
+        friend class boost::serialization::access;
+        BOOST_SERIALIZATION_SPLIT_MEMBER();
+
+        template<class Archive>
+        void save(Archive & ar, const unsigned int version) const {
+            jc_assert(version == 1);
+            ar << _all_objects << _idGen;
         }
 
         template<class Archive>
-        void serialize(Archive & ar, const unsigned int version) {
-            ar & _map;
-            ar & _idGen;
+        void load(Archive & ar, const unsigned int version) {
+
+            switch (version) {
+            default:
+                jc_assert(false);
+                break;
+            case 1:
+                ar >> _all_objects >> _idGen;
+
+                for (auto& obj : _all_objects) {
+                    if (obj->is_public()) {
+                        _map.insert(registry_container::value_type(obj->_uid(), obj));
+                    }
+                }
+
+                break;
+            case 0: {
+                typedef std::map<HandleT, object_base *> registry_container_old;
+                registry_container_old oldCnt;
+                ar >> oldCnt >> _idGen;
+
+                _map.insert(oldCnt.begin(), oldCnt.end());
+
+                std::transform(oldCnt.begin(), oldCnt.end(), std::inserter(_all_objects, _all_objects.begin()),
+                    [](const registry_container_old::value_type& pair) {
+                        return pair.second;
+                    }
+                );
+            }
+                break;
+            }
         }
     };
-
-    Handle object_registry::registerObject(object_base *collection)
-    {
-        object_registry& me = *this;
-        write_lock g(me._mutex);
-        auto newId = me._idGen.newId();
-        assert(me._map.find(newId) == me._map.end());
-        me._map[newId] = collection;
-        return (Handle)newId;
-    }
-
-    void object_registry::u_clear() {
-        /*  Not good, but working solution.
-         
-         issue: deadlock during loading savegame - e.g. cleaning current state.
-         
-         due to: collection release -> dealloc -> collection_registry::removeObject
-         introduces deadlock ( registry locked during context cleanup )
-         
-         solution: nullify object cross-references, then delete objects
-         
-         all we need is just free the memory but this will require track allocated collection & stl memory blocks
-         */
-
-        for (auto& pair : _map) {
-            pair.second->u_nullifyObjects(); // to force ~Item() calls while all collections alive (~Item() may release collection)
-        }
-        for (auto& pair : _map) {
-            delete pair.second;
-        }
-        
-        _map.clear();
-        _idGen.u_clear();
-    }
 
     struct all_objects_lock
     {
@@ -130,14 +177,14 @@ namespace collections
         explicit all_objects_lock(object_registry & registry)
             : _registry(registry)
         {
-            for (auto& pair : registry.u_container()) {
-                pair.second->_mutex.lock();
+            for (auto& obj : registry.u_container()) {
+                obj->_mutex.lock();
             }
         }
 
         ~all_objects_lock() {
-            for (auto& pair : _registry.u_container()) {
-                pair.second->_mutex.unlock();
+            for (auto& obj : _registry.u_container()) {
+                obj->_mutex.unlock();
             }
         }
 
@@ -146,5 +193,4 @@ namespace collections
 
 }
 
-//BOOST_CLASS_EXPORT_GUID(collections::collection_registry, "kObjectRegistry");
-//BOOST_CLASS_EXPORT_GUID(collections::collection_registry::id_generator_type, "kJObjectIdGenerator");
+BOOST_CLASS_VERSION(collections::object_registry, 1);

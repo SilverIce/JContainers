@@ -33,50 +33,54 @@ namespace papyrusHeadPart
 		BGSHeadPart* pHeadPart = (it != s_headPartCache.end()) ? it->second : NULL;
 		return pHeadPart;
 	}
-
-    UInt32 GetType(BGSHeadPart* thisPart)
-    {
+	
+	UInt32 GetType(BGSHeadPart* thisPart)
+	{
 		if(!thisPart)
 			return 0;
-
 		return thisPart->type;
-    }
+	}
 
-    UInt32 GetNumExtraParts(BGSHeadPart* thisPart)
-    {
+	UInt32 GetNumExtraParts(BGSHeadPart* thisPart)
+	{
 		return (thisPart) ? thisPart->extraParts.count : 0;
-    }
-
-    BGSHeadPart* GetNthExtraPart(BGSHeadPart* thisPart, UInt32 n)
-    {
+	}
+	
+	BGSHeadPart* GetNthExtraPart(BGSHeadPart* thisPart, UInt32 n)
+	{
 		BGSHeadPart* headPart;
 		if(!thisPart || !thisPart->extraParts.GetNthItem(n, headPart))
 			return NULL;
 
 		return headPart;
-    }
+	}
 
-    bool HasExtraPart(BGSHeadPart* thisPart, BGSHeadPart* extraPart)
-    {
+	bool IsExtraPart(BGSHeadPart* thisPart)
+	{
+		return (thisPart && thisPart->IsExtraPart()) ? true : false;
+	}
+
+	bool HasExtraPart(BGSHeadPart* thisPart, BGSHeadPart* extraPart)
+	{
 		return (thisPart && thisPart->extraParts.GetItemIndex(extraPart) != -1) ? true : false;
-    }
-
-    UInt32 GetIndexOfExtraPart(BGSHeadPart* thisPart, BGSHeadPart* extraPart)
-    {
+	}
+	
+	UInt32 GetIndexOfExtraPart(BGSHeadPart* thisPart, BGSHeadPart* extraPart)
+	{
 		return (thisPart) ? thisPart->extraParts.GetItemIndex(extraPart) : 0;
-    }
-
-    BGSListForm* GetValidRaces(BGSHeadPart* thisPart)
-    {
+	}
+	
+	BGSListForm* GetValidRaces(BGSHeadPart* thisPart)
+	{
 		return (thisPart) ? thisPart->validRaces : NULL;
-    }
-
-    void SetValidRaces(BGSHeadPart* thisPart, BGSListForm* raceList)
-    {
+	}
+	
+	void SetValidRaces(BGSHeadPart* thisPart, BGSListForm* raceList)
+	{
 		if(thisPart && raceList) {
 			thisPart->validRaces = raceList;
 		}
-    }
+	}
 }
 
 #include "PapyrusVM.h"
@@ -100,6 +104,9 @@ void papyrusHeadPart::RegisterFuncs(VMClassRegistry* registry)
 
 	registry->RegisterFunction(
 		new NativeFunction1<BGSHeadPart, bool, BGSHeadPart*>("HasExtraPart", "HeadPart", papyrusHeadPart::HasExtraPart, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction0<BGSHeadPart, bool>("IsExtraPart", "HeadPart", papyrusHeadPart::IsExtraPart, registry));
 
 	registry->RegisterFunction(
 		new NativeFunction1<BGSHeadPart, UInt32, BGSHeadPart*>("GetIndexOfExtraPart", "HeadPart", papyrusHeadPart::GetIndexOfExtraPart, registry));

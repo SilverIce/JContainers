@@ -1,4 +1,3 @@
-[![Stories in Ready](https://badge.waffle.io/SilverIce/JContainers.png?label=ready&title=Ready)](https://waffle.io/SilverIce/JContainers)
 #### JContainers
 
 JContainers is a Skyrim plugin that extends Papyrus by adding various data structures. Also it is simple NoSQL database. It features:

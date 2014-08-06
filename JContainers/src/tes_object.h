@@ -1,12 +1,17 @@
 namespace collections {
 
-    const char *kCommentObject = "creates new container object. returns container identifier (integral number).\n"
-        "identifier is the thing you will have to pass to the most of container's functions as first argument";
+    const char *kCommentObject = "creates new container object. returns container identifier (integer number).\n"
+        "identifier is the thing you will have to pass to the most of container's functions as a first argument";
+
+#define VALUE_TYPE_COMMENT "0 - no value, 1 - none, 2 - int, 3 - float, 4 - form, 5 - object, 6 - string"
+
 
 #define ARGS(...)   #__VA_ARGS__
 
-    class tes_object : public tes_binding::class_meta_mixin_t< tes_object > {
+    class tes_object : public reflection::class_meta_mixin_t< tes_object > {
     public:
+
+        typedef object_stack_ref& ref;
 
         REGISTER_TES_NAME("JValue");
 
@@ -14,19 +19,21 @@ namespace collections {
             metaInfo.comment = "Each container (JArray, JMap & JFormMap) inherits JValue functionality";
         }
 
-        static object_base* retain(object_base *obj) {
+        static object_base* retain(ref obj, const char* tag = nullptr) {
             if (obj) {
                 obj->tes_retain();
-                return obj;
+                obj->set_tag(tag);
+                return obj.get();
             }
-
+         
             return nullptr;
         }
-        REGISTERF2(retain, "*",
-"Retains and returns the object.\n\
-All containers that were created with object* or objectWith* methods are automatically destroyed after some amount of time (~10 seconds)\n\
-To keep object alive you must retain it once and you have to __release__ it when you do not need it anymore (also to not pollute save file).\n\
-An alternative to retain-release is store object in JDB container"
+        REGISTERF2(retain, "* tag=\"\"",
+"Retains and returns the object. Purpose - extend object lifetime.\n\
+Newly created object if not retained or not referenced/contained by another container directly or indirectly gets destoyed after ~10 seconds due to absence of owners.\n\
+Retain increases amount of owners object have by 1. The retainer is responsible for releasing object later.\n\
+Object have extended lifetime if JDB or JFormDB or any other container references/owns/contains object directly or indirectly.\n\
+It's recommended to set a tag (any unique string will fit - mod name for ex.) - later you'll be able to release all objects with selected tag even if identifier was lost"
             );
 
         template<class T>
@@ -34,58 +41,126 @@ An alternative to retain-release is store object in JDB container"
             return T::object(tes_context::instance());
         }
 
-        static object_base* release(object_base *obj) {
+        static object_base* release(ref obj) {
             if (obj) {
                 obj->tes_release();
             }
 
             return nullptr;
         }
-        REGISTERF2(release, "*", "releases the object and returns zero, so you could release and nullify with one line of code: object = JVlaue.release(object)");
+        REGISTERF2(release, "*", "releases the object and returns zero, so you can release and nullify with one line of code: object = JValue.release(object)");
 
-        static object_base* releaseAndRetain(object_base *previousObject, object_base *newObject) {
+        static object_base* releaseAndRetain(ref previousObject, ref newObject, const char* tag = nullptr) {
             if (previousObject != newObject) {
                 if (previousObject) {
                     previousObject->tes_release();
                 }
 
-                if (newObject) {
-                    newObject->tes_retain();
+                retain(newObject, tag);
+            }
+
+            return newObject.get();
+        }
+        REGISTERF2(releaseAndRetain, "previousObject newObject tag=\"\"",
+"Just a union of retain-release calls. Releases previousObject, retains and returns newObject.\n\
+It's recommended to set a tag (any unique string will fit - mod name for ex.) - later you'll be able to release all objects with selected tag even if identifier was lost.");
+
+        static void releaseObjectsWithTag(const char *tag) {
+            if (!tag) {
+                return;
+            }
+
+            auto objects = tes_context::instance().filter_objects([tag](const object_base& obj) {
+                return obj.has_equal_tag(tag);
+            });
+
+            for (auto& ref : objects) {
+                while (ref->_tes_refCount != 0) {
+                    ref->tes_release();
+                }
+            }
+        }
+        REGISTERF2(releaseObjectsWithTag, "tag",
+"For cleanup purpose only - releases lost (and not lost) objects with given tag.\n"
+"Complements all retain calls objects with given tag received with release calls.\n"
+"See 'object lifetime management' section for more information");
+
+        static object_base* addToPool(ref obj, const char *poolName) {
+            if (poolName) {
+                std::string path(".__tempPools.");
+                path += poolName;
+
+                array::ref location;
+
+                path_resolving::resolve(tes_context::instance(), tes_context::instance().database(), path.c_str(), [&](Item* itmPtr) {
+                    if (itmPtr) {
+                        if (auto loc = itmPtr->object()->as<array>()) {
+                            location = loc;
+                        }
+                        else {
+                            location = array::object(tes_context::instance());
+                            *itmPtr = location.get();
+                        }
+                    }
+                },
+                    true);
+
+                if (location) {
+                    location->push(Item(obj));
                 }
             }
 
-            return newObject;
+            return obj.get();
         }
-        REGISTERF2(releaseAndRetain, "previousObject newObject",
-"just a union of retain-release calls. releases previousObject, retains and returns newObject.\n\
-useful for those who use Papyrus properties instead of manual (and more error-prone) release-retain object lifetime management");
+        REGISTERF2(addToPool, "* poolName",
+"Handly for temporary objects (objects with no owners) - pool 'locationName' owns any amount of objects, preventing their destuction, extends lifetime.\n\
+Do not forget to clean location later! Typical use:\n\
+int tempMap = JValue.addToPool(JMap.object(), \"uniquePoolName\")\n\
+anywhere later:\n\
+JValue.cleanTempLocation(\"uniqueLocationName\")"
+);
 
-        static bool isArray(object_base *obj) {
-            return obj && obj->as<array>();
+        static void cleanPool(const char *poolName) {
+            if (poolName) {
+                auto locationsMap = tes_context::instance().database()->find("__tempPools").object()->as<map>();
+                if (locationsMap) {
+                    locationsMap->erase(poolName);
+                }
+            }
+        }
+        REGISTERF2(cleanPool, "poolName", nullptr);
+
+        static bool isExists(ref obj) {
+            return obj.get() != nullptr;
+        }
+        REGISTERF2(isExists, "*", "\n\ntests whether given object identifier points to existing object");
+
+        static bool isArray(ref obj) {
+            return obj->as<array>() != nullptr;
         }
         REGISTERF2(isArray, "*", "returns true if object is map, array or formmap container");
 
-        static bool isMap(object_base *obj) {
-            return obj && obj->as<map>();
+        static bool isMap(ref obj) {
+            return obj->as<map>() != nullptr;
         }
-        REGISTERF2(isMap, "*", NULL);
+        REGISTERF2(isMap, "*", nullptr);
 
-        static bool isFormMap(object_base *obj) {
-            return obj && obj->as<form_map>();
+        static bool isFormMap(ref obj) {
+            return obj->as<form_map>() != nullptr;
         }
-        REGISTERF2(isFormMap, "*", NULL);
+        REGISTERF2(isFormMap, "*", nullptr);
 
-        static bool empty(object_base *obj) {
+        static bool empty(ref obj) {
             return count(obj) == 0;
         }
         REGISTERF2(empty, "*", "returns true, if container is empty");
 
-        static SInt32 count(object_base *obj) {
+        static SInt32 count(ref obj) {
             return obj ? obj->s_count() : 0;
         }
         REGISTERF2(count, "*", "returns the number of items in container");
 
-        static void clear(object_base *obj) {
+        static void clear(ref obj) {
             if (obj) {
                 obj->s_clear();
             }
@@ -96,7 +171,7 @@ useful for those who use Papyrus properties instead of manual (and more error-pr
             auto obj = json_deserializer::object_from_file(tes_context::instance(), path);
             return  obj;
         }
-        REGISTERF2(readFromFile, "filePath", ARGS(creates and returns new container (JArray or JMap) containing the contents of JSON file));
+        REGISTERF2(readFromFile, "filePath", "JSON serialization/deserialization:\n\ncreates and returns new container object containing the contents of JSON file");
 
         static object_base* readFromDirectory(const char *dirPath, const char *extension = "")
         {
@@ -131,7 +206,7 @@ useful for those who use Papyrus properties instead of manual (and more error-pr
             return files;
         }
         REGISTERF2(readFromDirectory, "directoryPath extension=\"\"",
-            "parses files in directory (non recursive) and returns JMap containing filename - json-object pairs.\n"
+            "parses JSON files in directory (non recursive) and returns JMap containing {filename, container-object} pairs.\n"
             "note: by default it does not filters files by extension and will try to parse everything");
 
         static object_base* objectFromPrototype(const char *prototype) {
@@ -140,41 +215,67 @@ useful for those who use Papyrus properties instead of manual (and more error-pr
         }
         REGISTERF2(objectFromPrototype, "prototype", "creates new container object using given JSON string-prototype");
 
-        static void writeToFile(object_base *obj, const char * path) {
-            if (!path || !obj) {
+        static void writeToFile(object_base *obj, const char * cpath) {
+            if (!cpath || !obj) {
+                return;
+            }
+
+            boost::filesystem::path path(cpath);
+            auto& dir = path.remove_filename();
+            if (!dir.empty() && !boost::filesystem::exists(dir) &&
+                (boost::filesystem::create_directories(dir), !boost::filesystem::exists(dir)))
+            {
                 return;
             }
 
             auto json = json_serializer::create_json_value(*obj);
             if (json) {
-                json_dump_file(json.get(), path, JSON_INDENT(2));
+                json_dump_file(json.get(), cpath, JSON_INDENT(2));
             }
         }
-        REGISTERF2(writeToFile, "* filePath", "writes object into JSON file");
-
-        static bool hasPath(object_base *obj, const char *path) {
-            if (!obj || !path)
-                return false;
-
-            bool succeed = false;
-            path_resolving::resolvePath(obj, path, [&](Item* itmPtr) {
-                succeed = (itmPtr != nullptr);
-            });
-
-            return succeed;
+        static void _writeToFile(ref obj, const char * path) {
+            writeToFile(obj.get(), path);
         }
-        REGISTERF2(hasPath, "* path",
-"returns true, if container capable resolve given path.\n\
+        REGISTERF(_writeToFile, "writeToFile", "* filePath", "writes object into JSON file");
+
+        static SInt32 solvedValueType(object_base* obj, const char *path) {
+            SInt32 type = 0;
+
+            if (obj && path) {
+                path_resolving::resolve(tes_context::instance(), obj, path, [&](Item* itmPtr) {
+                    if (itmPtr) {
+                        type = itmPtr->which();
+                    }
+                });
+            }
+
+            return type;
+        }
+
+        static bool hasPath(object_base* obj, const char *path) {
+            return solvedValueType(obj, path) != 0;
+        }
+
+        static bool _hasPath(ref obj, const char *path) {
+            return hasPath(obj.get(), path);
+        }
+        REGISTERF(_hasPath, "hasPath", "* path",
+"Path resolving:\n\n\
+returns true, if container capable resolve given path.\n\
 for ex. JValue.hasPath(container, \".player.health\") will check if given container has 'player' which has 'health' information"
                                       );
 
-        template<class T>
-        static T resolveGetter(object_base *obj, const char* path) {
-            if (!obj || !path)
-                return 0;
+        static SInt32 _solvedValueType(ref obj, const char *path) {
+            return solvedValueType(obj.get(), path);
+        }
+        REGISTERF(_solvedValueType, "solvedValueType", "* path", "Returns type of resolved value. "VALUE_TYPE_COMMENT);
 
-            T val((T)0);
-            path_resolving::resolvePath(obj, path, [&](Item* itmPtr) {
+        template<class T>
+        static T resolveGetter(object_base *obj, const char* path, T val = T(0)) {
+            if (!obj || !path)
+                return val;
+
+            path_resolving::resolve(tes_context::instance(), obj, path, [&](Item* itmPtr) {
                 if (itmPtr) {
                     val = itmPtr->readAs<T>();
                 }
@@ -182,32 +283,56 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
 
             return val;
         }
-        REGISTERF(resolveGetter<Float32>, "solveFlt", "* path", "attempts to get value at given path.\nJValue.solveInt(container, \".player.mood\") will return player's mood");
-        REGISTERF(resolveGetter<SInt32>, "solveInt", "* path", NULL);
-        REGISTERF(resolveGetter<const char*>, "solveStr", "* path", NULL);
-        REGISTERF(resolveGetter<object_base*>, "solveObj", "* path", NULL);
-        REGISTERF(resolveGetter<TESForm*>, "solveForm", "* path", NULL);
+        template<class T>
+        static T _resolveGetter(ref obj, const char* path, T val) {
+            return resolveGetter<T>(obj.get(), path, val);
+        }
+        REGISTERF(_resolveGetter<Float32>, "solveFlt", "* path default=0.0", "attempts to get value at given path.\nJValue.solveInt(container, \".player.mood\") will return player's mood");
+        REGISTERF(_resolveGetter<SInt32>, "solveInt", "* path default=0", nullptr);
+        REGISTERF(_resolveGetter<const char*>, "solveStr", "* path default=\"\"", nullptr);
+        REGISTERF(_resolveGetter<Handle>, "solveObj", "* path default=0", nullptr);
+        REGISTERF(_resolveGetter<TESForm*>, "solveForm", "* path default=None", nullptr);
 
         template<class T>
-        static bool solveSetter(object_base *obj, const char* path, T value) { 
+        static bool solveSetter(object_base* obj, const char* path, T value, bool createMissingKeys = false) {
             if (!obj || !path)
                 return false;
 
             bool succeed = false;
-            path_resolving::resolvePath(obj, path, [&](Item* itmPtr) {
+            path_resolving::resolve(tes_context::instance(), obj, path, [&](Item* itmPtr) {
                 if (itmPtr) {
                     *itmPtr = Item((T)value);
                     succeed = true;
                 }
-            });
+            },
+                createMissingKeys);
 
             return succeed;
         }
-        REGISTERF(solveSetter<Float32>, "solveFltSetter", "* path value", "attempts to set value.\nJValue.solveIntSetter(container, \".player.mood\", 12) will set player's mood to 12");
-        REGISTERF(solveSetter<SInt32>, "solveIntSetter", "* path value", NULL);
-        REGISTERF(solveSetter<const char*>, "solveStrSetter", "* path value", NULL);
-        REGISTERF(solveSetter<object_base*>, "solveObjSetter", "* path value", NULL);
-        REGISTERF(solveSetter<TESForm*>, "solveFormSetter", "* path value", NULL);
+
+        template<class T>
+        static bool _solveSetter(ref obj, const char* path, T value, bool createMissingKeys = false) {
+            return solveSetter<T>(obj.get(), path, value, createMissingKeys);
+        }
+        REGISTERF(_solveSetter<Float32>, "solveFltSetter", "* path value createMissingKeys=false",
+            "Attempts to assign value. Returns false if no such path\n"
+            "With 'createMissingKeys=true' it creates any missing path element: solveIntSetter(map, \".keyA.keyB\", 10, true) on empty JMap creates {keyA: {keyB: 10}} structure"
+            );
+        REGISTERF(_solveSetter<SInt32>, "solveIntSetter", "* path value createMissingKeys=false", nullptr);
+        REGISTERF(_solveSetter<const char*>, "solveStrSetter", "* path value createMissingKeys=false", nullptr);
+        REGISTERF(_solveSetter<ref>, "solveObjSetter", "* path value createMissingKeys=false", nullptr);
+        REGISTERF(_solveSetter<TESForm*>, "solveFormSetter", "* path value createMissingKeys=false", nullptr);
+
+        template<class T>
+        static T evalLua(ref obj, const char* luaCode, T def = T(0)) {
+            auto item = lua_apply::process_apply_func(obj.get(), luaCode);
+            return !item.isNull() ? item.readAs<T>() : def;
+        }
+        REGISTERF(evalLua<Float32>, "evalLuaFlt", "* luaCode default=0.0", "Evaluates piece of lua code. Lua support is experimental");
+        REGISTERF(evalLua<SInt32>, "evalLuaInt", "* luaCode default=0", nullptr);
+        REGISTERF(evalLua<const char*>, "evalLuaStr", "* luaCode default=\"\"", nullptr);
+        REGISTERF(evalLua<Handle>, "evalLuaObj", "* luaCode default=0", nullptr);
+        REGISTERF(evalLua<TESForm*>, "evalLuaForm", "* luaCode default=None", nullptr);
 
     };
 

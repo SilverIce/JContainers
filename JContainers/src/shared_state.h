@@ -1,11 +1,7 @@
 #pragma once
 
 #include <atomic>
-//#include <functional>
-
-#include "rw_mutex.h"
-
-#include "tes_error_code.h"
+#include <functional>
 #include "object_base.h"
 
 namespace boost {
@@ -29,18 +25,10 @@ namespace collections {
 
     class shared_state {
 
-        void u_applyUpdates(int saveVersion);
-        void u_postLoadMaintenance(int saveVersion);
+        void u_applyUpdates(const uint32_t saveVersion);
+        void u_postLoadMaintenance(const uint32_t saveVersion);
 
-    protected:
-        bshared_mutex _mutex;
     public:
-
-        template<class T>
-        inline void performRead(T readFunc) {
-            read_lock r(_mutex);
-            readFunc();
-        }
 
         shared_state();
         ~shared_state();
@@ -50,21 +38,31 @@ namespace collections {
 
         shared_state_delegate *delegate;
 
+        std::vector<object_stack_ref> filter_objects(std::function<bool(object_base& obj)> predicate) const;
+
         template<class T>
-        T * getObjectOfType(HandleT hdl) {
+        T * getObjectOfType(Handle hdl) {
             return getObject(hdl)->as<T>();
         }
 
+        template<class T>
+        object_stack_ref_template<T> getObjectRefOfType(Handle hdl) {
+            return getObjectRef(hdl)->as<T>();
+        }
+
         size_t aqueueSize();
-        object_base * getObject(HandleT hdl);
-        object_base * u_getObject(HandleT hdl);
+        object_base * getObject(Handle hdl);
+        object_stack_ref getObjectRef(Handle hdl);
+        object_base * u_getObject(Handle hdl);
 
         void clearState();
         void u_clearState();
 
-        void loadAll(const std::string & data, int version);
+        void read_from_string(const std::string & data, const uint32_t version);
+        void read_from_stream(std::istream & data, const uint32_t version);
 
-        std::string saveToArray();
+        std::string write_to_string();
+        void write_to_stream(std::ostream& stream);
 
 
     };

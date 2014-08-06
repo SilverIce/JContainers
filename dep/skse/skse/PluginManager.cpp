@@ -5,10 +5,17 @@
 #include "Serialization.h"
 #include "skse_version.h"
 
+#include "PapyrusEvents.h"
+
 PluginManager	g_pluginManager;
 
 PluginManager::LoadedPlugin *	PluginManager::s_currentLoadingPlugin = NULL;
 PluginHandle					PluginManager::s_currentPluginHandle = 0;
+
+extern EventDispatcher<SKSEModCallbackEvent>	g_modCallbackEventDispatcher;
+extern EventDispatcher<SKSECameraEvent>			g_cameraEventDispatcher;
+extern EventDispatcher<SKSECrosshairRefEvent>	g_crosshairRefEventDispatcher;
+extern EventDispatcher<SKSEActionEvent>			g_actionEventDispatcher;
 
 static const SKSEInterface g_SKSEInterface =
 {
@@ -25,7 +32,8 @@ static const SKSEInterface g_SKSEInterface =
 #endif
 
 	PluginManager::QueryInterface,
-	PluginManager::GetPluginHandle
+	PluginManager::GetPluginHandle,
+	PluginManager::GetReleaseIndex
 };
 
 #ifdef RUNTIME
@@ -45,10 +53,11 @@ static const SKSETaskInterface g_SKSETaskInterface =
 {
 	SKSETaskInterface::kInterfaceVersion,
 
-	TaskInterface::AddTask
+	TaskInterface::AddTask,
+	TaskInterface::AddUITask
 };
 
-#ifdef _PPAPI
+//#ifdef _PPAPI
 #include "Hooks_Papyrus.h"
 #include "PapyrusVM.h"
 
@@ -58,8 +67,16 @@ static const SKSEPapyrusInterface g_SKSEPapyrusInterface =
 	RegisterPapyrusPlugin
 };
 
+//#endif
 #endif
-#endif
+
+static SKSEMessagingInterface g_SKSEMessagingInterface =
+{
+	SKSEMessagingInterface::kInterfaceVersion,
+	PluginManager::RegisterListener,
+	PluginManager::Dispatch_Message,
+	PluginManager::GetEventDispatcher,
+};
 
 PluginManager::PluginManager()
 {
@@ -143,16 +160,19 @@ void * PluginManager::QueryInterface(UInt32 id)
 	case kInterface_Scaleform:
 		result = (void *)&g_SKSEScaleformInterface;
 		break;
-#ifdef _PPAPI
+//#ifdef _PPAPI
 	case kInterface_Papyrus:
 		result = (void *)&g_SKSEPapyrusInterface;
 		break;
-#endif
+//#endif
 	case kInterface_Serialization:
 		result = (void *)&g_SKSESerializationInterface;
 		break;
 	case kInterface_Task:
 		result = (void *)&g_SKSETaskInterface;
+		break;
+	case kInterface_Messaging:
+		result = (void *)&g_SKSEMessagingInterface;
 		break;
 
 	default:
@@ -171,6 +191,11 @@ PluginHandle PluginManager::GetPluginHandle(void)
 	ASSERT_STR(s_currentPluginHandle, "A plugin has called SKSEInterface::GetPluginHandle outside of its Query/Load handlers");
 
 	return s_currentPluginHandle;
+}
+
+UInt32 PluginManager::GetReleaseIndex( void )
+{
+	return SKSE_VERSION_RELEASEIDX;
 }
 
 bool PluginManager::FindPluginDirectory(void)
@@ -273,6 +298,11 @@ void PluginManager::InstallPlugins(void)
 
 	s_currentLoadingPlugin = NULL;
 	s_currentPluginHandle = 0;
+
+	// alert any listeners that plugin load has finished
+	Dispatch_Message(0, SKSEMessagingInterface::kMessage_PostLoad, NULL, 0, NULL);
+	// second post-load dispatch
+	Dispatch_Message(0, SKSEMessagingInterface::kMessage_PostPostLoad, NULL, 0, NULL);
 }
 
 // SEH-wrapped calls to plugin API functions to avoid bugs from bringing down the core
@@ -387,4 +417,204 @@ const char * PluginManager::CheckPluginCompatibility(LoadedPlugin * plugin)
 	}
 
 	return NULL;
+}
+
+void * PluginManager::GetEventDispatcher(UInt32 dispatcherId)
+{
+	void	* result = NULL;
+
+#ifdef RUNTIME
+	switch(dispatcherId)
+	{
+	case SKSEMessagingInterface::kDispatcher_ModEvent:
+		result = (void *)&g_modCallbackEventDispatcher;
+		break;
+	case SKSEMessagingInterface::kDispatcher_CameraEvent:
+		result = (void *)&g_cameraEventDispatcher;
+		break;
+	case SKSEMessagingInterface::kDispatcher_CrosshairEvent:
+		result = (void *)&g_crosshairRefEventDispatcher;
+		break;
+	case SKSEMessagingInterface::kDispatcher_ActionEvent:
+		result = (void *)&g_actionEventDispatcher;
+		break;
+
+	default:
+		_WARNING("unknown EventDispatcher %08X", dispatcherId);
+		break;
+	}
+#else
+	_WARNING("unknown EventDispatcher %08X", id);
+#endif
+
+	return result;
+}
+
+
+// Plugin communication interface
+struct PluginListener {
+	PluginHandle	listener;
+	SKSEMessagingInterface::EventCallback	handleMessage;
+};
+
+typedef std::vector<std::vector<PluginListener> > PluginListeners;
+static PluginListeners s_pluginListeners;
+
+bool PluginManager::RegisterListener(PluginHandle listener, const char* sender, SKSEMessagingInterface::EventCallback handler)
+{
+	// because this can be called while plugins are loading, gotta make sure number of plugins hasn't increased
+	UInt32 numPlugins = g_pluginManager.GetNumPlugins() + 1;
+	if (s_pluginListeners.size() < numPlugins)
+	{
+		s_pluginListeners.resize(numPlugins + 5);	// add some extra room to avoid unnecessary re-alloc
+	}
+
+	_MESSAGE("registering plugin listener for %s at %u of %u", sender, listener, numPlugins);
+
+	// handle > num plugins = invalid
+	if (listener > g_pluginManager.GetNumPlugins() || !handler) 
+	{
+		return false;
+	}
+
+	if (sender)
+	{
+		// is target loaded?
+		PluginHandle target = g_pluginManager.LookupHandleFromName(sender);
+		if (target == kPluginHandle_Invalid)
+		{
+			return false;
+		}
+		// is listener already registered?
+		for (std::vector<PluginListener>::iterator iter = s_pluginListeners[target].begin(); iter != s_pluginListeners[target].end(); ++iter)
+		{
+			if (iter->listener == listener)
+			{
+				return true;
+			}
+		}
+
+		// register new listener
+		PluginListener newListener;
+		newListener.handleMessage = handler;
+		newListener.listener = listener;
+
+		s_pluginListeners[target].push_back(newListener);
+	}
+	else
+	{
+		// register listener to every loaded plugin
+		UInt32 idx = 0;
+		for(PluginListeners::iterator iter = s_pluginListeners.begin(); iter != s_pluginListeners.end(); ++iter)
+		{
+			// don't add the listener to its own list
+			if (idx && idx != listener)
+			{
+				bool skipCurrentList = false;
+				for (std::vector<PluginListener>::iterator iterEx = iter->begin(); iterEx != iter->end(); ++iterEx)
+				{
+					// already registered with this plugin, skip it
+					if (iterEx->listener == listener)
+					{
+						skipCurrentList = true;
+						break;
+					}
+				}
+				if (skipCurrentList)
+				{
+					continue;
+				}
+				PluginListener newListener;
+				newListener.handleMessage = handler;
+				newListener.listener = listener;
+
+				iter->push_back(newListener);
+			}
+			idx++;
+		}
+	}
+
+	return true;
+}
+
+bool PluginManager::Dispatch_Message(PluginHandle sender, UInt32 messageType, void * data, UInt32 dataLen, const char* receiver)
+{
+	_MESSAGE("dispatch message (%d) to plugin listeners", messageType);
+	UInt32 numRespondents = 0;
+	PluginHandle target = kPluginHandle_Invalid;
+
+	if (!s_pluginListeners.size())	// no listeners yet registered
+	{
+		_MESSAGE("no listeners registered");
+		return false;
+	}
+	else if (sender >= s_pluginListeners.size())
+	{
+		_MESSAGE("sender is not in the list");
+		return false;
+	}
+
+	if (receiver)
+	{
+		target = g_pluginManager.LookupHandleFromName(receiver);
+		if (target == kPluginHandle_Invalid)
+			return false;
+	}
+
+	const char* senderName = g_pluginManager.GetPluginNameFromHandle(sender);
+	if (!senderName)
+		return false;
+	for (std::vector<PluginListener>::iterator iter = s_pluginListeners[sender].begin(); iter != s_pluginListeners[sender].end(); ++iter)
+	{
+		SKSEMessagingInterface::Message msg;
+		msg.data = data;
+		msg.type = messageType;
+		msg.sender = senderName;
+		msg.dataLen = dataLen;
+
+		if (target != kPluginHandle_Invalid)	// sending message to specific plugin
+		{
+			if (iter->listener == target)
+			{
+				iter->handleMessage(&msg);
+				return true;
+			}
+		}
+		else
+		{
+			_DMESSAGE("sending message type %u to plugin %u", messageType, iter->listener);
+			iter->handleMessage(&msg);
+			numRespondents++;
+		}
+	}
+	_DMESSAGE("dispatched message.");
+	return numRespondents ? true : false;
+}
+
+const char * PluginManager::GetPluginNameFromHandle(PluginHandle handle)
+{
+	if (handle > 0 && handle <= m_plugins.size())
+		return (m_plugins[handle - 1].info.name);
+	else if (handle == 0)
+		return "SKSE";
+
+	return NULL;
+}
+
+PluginHandle PluginManager::LookupHandleFromName(const char* pluginName)
+{
+	if (!_stricmp("SKSE", pluginName))
+		return 0;
+
+	UInt32	idx = 1;
+	for(LoadedPluginList::iterator iter = m_plugins.begin(); iter != m_plugins.end(); ++iter)
+	{
+		LoadedPlugin	* plugin = &(*iter);
+		if(!_stricmp(plugin->info.name, pluginName))
+		{
+			return idx;
+		}
+		idx++;
+	}
+	return kPluginHandle_Invalid;
 }

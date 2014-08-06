@@ -22,6 +22,20 @@ namespace papyrusEnchantment
 
 	UInt32 GetCostliestEffectIndex(EnchantmentItem* thisMagic)
 	{ return magicItemUtils::GetCostliestEffectIndex(thisMagic); }
+
+	void SetNthEffectMagnitude(EnchantmentItem* thisMagic, UInt32 index, float value)
+	{ magicItemUtils::SetNthEffectMagnitude(thisMagic, index, value); }
+
+	void SetNthEffectArea(EnchantmentItem* thisMagic, UInt32 index, UInt32 value)
+	{ magicItemUtils::SetNthEffectArea(thisMagic, index, value); }
+
+	void SetNthEffectDuration(EnchantmentItem* thisMagic, UInt32 index, UInt32 value)
+	{ magicItemUtils::SetNthEffectDuration(thisMagic, index, value); }
+
+	EnchantmentItem * GetBaseEnchantment(EnchantmentItem* thisMagic)
+	{
+		return thisMagic ? thisMagic->data.baseEnchantment : NULL;
+	}
 }
 
 #include "PapyrusVM.h"
@@ -46,4 +60,30 @@ void papyrusEnchantment::RegisterFuncs(VMClassRegistry* registry)
 
 	registry->RegisterFunction(
 		new NativeFunction0<EnchantmentItem, UInt32>("GetCostliestEffectIndex", "Enchantment", papyrusEnchantment::GetCostliestEffectIndex, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction0<EnchantmentItem, EnchantmentItem*>("GetBaseEnchantment", "Enchantment", papyrusEnchantment::GetBaseEnchantment, registry));
+
+	// Sets
+	registry->RegisterFunction(
+		new NativeFunction2<EnchantmentItem, void, UInt32, float>("SetNthEffectMagnitude", "Enchantment", papyrusEnchantment::SetNthEffectMagnitude, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction2<EnchantmentItem, void, UInt32, UInt32>("SetNthEffectArea", "Enchantment", papyrusEnchantment::SetNthEffectArea, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction2<EnchantmentItem, void, UInt32, UInt32>("SetNthEffectDuration", "Enchantment", papyrusEnchantment::SetNthEffectDuration, registry));
+
+	registry->SetFunctionFlags("Enchantment", "GetNumEffects", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Enchantment", "GetNthEffectMagnitude", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Enchantment", "GetNthEffectArea", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Enchantment", "GetNthEffectDuration", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Enchantment", "GetNthEffectMagicEffect", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Enchantment", "GetCostliestEffectIndex", VMClassRegistry::kFunctionFlag_NoWait);
+
+	registry->SetFunctionFlags("Enchantment", "GetBaseEnchantment", VMClassRegistry::kFunctionFlag_NoWait);
+
+	registry->SetFunctionFlags("Enchantment", "SetNthEffectMagnitude", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Enchantment", "SetNthEffectArea", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Enchantment", "SetNthEffectDuration", VMClassRegistry::kFunctionFlag_NoWait);
 }

@@ -7,7 +7,7 @@ class NiPointer
 public:
 	T	* m_pObject;	// 00
 
-	inline NiPointer(T* pObject)
+	inline NiPointer(T* pObject = (T*) 0)
 	{
 		m_pObject = pObject;
 		if(m_pObject) m_pObject->IncRef();
@@ -89,6 +89,30 @@ T_to * niptr_cast(const T_from & src)
 }
 
 // 10
+template <class T>
+class NiRect
+{
+public:
+	T	m_left;		// 00
+	T	m_right;	// 04
+	T	m_top;		// 08
+	T	m_bottom;	// 0C
+};
+
+// 1C
+class NiFrustum
+{
+public:
+	float	m_fLeft;	// 00
+	float	m_fRight;	// 04
+	float	m_fTop;		// 08
+	float	m_fBottom;	// 0C
+	float	m_fNear;	// 10
+	float	m_fFar;		// 14
+	bool	m_bOrtho;	// 18
+};
+
+// 10
 class NiQuaternion
 {
 public:
@@ -100,6 +124,14 @@ public:
 	float	m_fZ;	// C
 };
 
+// 8
+class NiPoint2
+{
+public:
+	float	x;	// 0
+	float	y;	// 4
+};
+
 // C
 class NiPoint3
 {
@@ -107,6 +139,26 @@ public:
 	float	x;	// 0
 	float	y;	// 4
 	float	z;	// 8
+
+	NiPoint3();
+	NiPoint3(float X, float Y, float Z) : x(X), y(Y), z(Z) { };
+
+	// Negative
+	NiPoint3 operator- () const;
+
+	// Basic operations
+	NiPoint3 operator+ (const NiPoint3& pt) const;
+	NiPoint3 operator- (const NiPoint3& pt) const;
+
+	NiPoint3& operator+= (const NiPoint3& pt);
+	NiPoint3& operator-= (const NiPoint3& pt);
+
+	// Scalar operations
+	NiPoint3 operator* (float fScalar) const;
+	NiPoint3 operator/ (float fScalar) const;
+
+	NiPoint3& operator*= (float fScalar);
+	NiPoint3& operator/= (float fScalar);
 };
 
 // 0C
@@ -132,7 +184,22 @@ public:
 class NiMatrix33
 {
 public:
-	float	data[9];
+	float	data[3][3];
+
+	void Identity();
+
+	// Addition/Subtraction
+	NiMatrix33 operator+(const NiMatrix33& mat) const;
+	NiMatrix33 operator-(const NiMatrix33& mat) const;
+
+	// Matric mult
+	NiMatrix33 operator*(const NiMatrix33& mat) const;
+
+	// Vector mult
+	NiPoint3 operator*(const NiPoint3& pt) const;
+
+	// Scalar multiplier
+	NiMatrix33 operator*(float fScalar) const;
 };
 
 STATIC_ASSERT(sizeof(NiMatrix33) == 0x24);
@@ -144,6 +211,14 @@ public:
 	NiMatrix33	rot;	// 00
 	NiPoint3	pos;	// 24
 	float		scale;	// 30
+
+	NiTransform();
+
+	// Multiply transforms
+	NiTransform operator*(const NiTransform &rhs) const;
+
+	// Transform point
+	NiPoint3 operator*(const NiPoint3 &pt) const;
 };
 
 STATIC_ASSERT(sizeof(NiTransform) == 0x34);

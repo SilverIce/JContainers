@@ -82,3 +82,6 @@ Setting * GetINISetting(const char * name);
 extern SettingCollectionList	** g_iniSettingCollection;
 extern SettingCollectionList	** g_iniPrefSettingCollection;
 extern SettingCollectionMap		** g_gameSettingCollection;
+
+extern const float	* g_mapLocalHeight;
+extern const float	* g_localMapMinFrustumWidth;

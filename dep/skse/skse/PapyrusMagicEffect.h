@@ -59,4 +59,6 @@ namespace papyrusMagicEffect
 	void SetImageSpaceMod(EffectSetting* thisEffect, TESImageSpaceModifier * obj);
 	BGSPerk* GetPerk(EffectSetting* thisEffect);
 	void SetPerk(EffectSetting* thisEffect, BGSPerk * obj);
+	UInt32 GetCastingType(EffectSetting* thisEffect);
+	UInt32 GetDeliveryType(EffectSetting* thisEffect);
 };

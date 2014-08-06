@@ -31,6 +31,24 @@ public:
 	NiTLargeArray <UInt32>		m_objectSizes;		// 20C
 	NiTLargeArray <NiObject *>	m_rootObjects;		// 224
 	NiTLargeArray <char *>		m_stringTable;		// 23C
+	UInt32	unk254;									// 254
+	UInt32	unk258;									// 258
+	UInt32	unk25C;									// 25C
+	UInt32	unk260;									// 260
+	NiTMap<NiObject*, UInt32>	m_pointerMap;		// 264
+};
+
+class DeepCopyStream : public NiStream
+{
+public:
+	DeepCopyStream();
+	virtual ~DeepCopyStream();
+
+	// vtbl 001117394
+
+	MEMBER_FN_PREFIX(DeepCopyStream);
+	DEFINE_MEMBER_FN(SaveStream, bool, 0x00AB08C0, char ** buffer, UInt32 * length);
+	DEFINE_MEMBER_FN(LoadStream, bool, 0x00AB0410, char * buffer, UInt32 length);
 };
 
 STATIC_ASSERT(offsetof(NiStream, m_objects) == 0x1F4);

@@ -7,8 +7,11 @@
 MAKE_NI_POINTER(NiGeometryData);
 MAKE_NI_POINTER(NiSkinInstance);
 MAKE_NI_POINTER(NiProperty);
+MAKE_NI_POINTER(NiSkinData);
+MAKE_NI_POINTER(NiSkinPartition);
 
 class NiAdditionalGeometryData;
+class NiTriShapeData;
 
 // B8+
 class NiGeometry : public NiAVObject
@@ -45,6 +48,10 @@ public:
 class NiTriShape : public NiTriBasedGeom
 {
 public:
+	static NiTriShape * Create(NiTriShapeData * geometry);
+
+	MEMBER_FN_PREFIX(NiTriShape);
+	DEFINE_MEMBER_FN(ctor, NiTriShape *, 0x00AB9930, NiTriShapeData * geometry);
 };
 
 class BSSegmentedTriShape : public NiTriShape
@@ -75,9 +82,9 @@ public:
 	UInt16	m_usDataFlags;				// 0E
 	NiBound	m_kBound;					// 10
 	NiPoint3	* m_pkVertex;			// 20
-	float	* m_pkNormal;				// 24 - all normals, then all binormals etc
-	float	* m_pkColor;				// 28 - yes really, floats (b g r a)
-	float	* m_pkTexture;				// 2C
+	NiPoint3	* m_pkNormal;			// 24 - all normals, then all binormals etc
+	NiColorA	* m_pkColor;			// 28 - yes really, floats (b g r a)
+	NiPoint2	* m_pkTexture;			// 2C
 	UInt32	unk30;						// 30
 	UInt32	unk34;						// 34
 	UInt32	unkInt2;					// 38
@@ -101,12 +108,25 @@ public:
 	UInt16	m_usActiveTriangles;	// 4A
 };
 
-// 54+
+// 54
 class NiTriShapeData : public NiTriBasedGeomData
 {
 public:
 	UInt32	m_uiTriListLength;		// 4C
 	UInt16	* m_pusTriList;			// 50
+};
+
+// 58
+class NiTriShapeDynamicData : public NiTriShapeData
+{
+public:
+	struct SharedNormalArray
+	{
+		UInt16	m_usNumSharedNormals;
+		UInt16	* m_pusSharedNormalIndexArray;
+	};
+	SharedNormalArray * m_pkSharedNormals;	// 54
+	UInt16				m_usSharedNormalsArraySize;	// 56
 };
 
 // 10
@@ -137,7 +157,7 @@ public:
 	Partition	* m_pkPartitions;	// 0C
 };
 
-// 44+
+// 48
 class NiSkinData : public NiObject
 {
 public:
@@ -165,19 +185,49 @@ public:
 	NiTransform		m_kRootParentToSkin;	// 0C
 	BoneData		* m_pkBoneData;			// 40
 	UInt32			m_uiBones;				// 44
+
+	// ctor - AD4780
 };
 
 STATIC_ASSERT(sizeof(NiSkinData::BoneVertData) == 0x08);
 
-// 18
+// 38
 class NiSkinInstance : public NiObject
 {
 public:
-	NiSkinData		* m_spSkinData;			// 08
-	NiSkinPartition	* m_spSkinPartition;	// 0C
-	NiAVObject		* m_pkRootParent;		// 10
-	NiAVObject		** m_ppkBones;			// 14
-	// ...
+	NiSkinDataPtr		m_spSkinData;		// 08
+	NiSkinPartitionPtr	m_spSkinPartition;	// 0C
+	NiAVObject			* m_pkRootParent;	// 10
+	NiAVObject			** m_ppkBones;		// 14
+	
+	UInt32	unk18;							// 18
+	SInt32	unk1C;							// 1C
+	UInt32	unk20;							// 20
+	UInt32	numFlags;						// 24
+	UInt32	unk28;							// 28
+	UInt32 	* flags;						// 2C
+	UInt32	unk30;							// 30
+	UInt32	unk34;							// 34
+
+	static NiSkinInstance * Create();
+
 	MEMBER_FN_PREFIX(NiSkinInstance);
-	DEFINE_MEMBER_FN(SetSkinPartition, void, 0x0046ACC0, NiSkinPartition * skinPartition);
+	DEFINE_MEMBER_FN(ctor, NiSkinInstance *, 0x00ABDB90);
 };
+STATIC_ASSERT(sizeof(NiSkinInstance) == 0x38);
+
+// 44
+class BSDismemberSkinInstance : public NiSkinInstance
+{
+public:
+	UInt32	numPartitions;					// 38
+	UInt32	* partitionFlags;				// 3C
+	UInt8	unk40;							// 40
+	UInt8	pad41[3];						// 41
+
+	static BSDismemberSkinInstance * Create();
+
+	MEMBER_FN_PREFIX(BSDismemberSkinInstance);
+	DEFINE_MEMBER_FN(ctor, BSDismemberSkinInstance *, 0x00ABDBD0);
+};
+STATIC_ASSERT(sizeof(BSDismemberSkinInstance) == 0x44);

@@ -209,4 +209,21 @@ void papyrusSpell::RegisterFuncs(VMClassRegistry* registry)
 
 	registry->RegisterFunction(
 		new NativeFunction1 <SpellItem, void, BGSEquipSlot*>("SetEquipType", "Spell", papyrusSpell::SetEquipType, registry));
+
+	registry->SetFunctionFlags("Spell", "GetCastTime", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Spell", "GetPerk", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Spell", "GetNumEffects", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Spell", "GetNthEffectMagnitude", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Spell", "GetNthEffectArea", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Spell", "GetNthEffectDuration", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Spell", "GetNthEffectMagicEffect", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Spell", "GetCostliestEffectIndex", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Spell", "GetMagickaCost", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Spell", "GetEffectiveMagickaCost", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Spell", "GetEquipType", VMClassRegistry::kFunctionFlag_NoWait);
+
+	registry->SetFunctionFlags("Spell", "SetNthEffectMagnitude", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Spell", "SetNthEffectArea", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Spell", "SetNthEffectDuration", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("Spell", "SetEquipType", VMClassRegistry::kFunctionFlag_NoWait);
 }

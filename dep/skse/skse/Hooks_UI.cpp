@@ -1,4 +1,5 @@
 #include "Hooks_UI.h"
+#include "Hooks_Threads.h"
 #include "SafeWrite.h"
 #include "Utilities.h"
 #include "GameMenus.h"
@@ -29,7 +30,14 @@ void UIManager::ProcessCommands(void)
 		cmd->Dispose();
 	}
 	s_queueLock.Leave();
-	
+}
+
+void TaskInterface::AddUITask(UIDelegate * task)
+{
+	UIManager * uiManager = UIManager::GetSingleton();
+	if(uiManager) {
+		uiManager->QueueCommand(task);
+	}
 }
 
 void Hooks_UI_Commit(void)

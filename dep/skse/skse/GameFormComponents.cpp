@@ -77,6 +77,28 @@ SInt32 PlayerSkills::ResolveAdvanceableSkillId(SInt32 actorValue)
 	return -1;
 }
 
+float PlayerSkills::GetSkillPoints(BSFixedString actorValue)
+{
+	if(data) {
+		UInt32 avId = LookupActorValueByName(actorValue.data);
+		SInt32 skillId = ResolveAdvanceableSkillId(avId);
+		if(skillId != -1)
+			return data->levelData[skillId].points;
+	}
+
+	return 0.0;
+}
+
+void PlayerSkills::SetSkillPoints(BSFixedString actorValue, float points)
+{
+	if(data) {
+		UInt32 avId = LookupActorValueByName(actorValue.data);
+		SInt32 skillId = ResolveAdvanceableSkillId(avId);
+		if(skillId != -1)
+			data->levelData[skillId].points = points;
+	}
+}
+
 SInt32 PlayerSkills::GetSkillLegendaryLevel(BSFixedString actorValue)
 {
 	if(data) {

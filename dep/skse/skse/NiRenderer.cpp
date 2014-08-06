@@ -9,3 +9,5 @@ NiRenderManager * NiRenderManager::GetSingleton()
 {
 	return *((NiRenderManager **)0x01BA7490);
 }
+
+const _CreateRenderTargetGroup CreateRenderTargetGroup = (_CreateRenderTargetGroup)0x00C903B0;

@@ -4,9 +4,6 @@
     <Filter Include="gtest">
       <UniqueIdentifier>{9fe98443-90a1-4d4a-8155-1f06db3a251b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="code_producer">
-      <UniqueIdentifier>{d21e5bf5-2f63-4cc1-b1ed-e9500125c58a}</UniqueIdentifier>
-    </Filter>
     <Filter Include="object_module">
       <UniqueIdentifier>{36211b98-169e-46fc-961c-48122146285c}</UniqueIdentifier>
     </Filter>
@@ -22,52 +19,67 @@
     <Filter Include="collections_module\tes_api">
       <UniqueIdentifier>{a481ff76-9ab2-4bb4-91f6-f5d5e21c603c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="skse">
+      <UniqueIdentifier>{ca106175-46ec-41d4-a025-c06319331cdf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="reflection">
+      <UniqueIdentifier>{d21e5bf5-2f63-4cc1-b1ed-e9500125c58a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="plugin_interface">
+      <UniqueIdentifier>{14edfebb-ae9f-4369-bd9f-3b374e3a73ba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="collections_module\lua">
+      <UniqueIdentifier>{bc4ac5ac-882f-4d98-a11d-e0f0d63cb96f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\code_producer.cpp">
-      <Filter>code_producer</Filter>
-    </ClCompile>
     <ClCompile Include="src\serialization.cpp">
-      <Filter>collections_module</Filter>
-    </ClCompile>
-    <ClCompile Include="src\tes_inteface.cpp">
       <Filter>collections_module</Filter>
     </ClCompile>
     <ClCompile Include="src\gtest.cpp">
       <Filter>gtest</Filter>
     </ClCompile>
-    <ClCompile Include="src\basic_part.cpp">
-      <Filter>object_module\impl</Filter>
-    </ClCompile>
-    <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\jcontainers_pch.cpp" />
     <ClCompile Include="src\path_resolving.cpp">
       <Filter>collections_module\path_resolving</Filter>
+    </ClCompile>
+    <ClCompile Include="src\skse.cpp">
+      <Filter>skse</Filter>
+    </ClCompile>
+    <ClCompile Include="src\backward.compatibility.test.cpp">
+      <Filter>collections_module</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tes_inteface.cpp">
+      <Filter>collections_module\tes_api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\reflection.cpp">
+      <Filter>reflection</Filter>
+    </ClCompile>
+    <ClCompile Include="src\object_module.cpp">
+      <Filter>object_module\impl</Filter>
+    </ClCompile>
+    <ClCompile Include="src\jc_interface.cpp">
+      <Filter>plugin_interface</Filter>
+    </ClCompile>
+    <ClCompile Include="src\hotfix_boost.cpp" />
+    <ClCompile Include="src\lua_stuff.cpp">
+      <Filter>collections_module\lua</Filter>
     </ClCompile>
     <ClCompile Include="src\string_wrapper.cpp">
       <Filter>collections_module\tes_api</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\code_producer.h">
-      <Filter>code_producer</Filter>
-    </ClInclude>
     <ClInclude Include="src\collections.h">
       <Filter>collections_module</Filter>
     </ClInclude>
     <ClInclude Include="src\collections.tests.hpp">
       <Filter>collections_module</Filter>
     </ClInclude>
-    <ClInclude Include="src\jcontainers_pch.h">
-      <Filter>collections_module</Filter>
-    </ClInclude>
     <ClInclude Include="src\json_handling.h">
       <Filter>collections_module</Filter>
     </ClInclude>
     <ClInclude Include="src\tes_error_code.h">
-      <Filter>collections_module</Filter>
-    </ClInclude>
-    <ClInclude Include="src\tes_binding.h">
       <Filter>collections_module</Filter>
     </ClInclude>
     <ClInclude Include="src\tes_context.h">
@@ -128,7 +140,6 @@
       <Filter>object_module</Filter>
     </ClInclude>
     <ClInclude Include="src\typedefs.h" />
-    <ClInclude Include="src\plugin_info.h" />
     <ClInclude Include="src\tes_form_db.h">
       <Filter>collections_module\tes_api</Filter>
     </ClInclude>
@@ -144,10 +155,42 @@
     <ClInclude Include="src\boost_extras.h">
       <Filter>collections_module</Filter>
     </ClInclude>
+    <ClInclude Include="src\skse.h">
+      <Filter>skse</Filter>
+    </ClInclude>
+    <ClInclude Include="src\jcontainers_constants.h" />
+    <ClInclude Include="src\tes_binding.h">
+      <Filter>reflection</Filter>
+    </ClInclude>
+    <ClInclude Include="src\reflection.h">
+      <Filter>reflection</Filter>
+    </ClInclude>
+    <ClInclude Include="src\collection_bind_traits.h">
+      <Filter>collections_module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\boost_serialization_atomic.h">
+      <Filter>collections_module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\boost_serialization_intrusive_ptr_jc.h">
+      <Filter>collections_module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\object_base_serialization.h">
+      <Filter>object_module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\jcontainers_pch.h" />
+    <ClInclude Include="src\code_producer.hpp">
+      <Filter>reflection</Filter>
+    </ClInclude>
     <ClInclude Include="resource.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="exports.def" />
+    <ClInclude Include="src\jc_interface.h">
+      <Filter>plugin_interface</Filter>
+    </ClInclude>
+    <ClInclude Include="src\tes_lua.h">
+      <Filter>collections_module\tes_api</Filter>
+    </ClInclude>
+    <ClInclude Include="src\lua_stuff.h">
+      <Filter>collections_module\lua</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="JContainers.rc" />

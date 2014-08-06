@@ -7,22 +7,25 @@
 
 namespace collections
 {
+    class map;
+
     class tes_context : public shared_state, public shared_state_delegate
     {
-        HandleT _databaseId;
+        std::atomic<Handle> _databaseId;
         std::atomic_uint_fast16_t _lastError;
         spinlock _lazyDBLock;
 
     public:
 
         tes_context()
-            : _databaseId(0)
+            : _databaseId(HandleNull)
             , _lastError(0)
         {
             shared_state::delegate = this;
         }
 
-        //~tes_context() {}
+        ~tes_context() {
+        }
 
         void setLastError(JErrorCode code) {
             _lastError = code;
@@ -38,33 +41,32 @@ namespace collections
             return st;
         }
 
-        HandleT databaseId() {
-            read_lock r(_mutex);
+        Handle databaseId() const {
             return _databaseId;
         }
 
-        class map* database();
+        map* database();
+
+        map::ref database_ref() {
+            return database();
+        }
 
         void setDataBase(object_base *db) {
-            object_base * prev = nullptr;
-            performRead([&]() {
-                prev = u_getObject(_databaseId);
-            });
+            object_base * prev = getObject(_databaseId);
 
             if (prev == db) {
                 return;
-            }
-
-            if (prev) {
-                prev->release(); // may cause deadlock in removeObject
             }
 
             if (db) {
                 db->retain();
             }
 
-            write_lock g(_mutex);
-            _databaseId = db ? db->uid() : 0;
+            if (prev) {
+                prev->release();
+            }
+
+            _databaseId = db ? db->uid() : HandleNull;
         }
 
         void u_loadAdditional(boost::archive::binary_iarchive & arch) override;

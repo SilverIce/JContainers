@@ -19,7 +19,8 @@ namespace boost {
                 );
         }
 
-        return std::make_pair(RangeT(), RangeT());
+        auto end = Input.end();
+        return std::make_pair(RangeT(end,end), RangeT(end,end));
     }
 
     template< typename RangeT, typename Predicate >
@@ -35,7 +36,42 @@ namespace boost {
                 );
         }
 
-        return std::make_pair(RangeT(), RangeT());
+        auto end = Input.end();
+        return std::make_pair(RangeT(end,end), RangeT(end,end));
     }
+
+    template< typename RangeT, typename Iter >
+    inline std::pair<RangeT,RangeT> split_right_inclusive(
+        const RangeT& Input,
+        const Iter& location)
+    {
+        if (location != Input.end()) {
+            return std::make_pair(
+                RangeT (Input.begin(), location),
+                RangeT (location, Input.end())
+                );
+        }
+
+        auto end = Input.end();
+        return std::make_pair(RangeT(end,end), RangeT(end,end));
+    }
+
+    template< typename RangeT, typename Iter >
+    inline std::pair<RangeT,RangeT> split_left_inclusive(
+        const RangeT& Input,
+        const Iter& location)
+    {
+        if (location != Input.end()) {
+            return std::make_pair(
+                RangeT (Input.begin(), location + 1),
+                RangeT (location + 2, Input.end())
+                );
+        }
+
+        auto end = Input.end();
+        return std::make_pair(RangeT(end,end), RangeT(end,end));
+    }
+
+
 
 }

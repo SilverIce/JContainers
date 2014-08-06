@@ -3,7 +3,7 @@ namespace collections {
 
 	extern std::vector<std::string> wrap_string(const char *csource, int charsPerLine);
 
-    class tes_string : public tes_binding::class_meta_mixin_t<tes_string> {
+    class tes_string : public reflection::class_meta_mixin_t<tes_string> {
     public:
 
         tes_string() {

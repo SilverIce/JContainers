@@ -1,6 +1,6 @@
 namespace collections {
 
-    class tes_jcontainers : public tes_binding::class_meta_mixin_t<tes_jcontainers> {
+    class tes_jcontainers : public reflection::class_meta_mixin_t<tes_jcontainers> {
     public:
 
         REGISTER_TES_NAME("JContainers");
@@ -12,12 +12,12 @@ namespace collections {
         static bool isInstalled() {
             return true;
         }
-        REGISTERF2(isInstalled, NULL, "returns true if JContainers plugin is installed");
+        REGISTERF2(isInstalled, nullptr, "returns true if JContainers plugin is installed");
 
         static UInt32 APIVersion() {
             return kJAPIVersion;
         }
-        REGISTERF2(APIVersion, NULL, []() {
+        REGISTERF2(APIVersion, nullptr, []() {
             std::stringstream comm;
             comm << "returns API version. Incremented by 1 each time old API is not backward compatible with new one.\n";
             comm << "current API version is " << APIVersion();
@@ -35,10 +35,30 @@ namespace collections {
         }
         REGISTERF2(fileExistsAtPath, "path", "returns true if file at path exists");
 
+        static std::string userDirectory() {
+            char path[MAX_PATH];
+            if (!SUCCEEDED(SHGetFolderPath(NULL, CSIDL_MYDOCUMENTS, NULL, SHGFP_TYPE_CURRENT, path))) {
+                return std::string();
+            }
+
+            strcat_s(path, sizeof(path), JC_USER_FILES);
+
+            if (!boost::filesystem::exists(path) && (boost::filesystem::create_directories(path), !boost::filesystem::exists(path))) {
+                return std::string();
+            }
+
+            return path;
+        }
+
+        static BSFixedString _userDirectory() {
+            return userDirectory().c_str();
+        }
+        REGISTERF(_userDirectory, "userDirectory", "", "A path to user-specific directory - "JC_USER_FILES);
+
         static SInt32 lastError() {
             return tes_context::instance().lastError();
         }
-        REGISTERF2(lastError, NULL, []() {
+        REGISTERF2(lastError, nullptr, []() {
             std::stringstream comm;
             comm << "returns last occured error (error code):";
             for (int i = 0; i < JErrorCount; ++i) {
@@ -50,8 +70,37 @@ namespace collections {
         static const char* lastErrorString() {
             return JErrorCodeToString(tes_context::instance().lastError());
         }
-        REGISTERF2(lastErrorString, NULL, "returns string that describes last error");
+        REGISTERF2(lastErrorString, nullptr, "returns string that describes last error");
     };
 
     TES_META_INFO(tes_jcontainers);
+
+    TEST(tes_jcontainers, userDirectory)
+    {
+        auto write_file = [&](const boost::filesystem::path& path) {
+            boost::filesystem::remove_all(path);
+
+            EXPECT_FALSE(boost::filesystem::is_regular(path));
+
+            object_stack_ref obj = tes_object::object<map>();
+            tes_object::writeToFile(obj.get(), path.string().c_str());
+
+            EXPECT_TRUE(boost::filesystem::is_regular(path));
+
+            boost::filesystem::remove_all(path);
+        };
+
+        auto path = tes_jcontainers::userDirectory();
+        EXPECT_TRUE(!path.empty());
+        EXPECT_TRUE(boost::filesystem::is_directory(path));
+
+        write_file(tes_jcontainers::userDirectory() + "/MyMod/123/settings.json");
+        write_file(tes_jcontainers::userDirectory() + "/settings.json");
+        write_file(tes_jcontainers::userDirectory() + "settings2.json");
+        write_file("obj3");
+        write_file("path/obj3");
+        write_file("/path2/obj3");
+        write_file("path3\\obj3");
+        write_file("\\path4\\obj3");
+    }
 }

@@ -4,6 +4,7 @@
 #include "GameObjects.h"
 #include "GameReferences.h"
 #include "GameExtraData.h"
+#include "GameData.h"
 #include "GameRTTI.h"
 
 namespace papyrusActorBase
@@ -100,7 +101,7 @@ namespace papyrusActorBase
 	}
 
 	// Convenience function to return a headPart's index by type
-	UInt32 GetIndexOfHeadPartByType(TESNPC* thisNPC, UInt32 type)
+	SInt32 GetIndexOfHeadPartByType(TESNPC* thisNPC, UInt32 type)
 	{
 		if (thisNPC && thisNPC->headparts) {
 			for(int i = 0; i < thisNPC->numHeadParts; i++) {
@@ -108,6 +109,41 @@ namespace papyrusActorBase
 					return i;
 				}
 			}
+		}
+
+		return -1;
+	}
+
+	UInt32 GetNumOverlayHeadParts(TESNPC* thisNPC)
+	{
+		return (thisNPC) ? GetNumActorBaseOverlays(thisNPC) : 0;
+	}
+
+	BGSHeadPart* GetNthOverlayHeadPart(TESNPC* thisNPC, UInt32 n)
+	{
+		if (!thisNPC)
+			return NULL;
+
+		UInt32 numOverlays = GetNumActorBaseOverlays(thisNPC);
+		if(n >= numOverlays)
+			return NULL;
+
+		BGSHeadPart ** overlays = GetActorBaseOverlays(thisNPC);
+		return overlays[n];
+	}
+
+	// Convenience function to return a headPart's index by type
+	SInt32 GetIndexOfOverlayHeadPartByType(TESNPC* thisNPC, UInt32 type)
+	{
+		if (!thisNPC)
+			return NULL;
+
+		UInt32 numOverlays = GetNumActorBaseOverlays(thisNPC);
+		BGSHeadPart ** overlays = GetActorBaseOverlays(thisNPC);
+		for(UInt32 i = 0; i < numOverlays; i++)
+		{
+			if(overlays[i] && overlays[i]->type == type)
+				return i;
 		}
 
 		return -1;
@@ -157,8 +193,8 @@ namespace papyrusActorBase
 
 	void SetFaceTextureSet(TESNPC* thisNPC, BGSTextureSet * textureSet)
 	{
-		if (thisNPC && thisNPC->headData) {
-			thisNPC->headData->headTexture = textureSet;
+		if (thisNPC) {
+			thisNPC->SetFaceTexture(textureSet);
 		}
 	}
 
@@ -245,7 +281,18 @@ void papyrusActorBase::RegisterFuncs(VMClassRegistry* registry)
 		new NativeFunction2 <TESNPC, void, BGSHeadPart*, UInt32>("SetNthHeadPart", "ActorBase", papyrusActorBase::SetNthHeadPart, registry));
 
 	registry->RegisterFunction(
-		new NativeFunction1 <TESNPC, UInt32, UInt32>("GetIndexOfHeadPartByType", "ActorBase", papyrusActorBase::GetIndexOfHeadPartByType, registry));
+		new NativeFunction1 <TESNPC, SInt32, UInt32>("GetIndexOfHeadPartByType", "ActorBase", papyrusActorBase::GetIndexOfHeadPartByType, registry));
+
+
+	registry->RegisterFunction(
+		new NativeFunction0 <TESNPC, UInt32>("GetNumOverlayHeadParts", "ActorBase", papyrusActorBase::GetNumOverlayHeadParts, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction1 <TESNPC, BGSHeadPart*, UInt32>("GetNthOverlayHeadPart", "ActorBase", papyrusActorBase::GetNthOverlayHeadPart, registry));
+
+	registry->RegisterFunction(
+		new NativeFunction1 <TESNPC, SInt32, UInt32>("GetIndexOfOverlayHeadPartByType", "ActorBase", papyrusActorBase::GetIndexOfOverlayHeadPartByType, registry));
+
 
 	registry->RegisterFunction(
 		new NativeFunction1 <TESNPC, float, UInt32>("GetFaceMorph", "ActorBase", papyrusActorBase::GetFaceMorph, registry));
@@ -301,6 +348,9 @@ void papyrusActorBase::RegisterFuncs(VMClassRegistry* registry)
 	registry->SetFunctionFlags("ActorBase", "GetNthHeadPart", VMClassRegistry::kFunctionFlag_NoWait);
 	registry->SetFunctionFlags("ActorBase", "SetNthHeadPart", VMClassRegistry::kFunctionFlag_NoWait);
 	registry->SetFunctionFlags("ActorBase", "GetIndexOfHeadPartByType", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("ActorBase", "GetNumOverlayHeadParts", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("ActorBase", "GetNthOverlayHeadPart", VMClassRegistry::kFunctionFlag_NoWait);
+	registry->SetFunctionFlags("ActorBase", "GetIndexOfOverlayHeadPartByType", VMClassRegistry::kFunctionFlag_NoWait);
 	registry->SetFunctionFlags("ActorBase", "GetFaceMorph", VMClassRegistry::kFunctionFlag_NoWait);
 	registry->SetFunctionFlags("ActorBase", "SetFaceMorph", VMClassRegistry::kFunctionFlag_NoWait);
 	registry->SetFunctionFlags("ActorBase", "GetFacePreset", VMClassRegistry::kFunctionFlag_NoWait);

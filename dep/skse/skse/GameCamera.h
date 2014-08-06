@@ -3,6 +3,8 @@
 #include "GameTypes.h"
 #include "GameInput.h"
 
+#include "GameSettings.h"
+
 #include "skse/NiObjects.h"
 #include "skse/NiTypes.h"
 
@@ -15,14 +17,14 @@ public:
 	TESCameraState();
 	virtual ~TESCameraState();
 
-	virtual void Unk_01();
-	virtual void Unk_02();
-	virtual void Unk_03();
+	virtual void OnStateStart();	// pure
+	virtual void OnStateEnd();	// pure
+	virtual void OnUpdate(void * unk1);
 	virtual void Unk_04();
 	virtual void Unk_05();
-	virtual void Unk_06();
-	virtual void Unk_07();
-	virtual void Unk_08();
+	virtual void Unk_06();	// pure
+	virtual void Unk_07();	// pure
+	virtual void Unk_08();	// pure
 
 	BSIntrusiveRefCounted	refCount;		// 04
 	TESCamera				* camera;		// 08
@@ -187,16 +189,6 @@ public:
 STATIC_ASSERT(offsetof(ThirdPersonState, fOverShoulderPosX) == 0x3C);
 STATIC_ASSERT(offsetof(ThirdPersonState, unk48) == 0x48);
 
-class LocalMapCameraState : public TESCameraState
-{
-public:
-	NiPoint3	unk10;	// 10
-	NiPoint3	unk1C;	// 1C
-	UInt32		unk28;	// 28
-	float		minFrustumWidth;
-	float		minFrustumHeight;
-};
-
 class BleedoutCameraState : public ThirdPersonState
 {
 public:
@@ -235,20 +227,23 @@ public:
 	TESCamera();
 	virtual ~TESCamera();
 
-	virtual void Unk_01();
-	virtual void Unk_02();
+	virtual void SetNode(NiNode * node);
+	virtual void Update();
 
-	UInt32			unk04[0x06];	// 04
-	NiNode			* niNode;		// 1C
+	float		rotZ;	// 04
+	float		rotX;	// 08
+	NiPoint3	pos;	// 0C
+	float		zoom;	// 18
+	NiNode		* cameraNode;	// 1C - First child is usually NiCamera
 	TESCameraState	* cameraState;	// 20
-	UInt8			unk24;	// 24
-	UInt8			pad25[3];	// 25
+	UInt8		unk24;			// 24
+	UInt8		pad25[3];		// 25
 
 	MEMBER_FN_PREFIX(TESCamera);
 	DEFINE_MEMBER_FN(SetCameraState, UInt32, 0x006533D0, TESCameraState * cameraState);
 };
 
-STATIC_ASSERT(offsetof(TESCamera, niNode) == 0x1C);
+STATIC_ASSERT(offsetof(TESCamera, cameraNode) == 0x1C);
 
 class LocalMapCamera : public TESCamera
 {
@@ -256,11 +251,30 @@ public:
 	LocalMapCamera();
 	virtual ~LocalMapCamera();
 
-	NiPoint3	areaBoundsMin;	// 28
-	NiPoint3	areaBoundsMax;	// 34
-	LocalMapCameraState	* defaultState;	// 40
-	NiObject	* niCamera;		// 44
-	float		northRotation;	// 48
+	class DefaultState : public TESCameraState
+	{
+	public:
+		NiPoint3	someBoundMax;		// 10
+		NiPoint3	someBoundMin;		// 1C
+		float		zoomPercent;		// 28
+		float		minFrustumWidth;	// 2C
+		float		minFrustumHeight;	// 30
+	};
+
+	NiPoint3	areaBoundsMax;			// 28
+	NiPoint3	areaBoundsMin;			// 34
+	DefaultState	* defaultState;		// 40
+	NiObject	* niCamera;				// 44
+	float		northRotation;			// 48
+
+	void SetDefaultStateMinFrustumDimensions(float width, float height);
+	void SetAreaBounds(NiPoint3 * maxBound, NiPoint3 * minBound);
+	void SetDefaultStateMaxBound(NiPoint3 * maxBound);
+	void SetDefaultStateBounds(float x, float y, float z);
+
+	MEMBER_FN_PREFIX(LocalMapCamera);
+	DEFINE_MEMBER_FN(ctor, void, 0x00487420);
+	DEFINE_MEMBER_FN(SetNorthRotation, void, 0x00486440, float northRotation);
 };
 
 STATIC_ASSERT(offsetof(LocalMapCamera, northRotation) == 0x48);

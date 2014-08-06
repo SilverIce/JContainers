@@ -16,20 +16,38 @@ public:
 	virtual void	Unk_35(void);
 	virtual void	RemoveChild(NiAVObject * obj);
 	virtual void	Unk_37(void);
-	virtual void	Unk_38(void);
+	virtual void	RemoveAt(UInt32 i);
 	virtual void	Unk_39(void);
 	virtual void	Unk_3A(void);
 	virtual void	UpdateUpwardPass(void);
 
 	NiTArray <NiAVObject *>	m_children;	// A8
-};
 
+	static NiNode * Create(UInt32 arrBufLen = 0);
+
+	MEMBER_FN_PREFIX(NiNode);
+	DEFINE_MEMBER_FN(ctor, NiNode*, 0x00AAED00, UInt32 arrBufLen);
+};
 STATIC_ASSERT(sizeof(NiNode) == 0xB8);
+
+// E4
+class BSFadeNode : public NiNode
+{
+public:
+	UInt32	unkB8[(0xE4 - 0xB8) >> 2];
+
+	static BSFadeNode * Create();
+
+	MEMBER_FN_PREFIX(BSFadeNode);
+	DEFINE_MEMBER_FN(ctor, BSFadeNode *, 0x00C6BBE0);
+};
+STATIC_ASSERT(sizeof(BSFadeNode) == 0xE4);
 
 // EC
 class BSFaceGenNiNode : public NiNode
 {
 public:
+	UInt32	unkB8;
 	UInt32	unkBC;
 	UInt32	unkC0;
 	UInt32	unkC4;
@@ -40,9 +58,8 @@ public:
 	float	unkD8;
 	BSFaceGenAnimationData	* animData;
 	float	unkE0;
-	UInt32	unkE4;
+	UInt32	handle;	// handle
 	UInt32	unkE8;
-	UInt32	unkEC;
 
 	enum {
 		kAdjustType_Unk0 = 0,
@@ -56,6 +73,8 @@ public:
 };
 
 STATIC_ASSERT(sizeof(BSFaceGenNiNode) == 0xEC);
+STATIC_ASSERT(offsetof(BSFaceGenNiNode, animData) == 0xDC);
+STATIC_ASSERT(offsetof(BSFaceGenNiNode, handle) == 0xE4);
 
 
 class NiSwitchNode : public NiNode
@@ -63,15 +82,6 @@ class NiSwitchNode : public NiNode
 public:
 	// Nothing yet
 };
-
-typedef UInt32 (* _UpdateModelSkin)(NiNode*, NiColorA**);
-extern _UpdateModelSkin UpdateModelSkin;
-
-typedef UInt32 (* _UpdateModelHair)(NiNode*, NiColorA**);
-extern _UpdateModelHair UpdateModelHair;
-
-typedef UInt32 (* _UpdateModelFace)(NiNode*);
-extern _UpdateModelFace UpdateModelFace;
 
 // 110 ?
 class NiCullingProcess
@@ -136,14 +146,153 @@ STATIC_ASSERT(sizeof(BSCullingProcess) == 0x170);
 class LocalMapCullingProcess : public BSCullingProcess
 {
 public:
-	LocalMapCamera	localMapCamera;					// 170
-	void			* shaderAccumulator;			// 1BC
-	NiRenderTarget	* localMapTexture;				// 1C0
-	UInt32			unk1C4[(0x230 - 0x1C4) >> 2];	// 1C4
-	UInt32			width;							// 230
-	UInt32			height;							// 234
-	NiNode			* niNode;						// 238
+	LocalMapCamera		localMapCamera;					// 170
+	void				* shaderAccumulator;			// 1BC
+	BSRenderTargetGroup	* localMapTexture;				// 1C0
+	UInt32				unk1C4[(0x230 - 0x1C4) >> 2];	// 1C4
+	UInt32				width;							// 230
+	UInt32				height;							// 234
+	NiNode				* niNode;						// 238
+
+	MEMBER_FN_PREFIX(LocalMapCullingProcess);
+	DEFINE_MEMBER_FN(ctor, void, 0x00487610);
+	DEFINE_MEMBER_FN(CreateMapTarget, BSRenderTargetGroup **, 0x00486590, UInt32 width, UInt32 height);
+	DEFINE_MEMBER_FN(Init, void, 0x00487D20);
+	DEFINE_MEMBER_FN(Process, void, 0x00487900);
 };
 
 STATIC_ASSERT(offsetof(LocalMapCullingProcess, localMapCamera) == 0x170);
 STATIC_ASSERT(offsetof(LocalMapCullingProcess, niNode) == 0x238);
+
+class NiBoneNames
+{
+public:
+	static NiBoneNames * GetSingleton(void);
+
+	BSFixedString	root;	// 00
+	BSFixedString	npc;	// 04
+	BSFixedString	head;	// 08
+	BSFixedString	pelvis;	// 0C
+	BSFixedString	spine0;	// 10
+	BSFixedString	spine1;	// 14
+	BSFixedString	spine2;	// 18
+	BSFixedString	lFoot;	// 1C
+	BSFixedString	rFoot;	// 20
+	BSFixedString	lCalf;	// 24
+	BSFixedString	rCalf;	// 28
+	BSFixedString	specialIdleCast;		// 2C
+	BSFixedString	specialIdleAreaEffect;	// 30
+	BSFixedString	attachSound;			// 34
+	BSFixedString	soundMarker;			// 38
+	BSFixedString	skinnedDecalNode;		// 3C
+	BSFixedString	decalNode;				// 40
+	BSFixedString	modelSwapNode;			// 44
+	BSFixedString	open;	// 48
+	BSFixedString	close;	// 4C
+	BSFixedString	dvpg;	// 50
+	BSFixedString	prn;	// 54
+	BSFixedString	weapon;	// 58
+	BSFixedString	weaponSword;	// 5C
+	BSFixedString	weaponDagger;	// 60
+	BSFixedString	weaponAxe;		// 64
+	BSFixedString	weaponMace;		// 68
+	BSFixedString	shield;			// 6C
+	BSFixedString	weaponBack;		// 70
+	BSFixedString	weaponBow;		// 74
+	BSFixedString	quiver;			// 78
+	BSFixedString	editorMarker;	// 7C	
+	BSFixedString	editorMarker0;	// 80
+	BSFixedString	editorMarker1;	// 84
+	BSFixedString	editorMarker2;	// 88
+	BSFixedString	arrowQuiver;	// 8C
+	BSFixedString	markerSource;	// 90
+	BSFixedString	markerTarget;	// 94
+	BSFixedString	attachLight;	// 98
+	BSFixedString	skin;			// 9C
+	BSFixedString	faceGenEars;	// A0
+	BSFixedString	unequip;		// A4
+	BSFixedString	laserSight;		// A8
+	BSFixedString	aimSight;		// AC
+	BSFixedString	decal;			// B0
+	BSFixedString	permanentDecal;	// B4
+	BSFixedString	grabLeft;		// B8
+	BSFixedString	grabRight;		// BC
+	BSFixedString	arrow0;			// C0
+	BSFixedString	arrowBone;		// C4
+	BSFixedString	faceGenNiNodeSkinned;	// C8
+	BSFixedString	entryPoint;		// CC
+	BSFixedString	lUpperArm;		// D0
+	BSFixedString	lForearm;		// D4
+	BSFixedString	rUpperArm;		// D8
+	BSFixedString	lookNode;		// DC
+	BSFixedString	tail1;			// E0
+	BSFixedString	tailHub;		// E4
+	BSFixedString	npcPelvis;		// E8
+	BSFixedString	talking;		// EC
+	BSFixedString	camera1st;		// F0
+	BSFixedString	camera3rd;		// F4
+	BSFixedString	headMeshForExport;	// F8
+	BSFixedString	pinnedLimb;		// FC
+	BSFixedString	backpack;		// 100
+	BSFixedString	projectileNode;	// 104
+	BSFixedString	blastRadiusNode;	// 108
+	BSFixedString	torchFire;		// 10C
+	BSFixedString	lightOn;		// 110
+	BSFixedString	npcCom;			// 114
+	BSFixedString	skinAttachment;	// 118
+	BSFixedString	npcNeck;		// 11C
+	BSFixedString	nifRound;		// 120
+	BSFixedString	scb;			// 124
+	BSFixedString	upperBody;		// 128
+	BSFixedString	lightOff;		// 12C
+	BSFixedString	headMagicNode;	// 130
+	BSFixedString	lMagicNode;		// 134
+	BSFixedString	rMagicNode;		// 138
+	BSFixedString	magicLeft;		// 13C
+	BSFixedString	magicRight;		// 140
+	BSFixedString	magicOther;		// 144
+	BSFixedString	cameraControl;	// 148
+	BSFixedString	npcRoot;		// 14C
+	BSFixedString	saddleBone;		// 150
+	BSFixedString	perchFireNode;	// 154
+	BSFixedString	animationGraphVariables[101];
+};
+
+class NiWeaponNodes
+{
+public:
+	enum
+	{
+		kTypeWeapon1 = 0,
+		kTypeWeaponSword,
+		kTypeWeaponDagger,
+		kTypeWeaponAxe,
+		kTypeWeaponMace,
+		kTypeWeaponBack1,
+		kTypeWeaponBack2,
+		kTypeWeaponBow1,
+		kTypeWeapon2,
+		kTypeWeaponBow2,
+		kTypeUnknown,
+		kNumTypes
+	};
+
+	static NiWeaponNodes * GetSingleton(void);
+
+	BSFixedString	nodes[kNumTypes];
+};
+
+typedef NiBoneNames * (* _GetBoneNames)(void);
+extern const _GetBoneNames GetBoneNames;
+
+typedef NiAVObject * (* _GetNodeByName)(NiNode * parent, BSFixedString nodeName, UInt8 unk1);
+extern const _GetNodeByName GetNodeByName;
+
+typedef BSFixedString (* _GetNodeNameByWeaponType)(UInt32 weaponType);
+extern const _GetNodeNameByWeaponType GetNodeNameByWeaponType;
+
+typedef BSFixedString (* _GetInternalNode)(UInt32 type, UInt8 unk1);
+extern const _GetInternalNode GetInternalNode;
+
+typedef UInt8 (* _SwapNodeParent)(NiNode * skeleton, BSFixedString sourceNode, BSFixedString destNode, UInt8 unk1);
+extern const _SwapNodeParent SwapNodeParent;

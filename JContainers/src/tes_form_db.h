@@ -2,7 +2,7 @@
 
 namespace collections {
 
-    class tes_form_db : public tes_binding::class_meta_mixin_t<tes_form_db> {
+    class tes_form_db : public reflection::class_meta_mixin_t<tes_form_db> {
     public:
 
         REGISTER_TES_NAME("JFormDB");
@@ -63,23 +63,27 @@ namespace collections {
         };
 
         static form_map *makeFormStorage(const char *storageName) {
-            if (!storageName) {
+            if (!validate_storage_name(storageName)) {
                 return nullptr;
             }
 
             auto db = tes_context::instance().database();
-            form_map *fmap = tes_map::getItem<object_base*>(db, storageName)->as<form_map>();
+            form_map::ref fmap = tes_map::getItem<object_base*>(db, storageName)->as<form_map>();
 
             if (!fmap) {
                 fmap = tes_object::object<form_map>();
-                tes_db::setObj(storageName, fmap);
+                tes_db::setObj(storageName, fmap.to_base<object_base>());
             }
 
-            return fmap;
+            return fmap.get();
         }
 
-        static void setEntry(const char *storageName, TESForm *formKey, object_base *entry) {
-            if (!storageName || !formKey) {
+        static bool validate_storage_name(const char *name) {
+            return name && *name;
+        }
+
+        static void setEntry(const char *storageName, TESForm *formKey, object_stack_ref& entry) {
+            if (!validate_storage_name(storageName) || !formKey) {
                 return;
             }
 
@@ -95,7 +99,7 @@ namespace collections {
         REGISTERF2(setEntry, "storageName fKey entry", "associates given form key and entry (container). set entry to zero to destroy association");
 
         static map *makeMapEntry(const char *storageName, TESForm *form) {
-            if (!form || !storageName) {
+            if (!form || !validate_storage_name(storageName)) {
                 return nullptr;
             }
 
@@ -124,27 +128,28 @@ namespace collections {
         //////////////////////////////////////////////////////////////////////////
 
         template<class T>
-        static T solveGetter(TESForm *form, const char* path) {
+        static T solveGetter(TESForm *form, const char* path, T t = T(0)) {
             subpath_extractor sub(path, is_path);
-            return tes_object::resolveGetter<T>(findEntry(sub.storageName(), form), sub.rest()); 
+            return tes_object::resolveGetter<T>(findEntry(sub.storageName(), form), sub.rest(), t); 
         }
-        REGISTERF(solveGetter<Float32>, "solveFlt", "fKey path", "attempts to get value associated with path.");
-        REGISTERF(solveGetter<SInt32>, "solveInt", "fKey path", NULL);
-        REGISTERF(solveGetter<const char*>, "solveStr", "fKey path", NULL);
-        REGISTERF(solveGetter<object_base*>, "solveObj", "fKey path", NULL);
-        REGISTERF(solveGetter<TESForm*>, "solveForm", "fKey path", NULL);
+        REGISTERF(solveGetter<Float32>, "solveFlt", "fKey path default=0.0", "attempts to get value associated with path.");
+        REGISTERF(solveGetter<SInt32>, "solveInt", "fKey path default=0", nullptr);
+        REGISTERF(solveGetter<const char*>, "solveStr", "fKey path default=\"\"", nullptr);
+        REGISTERF(solveGetter<Handle>, "solveObj", "fKey path default=0", nullptr);
+        REGISTERF(solveGetter<TESForm*>, "solveForm", "fKey path default=None", nullptr);
 
         template<class T>
-        static bool solveSetter(TESForm *form, const char* path, T value) { 
+        static bool solveSetter(TESForm *form, const char* path, T value, bool createMissingKeys = false) {
             subpath_extractor sub(path, is_path);
-            return tes_object::solveSetter(findEntry(sub.storageName(), form), sub.rest(), value);
+            return tes_object::solveSetter(findEntry(sub.storageName(), form), sub.rest(), value, createMissingKeys);
         }
-        REGISTERF(solveSetter<Float32>, "solveFltSetter", "fKey path value",
-            "attempts to assign value. returns false if no such path");
-        REGISTERF(solveSetter<SInt32>, "solveIntSetter", "fKey path value", NULL);
-        REGISTERF(solveSetter<const char*>, "solveStrSetter", "fKey path value", NULL);
-        REGISTERF(solveSetter<object_base*>, "solveObjSetter", "fKey path value", NULL);
-        REGISTERF(solveSetter<TESForm*>, "solveFormSetter", "fKey path value", NULL);
+        REGISTERF(solveSetter<Float32>, "solveFltSetter", "fKey path value createMissingKeys=false",
+            "Attempts to assign value. Returns false if no such path\n"
+            "With 'createMissingKeys=true' it creates any missing path elements: JFormDB.solveIntSetter(formKey, \".frostfall.keyB\", 10, true) creates {frostfall: {keyB: 10}} structure");
+        REGISTERF(solveSetter<SInt32>, "solveIntSetter", "fKey path value createMissingKeys=false", nullptr);
+        REGISTERF(solveSetter<const char*>, "solveStrSetter", "fKey path value createMissingKeys=false", nullptr);
+        REGISTERF(solveSetter<object_stack_ref&>, "solveObjSetter", "fKey path value createMissingKeys=false", nullptr);
+        REGISTERF(solveSetter<TESForm*>, "solveFormSetter", "fKey path value createMissingKeys=false", nullptr);
 
         static bool hasPath(TESForm *form, const char* path) {
             subpath_extractor sub(path);
@@ -188,7 +193,7 @@ namespace collections {
         REGISTERF(setItem<SInt32>, "setInt", "fKey key value", "creates key-value association. replaces existing value if any");
         REGISTERF(setItem<Float32>, "setFlt", "fKey key value", "");
         REGISTERF(setItem<const char *>, "setStr", "fKey key value", "");
-        REGISTERF(setItem<object_base*>, "setObj", "fKey key container", "");
+        REGISTERF(setItem<object_stack_ref&>, "setObj", "fKey key container", "");
         REGISTERF(setItem<TESForm*>, "setForm", "fKey key value", "");
     };
 
@@ -221,16 +226,37 @@ namespace collections {
         expectFail("...");
     }
 
-    TEST(tes_form_db, test)
+    TEST(tes_form_db, storage_and_entry)
+    {
+        const char *storageName = "forms";
+
+        auto formStorage = tes_form_db::makeFormStorage(storageName);
+        EXPECT_NOT_NIL(formStorage);
+        EXPECT_EQ( formStorage, tes_form_db::makeFormStorage(storageName));
+
+        char formData[sizeof TESForm];
+        TESForm *fakeForm = (TESForm *)&formData;
+        fakeForm->formID = 0x14;
+
+        auto entry = tes_form_db::makeMapEntry(storageName, fakeForm);
+        EXPECT_NOT_NIL(entry);
+        EXPECT_EQ(entry, tes_form_db::makeMapEntry(storageName, fakeForm));
+    }
+
+
+    TEST(tes_form_db, get_set)
     {
         char formData[sizeof TESForm];
         TESForm *fakeForm = (TESForm *)&formData;
         fakeForm->formID = 0x14;
 
         const char *path = ".forms.object";
+
         tes_form_db::setItem(fakeForm, path, tes_array::objectWithSize(0));
 
         EXPECT_NOT_NIL( tes_form_db::getItem<object_base*>(fakeForm, path) );
         EXPECT_NOT_NIL( tes_form_db::solveGetter<object_base*>(fakeForm, path) );
     }
+
+
 }
