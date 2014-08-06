@@ -3,7 +3,7 @@
 
 For testing purposes only!
 
-You may add even more functions
+You may add more functionality via creating a new .lua file in JCData/lua/ directory
 
 Example 1
 
