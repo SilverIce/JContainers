@@ -94,7 +94,8 @@
       <PreserveSbr>true</PreserveSbr>
     </Bscmake>
     <PreBuildEvent>
-      <Command>XCOPY "$(ProjectDir)/test_data" "$(TargetDir)/test_data" /E /I /F /Y</Command>
+      <Command>XCOPY "$(ProjectDir)/test_data" "$(TargetDir)/test_data" /E /I /F /Y
+XCOPY "$(ProjectDir)/JCData" "$(TargetDir)/JCData" /E /I /F /Y</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -130,7 +131,8 @@
       <PreserveSbr>true</PreserveSbr>
     </Bscmake>
     <PreBuildEvent>
-      <Command>XCOPY "$(ProjectDir)/test_data" "$(TargetDir)/test_data" /E /I /F /Y</Command>
+      <Command>XCOPY "$(ProjectDir)/test_data" "$(TargetDir)/test_data" /E /I /F /Y
+XCOPY "$(ProjectDir)/JCData" "$(TargetDir)/JCData" /E /I /F /Y</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

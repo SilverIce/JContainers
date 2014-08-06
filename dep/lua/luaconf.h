@@ -58,15 +58,16 @@
 /* #undef LUA_LDIR */
 /* #undef LUA_CDIR */
 
-#define LUA_PATH_DEFAULT ".\\?.lua;!\\..\\\\?.lua;!\\..\\\\?\\init.lua"
-#define LUA_CPATH_DEFAULT ".\\?.dll;!\\..\\\\?.dll;!\\..\\\\loadall.dll"
+#define LUA_PATH_DEFAULT "./?.lua"
+#define LUA_CPATH_DEFAULT "./?.dll"
 
 /*
 @@ LUA_DIRSEP is the directory separator (for submodules).
 ** CHANGE it if your machine does not use "/" as the directory separator
 ** and is not Windows. (On Windows Lua automatically uses "\".)
 */
-#define LUA_DIRSEP	"\\"
+#define LUA_DIRSEP	    "/"
+#define LUA_DIRSEP_ALT	"\\"
 
 /*
 @@ LUA_ENV is the name of the variable that holds the current

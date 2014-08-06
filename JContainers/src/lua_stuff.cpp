@@ -12,6 +12,7 @@
 #include "meta.h"
 #include "gtest.h"
 
+#include "jcontainers_constants.h"
 #include "collections.h"
 #include "json_handling.h"
 #include "skse.h"
@@ -307,10 +308,13 @@ namespace collections {
         lua_context()
             : l(luaL_newstate())
         {
+            luaL_openlibs(l);
+/*
             luaopen_base(l);
+            luaopen_package(l);
             luaopen_math(l);
             luaopen_bit32(l);
-            luaopen_string(l);
+            luaopen_string(l);*/
 
             using namespace std;
             using namespace lua_traits;
@@ -479,33 +483,55 @@ namespace collections { namespace lua_apply {
             lua_setglobal(l, object_to_apply_key);
         }
 
-        const char * lua_directory() {
-            return (skse::is_fake() ? "JContainersLua/" : "Data/SKSE/Plugins/JContainersLua/");
+#   define JC_DATA_DIR     "JCData/"
+
+        const char * data_directory() {
+            return (skse::is_fake() ? JC_DATA_DIR : "Data/SKSE/Plugins/"JC_DATA_DIR);
         }
 
         void load_lua_code(lua_State *l) {
 
             namespace fs = boost::filesystem;
 
-            if (!fs::is_directory(lua_directory())) {
-                return;
-            }
-
-            fs::recursive_directory_iterator itr(lua_directory()), end;
-            for (; itr != end; ++itr) {
-                const auto& path = itr->path();
-
-                if (!fs::is_regular_file(path) || fs::extension(path) != ".lua") {
-                    continue;
-                }
-
-                int failed = luaL_dofile(l, path.generic_string().c_str());
+            auto do_string = [l](const char *code) {
+                int failed = luaL_dostring(l, code);
                 if (failed) {
                     printLuaError(l);
                 }
-            }
+            };
 
-            lua_settop(l, 0);
+            auto loadFromFolder = [&](const char *folder) {
+
+                fs::path dirPath(data_directory());
+                dirPath += folder;
+
+                if (!fs::is_directory(dirPath)) {
+                    return;
+                }
+
+                char luaCode[1024] = { 0 };
+
+                sprintf_s(luaCode, STR(
+                    package.path = package.path .. ";%s?.lua"
+                    ),
+                    dirPath.generic_string().c_str());
+
+                do_string(luaCode);
+
+                fs::directory_iterator itr(dirPath), end;
+                for (; itr != end; ++itr) {
+                    const auto& path = itr->path();
+
+                    if (!fs::is_regular_file(path) || fs::extension(path) != ".lua") {
+                        continue;
+                    }
+                    
+                    sprintf_s(luaCode, STR(require '%s'), path.filename().replace_extension().generic_string().c_str());
+                    do_string(luaCode);
+                }
+            };
+
+            loadFromFolder("lua\\");
         }
 
         void register_apply_functions(lua_State *l)

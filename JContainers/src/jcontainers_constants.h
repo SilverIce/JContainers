@@ -16,6 +16,6 @@ namespace collections {
         kJVersionPatch = 0,
     };
 
-#   define JC_USER_FILES "/My Games/Skyrim/JCUser/"
+#   define JC_USER_FILES    "/My Games/Skyrim/JCUser/"
 
 }
