@@ -11,7 +11,7 @@ namespace collections {
         REGISTER_TES_NAME("JArray");
 
         void additionalSetup() {
-            metaInfo.comment = "Ordered collection of values (value is float, integer, string or another container).\n"
+            metaInfo.comment = "Ordered collection of values (value is float, integer, string, form or another container).\n"
                 "Inherits JValue functionality";
         }
 
@@ -94,20 +94,38 @@ objectWithBooleans converts booleans into integers");
                 return ;
             }
 
-            object_lock g1(obj), g2(another);
+            object_lock g2(another);
 
-            if (insertAtIndex >= 0 && validateWriteIndex(obj.get(), insertAtIndex) == false) {
-                onOutOfBoundAccess();
+            doWriteOp(obj, insertAtIndex, [&obj, &another](uint32_t whereTo) {
+                obj->_array.insert(obj->begin() + whereTo, another->begin(), another->end());
+            });
+        }
+        REGISTERF2(addFromArray, "* source insertAtIndex=-1",
+"adds values from source array into this array. if insertAtIndex is -1 (default behaviour) it adds to the end.\n"
+NEGATIVE_IDX_COMMENT);
+
+        static void addFromFormList(ref obj, BGSListForm *formList, SInt32 insertAtIndex = -1) {
+            if (!obj || !formList) {
                 return;
             }
 
-            SInt32 whereTo = insertAtIndex >= 0 ? insertAtIndex : obj->u_count();
+            struct inserter : BGSListForm::Visitor {
 
-            obj->_array.insert(obj->begin() + whereTo, another->begin(), another->end());
+                virtual bool Accept(TESForm * form) override {
+                    arr->u_push(Item(form));
+                    return false;
+                }
+
+                array *arr;
+
+                inserter(array *obj) : arr(obj) {}
+            };
+
+            doWriteOp(obj, insertAtIndex, [formList, &obj](uint32_t idx) {
+                formList->Visit(inserter(obj.get()));
+            });
         }
-        REGISTERF2(addFromArray, "* sourceArray insertAtIndex=-1",
-"adds values from source array into this array. if insertAtIndex is -1 (default behaviour) it adds to the end.\n\
-if insertAtIndex >= 0 it appends values starting from insertAtIndex index");
+        REGISTERF2(addFromFormList, "* source insertAtIndex=-1", nullptr);
 
         typedef boost::optional<uint32_t> maybe_index;
 

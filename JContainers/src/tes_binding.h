@@ -62,6 +62,9 @@ namespace reflection { namespace binding {
     template<> struct j2Str < TESForm * > {
         static function_parameter typeInfo() { return function_parameter_make("form", nullptr); }
     };
+    template<> struct j2Str < BGSListForm * > {
+        static function_parameter typeInfo() { return function_parameter_make("FormList", nullptr); }
+    };
 
     template<class T> struct j2Str < VMArray<T> > {
         static function_parameter typeInfo() {
