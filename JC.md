@@ -1,4 +1,5 @@
-### Motivation & Overview
+## Motivation & Overview
+
 
 Papyrus lacks of convenient data structures such as dynamic arrays or associative containers. Script language should be simple but not underdeveloped.
 
@@ -6,12 +7,12 @@ This plugin attempts to add missing functionality. Although it is not native fun
 
 Current version implements array and associative (map or dictionary) containers: JArray (array container), JMap and JFormMap (both associative containers) and few convenient wrappers: JDB and JFormDB (databases).
 
-### Table of Contents
+## Table of Contents
 
 * [Reference](#Reference)
 * [Tutorial](#Tutorial)
 
-### Reference
+## Reference
 
 #### What is a value?
 
