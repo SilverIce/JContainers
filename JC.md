@@ -59,10 +59,10 @@ Nothing more that just an interface that shows what functionality JArray, JMap a
 ```lua
 int array = JArray.object()
 int map = JMap.object()
-; // equivalent ways to do same things.
-; // all count functions return zero as new containers are empty
+-- equivalent ways to do same things.
+-- all count functions return zero as new containers are empty
 JValue.count(array) == JArray.count(array) == JValue.count(map)
-; // write container content into file:
+-- write container content into file:
 JValue.writeToFile(map, "map.txt")
 JValue.writeToFile(array, "array.txt")
 ```
@@ -74,10 +74,12 @@ Take it as a global entry point or database - you put information in it under a 
 Typical JDB usage would involve:
 
 1. Setup (during mod installation) where you specify `root key` name. In example below root key is `frostfall`.
-    > **Important:** Choose root name carefully to avoid clashes with rest of JDB root keys and with JFormDB storage names.
+
+ > **Important:** Choose root name carefully to avoid clashes with rest of JDB root keys and with JFormDB storage names.
+
 2. Access data:
 
-    ```
+    ```lua
     -- 1. Setup procedure
     int frosfallData = JValue.readFromFile("frostfall_config.json")
     JDB.setObj("frostfall", frosfallData)
@@ -95,11 +97,11 @@ Provides a convenient way to associate values with a form. You may find it looki
 To store or retrieve value form-key and string path must be passed:
 
 ```lua
-; // store...
+-- store...
 form me
 JFormDB.setFlt(me, ".yourModFormStorage.valueKey", 10)
 JFormDB.setStr(me, ".yourModFormStorage.anotherValueKey", "name")
-; // and retrieve values
+-- and retrieve values
 float value = JFormDB.getFlt(me, ".yourModFormStorage.valueKey")
 ```
 
@@ -111,7 +113,7 @@ String path must always consist of two parts: `formStorageName` and `valueKey`
 It was added to avoid possible collisions: one mod may occasionally override value written by another mod if I'd allowed simple paths without storage name part. The fact that it is a separate storage makes it possible to access that storage, delete it without any risk to delete another mod data:
 
 ```lua
-; // Will destroy everything "yourModFormStorage" contains
+-- Will destroy everything "yourModFormStorage" contains
 JDB.setObj("formStorageName", 0)
 ```
 
@@ -121,10 +123,10 @@ Once a value gets assigned via `JFormDB.set*(formKey, ".formStorageName.valueKey
 Slightly more advanced usage:
 
 ```lua
-; // Will destroy everything associated with 'me' form in "yourModFormStorage" storage
+-- Will destroy everything associated with 'me' form in "yourModFormStorage" storage
 JFormDB.setEntry("yourModFormStorage", me, 0)
  
-; // Custom entry type
+-- Custom entry type
 JFormDB.setEntry("yourModFormStorage", me, JArray.object())
 ```
 
