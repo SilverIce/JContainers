@@ -1,11 +1,10 @@
 ## Motivation & Overview
 
-
-Papyrus lacks of convenient data structures such as dynamic arrays or associative containers. Script language should be simple but not underdeveloped.
+Papyrus lacks convenient data structures such as dynamic arrays or associative containers. Scripting languages such as Papyrus should be simple but not underdeveloped.
 
 This plugin attempts to add missing functionality. Although it is not native functionality and it will never have the nice brackets to access items that the default Papyrus Array has, I believe it is still better than nothing.
 
-Current version implements array and associative (map or dictionary) containers: JArray (array container), JMap and JFormMap (both associative containers) and few convenient wrappers: JDB and JFormDB (databases).
+The current version implements array and associative (map or dictionary) containers: JArray (array container), JMap and JFormMap (both associative containers) and a few convenient wrappers: JDB and JFormDB (databases).
 
 ## Table of Contents
 
@@ -131,19 +130,27 @@ JFormDB.setEntry("yourModFormStorage", me, JArray.object())
 
 ### API usage notes
 
-First and foremost - game will not crash no matter what data you will pass into JContainer functions. The following happens if function gets called with invalid input (state when input cannot be handled properly):
+First and foremost, the game will not crash no matter what data you pass into JContainer functions. The following happens if a function gets called with invalid input (when input cannot be handled properly):
 
-All functions returning new container return zero identifier. For. ex `JValue.readFromFile("")` returns 0 because of invalid file path. Zero identifier means non-existing object. It’s ok to pass it into other functions - in that case function will return default value.
+All functions returning new containers return zero identifier. For. ex `JValue.readFromFile("")` returns 0 because of an invalid file path. Zero identifier means non-existing object. It’s ok to pass it into other functions - in that case the function will return the default value.
 
-All functions that read container contents (such as `getFlt`, `solveFlt`, `getStr`, `count`, `allKeys` and etc) return default value. In case function returns integer or float - default value is 0, string or form - `None`, container identifier - 0.
+All functions that read container contents (such as `getFlt`, `solveFlt`, `getStr`, `count`, `allKeys`, etc.) return the default value. For function that return an integer or float, the default value is 0, for functions that return a string or form the default value is `None`, and for functions that return a container the default value is 0.
 
 ### Object persistence
 
-Every container object persists in save file until it (container) gets destroyed. When save performed all objects are saved and all objects are resurrected when save file gets loaded.
+Every container object persists in save file until the container gets destroyed. When a save is performed, all objects are saved and all objects are resurrected when the save file gets loaded.
 
 ### JSON serialization
 
-As said above, it’s possible to serialize/deserialize container data (write to or read from an external file). While numbers and strings serialized in natural way, store form information is slight tricky as JSON knows nothing about Skyrim forms (and also because global form id depends on mod load order). Serialized form is a string prefixed with `"__formData"`, plugin file name and local or global form id (hex or decimal number).
+As said above, it's possible to serialize/deserialize container data (write to or read from an external file). While numbers and strings are serialized in a natural way, storing form information is slightly tricky because JSON knows nothing about Skyrim forms (and also because global form id depends on mod load order). A serialized form is a string prefixed with `"__formData"`, the plugin file name, and the local or global form id (hex or decimal number).
+
+Serialization:
+```lua
+int playerData = JMap.object()
+JMap.setForm(playerData, "actor", playerForm)
+JMap.setInt(playerData, "level", playerForm.GetLevel())
+JValue.writeToFile(playerData, "Data/playerInfo.txt")
+```
 
 Example of serialized JMap containing player's form associated with `"test"` key:
 ```json
@@ -153,7 +160,7 @@ Example of serialized JMap containing player's form associated with `"test"` key
     "level": 2
 }
 ```
-Serialized array and nested form-map container:
+Example of a serialized array woth a nested form-map container:
 ```json
 [
     0,
@@ -166,13 +173,7 @@ Serialized array and nested form-map container:
     "just a string"
 ]
 ```
-Serialization:
-```lua
-int playerData = JMap.object()
-JMap.setForm(playerData, "actor", playerForm)
-JMap.setInt(playerData, "level", playerForm.GetLevel())
-JValue.writeToFile(playerData, "Data/playerInfo.txt")
-```
+
 Deserialization:
 ```lua
 int data = JValue.readFromFile("Data/playerInfo.txt")
@@ -209,7 +210,7 @@ JValue.solveIntSetter(info, ".numbers[0]", 10)
 
 ### Collection operators
 
-Feature allows execute functions on collection (container) elements. It’s accessible via solve* functions.
+This feature allows executing functions on collection (container) elements. It's accessible via solve* functions.
 Syntax:
 
 * @function
@@ -217,15 +218,15 @@ Syntax:
 * path.to.container@function
 * path.to.container@function.path.to.element
 
-path.to.container - is the path to retrieve collection.
+path.to.container - the path to the collection you want to retrieve.
 
-function - is the function that will be applied on each collection element. Currently only few functions implemented:
+function - the function that will be applied on each element of the collection. Currently these functions are implemented:
 
 * minNum, maxNum (search for min or max number, works with any number type (int or float))
-* minFlt, maxFlt - the same as above, accepts float values only
-* minInt, maxInt - the same as above, accepts integer values only
+* minFlt, maxFlt - the same as above, but accepts float values only
+* minInt, maxInt - the same as above, but accepts integer values only
 
-path.to.element - is the path to retrieve element.
+path.to.element - the path to the element you want to retrieve.
 
 Examples (pseudo-code):
 ```lua
@@ -250,40 +251,40 @@ solveFlt(obj, ".mapKey@maxNum.value.k") is 100
 
 ### Key naming convention
 
-In order to make path resolving and collection operators features function properly sting-keys should not contain point, square brackets or `@` characters. For instance, the following code will fail to work:
+In order to make path resolving and collection operators function properly, string keys should not contain the decimal character, square brackets, or the `@` character. For instance, the following code will fail to work:
 ```lua
 obj = { "invalid.key" : {"k": 10} }
 
 solveInt(map, ".invalid.key.k") is 0
 
-// although it's still possible to access value in another way:
+// although it's still possible to access that value in the traditional way:
 getObj(map, "invalid.key") is {"k": 10}
 ```
-This convention applies to every key-string, not just JMap key - it affects JFormDB storage name and keys, JDB.setObj key. Key naming shouldn't matter if it not involved in path resolving.
+This convention applies to every key string, not just the JMap key.  It affects JFormDB storage name and keys as well as JDB.setObj key. Key naming shouldn't matter if you don't use path resolving.
 
 ### Number conversion notes
 
-Functions accessing number (`getFlt`, `solveFlt`, `getInt`, `solveInt`) may convert it e.g. able to read any kind of number no matter whether stored number is integer or real value. While the rest of `get*` and `solve*` functions may fail to perform conversion and return default value.
+Functions that handle numbers (`getFlt`, `solveFlt`, `getInt`, `solveInt`) will convert the numbers they handle into their respective types.  For example, `getFlt` will return a float `1.0` if the number passed to it is the int `1`.  On the other hand, the rest of the `get*` and `solve*` functions may fail to perform conversions and will return default values.
 
 
 ### Object lifetime management rules
 
-Each time script creates new string or papyrus array, Skyrim allocates memory and automatically frees it when you do not need that string or array or something else.
+Each time a script creates a new string or Papyrus array, Skyrim allocates memory and automatically frees it when you do not need that string or array anymore.
 
-Internally all containers are C++ objects, Skyrim knows nothing about them and unable to manage their lifetime and memory.
+In JContainers, internally all containers are C++ objects, so Skyrim knows nothing about them and can not manage their lifetime and memory.
 
 The lifetime management model is based on object ownership. Any container object may have one or more owners. As long as an object has at least one owner, it continues to exist. If an object has no owners it gets destroyed.
 
 #### Functionality to manage object's lifetime:
 -------------
 ```lua
-int function retain(int object, string tag=None)
+int function retain(int object, string tag="")
 int function release(int object)
 function releaseObjectsWithTag(string tag)
 ```
-The lifetime model implemented using simple owner (reference) counter. Each object have a such counter. Each time the object gets inserted into another container or `JValue.retain` used object's reference counter increases. Each time object gets removed from container or released via `JValue.release` - reference counter decreases.
-When reference counter reaches zero, object temporarily owned for roughly 10 seconds, during this period of time it have a _last chance to survive_ - and gets destroyed if nobody owned it.
-Newly created object (created with `object`, `objectWith*`, `all/Keys/Values` or `readFromFile` function) also have that _last chance_.
+The lifetime model implemented using simple owner (reference) counting. Each object have a such counter. Each time the object gets inserted into another container or `JValue.retain` is called the counter increases by 1. Each time the object gets removed from a container or released via `JValue.release` the reference counter decreases by 1.
+If the reference counter reaches zero, the object is temporarily owned for roughly 10 seconds. During this period of time the object have a _last chance to survive_ - and gets destroyed if nobody owns it.
+Newly created objects (object created with `object`, `objectWith*`, `all/Keys/Values` or `readFromFile`) also have that 'last chance to survive'_.
 
 Illustration shows the idea: ![test][1]
 
