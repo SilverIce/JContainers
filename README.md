@@ -10,7 +10,7 @@ JContainers is a Skyrim plugin that extends Papyrus by adding various data struc
 
 #### Documentation
 
-The most up-to-date documentation can be found [here](https://github.com/SilverIce/JContainers/blob/gh-pages/JC.md).
+The most up-to-date documentation can be found [here](JC.md).
 
 #### Installation
 
