@@ -8,8 +8,8 @@ The current version implements array and associative (map or dictionary) contain
 
 ## Table of Contents
 
-* [Reference](#Reference)
-* [Tutorial](#Tutorial)
+* [Reference](JC.md#Reference)
+* [Tutorial](JC.md#Tutorial)
 
 ## Reference
 
@@ -78,11 +78,11 @@ Typical JDB usage would involve:
 2. Access data:
 
     ```
-    ;// 1. Setup procedure
+    -- 1. Setup procedure
     int frosfallData = JValue.readFromFile("frostfall_config.json")
     JDB.setObj("frostfall", frosfallData)
 
-    ;// 2. read/write data later in another script:
+    -- 2. read/write data later in another script:
     int lighttignMode = JDB.solveInt(".frostfall.campfileLightingMode")
     JDB.solveIntSetter(".frostfall.campfileLightingMode", 1)
     ```
@@ -327,61 +327,65 @@ In JContainers, internally all containers are C++ objects, so Skyrim knows nothi
 The lifetime management model is based on object ownership. Any container object may have one or more owners. As long as an object has at least one owner, it continues to exist. If an object has no owners it gets destroyed.
 
 #### Functionality to manage object's lifetime:
--------------
-```lua
+
+- retain-release:
+
+ ```lua
 int function retain(int object, string tag="")
 int function release(int object)
 function releaseObjectsWithTag(string tag)
-```
-The lifetime model implemented using simple owner (reference) counting. Each object have a such counter. Each time the object gets inserted into another container or `JValue.retain` is called the counter increases by 1. Each time the object gets removed from a container or released via `JValue.release` the reference counter decreases by 1.
+ ```
+ The lifetime model implemented using simple owner (reference) counting. Each object have a such counter. Each time the object gets inserted into another container or `JValue.retain` is called the counter increases by 1. Each time the object gets removed from a container or released via `JValue.release` the reference counter decreases by 1.
 If the reference counter reaches zero, the object is temporarily owned for roughly 10 seconds. During this period of time the object have a _last chance to survive_ - and gets destroyed if nobody owns it.
-Newly created objects (object created with `object`, `objectWith*`, `all/Keys/Values` or `readFromFile`) also have that 'last chance to survive'_.
+Newly created objects (object created with `object`, `objectWith*`, `all/Keys/Values` or `readFromFile`) also have that _last chance to survive_.
 
-Illustration shows the idea: ![test][1]
+ Illustration shows the idea: ![test][1]
 
-> **Important:** The caller of `JValue.retain` is responsible for releasing object. Not released object will remain in save file forever.
+ > **Important:** The caller of `JValue.retain` is responsible for releasing object. Not released object will remain in save file forever.
     
-`Tag` parameter marks an object. `None` tag does nothing. Must be an unique string (mod name may fit). Why we need a tag? We all human. We may forget to release an object. Papyrus may throw an error in between `retain .. release` and in a result `release` will not be executed. By tagging an object you leave a possibility to track lost objects with specific tag and release them via `JValue.releaseObjectsWithTag` function.
+ `Tag` parameter marks an object. `None` tag does nothing. Must be an unique string (mod name may fit). Why we need a tag? We all human. We may forget to release an object. Papyrus may throw an error in between `retain .. release` and in a result `release` will not be executed. By tagging an object you leave a possibility to track lost objects with specific tag and release them via `JValue.releaseObjectsWithTag` function.
     
-> **Important:** `JValue.releaseObjectsWithTag` complements all `retain` calls with `release` that were ever made to all objects with given tag.
+ > **Important:** `JValue.releaseObjectsWithTag` complements all `retain` calls with `release` that were ever made to all objects with given tag.
     
-```lua
+ ```lua
 int function releaseAndRetain(int previousObject, int newObject, string tag=None)
-```
-It's just a union of retain-release calls. Releases `previousObject`, retains, tags and returns `newObject`. Typical usage:
+ ```
+ It's just a union of retain-release calls. Releases `previousObject`, retains, tags and returns `newObject`. Typical usage:
     
-```lua
-; -- create and retain an object
-self.followers = JArray.object()
-; -- release object
-self.followers = 0
-; -- or replace with another
-self.followers = JArray.object()
+ ```lua
+ -- create and retain an object
+ self.followers = JArray.object()
+ -- release object
+ self.followers = 0
+ -- or replace with another
+ self.followers = JArray.object()
 
-int property followers hidden
+ int property followers hidden
     int function get()
         return _followers
     endFunction
     function set(int value)
         _followers = JValue.releaseAndRetain(_followers, value, "uniqueTag")
     endFunction
-endProperty
+ endProperty
     
-int _followers = 0
-```
--------------
-```lua
-int function addToPool(int object, string poolName) global native
-function cleanPool(string poolName) global native
-```
+ int _followers = 0
+ ```
 
-Handy for temporary objects (objects with no owners) - when it's known that object's lifetime should exceed 10 seconds. Pool `poolName` (must be an unique string - mod name may fit) owns any amount of objects, preventing their destruction, extends lifetime. Internally location is JArray - `addToPool` adds an object and `cleanPool` clears pool. Do not forget to clean location later! Typical use:
+- pools: 
 
-```lua
-int tempMap = JValue.addToPool(JMap.object(), "uniquePoolName")
-;// anywhere later:
-JValue.cleanPool("uniquePoolName")
-```
+ ```lua
+ int function addToPool(int object, string poolName) global native
+ function cleanPool(string poolName) global native
+ ```
+
+ Handy for temporary objects (objects with no owners) - when it's known that object's lifetime should exceed 10 seconds. Pool `poolName` (must be an unique string - mod name may fit) owns any amount of objects, preventing their destruction, extends lifetime. Internally location is JArray - `addToPool` adds an object and `cleanPool` clears pool. Do not forget to clean location later! Typical use:
+
+ ```lua
+ int tempMap = JValue.addToPool(JMap.object(), "uniquePoolName")
+ -- anywhere later:
+ JValue.cleanPool("uniquePoolName")
+ ```
 
 
 ## Tutorial
@@ -392,19 +396,19 @@ Suppose you want to store some actor related information (let it be player’s f
 
 ```lua
 function storeFolloverMood(form follower, float mood)
-    ;// function creates "followers" storage and then creates
-    ;// (follower, entry) associations
+    -- function creates "followers" storage and then creates
+    -- (follower, entry) associations
     JFormDB.setFlt(follower, ".followers.mood", mood)
 endfunction
 
 float function followerMood(form follower)
-    ;// fetch follower mood
+    -- fetch follower mood
     return JFormDB.getFlt(follower, ".followers.mood")
 endfunction
 
 ; method that gets called once user uninstalls your mod
 function modUninstallMethod()
-    ;//  destroy association to not pollute game save and precious RAM
+    --  destroy association to not pollute game save and precious RAM
     JDB.setObj("followers", 0)
 endfunction
 ```
@@ -433,23 +437,23 @@ You wish to have all your mod config values to be stored somewhere (for ex. in `
 It contains root map containing two maps - two standard presets your mod provides - classicPreset & winterHorkerPreset. Config file reading may look like:
 
 ```lua
-;// let it be .classicPreset or .winterHorkerPreset string
+-- let it be .classicPreset or .winterHorkerPreset string
 string currentPreset
 
-;// use function each time you need re-read preset from a file
+-- use function each time you need re-read preset from a file
 function parseConfig()
-    ;// that’s all. presets are already in Skyrim
-    ;// readFromFile returns root map container
-    ;// it may return zero if file not exist or it can not be parsed (not JSON format or you have accidentally added extra coma)
+    -- that’s all. presets are already in Skyrim
+    -- readFromFile returns root map container
+    -- it may return zero if file not exist or it can not be parsed (not JSON format or you have accidentally added extra coma)
     int config = JValue.readFromFile("Data/preset.txt")
-    ;// put config into DB - associate key and config
+    -- put config into DB - associate key and config
     JDB.setObj("frostfall", config)
     currentPreset = ".classicPreset"
 endfunction
 
 bool function axeDurabilityEnabled()
-    ;// solveInt like any solve* function tries to find (solve) value for given path
-    ;// current path is ".frostfall.classicPreset.axeDurability"
+    -- solveInt like any solve* function tries to find (solve) value for given path
+    -- current path is ".frostfall.classicPreset.axeDurability"
     return JDB.solveInt(".frostfall" + currentPreset + ".axeDurability") != 0
 endfunction
 
@@ -473,21 +477,21 @@ What you see here is one array that contains 4 sub-arrays and each sub-array con
 
 ```lua
 EventOnEffectStart(Actor akTarget, Actor akCaster)
-    ;//  read config file from game root folder and associate it with "scaleMod" key
+    --  read config file from game root folder and associate it with "scaleMod" key
     JDB.setObj("scaleMod", JValue.readFromFile("scale.txt"))
 Endevent
 
 function setScale(float scale)
     objectreference plr = GetTargetActor()
     
-    ;// retrieve config
+    -- retrieve config
     int config = JDB.solveObj(".scaleMod")
     
-    ;// iterate over array & calculate bone scale
+    -- iterate over array & calculate bone scale
     int i = JArray.count(config)
     while(i > 0)
         i -= 1
-        ;// fetch sub-array. it can be ["NPC Head [Head]", 0, -0.33] for instance
+        -- fetch sub-array. it can be ["NPC Head [Head]", 0, -0.33] for instance
         int data = JArray.getObj(config, i)
         float nodeScale = 1.0 + JArray.getFlt(data,1) + (JArray.getFlt(data,2) - JArray.getFlt(data,1)) * scale
         NetImmerse.SetNodeScale(plr, JArray.getStr(data, 0), nodeScale, False)
@@ -510,21 +514,21 @@ We will store all per-actor information in following structure:
 Here you can see a map that contains 3 key-value associations: mood and angler (both values are zeros initially) and `"victims": []` association (`[]` means empty array).
 ```lua
 function storeFollowerMood(form follower, float mood)
-    ;// get follower entry to write into it
+    -- get follower entry to write into it
     int entry = getActorEntry(follower)
-    ;// write mood into follower entry
+    -- write mood into follower entry
     JValue.solveFltSetter(entry, ".mood", mood)
 endfunction
 
 function addFollowerVictim(form follower, form victim)
-    ;// get follower entry to write into it AND then get victims array
+    -- get follower entry to write into it AND then get victims array
     int victims = JValue.solveObj(getActorEntry(follower), ".victims")
-    ;// add victim into array
+    -- add victim into array
     JArray.addForm(victims, victim)
 endfunction
 
 float function followerMood(form follower)
-    ;// get follower entry AND fetch mood
+    -- get follower entry AND fetch mood
     return JValue.solveFlt(getActorEntry(follower), ".mood")
 endfunction
 
@@ -532,10 +536,10 @@ float function followerAnger(form follower)
     return JValue.solveFlt(getActorEntry(follower), ".anger")
 endfunction
 
-;// find (or create new if not found) per-actor information containing mood, anger and array of victims
+-- find (or create new if not found) per-actor information containing mood, anger and array of victims
 int function getActorEntry(form actor)
     int entry = JFormMap.getObj(self.followers, follower)
-    ;// if no entry found - create new from prototype-string
+    -- if no entry found - create new from prototype-string
     if !entry
         entry = JValue.objectWithPrototype("{ \"mood\": 0, \"anger\": 0, \"victims\": [] }")
         JFormMap.setObj(self.followers, follower, entry)
@@ -544,30 +548,30 @@ int function getActorEntry(form actor)
     return entry
 endfunction
 
-;// property hides all black magick - retains & releases object
-;// see 'Object lifetime management rules' section for more of it
+-- property hides all black magick - retains & releases object
+-- see 'Object lifetime management rules' section for more of it
 int property followers hidden
     int function get()
         return _followers
     endFunction
     function set(int value)
-        ;// retainAndRelease releases previous _followers object
-        ;// and owns (retains) a new
+        -- retainAndRelease releases previous _followers object
+        -- and owns (retains) a new
         _followers = JValue.releaseAndRetain(_followers, value)
     endFunction
 endProperty
 
 int _followers = 0
 
-;// initial setup function where you usually do the things once mod gets installed
+-- initial setup function where you usually do the things once mod gets installed
 function modSetupMethod()
-    ;// create and retain JFormMap container
+    -- create and retain JFormMap container
     self.followers = JFormMap.object()
 endfunction
 
-;// method that gets called once user uninstalls it via MCM
+-- method that gets called once user uninstalls it via MCM
 function modUninstallMethod()
-    ;// release followers container to not pollute game save
+    -- release followers container to not pollute game save
     self.followers = 0
 endfunction
 ```
