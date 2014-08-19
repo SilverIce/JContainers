@@ -266,7 +266,58 @@ This convention applies to every key string, not just the JMap key.  It affects 
 
 Functions that handle numbers (`getFlt`, `solveFlt`, `getInt`, `solveInt`) will convert the numbers they handle into their respective types.  For example, `getFlt` will return a float `1.0` if the number passed to it is the int `1`.  On the other hand, the rest of the `get*` and `solve*` functions may fail to perform conversions and will return default values.
 
+### Lua
 
+Since 3.0 JContainers embeds Lua. Benefits of using Lua:
+
+- any standard lua library functionality available (bitwise operations, math, string manipulation, operating system facilities and etc)
+- seek, sort (in development) JArray with user specified predicate
+
+Typical usage may look like:
+
+- you invoke any lua function with `JValue.evalLuaFlt/Int/Str/Form/Obj`:
+
+ ```lua
+ float pi = JValue.evalLuaFlt(0, "return math.pi")
+ JValue.evalLuaInt(0, "return bit32.bxor(8, 2, 10)") -- returns 8 xor 2 xor 10
+ ```
+ 
+ ```lua
+ obj = [
+         {   "theSearchString": "a",
+             "theSearchForm" : "__formData|A|0x14"
+         },
+         {   "theSearchString": "b",
+             "theSearchForm" : "__formData|A|0x15"
+         }
+ ]
+ 
+ -- returns 1 - an array index where `arrayItem.theSearchString == 'b'`
+ JValue.evalLuaInt(obj, "return find(jobject, function(x) return x.theSearchString == 'b' end")
+ ```
+
+- you write your own functionality in a _Data/SKSE/Plugins/JCData/lua/frostfall.lua_ file:
+
+ ```lua
+ -- frostfall module depends on 'JCData/lua/jc.lua'
+ require 'jc'
+ 
+ local frostfall = {}
+ 
+ function frostfall.countItemsLessAndGreaterThan(collection, less, greater)
+     return count(collection, function(x)
+        return x < less and x > greater
+     end)
+ end
+
+ return frostfall
+ ```
+ Papyrus:
+ ```lua
+ 
+  JValue.evalLuaInt(obj, "return frostfall.countItemsLessAndGreaterThan(jobject, 60, -5")
+ ```
+ 
 ### Object lifetime management rules
 
 Each time a script creates a new string or Papyrus array, Skyrim allocates memory and automatically frees it when you do not need that string or array anymore.
