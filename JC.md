@@ -8,8 +8,8 @@ The current version implements array and associative (map or dictionary) contain
 
 ## Table of Contents
 
-* [Reference](JC.md#Reference)
-* [Tutorial](JC.md#Tutorial)
+* [Reference](JC.md#reference)
+* [Tutorial](JC.md#tutorial)
 
 ## Reference
 
