@@ -19,10 +19,19 @@ namespace collections {
         }
         REGISTERF2(APIVersion, nullptr, []() {
             std::stringstream comm;
-            comm << "returns API version. Incremented by 1 each time old API is not backward compatible with new one.\n";
-            comm << "current API version is " << APIVersion();
+            comm << "Version information.\n"
+                "It's a good practice to validate installed JContainers version with the following code:\n"
+                "    bool isJCValid = JContainers.APIVersion() == AV && JContainers.featureVersion() >= FV\n"
+                "where AV and FV are hardcoded API and feature version numbers.\n";
+            comm << "Current API version is " << APIVersion() << std::endl;
+            comm << "Current feature version is " << featureVersion();
             return comm.str();
         });
+
+        static UInt32 featureVersion() {
+            return kJVersionMinor;
+        }
+        REGISTERF2(featureVersion, nullptr, nullptr);
 
         static bool fileExistsAtPath(const char *filename) {
             if (!filename) {
@@ -33,7 +42,14 @@ namespace collections {
             int result = _stat(filename, &buf);
             return result == 0;
         }
-        REGISTERF2(fileExistsAtPath, "path", "returns true if file at path exists");
+        REGISTERF2(fileExistsAtPath, "path", "Returns true if file at a specified path exists");
+
+        static void removeFileAtPath(const char *filename) {
+            if (filename) {
+                boost::filesystem::remove_all(filename);
+            }
+        }
+        REGISTERF2(removeFileAtPath, "path", "Deletes the file or directory identified by a given path");
 
         static std::string userDirectory() {
             char path[MAX_PATH];
