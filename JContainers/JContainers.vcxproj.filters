@@ -31,6 +31,9 @@
     <Filter Include="collections_module\lua">
       <UniqueIdentifier>{bc4ac5ac-882f-4d98-a11d-e0f0d63cb96f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="lua_scripts">
+      <UniqueIdentifier>{f6db937d-fad4-4e64-a279-41b638d8237a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\serialization.cpp">
@@ -194,5 +197,13 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="JContainers.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="JCData\lua\jc.lua">
+      <Filter>lua_scripts</Filter>
+    </None>
+    <None Include="JCData\lua\MyModRoot.lua.example">
+      <Filter>lua_scripts</Filter>
+    </None>
   </ItemGroup>
 </Project>

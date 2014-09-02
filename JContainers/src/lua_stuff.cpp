@@ -473,14 +473,17 @@ namespace collections { namespace lua_apply {
     namespace {
 
         void register_cfunctions(lua_State *l) {
+            lua_settop(l, 0);
+
+            lua_getglobal(l, "jc");
+
+            lua_pushstring(l, "apply");
             lua_pushcfunction(l, lua_apply_func);
-            lua_setglobal(l, "apply");
+            lua_settable(l, 1);
 
+            lua_pushstring(l, "filter");
             lua_pushcfunction(l, lua_filter_func);
-            lua_setglobal(l, "filter");
-
-            lua_pushnil(l);
-            lua_setglobal(l, object_to_apply_key);
+            lua_settable(l, 1);
         }
 
 #   define JC_DATA_DIR     "JCData/"
@@ -534,10 +537,9 @@ namespace collections { namespace lua_apply {
             loadFromFolder("lua\\");
         }
 
-        void register_apply_functions(lua_State *l)
-        {
-            register_cfunctions(l);
+        void register_apply_functions(lua_State *l) {
             load_lua_code(l);
+            register_cfunctions(l);
         }
         LUA_CONTEXT_MODIFIER(register_apply_functions);
     }
@@ -571,19 +573,19 @@ namespace collections { namespace lua_apply {
         root->setValueForKey("aKey", Item(obj));
 
         auto result = process_apply_func(obj, STR(
-            return find(jobject, greater(2))
+            return jc.find(jobject, jc.greater(2))
             ));
 
         EXPECT_TRUE(result.intValue() == 2);
 
         result = process_apply_func(root, STR(
-            return find(jobject.aKey, greater(1))
+            return jc.find(jobject.aKey, jc.greater(1))
             ));
         
         EXPECT_TRUE(result.intValue() == 1);
 
         result = process_apply_func(root, STR(
-            return count(jobject.aKey, greater(1))
+            return jc.count(jobject.aKey, jc.greater(1))
             ));
 
         EXPECT_TRUE(result.intValue() == 2);
@@ -604,7 +606,7 @@ namespace collections { namespace lua_apply {
         ));
 
         auto result = process_apply_func(obj, STR(
-            return find(jobject, function(x) return x.theSearchString == 'b' end)
+            return jc.find(jobject, function(x) return x.theSearchString == 'b' end)
             ));
 
         EXPECT_TRUE(result.intValue() == 1);
