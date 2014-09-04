@@ -1,9 +1,11 @@
 
-namespace collections {
+namespace tes_api_3 {
+
+    using namespace collections;
 
 #define NEGATIVE_IDX_COMMENT "negative index accesses items from the end of array counting backwards."
 
-    class tes_array : public reflection::class_meta_mixin_t< tes_array > {
+    class tes_array : public class_meta< tes_array > {
     public:
 
         typedef array::ref& ref;

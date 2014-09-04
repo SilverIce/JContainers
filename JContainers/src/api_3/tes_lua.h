@@ -1,6 +1,6 @@
 namespace collections {
 #if 0
-    class tes_lua : public reflection::class_meta_mixin_t < tes_lua > {
+    class tes_lua : public class_meta < tes_lua > {
     public:
 
         void additionalSetup() {

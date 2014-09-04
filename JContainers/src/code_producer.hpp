@@ -79,7 +79,7 @@ namespace reflection {
             _pushComment(self.comment, str);
 
             str += "Scriptname ";
-            str += self.className;
+            str += self.className();
 
             if (!self.extendsClass.empty()) {
                 (str += " extends ") += self.extendsClass;
@@ -96,7 +96,7 @@ namespace reflection {
         }
 
         void produceClassToFile(const class_info& self) {
-            auto file = fopen((std::string(self.className) + ".psc").c_str(), "w");
+            auto file = fopen((self.className() + ".psc").c_str(), "w");
             assert(file);
             if (file) {
                 auto code = produceClassCode(self);

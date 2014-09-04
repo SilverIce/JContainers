@@ -7,7 +7,7 @@ namespace collections {
     public:
 
         tes_string() {
-            metaInfo.className = "JString";
+            metaInfo._className = "JString";
             metaInfo.comment = "various string utility methods";
         }
 

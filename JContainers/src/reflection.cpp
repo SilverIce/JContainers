@@ -18,12 +18,12 @@ namespace reflection {
             for (auto & item : meta<class_info_creator>::getListConst()) {
                 class_info& info = item();
 
-                auto found = classDB.find(info.className);
+                auto found = classDB.find(info.className());
                 if (found != classDB.end()) {
                     found->second.merge_with_extension(info);
                 }
                 else {
-                    classDB[info.className] = info;
+                    classDB[info.className()] = info;
                 }
             }
 

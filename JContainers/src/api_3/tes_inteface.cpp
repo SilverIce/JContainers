@@ -27,16 +27,7 @@
 
 #include "collection_bind_traits.h"
 
-#include "tes_object.h"
-#include "tes_array.h"
-#include "tes_map.h"
-#include "tes_db.h"
-#include "tes_jcontainers.h"
-#include "tes_string.h"
-#include "tes_form_db.h"
-#include "tes_lua.h"
-
-#include "collections.tests.hpp"
+#include "api_3/master.h"
 
 namespace collections {
 

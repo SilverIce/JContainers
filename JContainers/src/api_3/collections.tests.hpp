@@ -2,7 +2,9 @@
 
 #include <future>
 
-namespace collections {
+namespace tes_api_3 {
+
+    using namespace collections;
 
     struct JCFixture : testing::Fixture {
         tes_context context;
@@ -20,7 +22,7 @@ namespace collections {
 
 #ifndef TEST_COMPILATION_DISABLED
 
-namespace collections {
+namespace tes_api_3 {
 
     const char * jsonTestString() {
         const char *jsonString = STR(
@@ -384,7 +386,7 @@ namespace collections {
 }
 
 // API-related tests:
-namespace collections {
+namespace tes_api_3 {
 
     JC_TEST(array,  test)
     {
@@ -629,7 +631,7 @@ namespace collections {
     }
 }
 
-namespace collections {
+namespace tes_api_3 {
 
     JC_TEST(tes_context, database)
     {
@@ -643,9 +645,7 @@ namespace collections {
 
     JC_TEST(autorelease_queue, over_release)
     {
-        using namespace std;
-
-        vector<Handle> identifiers;
+        std::vector<Handle> identifiers;
         //int countBefore = queue.count();
 
         for (int i = 0; i < 10; ++i) {
@@ -683,9 +683,7 @@ namespace collections {
 
     JC_TEST(autorelease_queue, ensure_destroys)
     {
-        using namespace std;
-
-        vector<Handle> public_identifiers, privateIds;
+        std::vector<Handle> public_identifiers, privateIds;
 
         for (int i = 0; i < 10; ++i) {
             auto obj = map::object(context);
@@ -696,13 +694,13 @@ namespace collections {
             priv->prolong_lifetime();
         }
 
-        auto allExist = [&](vector<Handle>& identifiers) {
+        auto allExist = [&](std::vector<Handle>& identifiers) {
             return std::all_of(identifiers.begin(), identifiers.end(), [&](Handle id) {
                 return context.getObject(id);
             });
         };
 
-        auto allDestroyed = [&](vector<Handle>& identifiers) {
+        auto allDestroyed = [&](std::vector<Handle>& identifiers) {
             return std::all_of(identifiers.begin(), identifiers.end(), [&](Handle id) {
                 return !context.getObject(id);
             });

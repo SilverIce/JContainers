@@ -4,6 +4,7 @@
 #include <vector>
 #include <assert.h>
 #include <algorithm>
+#include <stdint.h>
 
 #include "meta.h"
 
@@ -79,12 +80,25 @@ namespace reflection {
     struct class_info {
 
         std::vector<function_info > methods;
-        std::string className;
+        std::string _className;
         std::string extendsClass;
         std::string comment;
+        uint32_t version = 0;
 
         class_info() {
-            className = "NoClassName";
+            _className = "NoClassName";
+        }
+
+        bool initialized() const {
+            return !_className.empty();
+        }
+
+        std::string className() const {
+#   if 0
+            return _className + '_' + (char)((uint32_t)'0' + version);
+#   else
+            return _className;
+#   endif
         }
 
         const function_info * find_function(const char* func_name) const {
@@ -98,15 +112,17 @@ namespace reflection {
         }
 
         void bind(VMClassRegistry* registry) const {
-            assert(!className.empty());
+            assert(initialized());
 
+            auto clsName = className();
             for (const auto& itm : methods) {
-                itm.bind(registry, className.c_str());
+                itm.bind(registry, clsName.c_str());
             }
         }
 
         void merge_with_extension(const class_info& extension) {
-            assert(className == extension.className);
+            assert(initialized());
+            assert(className() == extension.className());
             assert(extendsClass == extension.extendsClass);
 
             for (const auto& itm : extension.methods) {

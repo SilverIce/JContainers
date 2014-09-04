@@ -250,7 +250,7 @@ namespace reflection { namespace binding {
         CONCAT(_struct_, __LINE__)() {\
             using namespace reflection;\
             auto& mInfo = binding::metaInfoFromFieldAndOffset( this, offsetof(__Type, CONCAT(_mem_, __LINE__)) );\
-            mInfo.className = (ScriptTesName);\
+            mInfo._className = (ScriptTesName);\
         }\
     } CONCAT(_mem_, __LINE__);
 

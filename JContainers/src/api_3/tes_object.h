@@ -1,4 +1,6 @@
-namespace collections {
+namespace tes_api_3 {
+
+    using namespace collections;
 
     const char *kCommentObject = "creates new container object. returns container identifier (integer number).\n"
         "identifier is the thing you will have to pass to the most of container's functions as a first argument";
@@ -8,7 +10,7 @@ namespace collections {
 
 #define ARGS(...)   #__VA_ARGS__
 
-    class tes_object : public reflection::class_meta_mixin_t< tes_object > {
+    class tes_object : public class_meta< tes_object > {
     public:
 
         typedef object_stack_ref& ref;
