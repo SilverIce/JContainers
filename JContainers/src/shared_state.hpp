@@ -60,13 +60,13 @@ namespace collections
 
             u_clearState();
 
-            bool isFromFuture = kJSerializationCurrentVersion < version;
+            bool isNotSupported = kJSerializationCurrentVersion < version || version < kJJSerializationVersionPreAQueueFix;
 
-            if (isFromFuture) {
-                _FATALERROR("plugin can not be compatible with future save version %u. plugin save vesrion is %u", version, kJSerializationCurrentVersion);
+            if (isNotSupported) {
+                _FATALERROR("Unable load serialized data of version %u. Current serialization version is %u", version, kJSerializationCurrentVersion);
             }
 
-            if (!data.empty() && !isFromFuture) {
+            if (!data.empty() && !isNotSupported) {
 
                 std::istringstream stream(data);
                 boost::archive::binary_iarchive archive(stream);
