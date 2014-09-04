@@ -144,7 +144,7 @@ namespace collections { namespace {
             // populate info structure
             info->infoVersion = PluginInfo::kInfoVersion;
             info->name = "JContainers";
-            info->version = 1;
+            info->version = kJVersionMajor;
 
             // store plugin handle so we can identify ourselves later
             g_pluginHandle = skse->GetPluginHandle();

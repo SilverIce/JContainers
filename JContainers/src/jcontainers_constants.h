@@ -12,7 +12,7 @@ namespace collections {
         kJAPIVersion = 3,
 
         kJVersionMajor = kJAPIVersion,
-        kJVersionMinor = 0,
+        kJVersionMinor = 1,
         kJVersionPatch = 0,
     };
 

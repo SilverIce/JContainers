@@ -212,6 +212,8 @@ JValue.solveIntSetter(info, ".numbers[0]", 10)
 
 ### Collection operators
 
+>**Important:** Collection operators is deprecated feature and will be replaced with [Lua](JC.md#lua)
+
 This feature allows executing functions on collection (container) elements. It's accessible via solve* functions.
 Syntax:
 
@@ -274,6 +276,7 @@ Since 3.0 JContainers embeds Lua. Benefits of using Lua:
 
 - any standard lua library functionality available (bitwise operations, math, string manipulation, operating system facilities and etc)
 - seek, sort (in development) JArray with user specified predicate
+- move some cumbersome Papyrus code into more compact Lua (see `frostfall.uuid` function in example below)
 
 Typical usage may look like:
 
@@ -295,19 +298,19 @@ Typical usage may look like:
  ]
  
  -- returns 1 - an array index where `arrayItem.theSearchString == 'b'`
- JValue.evalLuaInt(obj, "return find(jobject, function(x) return x.theSearchString == 'b' end")
+ JValue.evalLuaInt(obj, "return jc.find(jobject, function(x) return x.theSearchString == 'b' end")
  ```
 
 - you write your own functionality in a _Data/SKSE/Plugins/JCData/lua/frostfall.lua_ file:
 
  ```lua
- -- frostfall module depends on 'JCData/lua/jc.lua'
+ -- frostfall module depends on jc.count function from 'JCData/lua/jc.lua'
  require 'jc'
  
- local frostfall = {}
+ frostfall = {}
  
  function frostfall.countItemsLessAndGreaterThan(collection, less, greater)
-     return count(collection, function(x)
+     return jc.count(collection, function(x)
         return x < less and x > greater
      end)
  end

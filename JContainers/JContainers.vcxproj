@@ -215,6 +215,10 @@ XCOPY "$(ProjectDir)/JCData" "$(TargetDir)/JCData" /E /I /F /Y</Command>
   <ItemGroup>
     <ResourceCompile Include="JContainers.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="JCData\lua\jc.lua" />
+    <None Include="JCData\lua\MyModRoot.lua.example" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
