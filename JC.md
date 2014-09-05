@@ -1,3 +1,4 @@
+
 ## Motivation & Overview
 
 Papyrus lacks convenient data structures such as dynamic arrays or associative containers. Scripting languages such as Papyrus should be simple but not underdeveloped.
@@ -35,7 +36,7 @@ JArray.addForm(array, GetTargetActor())
 ```
 And read the array's contents:        
 ```lua
-string string = JArray.getStr(array, 0)
+string text = JArray.getStr(array, 0)
 form actor = JArray.getForm(array, 1)
 ```
 
@@ -75,7 +76,8 @@ Typical JDB usage would involve:
 
 1. Setup (during mod installation) where you specify `root key` name. In example below root key is `frostfall`.
 
- > **Important:** Choose root name carefully to avoid clashes with rest of JDB root keys and with JFormDB storage names.
+ > **Important**
+ > Choose root name carefully to avoid clashes with rest of JDB root keys and with JFormDB storage names.
 
 2. Access data:
 
@@ -212,7 +214,8 @@ JValue.solveIntSetter(info, ".numbers[0]", 10)
 
 ### Collection operators
 
->**Important:** Collection operators is deprecated feature and will be replaced with [Lua](JC.md#lua)
+>**Important**
+> Collection operators is deprecated feature and will be replaced with [Lua](JC.md#lua)
 
 This feature allows executing functions on collection (container) elements. It's accessible via solve* functions.
 Syntax:
@@ -255,13 +258,13 @@ solveFlt(obj, ".mapKey@maxNum.value.k") is 100
 
 ### Key naming convention
 
-In order to make path resolving and collection operators function properly, string keys should not contain the decimal character, square brackets, or the `@` character. For instance, the following code will fail to work:
+In order to make path resolving and collection operators function properly, string keys should consist of ASCII characters and should not contain the decimal character, square brackets, or the `@` character. For instance, the following code will fail to work:
 ```lua
 obj = { "invalid.key" : {"k": 10} }
 
 solveInt(map, ".invalid.key.k") is 0
 
-// although it's still possible to access that value in the traditional way:
+-- although it's still possible to access that value in the traditional way:
 getObj(map, "invalid.key") is {"k": 10}
 ```
 This convention applies to every key string, not just the JMap key.  It affects JFormDB storage name and keys as well as JDB.setObj key. Key naming shouldn't matter if you don't use path resolving.
@@ -277,6 +280,9 @@ Since 3.0 JContainers embeds Lua. Benefits of using Lua:
 - any standard lua library functionality available (bitwise operations, math, string manipulation, operating system facilities and etc)
 - seek, sort (in development) JArray with user specified predicate
 - move some cumbersome Papyrus code into more compact Lua (see `frostfall.uuid` function in example below)
+ 
+> **Important**
+> Lua feature status is highly experimental. It's API may change when more functionality will be added.
 
 Typical usage may look like:
 
@@ -315,6 +321,7 @@ Typical usage may look like:
      end)
  end
  
+ -- generates random guid-string (may return 'd6cce35c-487a-458f-bab2-9032c2621f38' once per billion years)
  function frostfall.uuid()
     local random = math.random
     local template ='xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
@@ -330,7 +337,7 @@ Typical usage may look like:
  ```lua
  
   JValue.evalLuaInt(obj, "return frostfall.countItemsLessAndGreaterThan(jobject, 60, -5)")
-  string guid = JValue.evalLuaStr(obj, "return frostfall.uuid()")
+  string guid = JValue.evalLuaStr(0, "return frostfall.uuid()")
  ```
  
 ### Object lifetime management rules
@@ -341,9 +348,9 @@ In JContainers, internally all containers are C++ objects, so Skyrim knows nothi
 
 The lifetime management model is based on object ownership. Any container object may have one or more owners. As long as an object has at least one owner, it continues to exist. If an object has no owners it gets destroyed.
 
-#### Functionality to manage object's lifetime:
+Functionality to manage object's lifetime:
 
-- retain-release:
+- Retain, release functions:
 
  ```lua
 int function retain(int object, string tag="")
@@ -356,11 +363,13 @@ Newly created objects (object created with `object`, `objectWith*`, `all/Keys/Va
 
  Illustration shows the idea: ![test][1]
 
- > **Important:** The caller of `JValue.retain` is responsible for releasing object. Not released object will remain in save file forever.
+ > **Important**
+ > The caller of `JValue.retain` is responsible for releasing object. Not released object will remain in save file forever.
     
  `Tag` parameter marks an object. `None` tag does nothing. Must be an unique string (mod name may fit). Why we need a tag? We all human. We may forget to release an object. Papyrus may throw an error in between `retain .. release` and in a result `release` will not be executed. By tagging an object you leave a possibility to track lost objects with specific tag and release them via `JValue.releaseObjectsWithTag` function.
     
- > **Important:** `JValue.releaseObjectsWithTag` complements all `retain` calls with `release` that were ever made to all objects with given tag.
+ > **Important**
+ > `JValue.releaseObjectsWithTag` complements all `retain` calls with `release` that were ever made to all objects with given tag.
     
  ```lua
 int function releaseAndRetain(int previousObject, int newObject, string tag=None)
@@ -387,7 +396,7 @@ int function releaseAndRetain(int previousObject, int newObject, string tag=None
  int _followers = 0
  ```
 
-- pools: 
+- Pools: 
 
  ```lua
  int function addToPool(int object, string poolName) global native
