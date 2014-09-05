@@ -140,14 +140,14 @@ namespace collections
 
             auto hdr = header::make();
 
-            bool isFromFuture = kJSerializationCurrentVersion < version;
+            bool isNotSupported = kJSerializationCurrentVersion < version || version < kJJSerializationVersionPreAQueueFix;
 
-            if (isFromFuture) {
-                _FATALERROR("plugin can not be compatible with future save version %u. plugin save vesrion is %u", version, kJSerializationCurrentVersion);
+            if (isNotSupported) {
+                _FATALERROR("Unable load serialized data of version %u. Current serialization version is %u", version, kJSerializationCurrentVersion);
                 jc_assert(false);
             }
 
-            if (stream.peek() != std::istream::traits_type::eof() && !isFromFuture) {
+            if (stream.peek() != std::istream::traits_type::eof() && !isNotSupported) {
 
                 if (version <= kJSerializationNoHeaderVersion) {
                     hdr = header::imitate_old_header();
