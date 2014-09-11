@@ -48,7 +48,10 @@ namespace collections
 
         void removeObject(object_base& obj) {
             write_lock g(_mutex);
+            u_removeObject(obj);
+        }
 
+        void u_removeObject(object_base& obj) {
             auto id = obj._uid();
             if (id != HandleNull) {
                 _map.erase(id);

@@ -197,6 +197,9 @@
     <ClInclude Include="src\object_context.hpp">
       <Filter>object_module</Filter>
     </ClInclude>
+    <ClInclude Include="src\garbage_collector.h">
+      <Filter>object_module\impl</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="JContainers.rc" />

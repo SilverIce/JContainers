@@ -123,6 +123,10 @@ namespace collections {
                 _stack_refCount.load() == 0;
         }
 
+        bool u_is_user_retains() const {
+            return _tes_refCount.load(std::memory_order_relaxed) > 0;
+        }
+
 /*
         bool noOwners() const {
             return
@@ -200,6 +204,8 @@ namespace collections {
                 _stack_refCount == other._stack_refCount &&
                 u_count() == other.u_count();
         }
+
+        virtual void u_visit_referenced_objects(const std::function<void(object_base&)>& visitor) {}
     };
 
     inline void object_base_stack_ref_policy::retain(object_base * p) {

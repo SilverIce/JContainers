@@ -42,6 +42,7 @@
 #include "id_generator.h"
 #include "object_registry.h"
 #include "autorelease_queue.h"
+#include "garbage_collector.h"
 
 #include "object_base.hpp"
 #include "object_context.hpp"
