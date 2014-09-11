@@ -112,12 +112,6 @@
     <ClInclude Include="src\object_base.h">
       <Filter>object_module</Filter>
     </ClInclude>
-    <ClInclude Include="src\shared_state.h">
-      <Filter>object_module</Filter>
-    </ClInclude>
-    <ClInclude Include="src\shared_state.hpp">
-      <Filter>object_module</Filter>
-    </ClInclude>
     <ClInclude Include="src\spinlock.h">
       <Filter>object_module</Filter>
     </ClInclude>
@@ -196,6 +190,12 @@
     </ClInclude>
     <ClInclude Include="src\api_3\master.h">
       <Filter>collections_module\tes_api_3</Filter>
+    </ClInclude>
+    <ClInclude Include="src\object_context.h">
+      <Filter>object_module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\object_context.hpp">
+      <Filter>object_module</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

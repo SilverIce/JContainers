@@ -5,7 +5,7 @@ namespace collections
         return std::unique_ptr<T, D>(data, destr);
     }
 
-    shared_state::shared_state()
+    object_context::object_context()
         : registry(nullptr)
         , aqueue(nullptr)
     {
@@ -13,13 +13,13 @@ namespace collections
         aqueue = new autorelease_queue(*registry);
     }
 
-    shared_state::~shared_state() {
+    object_context::~object_context() {
 
         delete registry;
         delete aqueue;
     }
     
-    void shared_state::u_clearState() {
+    void object_context::u_clearState() {
 
         /*  Not good, but working solution.
 
@@ -48,7 +48,7 @@ namespace collections
         }
     }
     
-    void shared_state::clearState() {
+    void object_context::clearState() {
         
         aqueue->stop();
         
@@ -59,27 +59,27 @@ namespace collections
         aqueue->start();
     }
 
-    std::vector<object_stack_ref> shared_state::filter_objects(std::function<bool(object_base& obj)> predicate) const {
+    std::vector<object_stack_ref> object_context::filter_objects(std::function<bool(object_base& obj)> predicate) const {
         return registry->filter_objects(predicate);
     }
 
-    object_base * shared_state::getObject(Handle hdl) {
+    object_base * object_context::getObject(Handle hdl) {
         return registry->getObject(hdl);
     }
 
-    object_stack_ref shared_state::getObjectRef(Handle hdl) {
+    object_stack_ref object_context::getObjectRef(Handle hdl) {
         return registry->getObjectRef(hdl);
     }
 
-    object_base * shared_state::u_getObject(Handle hdl) {
+    object_base * object_context::u_getObject(Handle hdl) {
         return registry->u_getObject(hdl);
     }
 
-    size_t shared_state::aqueueSize() {
+    size_t object_context::aqueueSize() {
         return aqueue->count();
     }
 
-    void shared_state::read_from_string(const std::string & data, const serialization_version version) {
+    void object_context::read_from_string(const std::string & data, const serialization_version version) {
         namespace io = boost::iostreams;
         io::stream<io::array_source> stream( io::array_source(data.c_str(), data.size()) );
         read_from_stream(stream, version);
@@ -129,7 +129,7 @@ namespace collections
         }
     };
 
-    void shared_state::read_from_stream(std::istream & stream, const serialization_version version) {
+    void object_context::read_from_stream(std::istream & stream, const serialization_version version) {
 
         stream.flags(stream.flags() | std::ios::binary);
 
@@ -194,13 +194,13 @@ namespace collections
         aqueue->start();
     }
 
-    std::string shared_state::write_to_string() {
+    std::string object_context::write_to_string() {
         std::ostringstream stream;
         write_to_stream(stream);
         return stream.str();
     }
 
-    void shared_state::write_to_stream(std::ostream& stream) {
+    void object_context::write_to_stream(std::ostream& stream) {
 
         stream.flags(stream.flags() | std::ios::binary);
 
@@ -223,11 +223,11 @@ namespace collections
 
     //////////////////////////////////////////////////////////////////////////
 
-    void shared_state::u_applyUpdates(const serialization_version saveVersion) {
+    void object_context::u_applyUpdates(const serialization_version saveVersion) {
 
     }
 
-    void shared_state::u_postLoadMaintenance(const serialization_version saveVersion)
+    void object_context::u_postLoadMaintenance(const serialization_version saveVersion)
     {
         for (auto& obj : registry->u_container()) {
             obj->set_context(*this);

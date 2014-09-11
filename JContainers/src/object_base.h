@@ -17,7 +17,7 @@ namespace collections {
     };
 
     class object_base;
-    class shared_state;
+    class object_context;
 
     enum CollectionType
     {
@@ -39,7 +39,7 @@ namespace collections {
 
     class object_base
     {
-        friend class shared_state;
+        friend class object_context;
     public:
         Handle _id;
 
@@ -50,7 +50,7 @@ namespace collections {
         CollectionType _type;
         boost::optional<std::string> _tag;
     private:
-        shared_state *_context;
+        object_context *_context;
 
         void release_counter(std::atomic_int32_t& counter);
 
@@ -146,12 +146,12 @@ namespace collections {
         // true, if object deleted
         bool release_from_queue();
 
-        void set_context(shared_state & ctx) {
+        void set_context(object_context & ctx) {
             jc_assert(!_context);
             _context = &ctx;
         }
 
-        shared_state& context() const {
+        object_context& context() const {
             jc_assert(_context);
             return *_context;
         }

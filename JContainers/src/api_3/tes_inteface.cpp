@@ -20,7 +20,7 @@
 #include "tes_error_code.h"
 
 #include "collections.h"
-#include "shared_state.h"
+#include "object_context.h"
 #include "json_handling.h"
 #include "path_resolving.h"
 #include "lua_stuff.h"

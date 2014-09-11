@@ -31,15 +31,15 @@ namespace collections {
 
 
 
-    class shared_state {
+    class object_context {
 
         void u_applyUpdates(const serialization_version saveVersion);
         void u_postLoadMaintenance(const serialization_version saveVersion);
 
     public:
 
-        shared_state();
-        ~shared_state();
+        object_context();
+        ~object_context();
 
         object_registry* registry;
         autorelease_queue* aqueue;

@@ -191,8 +191,8 @@ XCOPY "$(ProjectDir)/JCData" "$(TargetDir)/JCData" /E /I /F /Y</Command>
     <ClInclude Include="src\object_base.hpp" />
     <ClInclude Include="src\object_registry.h" />
     <ClInclude Include="src\rw_mutex.h" />
-    <ClInclude Include="src\shared_state.h" />
-    <ClInclude Include="src\shared_state.hpp" />
+    <ClInclude Include="src\object_context.h" />
+    <ClInclude Include="src\object_context.hpp" />
     <ClInclude Include="src\spinlock.h" />
     <ClInclude Include="src\tes_binding.h" />
     <ClInclude Include="src\tes_context.h" />

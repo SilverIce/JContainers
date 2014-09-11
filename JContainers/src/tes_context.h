@@ -1,6 +1,6 @@
 #pragma once
 
-#include "shared_state.h"
+#include "object_context.h"
 #include "collections.h"
 #include "tes_error_code.h"
 #include "spinlock.h"
@@ -9,7 +9,7 @@ namespace collections
 {
     class map;
 
-    class tes_context : public shared_state, public shared_state_delegate
+    class tes_context : public object_context, public shared_state_delegate
     {
         std::atomic<Handle> _databaseId;
         std::atomic_uint_fast16_t _lastError;
@@ -21,7 +21,7 @@ namespace collections
             : _databaseId(HandleNull)
             , _lastError(0)
         {
-            shared_state::delegate = this;
+            object_context::delegate = this;
         }
 
         ~tes_context() {
