@@ -276,7 +276,7 @@ namespace tes_api_3 {
                 auto state = ctx.write_to_string();
                 ctx.clearState();
 
-                ctx.read_from_string(state, kJSerializationCurrentVersion);
+                ctx.read_from_string(state, serialization_version::current);
 
                 jsonOut = json_serializer::create_json_value(*ctx.getObject(rootId));
                 ctx.clearState();
@@ -376,7 +376,7 @@ namespace tes_api_3 {
 
                 std::ifstream file(itr->path().generic_string(), std::ios::in | std::ios::binary);
                 // had to pass kJSerializationNoHeaderVersion - 0.67 has no header :(
-                context.read_from_stream(file, kJSerializationNoHeaderVersion);
+                context.read_from_stream(file, serialization_version::no_header);
             }
         }
 

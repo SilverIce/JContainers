@@ -79,7 +79,7 @@ namespace collections
         return aqueue->count();
     }
 
-    void shared_state::read_from_string(const std::string & data, const uint32_t version) {
+    void shared_state::read_from_string(const std::string & data, const serialization_version version) {
         namespace io = boost::iostreams;
         io::stream<io::array_source> stream( io::array_source(data.c_str(), data.size()) );
         read_from_stream(stream, version);
@@ -87,15 +87,17 @@ namespace collections
 
     struct header {
 
-        uint32_t updateVersion;
+        serialization_version updateVersion;
 
         static header imitate_old_header() {
-            return{ kJSerializationNoHeaderVersion };
+            return{ serialization_version::no_header };
         }
 
         static header make() {
-            return{ kJSerializationCurrentVersion };
+            return{ serialization_version::current };
         }
+
+        static const char *common_version_key() { return "commonVersion"; }
 
         static header read_from_stream(std::istream & stream) {
 
@@ -106,13 +108,13 @@ namespace collections
 
             auto js = make_unique_ptr(json_loads(hdrString.c_str(), 0, nullptr), &json_decref);
 
-            return{ json_integer_value(json_object_get(js.get(), "commonVersion")) };
+            return{ (serialization_version)json_integer_value(json_object_get(js.get(), common_version_key())) };
         }
 
         static auto write_to_json() -> decltype(make_unique_ptr((json_t *)nullptr, &json_decref)) {
             auto header = make_unique_ptr(json_object(), &json_decref);
 
-            json_object_set(header.get(), "commonVersion", json_integer(kJSerializationCurrentVersion));
+            json_object_set(header.get(), common_version_key(), json_integer((json_int_t)serialization_version::current));
 
             return header;
         }
@@ -127,7 +129,7 @@ namespace collections
         }
     };
 
-    void shared_state::read_from_stream(std::istream & stream, const uint32_t version) {
+    void shared_state::read_from_stream(std::istream & stream, const serialization_version version) {
 
         stream.flags(stream.flags() | std::ios::binary);
 
@@ -140,16 +142,16 @@ namespace collections
 
             auto hdr = header::make();
 
-            bool isFromFuture = kJSerializationCurrentVersion < version;
+            bool isFromFuture = serialization_version::current < version;
 
             if (isFromFuture) {
-                _FATALERROR("plugin can not be compatible with future save version %u. plugin save vesrion is %u", version, kJSerializationCurrentVersion);
+                _FATALERROR("plugin can not be compatible with future save version %u. plugin save vesrion is %u", version, serialization_version::current);
                 jc_assert(false);
             }
 
             if (stream.peek() != std::istream::traits_type::eof() && !isFromFuture) {
 
-                if (version <= kJSerializationNoHeaderVersion) {
+                if (version <= serialization_version::no_header) {
                     hdr = header::imitate_old_header();
                 }
                 else {
@@ -221,11 +223,11 @@ namespace collections
 
     //////////////////////////////////////////////////////////////////////////
 
-    void shared_state::u_applyUpdates(const uint32_t saveVersion) {
+    void shared_state::u_applyUpdates(const serialization_version saveVersion) {
 
     }
 
-    void shared_state::u_postLoadMaintenance(const uint32_t saveVersion)
+    void shared_state::u_postLoadMaintenance(const serialization_version saveVersion)
     {
         for (auto& obj : registry->u_container()) {
             obj->set_context(*this);

@@ -6,7 +6,7 @@ namespace tes_api_3 {
     class class_meta : public reflection::class_meta_mixin_t < T > {
     public:
         class_meta() {
-            metaInfo.version = kJAPIVersion;
+            metaInfo.version = (uint32_t)consts::api_version;
         }
     };
 }

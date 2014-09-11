@@ -17,7 +17,7 @@ namespace tes_api_3 {
         REGISTERF2(isInstalled, nullptr, "returns true if JContainers plugin is installed");
 
         static UInt32 APIVersion() {
-            return kJAPIVersion;
+            return (UInt32)consts::api_version;
         }
         REGISTERF2(APIVersion, nullptr, []() {
             std::stringstream comm;
@@ -31,7 +31,7 @@ namespace tes_api_3 {
         });
 
         static UInt32 featureVersion() {
-            return kJVersionMinor;
+            return (UInt32)consts::feature_version;
         }
         REGISTERF2(featureVersion, nullptr, nullptr);
 

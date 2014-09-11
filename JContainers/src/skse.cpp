@@ -34,7 +34,10 @@ namespace collections { namespace {
     static SKSEMessagingInterface       * g_messaging = nullptr;
 
     template<class T>
-    float do_with_timing(T& func) {
+    void do_with_timing(const char *operation_name, T& func) {
+        assert(operation_name);
+        _DMESSAGE("%s started", operation_name);
+
         namespace chr = std::chrono;
         auto started = chr::system_clock::now();
 
@@ -49,15 +52,14 @@ namespace collections { namespace {
         }
 
         auto ended = chr::system_clock::now();
-        return chr::duration_cast<chr::milliseconds>(ended - started).count() / 1000.f;
+        float diff = chr::duration_cast<chr::milliseconds>(ended - started).count() / 1000.f;
+        _DMESSAGE("%s finished in %f sec", operation_name, diff);
     }
 
     void revert(SKSESerializationInterface * intfc) {
-        _DMESSAGE("Revert started");
-        float diff = do_with_timing([]() {
+        do_with_timing("Revert", []() {
             collections::tes_context::instance().clearState();
         });
-        _DMESSAGE("Revert finished in %f sec", diff);
     }
 
     void save(SKSESerializationInterface * intfc) {
@@ -77,10 +79,8 @@ namespace collections { namespace {
         };
 
 
-        float diff = do_with_timing([intfc]() {
-            _DMESSAGE("Save started");
-
-            if (intfc->OpenRecord(kJStorageChunk, kJSerializationCurrentVersion)) {
+        do_with_timing("Save", [intfc]() {
+            if (intfc->OpenRecord((UInt32)consts::storage_chunk, (UInt32)serialization_version::current)) {
                 io::stream<skse_data_sink> stream(skse_data_sink{ intfc });
                 collections::tes_context::instance().write_to_stream(stream);
                 //_DMESSAGE("%lu bytes saved", stream.tellp());
@@ -89,8 +89,6 @@ namespace collections { namespace {
                 _DMESSAGE("Unable open JC record");
             }
         });
-
-        _DMESSAGE("Save finished in %f sec", diff);
     }
 
     void load(SKSESerializationInterface * intfc) {
@@ -112,44 +110,40 @@ namespace collections { namespace {
             SKSESerializationInterface* _source;
         };
 
-        float diff = do_with_timing([intfc]() {
-
-            _DMESSAGE("Load started");
+        do_with_timing("Load", [intfc]() {
 
             UInt32 type = 0;
             UInt32 version = 0;
             UInt32 length = 0;
 
             while (intfc->GetNextRecordInfo(&type, &version, &length)) {
-                if (type == kJStorageChunk) {
+                if (static_cast<consts>(type) == consts::storage_chunk) {
                     break;
                 }
             }
 
-            io::stream<skse_data_source> stream(skse_data_source(type == kJStorageChunk ? intfc : nullptr));
-            collections::tes_context::instance().read_from_stream(stream, version);
+            io::stream<skse_data_source> stream(skse_data_source(static_cast<consts>(type) == consts::storage_chunk ? intfc : nullptr));
+            collections::tes_context::instance().read_from_stream(stream, (serialization_version)version);
         });
-
-        _DMESSAGE("Load finished in %f sec", diff);
     }
 
     extern "C" {
 
         __declspec(dllexport) bool SKSEPlugin_Query(const SKSEInterface * skse, PluginInfo * info)
         {
-            gLog.OpenRelative(CSIDL_MYDOCUMENTS, "\\My Games\\Skyrim\\SKSE\\JContainers.log");
+            gLog.OpenRelative(CSIDL_MYDOCUMENTS, "\\My Games\\Skyrim\\SKSE\\"JC_PLUGIN_NAME".log");
             gLog.SetPrintLevel(IDebugLog::kLevel_Error);
             gLog.SetLogLevel(IDebugLog::kLevel_DebugMessage);
 
             // populate info structure
             info->infoVersion = PluginInfo::kInfoVersion;
-            info->name = "JContainers";
-            info->version = kJVersionMajor;
+            info->name = JC_PLUGIN_NAME;
+            info->version = JC_API_VERSION;
 
             // store plugin handle so we can identify ourselves later
             g_pluginHandle = skse->GetPluginHandle();
 
-            _MESSAGE("JContainers %u.%u.%u\n", kJVersionMajor, kJVersionMinor, kJVersionPatch);
+            _MESSAGE(JC_PLUGIN_NAME " " JC_VERSION_STR);
 
             if (skse->isEditor) {
                 _MESSAGE("loaded in editor, marking as incompatible");
@@ -200,7 +194,7 @@ namespace collections { namespace {
 
         __declspec(dllexport) bool SKSEPlugin_Load(const SKSEInterface * skse) {
 
-            g_serialization->SetUniqueID(g_pluginHandle, kJStorageChunk);
+            g_serialization->SetUniqueID(g_pluginHandle, (UInt32)consts::storage_chunk);
 
             g_serialization->SetRevertCallback(g_pluginHandle, revert);
             g_serialization->SetSaveCallback(g_pluginHandle, save);
