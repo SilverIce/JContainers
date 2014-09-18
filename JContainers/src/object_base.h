@@ -118,9 +118,9 @@ namespace collections {
         }
         bool noOwners() const {
             return
-                _refCount.load() == 0 &&
-                _tes_refCount.load() == 0 &&
-                _stack_refCount.load() == 0;
+                _refCount.load() <= 0 &&
+                _tes_refCount.load() <= 0 &&
+                _stack_refCount.load() <= 0;
         }
 
         bool u_is_user_retains() const {
@@ -148,7 +148,8 @@ namespace collections {
 
         // releases and then deletes object if no owners
         // true, if object deleted
-        bool release_from_queue();
+        bool _final_release();
+        void _delete_self();
 
         void set_context(object_context & ctx) {
             jc_assert(!_context);

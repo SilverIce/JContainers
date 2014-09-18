@@ -2,6 +2,8 @@
 
 #include <atomic>
 #include <functional>
+#include <deque>
+
 #include "object_base.h"
 
 namespace boost {
@@ -72,7 +74,9 @@ namespace collections {
         std::string write_to_string();
         void write_to_stream(std::ostream& stream);
 
-
+        // exposed for testing purposes only
+        typedef std::deque<std::reference_wrapper<object_base>> not_nil_object_list;
+        size_t collect_garbage(const not_nil_object_list& root_objects);
     };
 
 }

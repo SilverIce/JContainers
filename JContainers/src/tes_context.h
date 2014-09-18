@@ -73,6 +73,9 @@ namespace collections
         void u_saveAdditional(boost::archive::binary_oarchive & arch) override;
         void u_cleanup() override;
 
+        size_t collect_garbage() {
+            return object_context::collect_garbage({ *database() });
+        }
     };
 
 }
