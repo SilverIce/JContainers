@@ -1,7 +1,7 @@
 /*
     Primitive example which shows how to use SKSE messaging API and interact with JContainers API
 
-    Plugin obtains some JC functionality and registers a function (sortByName) which sorts an jarray of form by their names
+    Plugin obtains some JC functionality and registers a function (sortByName) which sorts an jarray of forms by their names
 */
 
 

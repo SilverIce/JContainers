@@ -28,7 +28,7 @@ namespace collections
 
         solution: isolate objects by nullifying cross-references, then delete objects
 
-        all we need is just free all allocated memory but this will require track stl memory blocks
+        actually all I need is just free all allocated memory but this is hardly achievable
         */
 
         aqueue->u_nullify();

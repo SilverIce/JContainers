@@ -49,12 +49,12 @@ namespace collections {
         }
 
         static T* object(tes_context& context /*= tes_context::instance()*/) {
-            return static_cast<T *> (make(context));
+            return make(context);
         }
 
         template<class Init>
         static T* objectWithInitializer(Init& init, tes_context& context /*= tes_context::instance()*/) {
-            return static_cast<T *> (_makeWithInitializer(init, context));
+            return _makeWithInitializer(init, context);
         }
     };
 

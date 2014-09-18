@@ -7,11 +7,11 @@ namespace collections {
 #   define STR(...) #__VA_ARGS__
 
 #   define JC_PLUGIN_NAME           "JContainers"
-#   define JC_API_VERSION           4
+#   define JC_API_VERSION           3
 #   define JC_FEATURE_VERSION       1
 #   define JC_PATCH_VERSION         0
 
-#   define VER_FILE_VERSION      JC_API_VERSION, JC_FEATURE_VERSION, JC_PATCH_VERSION, 0
+#   define VER_FILE_VERSION         JC_API_VERSION, JC_FEATURE_VERSION, JC_PATCH_VERSION, 0
 
 #   define JC_VERSION_STR           STR(JC_API_VERSION)           \
                                     "." STR(JC_FEATURE_VERSION)   \
