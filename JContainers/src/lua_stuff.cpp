@@ -17,6 +17,7 @@
 #include "json_handling.h"
 #include "skse.h"
 #include "tes_context.h"
+#include "util.h"
 
 namespace collections { namespace lua_traits {
 
@@ -477,6 +478,9 @@ namespace collections { namespace lua_apply {
 
             lua_getglobal(l, "jc");
 
+            // global 'jc' is loaded
+            assert(lua_istable(l, -1));
+
             lua_pushstring(l, "apply");
             lua_pushcfunction(l, lua_apply_func);
             lua_settable(l, 1);
@@ -484,12 +488,6 @@ namespace collections { namespace lua_apply {
             lua_pushstring(l, "filter");
             lua_pushcfunction(l, lua_filter_func);
             lua_settable(l, 1);
-        }
-
-#   define JC_DATA_DIR     "JCData/"
-
-        const char * data_directory() {
-            return (skse::is_fake() ? JC_DATA_DIR : "Data/SKSE/Plugins/"JC_DATA_DIR);
         }
 
         void load_lua_code(lua_State *l) {
@@ -505,8 +503,7 @@ namespace collections { namespace lua_apply {
 
             auto loadFromFolder = [&](const char *folder) {
 
-                fs::path dirPath(data_directory());
-                dirPath += folder;
+                fs::path dirPath = util::relative_to_dll_path(folder);
 
                 if (!fs::is_directory(dirPath)) {
                     return;
@@ -534,7 +531,7 @@ namespace collections { namespace lua_apply {
                 }
             };
 
-            loadFromFolder("lua\\");
+            loadFromFolder("JCData/lua/");
         }
 
         void register_apply_functions(lua_State *l) {

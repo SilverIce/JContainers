@@ -95,8 +95,9 @@ namespace reflection {
             return str;
         }
 
-        void produceClassToFile(const class_info& self) {
-            auto file = fopen((self.className() + ".psc").c_str(), "w");
+        void produceClassToFile(const class_info& self, const std::string& directoryPath) {
+            auto path = (!directoryPath.empty() ? (directoryPath + "\\") : "") + self.className() + ".psc";
+            auto file = fopen(path.c_str(), "w");
             assert(file);
             if (file) {
                 auto code = produceClassCode(self);

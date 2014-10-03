@@ -1,0 +1,2 @@
+"I:\Games\Elder Scrolls Skyrim\Papyrus Compiler\PapyrusCompiler.exe" %1 -f="TESV_Papyrus_Flags.flg" -i="I:\Games\Elder Scrolls Skyrim\Data\scripts\source" -o="I:\Games\Elder Scrolls Skyrim\Data\scripts"
+pause

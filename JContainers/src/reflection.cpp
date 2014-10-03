@@ -50,15 +50,4 @@ namespace reflection {
 
         return functionPtr;
     }
-    
-    extern "C" {
-
-        __declspec(dllexport) void produceCode() {
-
-            foreach_metaInfo_do([](const class_info& info) {
-                code_producer::produceClassToFile(info);
-            });
-        }
-    };
-
 }

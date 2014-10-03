@@ -135,7 +135,7 @@ namespace reflection {
     namespace code_producer {
 
         std::string produceClassCode(const class_info& self);
-        void produceClassToFile(const class_info& self);
+        void produceClassToFile(const class_info& self, const std::string& directoryPath);
 
     }
 
