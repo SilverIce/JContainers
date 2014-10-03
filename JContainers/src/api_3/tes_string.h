@@ -1,7 +1,10 @@
-﻿
+﻿#pragma once
+
+#include "util.h"
+
 namespace collections {
 
-	extern std::vector<std::string> wrap_string(const char *csource, int charsPerLine);
+	extern boost::optional<std::vector<std::string>> wrap_string(const char *csource, int charsPerLine);
 
     class tes_string : public reflection::class_meta_mixin_t<tes_string> {
     public:
@@ -13,23 +16,24 @@ namespace collections {
 
         static object_base * wrap(const char* source, SInt32 charsPerLine) {
 
-            if (!source || charsPerLine <= 0) {
+			auto strings = wrap_string(source, charsPerLine);
+
+            if (!strings) {
                 return nullptr;
             }
 
-			auto strings = wrap_string(source, charsPerLine);
-
             return array::objectWithInitializer([&](array *obj) {
 
-                for (auto& str : strings) {
+                for (auto& str : *strings) {
                     obj->_array.push_back(Item(str));
                 }
             },
                 tes_context::instance());
         }
         REGISTERF2(wrap, "sourceText charactersPerLine=60",
-"breaks source text onto set of lines of almost equal size.\n\
-returns JArray object containing lines");
+"Breaks source text onto set of lines of almost equal size.\n\
+Returns JArray object containing lines.\n\
+Accepts ASCII and UTF-8 encoded strings only");
 
     };
 
@@ -40,35 +44,35 @@ returns JArray object containing lines");
 
     TEST(tes_string, test)
     {
+        auto testData = json_deserializer::json_from_file(
+            util::relative_to_dll_path("test_data/tes_string/string_wrap.json").generic_string().c_str() );
+        EXPECT_TRUE( json_is_array(testData.get()) );
+
 		auto testWrap = [&](const char *string, int linesCount, int charsPerLine) {
             auto obj = tes_string::wrap(string, charsPerLine);
-			if (linesCount == -1) {
-				EXPECT_NIL(obj);
-			}
-			else {
-				EXPECT_NOT_NIL(obj);
-				EXPECT_TRUE(obj->s_count() >= linesCount);
-			}
+            if (linesCount == -1) {
+                EXPECT_NIL(obj);
+            }
+            else {
+                EXPECT_NOT_NIL(obj);
+                EXPECT_TRUE(obj->s_count() >= linesCount);
+            }
 		};
+        
+        size_t index = 0;
+        json_t *value = nullptr;
+        json_array_foreach(testData.get(), index, value) {
+            int charsPerLine = -1;
+            json_t *jtext = nullptr;
+            int linesCountMinimum = -1;
 
-        const char *source = STR(is a 2005 American\ndocumentary film by Steve Anderson, which argues the titular word is key
-			to discussions on freedom of speech and censorship. It provides perspectives from art,
-			linguistics and society. Oxford English Dictionary editor Jesse Sheidlower, journalism analyst David Shaw,
-			and linguists Reinhold Aman and Geoffrey Nunberg explain the terms evolution. Comedian Billy Connolly states it can
-			be understood regardless of ones background, and musician Alanis Morissette says its taboo nature gives it power.
-			The film contains the last interview of author Hunter S. Thompson before his suicide. It features animated sequences by Bill Plympton.
-			The documentary was first screened at the AFI Film Festival at ArcLight Hollywood. The New York Times critic A. O. Scott called
-			the film a battle between advocates of morality and supporters of freedom of expression; a review by the American Film Institute said
-			this freedom must extend to words that offend. Other reviewers criticized the films length and repetitiveness. Its DVD
-			was released in the US and the UK and used in university cour);
+            json_error_t error;
+            int succeed = json_unpack_ex(value, &error, 0,
+                "{s:i, s:o, s:i}", "charsPerLine", &charsPerLine, "text", &jtext, "linesCountMinimum", &linesCountMinimum);
+            EXPECT_TRUE(succeed == 0);
 
-		testWrap(source, 20, 40);
-		testWrap("nospacesherenospacesherenospacesherenospaceshere", 1, 40);
-        testWrap(" test ", 1, 40);
-        // testWrap("スタァァァップ!　首長の命により止まれ！", 2, 15);
-		testWrap("", 0, 40);
-
-		testWrap(nullptr, -1, 40);
+            testWrap(json_string_value(jtext), linesCountMinimum, charsPerLine);
+        }
     }
 
 #endif

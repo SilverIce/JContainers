@@ -12,6 +12,7 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/range/iterator_range.hpp>
+#include <boost/optional.hpp>
 
 namespace collections {
 
@@ -324,12 +325,23 @@ namespace {
 
 }
 
-vector<string> wrap_string(const char *csource, int charsPerLine)
+boost::optional<vector<string>> wrap_string(const char *csource, int charsPerLine)
 {
-	assert(csource);
+    if (!csource || charsPerLine <= 0) {
+        // invalid input
+        return boost::none;
+    }
 
     wide_string_converter converter;
-    auto wstr = converter.from_bytes(csource);
+    wide_string_converter::wide_string wstr;
+
+    try {
+        wstr = converter.from_bytes(csource);
+    }
+    catch (const std::range_error&) {
+        // invalid input - non UTF-8 source string probably
+        return boost::none;
+    }
 
     if (wstr.empty()) {
         return vector<string>();
