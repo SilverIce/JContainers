@@ -1,6 +1,7 @@
 #pragma once
 
 #include <future>
+#include "util.h"
 
 namespace tes_api_3 {
 
@@ -228,7 +229,7 @@ namespace tes_api_3 {
 
             namespace fs = boost::filesystem;
 
-            fs::path dir("test_data/json_loading_test");
+            auto dir = util::relative_to_dll_path("test_data/json_loading_test");
             fs::directory_iterator end;
             bool atLeastOneTested = false;
 
@@ -366,7 +367,7 @@ namespace tes_api_3 {
     {
         namespace fs = boost::filesystem;
 
-        fs::path dir("test_data/backward_compatibility");
+        fs::path dir = util::relative_to_dll_path("test_data/backward_compatibility");
         fs::directory_iterator end;
         bool atLeastOneTested = false;
 
@@ -455,7 +456,6 @@ namespace tes_api_3 {
         EXPECT_TRUE(tes_jcontainers::isInstalled());
 
         EXPECT_FALSE(tes_jcontainers::fileExistsAtPath(nullptr));
-        EXPECT_TRUE(tes_jcontainers::fileExistsAtPath("JContainers.dll"));
         EXPECT_TRUE(!tes_jcontainers::fileExistsAtPath("abracadabra"));
     }
 

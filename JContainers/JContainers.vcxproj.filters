@@ -28,11 +28,11 @@
     <Filter Include="collections_module\lua">
       <UniqueIdentifier>{bc4ac5ac-882f-4d98-a11d-e0f0d63cb96f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="lua_scripts">
-      <UniqueIdentifier>{f6db937d-fad4-4e64-a279-41b638d8237a}</UniqueIdentifier>
-    </Filter>
     <Filter Include="collections_module\tes_api_3">
       <UniqueIdentifier>{a481ff76-9ab2-4bb4-91f6-f5d5e21c603c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="util">
+      <UniqueIdentifier>{b2bd77e9-b73b-4846-b0e6-6ae153b3c7f1}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -61,7 +61,6 @@
     <ClCompile Include="src\jc_interface.cpp">
       <Filter>plugin_interface</Filter>
     </ClCompile>
-    <ClCompile Include="src\hotfix_boost.cpp" />
     <ClCompile Include="src\lua_stuff.cpp">
       <Filter>collections_module\lua</Filter>
     </ClCompile>
@@ -70,6 +69,12 @@
     </ClCompile>
     <ClCompile Include="src\api_3\tes_inteface.cpp">
       <Filter>collections_module</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dll_api.cpp">
+      <Filter>plugin_interface</Filter>
+    </ClCompile>
+    <ClCompile Include="src\util.cpp">
+      <Filter>util</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -197,16 +202,11 @@
     <ClInclude Include="src\object_context.hpp">
       <Filter>object_module</Filter>
     </ClInclude>
+    <ClInclude Include="src\util.h">
+      <Filter>util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="JContainers.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="JCData\lua\jc.lua">
-      <Filter>lua_scripts</Filter>
-    </None>
-    <None Include="JCData\lua\MyModRoot.lua.example">
-      <Filter>lua_scripts</Filter>
-    </None>
   </ItemGroup>
 </Project>

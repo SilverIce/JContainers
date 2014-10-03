@@ -1,10 +1,9 @@
 #pragma once
 
 #include <stdint.h>
+#include "typedefs.h"
 
 namespace collections {
-
-#   define STR(...) #__VA_ARGS__
 
 #   define JC_PLUGIN_NAME           "JContainers"
 #   define JC_API_VERSION           3

@@ -233,8 +233,6 @@ namespace reflection { namespace binding {
 #define CONCAT(x, y) CONCAT1 (x, y)
 #define CONCAT1(x, y) x##y
 
-#define STR(...)    #__VA_ARGS__
-
     // MSVC2012 bug workaround
     template <typename T> T msvc_identity(T);
 

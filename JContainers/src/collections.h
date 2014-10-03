@@ -510,14 +510,6 @@ namespace collections {
 
         void u_nullifyObjects() override;
 
-        void u_visit_referenced_objects(const std::function<void(object_base&)>& visitor) override {
-            for (auto& pair : u_container()) {
-                if (auto obj = pair.second.object()) {
-                    visitor(*obj);
-                }
-            }
-        }
-
         //////////////////////////////////////////////////////////////////////////
 
         template<class Archive>

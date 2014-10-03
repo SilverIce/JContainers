@@ -214,10 +214,6 @@ namespace collections { namespace {
 
             return true;
         }
-
-        __declspec(dllexport) void launchShityTest() {
-            testing::runTests(meta<testing::TestInfo>::getListConst());
-        }
     };
 
 }
