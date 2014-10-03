@@ -87,9 +87,11 @@ It's recommended to set a tag (any unique string will fit - mod name for ex.) - 
 "Complements all retain calls objects with given tag received with release calls.\n"
 "See 'object lifetime management' section for more information");
 
+#       define JC_OBJECT_POOL_KEY   "__tempPools"
+
         static object_base* addToPool(ref obj, const char *poolName) {
             if (poolName) {
-                std::string path(".__tempPools.");
+                std::string path("." JC_OBJECT_POOL_KEY ".");
                 path += poolName;
 
                 array::ref location;
@@ -124,7 +126,7 @@ JValue.cleanTempLocation(\"uniqueLocationName\")"
 
         static void cleanPool(const char *poolName) {
             if (poolName) {
-                auto locationsMap = tes_context::instance().database()->find("__tempPools").object()->as<map>();
+                auto locationsMap = tes_context::instance().database()->find(JC_OBJECT_POOL_KEY).object()->as<map>();
                 if (locationsMap) {
                     locationsMap->erase(poolName);
                 }

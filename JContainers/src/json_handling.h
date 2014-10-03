@@ -260,7 +260,7 @@ namespace collections {
                 break;
             case JSON_TRUE:
             case JSON_FALSE:
-                item = json_boolean_value(val);
+                item = json_is_true(val);
                 break;
             case JSON_NULL:
             default:
