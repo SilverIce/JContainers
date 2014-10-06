@@ -280,8 +280,11 @@ namespace collections { namespace skse {
         return g_serialization ? DataHandler::GetSingleton()->GetModIndex(name) : aux::modindex_from_name(name);
     }
 
+    // made for imitating SKSE during synthetic tests
+    static char fakeTesForm[sizeof TESForm];
+
     TESForm* lookup_form(uint32_t handle) {
-        return g_serialization ? LookupFormByID(handle) : nullptr;
+        return g_serialization ? LookupFormByID(handle) : reinterpret_cast<TESForm*>(&fakeTesForm);
     }
 
     bool is_fake() {
