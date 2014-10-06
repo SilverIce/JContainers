@@ -128,7 +128,7 @@ namespace collections { namespace lua_traits {
             switch (lua_type(l, 2)){
                 case LUA_TSTRING: {
                     const char *keyString = luaL_checkstring(l, 2);
-                    luaL_argcheck(l, obj->as<map>(), 2, "JMap expected");
+                    luaL_argcheck(l, obj->as<map>(), 1, "JMap expected");
 
                     trait<Item>::push(l, obj->as<map>()->find(keyString));
                     break;
