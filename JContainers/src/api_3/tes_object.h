@@ -329,7 +329,7 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
 
         template<class T>
         static T evalLua(ref obj, const char* luaCode, T def = T(0)) {
-            auto item = lua_apply::process_apply_func(obj.get(), luaCode);
+            auto item = process_apply_func(obj.get(), luaCode);
             return !item.isNull() ? item.readAs<T>() : def;
         }
         REGISTERF(evalLua<Float32>, "evalLuaFlt", "* luaCode default=0.0", "Evaluates piece of lua code. Lua support is experimental");

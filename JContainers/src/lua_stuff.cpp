@@ -2,15 +2,14 @@
 
 #include "lua_stuff.h"
 
-#include <lua.hpp>
 #include <utility>
 #include <string>
 #include <boost/optional.hpp>
-#include <boost/noncopyable.hpp>
 #include <boost/filesystem.hpp>
 
-#include "meta.h"
 #include "gtest.h"
+
+#include "lua_basics.h"
 
 #include "jcontainers_constants.h"
 #include "collections.h"
@@ -19,7 +18,7 @@
 #include "tes_context.h"
 #include "util.h"
 
-namespace collections { namespace lua_traits {
+namespace collections { namespace {
 
     template<class T> struct trait;
 
@@ -125,7 +124,7 @@ namespace collections { namespace lua_traits {
             object_base * obj = check(l, 1);
             luaL_argcheck(l, obj != NULL, 1, "JC object expected");
 
-            switch (lua_type(l, 2)){
+            switch (lua_type(l, 2)) {
                 case LUA_TSTRING: {
                     const char *keyString = luaL_checkstring(l, 2);
                     luaL_argcheck(l, obj->as<map>(), 1, "JMap expected");
@@ -160,7 +159,7 @@ namespace collections { namespace lua_traits {
                     break;
                 }
                 default:
-                    luaL_argcheck(l, false, 2, "JC object expects number or string key only");
+                    luaL_argcheck(l, false, 2, "expected a number, string or form as a key");
                     break;
             }
 
@@ -276,83 +275,17 @@ namespace collections { namespace lua_traits {
 }
 }
 
-
-namespace collections {
-
-    struct lua_context_modifier_tag {};
-
-#   define LUA_CONTEXT_MODIFIER(function_modifier) \
-        static const ::meta<void (*)(lua_State *), collections::lua_context_modifier_tag> g_lua_modifier_##function_modifier(function_modifier);
-
-    class lua_context : boost::noncopyable {
-
-        static __declspec(thread) lua_context * __state;
-
-        lua_State *l;
-
-    public:
-
-        lua_State *state() const {
-            return l;
-        }
-
-        // thread-local single instance
-        static lua_context& instance() {
-            if (!__state) {
-                __state = new lua_context();
-            }
-            return *__state;
-        }
-
-    private:
-
-        lua_context()
-            : l(luaL_newstate())
-        {
-            luaL_openlibs(l);
-/*
-            luaopen_base(l);
-            luaopen_package(l);
-            luaopen_math(l);
-            luaopen_bit32(l);
-            luaopen_string(l);*/
-
-            using namespace std;
-            using namespace lua_traits;
-
-            trait<object_base>::make_metatable(l);
-            trait<pair<string, Item>>::make_metatable(l);
-            trait<pair<FormId, Item>>::make_metatable(l);
-            trait<FormId>::make_metatable(l);
-
-            for (const auto& modifier : meta<void (*)(lua_State *), collections::lua_context_modifier_tag>::getListConst()) {
-                modifier(l);
-            }
-        }
-
-        ~lua_context() {
-            lua_close(l);
-            l = nullptr;
-        }
-    };
-
-    lua_context* lua_context::__state = nullptr;
-
-}
-
 // group of apply-functions:
-namespace collections { namespace lua_apply {
-
-    void printLuaError(lua_State *l) {
-        if (lua_gettop(l) > 0 && lua_isstring(l, -1)) {
-            const char *str = lua_tostring(l, -1);
-            _MESSAGE("lua error: %s", str ? str : "");
-        }
-    }
+namespace collections {
 
     namespace {
 
-        using namespace lua_traits;
+        void printLuaError(lua_State *l) {
+            if (lua_gettop(l) > 0 && lua_isstring(l, -1)) {
+                const char *str = lua_tostring(l, -1);
+                _MESSAGE("lua error: %s", str ? str : "");
+            }
+        }
 
         const char * object_to_apply_key = "jobject";
 
@@ -388,10 +321,11 @@ namespace collections { namespace lua_apply {
             for (const auto& itm : container_copy) {
 
                 lua_pushvalue(l, predicate);
-                lua_traits::trait< std::remove_const<std::remove_reference<decltype(itm)>::type>::type >::push(l, itm);
+                trait< std::remove_const<std::remove_reference<decltype(itm)>::type>::type >::push(l, itm);
 
                 if (lua_pcall(l, 1, 1, 0) != 0) {
-                    luaL_error(l, "error running function `f': %s", lua_tostring(l, -1));
+                    printLuaError(l);
+                    break;
                 }
                 //-1 - shouldstop
                 bool lambdaResult = lua_toboolean(l, -1) != 0;
@@ -534,7 +468,15 @@ namespace collections { namespace lua_apply {
             loadFromFolder("JCData/lua/");
         }
 
+        void load_traits(lua_State *l) {
+            trait<object_base>::make_metatable(l);
+            trait<std::pair<std::string, Item>>::make_metatable(l);
+            trait<std::pair<FormId, Item>>::make_metatable(l);
+            trait<FormId>::make_metatable(l);
+        }
+
         void register_apply_functions(lua_State *l) {
+            load_traits(l);
             load_lua_code(l);
             register_cfunctions(l);
         }
@@ -543,7 +485,7 @@ namespace collections { namespace lua_apply {
 
     Item process_apply_func(object_base *object, const char *lua_string) {
 
-        auto l = lua_context::instance().state();
+        auto l = lua::context::instance().state();
         Item result;
         set_object_to_apply(l, object);
         {
@@ -609,5 +551,4 @@ namespace collections { namespace lua_apply {
         EXPECT_TRUE(result.intValue() == 1);
     }
 
-}
 }

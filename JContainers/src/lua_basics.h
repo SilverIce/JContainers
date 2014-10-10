@@ -1,0 +1,140 @@
+#pragma once
+
+#include <lua.hpp>
+#include <boost/noncopyable.hpp>
+#include "meta.h"
+#include "gtest.h"
+
+// Basic Lua-related-only things
+namespace lua {
+
+    // Caches a strings compiled into a lua-functions:
+    // Stores associations {luaString: compiledFunction} in a weak lua table
+    namespace function_cache {
+
+        static char jc_compile_function_key;
+
+        void setup(lua_State *L) {
+
+            assert(LUA_OK == luaL_dostring(L, STR(
+                local jc_function_cache = {}
+                setmetatable(jc_function_cache, { __mode = 'v' })
+
+                local jc_compile = function(luaString)
+                    local fc = jc_function_cache
+                    local funcOrError = fc[luaString]
+                    if not funcOrError then
+                        local f, errorMsg = loadstring(luaString)
+                        funcOrError = (f or errorMsg)
+                        fc[luaString] = funcOrError
+                    end
+
+                    return funcOrError
+                end
+
+                return jc_compile
+            )));
+
+            int functionIdx = lua_gettop(L);
+            assert(lua_isfunction(L, functionIdx));
+ 
+            lua_pushlightuserdata(L, &jc_compile_function_key); // push key
+            lua_pushvalue(L, functionIdx);
+            lua_settable(L, LUA_REGISTRYINDEX);
+
+            lua_settop(L, 0);
+        }
+
+        // pushes compiled function on stack in case of success or error string in case of failure
+        // returns true
+        bool compile(lua_State *l, const char *lua_string) {
+            assert(lua_string);
+
+            lua_pushlightuserdata(l, &jc_compile_function_key); // push key
+            lua_gettable(l, LUA_REGISTRYINDEX); // get 'jc_compile' function
+            lua_pushstring(l, lua_string);
+            // invoke 'jc_compile' function
+            return lua_pcall(l, 1, 1, 0) == LUA_OK;
+        }
+
+/*
+        bool compile_and_run(lua_State *l, const char *lua_string, int numargs, int numret) {
+            return compile(l, lua_string) && lua_pcall(l, 0, 0, 0);
+        }
+
+*/
+        namespace {
+            // anonymous namespace to not pollute other namespaces
+            struct fixture : testing::Fixture {
+                lua_State *l;
+                fixture() : l(luaL_newstate()) { luaL_openlibs(l); }
+                ~fixture() { lua_close(l); l = nullptr; }
+            };
+
+            TEST_F(fixture, _, function_cache)
+            {
+                setup(l);
+
+                EXPECT_TRUE(compile(l, STR(
+                    return function(x, y)
+                        return x*x + y*y
+                    end
+                )));
+                
+                EXPECT_TRUE( lua_isfunction(l, -1) );
+
+                lua_pushinteger(l, 4);
+                lua_pushinteger(l, 1);
+                EXPECT_TRUE( lua_pcall(l, 2, 1, 0) == LUA_OK );
+                EXPECT_TRUE( lua_tonumber(l, -1) == (4 * 4 + 1 * 1) );
+            }
+        }
+    };
+
+    struct context_modifier_tag {};
+
+#   define LUA_CONTEXT_MODIFIER(function_modifier) \
+        namespace { static const ::meta<void (*)(lua_State *), ::lua::context_modifier_tag> g_lua_modifier_##function_modifier(function_modifier); }
+
+    class context : boost::noncopyable {
+
+        static __declspec(thread) context * __state;
+
+        lua_State *l;
+
+    public:
+
+        lua_State *state() const {
+            return l;
+        }
+
+        // thread-local single instance
+        static context& instance() {
+            if (!__state) {
+                __state = new context();
+            }
+            return *__state;
+        }
+
+    private:
+
+        context()
+            : l(luaL_newstate())
+        {
+            luaL_openlibs(l);
+            function_cache::setup(l);
+
+            for (const auto& modifier : meta<void(*)(lua_State *), context_modifier_tag>::getListConst()) {
+                modifier(l);
+            }
+        }
+
+        ~context() {
+            lua_close(l);
+            l = nullptr;
+        }
+    };
+
+    context* context::__state = nullptr;
+
+}
