@@ -1,9 +1,15 @@
 #pragma once
 
-#include <lua.hpp>
+#include "lua.h"
+#include "lualib.h"
+#include "lauxlib.h"
+
 #include <boost/noncopyable.hpp>
+#include <mutex>
+
 #include "meta.h"
 #include "gtest.h"
+#include "spinlock.h"
 
 // Basic Lua-related-only things
 namespace lua {
@@ -110,10 +116,25 @@ namespace lua {
 
         // thread-local single instance
         static context& instance() {
-            if (!__state) {
-                __state = new context();
+            context * ctx = __state;
+            if (!ctx) {
+                __state = ctx = new context();
+                add_context(*ctx);
             }
-            return *__state;
+            return *ctx;
+        }
+
+        static void shutdown() {
+            guard g(_contexts_lock);
+            for (auto& c : _contexts) {
+                c->close_lua();
+            }
+        }
+
+        // Not threadsafe. Not supposed to be threadsafe!
+        void close_lua() {
+            lua_close(l);
+            l = nullptr;
         }
 
     private:
@@ -130,11 +151,32 @@ namespace lua {
         }
 
         ~context() {
-            lua_close(l);
-            l = nullptr;
+            remove_context(*this);
+            close_lua();
+        }
+        
+    private:
+
+        static std::vector<context *> _contexts;
+        static collections::spinlock _contexts_lock;
+        typedef std::lock_guard<collections::spinlock> guard;
+
+        static void add_context(context &c) {
+            guard g(_contexts_lock);
+            if (std::find(_contexts.begin(), _contexts.end(), &c) != _contexts.end()) {
+                _contexts.push_back(&c);
+            }
+        }
+
+        static void remove_context(context &c) {
+            guard g(_contexts_lock);
+            _contexts.erase(std::remove(_contexts.begin(), _contexts.end(), &c), _contexts.end());
         }
     };
 
     context* context::__state = nullptr;
+
+    std::vector<context *> context::_contexts;
+    collections::spinlock context::_contexts_lock;
 
 }
