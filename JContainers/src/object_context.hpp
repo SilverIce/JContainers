@@ -47,15 +47,15 @@ namespace collections
             delegate->u_cleanup();
         }
     }
+
+    void object_context::shutdown() {
+        aqueue->stop();
+        u_clearState();
+    }
     
     void object_context::clearState() {
-        
         aqueue->stop();
-        
-        {
-            u_clearState();
-        }
-        
+        u_clearState();
         aqueue->start();
     }
 

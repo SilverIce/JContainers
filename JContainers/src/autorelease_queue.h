@@ -148,6 +148,9 @@ namespace collections {
         }
 
         ~autorelease_queue() {
+            // at this point of time aqueue should be empty as whole system is in half-alive-half-destroyed state
+            // if not empty -> object_base::release_from_queue -> accesses died object_registry::removeObject
+
             stop();
         }
 
