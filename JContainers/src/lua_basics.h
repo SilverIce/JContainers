@@ -27,6 +27,7 @@ namespace lua {
                 setmetatable(jc_function_cache, { __mode = 'v' })
 
                 local jc_compile = function(luaString)
+                    print('jc_compile', luaString)
                     local fc = jc_function_cache
                     local funcOrError = fc[luaString]
                     if not funcOrError then
@@ -58,6 +59,7 @@ namespace lua {
 
             lua_pushlightuserdata(l, &jc_compile_function_key); // push key
             lua_gettable(l, LUA_REGISTRYINDEX); // get 'jc_compile' function
+            assert(lua_isfunction(l, -1));
             lua_pushstring(l, lua_string);
             // invoke 'jc_compile' function
             return lua_pcall(l, 1, 1, 0) == LUA_OK;
@@ -82,9 +84,7 @@ namespace lua {
                 setup(l);
 
                 EXPECT_TRUE(compile(l, STR(
-                    return function(x, y)
-                        return x*x + y*y
-                    end
+                    return 'message' .. 's'
                 )));
                 
                 EXPECT_TRUE( lua_isfunction(l, -1) );
@@ -92,7 +92,8 @@ namespace lua {
                 lua_pushinteger(l, 4);
                 lua_pushinteger(l, 1);
                 EXPECT_TRUE( lua_pcall(l, 2, 1, 0) == LUA_OK );
-                EXPECT_TRUE( lua_tonumber(l, -1) == (4 * 4 + 1 * 1) );
+
+                EXPECT_TRUE(strcmp(lua_tostring(l,-1), "messages") == 0);
             }
         }
     };
