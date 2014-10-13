@@ -68,7 +68,7 @@ namespace tes_api_3 {
 
             object_lock g(obj);
             auto item = obj->u_find(tes_hash(key));
-            return item ? item->which() : 0;
+            return item ? item->type() : item_type::no_item;
         }
         REGISTERF2(valueType, "* key", "returns type of the value associated with key.\n"VALUE_TYPE_COMMENT);
 

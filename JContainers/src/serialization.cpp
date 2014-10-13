@@ -121,19 +121,9 @@ namespace collections {
 
 #endif
 
-    // deprecate in 0.67:
-    enum ItemType : unsigned char
-    {
-        ItemTypeNone = 0,
-        ItemTypeInt32 = 1,
-        ItemTypeFloat32 = 2,
-        ItemTypeCString = 3,
-        ItemTypeObject = 4,
-        ItemTypeForm = 5,
-    };
 
     // 0.67 to 0.68:
-    namespace conv_1_to_2 {
+    namespace conv_067_to_3 {
 
         struct old_blank {
             template<class Archive>
@@ -175,6 +165,58 @@ namespace collections {
         }
     }
     
+    namespace conv_066 {
+        // deprecate in 0.67:
+        enum ItemType : unsigned char {
+            ItemTypeNone = 0,
+            ItemTypeInt32 = 1,
+            ItemTypeFloat32 = 2,
+            ItemTypeCString = 3,
+            ItemTypeObject = 4,
+            ItemTypeForm = 5,
+        };
+
+        template<class Archive>
+        void read(Archive & ar, Item& itm) {
+            ItemType type = ItemTypeNone;
+            ar & type;
+
+            switch (type) {
+            case ItemTypeInt32: {
+                SInt32 val = 0;
+                ar & val;
+                itm = val;
+                break;
+            }
+            case ItemTypeFloat32: {
+                Float32 val = 0;
+                ar & val;
+                itm = val;
+                break;
+            }
+            case ItemTypeCString: {
+                std::string string;
+                ar & string;
+                itm = string;
+                break;
+            }
+            case ItemTypeObject: {
+                object_base *object = nullptr;
+                ar & object;
+                itm.var() = internal_object_ref(object, false);
+                break;
+            }
+            case ItemTypeForm: {
+                UInt32 oldId = 0;
+                ar & oldId;
+                itm.var() = (FormId)oldId;
+                break;
+            }
+            default:
+                break;
+            }
+        }
+    }
 
     template<class Archive>
     void Item::load(Archive & ar, const unsigned int version)
@@ -188,49 +230,11 @@ namespace collections {
             ar & _var;
             break;
         case 1: {
-            conv_1_to_2::do_conversion(ar, _var);
+            conv_067_to_3::do_conversion(ar, _var);
             break;
         }
-        case 0: {
-            ItemType type = ItemTypeNone;
-            ar & type;
-
-            switch (type)
-            {
-            case ItemTypeInt32: {
-                SInt32 val = 0;
-                ar & val;
-                *this = val;
-                break;
-            }
-            case ItemTypeFloat32: {
-                Float32 val = 0;
-                ar & val;
-                *this = val;
-                break;
-            }
-            case ItemTypeCString: {
-                std::string string;
-                ar & string;
-                *this = string;
-                break;
-            }
-            case ItemTypeObject: {
-                object_base *object = nullptr;
-                ar & object;
-                _var = internal_object_ref(object, false);
-                break;
-            }
-            case ItemTypeForm: {
-                UInt32 oldId = 0;
-                ar & oldId;
-                *this = (FormId)oldId;
-                break;
-            }
-            default:
-                break;
-            }
-        }
+        case 0:
+            conv_066::read(ar, *this);
             break;
         }
 

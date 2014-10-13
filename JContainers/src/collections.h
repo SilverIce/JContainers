@@ -67,6 +67,16 @@ namespace collections {
     class map;
     class object_base;
 
+    enum item_type {
+        no_item = 0,
+        none,
+        integer,
+        real,
+        form,
+        object,
+        string,
+    };
+
     class Item
     {
     public:
@@ -102,11 +112,15 @@ namespace collections {
             return _var;
         }
 
+        variant& var() {
+            return _var;
+        }
+
         template<class T> bool is_type() const {
             return boost::get<T>(&_var) != nullptr;
         }
 
-        int which() const {
+        uint32_t type() const {
             return _var.which() + 1;
         }
 

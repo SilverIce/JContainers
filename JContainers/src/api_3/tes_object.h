@@ -243,12 +243,12 @@ JValue.cleanTempLocation(\"uniqueLocationName\")"
         REGISTERF(_writeToFile, "writeToFile", "* filePath", "writes object into JSON file");
 
         static SInt32 solvedValueType(object_base* obj, const char *path) {
-            SInt32 type = 0;
+            SInt32 type = item_type::no_item;
 
             if (obj && path) {
                 path_resolving::resolve(tes_context::instance(), obj, path, [&](Item* itmPtr) {
                     if (itmPtr) {
-                        type = itmPtr->which();
+                        type = itmPtr->type();
                     }
                 });
             }

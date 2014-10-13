@@ -311,9 +311,9 @@ if addToIndex >= 0 it inserts value at given index. "NEGATIVE_IDX_COMMENT);
         REGISTERF2(eraseIndex, "* index", "erases item at index. "NEGATIVE_IDX_COMMENT);
 
         static SInt32 valueType(ref obj, SInt32 index) {
-            SInt32 type = 0;
+            SInt32 type = item_type::no_item;
             doReadOp(obj, index, [=, &type](uint32_t idx) {
-                type = obj->_array[idx].which();
+                type = obj->_array[idx].type();
             });
 
             return type;
