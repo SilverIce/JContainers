@@ -29,7 +29,12 @@ namespace collections
         solution: isolate objects by nullifying cross-references, then delete objects
 
         actually all I need is just free all allocated memory but this is hardly achievable
+
         */
+
+        if (delegate) {
+            delegate->u_cleanup();
+        }
 
         aqueue->u_nullify();
 
@@ -42,10 +47,6 @@ namespace collections
 
         registry->u_clear();
         aqueue->u_clear();
-        
-        if (delegate) {
-            delegate->u_cleanup();
-        }
     }
 
     void object_context::shutdown() {

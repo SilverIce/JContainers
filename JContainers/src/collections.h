@@ -34,7 +34,7 @@ namespace collections {
 
         static T* make(tes_context& context /*= tes_context::instance()*/) {
             auto obj = new T();
-            obj->set_context(context);
+            obj->set_context(context.obj_context());
             obj->_registerSelf();
             return obj;
         }
@@ -42,7 +42,7 @@ namespace collections {
         template<class Init>
         static T* _makeWithInitializer(Init& init, tes_context& context /*= tes_context::instance()*/) {
             auto obj = new T();
-            obj->set_context(context);
+            obj->set_context(context.obj_context());
             init(obj);
             obj->_registerSelf();
             return obj;

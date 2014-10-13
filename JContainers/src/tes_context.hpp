@@ -1,4 +1,8 @@
 
+namespace lua {
+    extern void shutdown_all_contexts();
+}
+
 namespace collections {
 
     void tes_context::u_loadAdditional(boost::archive::binary_iarchive & arch) {
@@ -13,6 +17,8 @@ namespace collections {
     }
 
     void tes_context::u_cleanup() {
+        lua::shutdown_all_contexts();
+
         _databaseId = HandleNull;
         _lastError = 0;
     }

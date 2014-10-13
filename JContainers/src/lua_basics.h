@@ -125,7 +125,7 @@ namespace lua {
             return *ctx;
         }
 
-        static void shutdown() {
+        static void shutdown_all() {
             guard g(_contexts_lock);
             for (auto& c : _contexts) {
                 c->close_lua();
@@ -164,7 +164,7 @@ namespace lua {
 
         static void add_context(context &c) {
             guard g(_contexts_lock);
-            if (std::find(_contexts.begin(), _contexts.end(), &c) != _contexts.end()) {
+            if (std::find(_contexts.begin(), _contexts.end(), &c) == _contexts.end()) {
                 _contexts.push_back(&c);
             }
         }
@@ -174,6 +174,10 @@ namespace lua {
             _contexts.erase(std::remove(_contexts.begin(), _contexts.end(), &c), _contexts.end());
         }
     };
+
+    void shutdown_all_contexts() {
+        context::shutdown_all();
+    }
 
     context* context::__state = nullptr;
 

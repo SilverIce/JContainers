@@ -22,7 +22,7 @@ namespace collections {
         current = 4,
     };
 
-    struct shared_state_delegate
+    struct object_context_delegate
     {
         virtual void u_loadAdditional(boost::archive::binary_iarchive & arch) = 0;
         virtual void u_saveAdditional(boost::archive::binary_oarchive & arch) = 0;
@@ -44,7 +44,7 @@ namespace collections {
         object_registry* registry;
         autorelease_queue* aqueue;
 
-        shared_state_delegate *delegate;
+        object_context_delegate *delegate;
 
         std::vector<object_stack_ref> filter_objects(std::function<bool(object_base& obj)> predicate) const;
 

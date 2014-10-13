@@ -9,11 +9,6 @@ namespace tes_api_3 {
 
     struct JCFixture : testing::Fixture {
         tes_context context;
-
-        ~JCFixture() {
-            context.clearState();
-        }
-
     };
 
 #   define JC_TEST(name, name2) TEST_F(JCFixture, name, name2)
