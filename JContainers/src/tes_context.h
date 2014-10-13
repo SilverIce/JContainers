@@ -25,6 +25,7 @@ namespace collections
         }
 
         ~tes_context() {
+            shutdown();
         }
 
         void setLastError(JErrorCode code) {
