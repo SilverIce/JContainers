@@ -189,6 +189,10 @@ public:
         px = nullptr;
     }
 
+    operator T * () const {
+        return px;
+    }
+
 private:
 
     T * px;

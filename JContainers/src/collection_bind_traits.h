@@ -28,6 +28,21 @@ namespace reflection { namespace binding {
         }
     };
 
+    template<class T>
+    struct ObjectConverterT {
+
+        typedef HandleT tes_type;
+
+        static HandleT convert2Tes(object_base* obj) {
+            return obj ? obj->tes_uid() : 0;
+        }
+
+        static typename T::ref convert2J(HandleT hdl) {
+            return tes_context::instance().getObjectRefOfType<T>((Handle)hdl);
+        }
+
+    };
+
     template<> struct GetConv < object_stack_ref& > : ObjectConverter{};
     //template<> struct GetConv < object_stack_ref > : ObjectConverter{};
 
