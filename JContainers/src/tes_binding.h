@@ -249,8 +249,8 @@ namespace reflection { namespace binding {
             using namespace reflection;\
             auto& mInfo = binding::metaInfoFromFieldAndOffset( this, offsetof(__Type, CONCAT(_mem_, __LINE__)) );\
             mInfo._className = (ScriptTesName);\
-        }\
-    } CONCAT(_mem_, __LINE__);
+            }\
+        } CONCAT(_mem_, __LINE__);
 
 #define REGISTERF(func, _funcname, _args, _comment)\
     struct CONCAT(_struct_, __LINE__) {\
@@ -265,6 +265,8 @@ namespace reflection { namespace binding {
              metaF.setComment(_comment);\
              metaF.name = (_funcname);\
              metaF.tes_func = &binder::tes_func;\
+             auto addr = &(func);\
+             metaF.c_func = addr;\
              binding::metaInfoFromFieldAndOffset(this, offsetof(__Type, CONCAT(_mem_, __LINE__))).addFunction(metaF);\
          }\
     } CONCAT(_mem_, __LINE__);

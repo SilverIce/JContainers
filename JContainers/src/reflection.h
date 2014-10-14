@@ -24,6 +24,7 @@ namespace reflection {
     typedef function_parameter (*type_info_func)();
 
     typedef void* tes_api_function;
+    typedef void* c_function;
 
     struct function_info {
         typedef std::string (*comment_generator)();
@@ -33,6 +34,7 @@ namespace reflection {
         tes_function_binder registrator = nullptr;
         parameter_list_creator param_list_func = nullptr;
         tes_api_function tes_func = nullptr;
+        c_function c_func = nullptr;
         const char *argument_names = nullptr;
         const char *name = nullptr;
 
