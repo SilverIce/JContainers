@@ -49,12 +49,12 @@ namespace collections {
         }
 
         static T* object(tes_context& context /*= tes_context::instance()*/) {
-            return static_cast<T *> (make(context));
+            return make(context);
         }
 
         template<class Init>
         static T* objectWithInitializer(Init& init, tes_context& context /*= tes_context::instance()*/) {
-            return static_cast<T *> (_makeWithInitializer(init, context));
+            return _makeWithInitializer(init, context);
         }
     };
 
@@ -426,24 +426,13 @@ namespace collections {
         void serialize(Archive & ar, const unsigned int version);
     };
 
-    class map : public collection_base< map >
-    {
+    template<class RealType, class ContainerType>
+    class basic_map_collection : public collection_base< RealType > {
     public:
-
-        enum  {
-            TypeId = CollectionTypeMap,
-        };
-
-        struct comp { 
-            bool operator() (const std::string& lhs, const std::string& rhs) const {
-                return _stricmp(lhs.c_str(), rhs.c_str()) < 0;
-            }
-        };
-
-        typedef std::map<std::string, Item, comp> container_type;
-
-    private:
-        container_type cnt;
+        typedef ContainerType container_type;
+        typedef typename ContainerType::key_type key_type;
+    protected:
+        ContainerType cnt;
 
     public:
 
@@ -460,54 +449,66 @@ namespace collections {
             return cnt;
         }
 
-        Item find(const std::string& key) {
+        Item find(const key_type& key) {
             object_lock g(this);
             auto result = u_find(key);
             return result ? *result : Item();
         }
 
-        container_type::iterator findItr(const std::string& key) {
+        typename container_type::iterator findItr(const key_type& key) {
             return cnt.find(key);
         }
 
-        Item* u_find(const std::string& key) {
+        Item* u_find(const key_type& key) {
             auto itr = findItr(key);
             return itr != cnt.end() ? &(itr->second) : nullptr;
         }
 
-        bool erase(const std::string& key) {
+        bool erase(const key_type& key) {
             object_lock g(this);
             return u_erase(key);
         }
 
-        bool u_erase(const std::string& key) {
+        bool u_erase(const key_type& key) {
             auto itr = findItr(key);
             return itr != cnt.end() ? (cnt.erase(itr), true) : false;
         }
-
-/*
-        Item& operator [] (const std::string& key) {
-            return cnt[key];
-        }*/
-
-        void u_setValueForKey(const std::string& key, const Item& value) {
-            cnt[key] = value;
-        }
-
-        void setValueForKey(const std::string& key, const Item& value) {
-            object_lock g(this);
-            cnt[key] = value;
-        }
-
-        void u_nullifyObjects() override;
 
         void u_clear() override {
             cnt.clear();
         }
 
+        void u_setValueForKey(const key_type& key, const Item& value) {
+            cnt[key] = value;
+        }
+
+        void setValueForKey(const key_type& key, const Item& value) {
+            object_lock g(this);
+            cnt[key] = value;
+        }
+
         SInt32 u_count() const override {
             return cnt.size();
         }
+
+    };
+
+    struct map_case_insensitive_comp {
+        bool operator() (const std::string& lhs, const std::string& rhs) const {
+            return _stricmp(lhs.c_str(), rhs.c_str()) < 0;
+        }
+    };
+
+
+    class map : public basic_map_collection< map, std::map<std::string, Item, map_case_insensitive_comp > >
+    {
+    public:
+
+        enum  {
+            TypeId = CollectionTypeMap,
+        };
+
+        void u_nullifyObjects() override;
 
         //////////////////////////////////////////////////////////////////////////
 
@@ -516,69 +517,18 @@ namespace collections {
     };
 
 
-    class form_map : public collection_base< form_map >
+    class form_map : public basic_map_collection< form_map, std::map<FormId, Item> >
     {
     public:
         enum  {
             TypeId = CollectionTypeFormMap,
         };
 
-        typedef std::map<FormId, Item> container_type;
-
-    private:
-        container_type cnt;
-
-    public:
-
-        const container_type& u_container() const {
-            return cnt;
-        }
-
-        container_type& u_container() {
-            return cnt;
-        }
-
-        container_type container_copy() {
-            object_lock g(this);
-            return cnt;
-        }
-
+/*
         Item& operator [] (FormId key) {
             return cnt[key];
         }
-
-        Item find(FormId key) {
-            object_lock g(this);
-            auto itr = cnt.find(key);
-            return itr != cnt.end() ? (itr->second) : Item();
-        }
-
-        Item* u_find(FormId key) {
-            auto itr = cnt.find(key);
-            return itr != cnt.end() ? &(itr->second) : nullptr;
-        }
-
-        bool u_erase(FormId key) {
-            auto itr = cnt.find(key);
-            return itr != cnt.end() ? (cnt.erase(itr), true) : false;
-        }
-
-        void u_clear() {
-            cnt.clear();
-        }
-
-        void u_setValueForKey(FormId key, const Item& value) {
-            cnt[key] = value;
-        }
-
-        void setValueForKey(FormId key, const Item& value) {
-            object_lock g(this);
-            cnt[key] = value;
-        }
-
-        SInt32 u_count() const override {
-            return cnt.size();
-        }
+*/
 
         void u_onLoaded() override {
             u_updateKeys();

@@ -5,7 +5,7 @@ namespace collections
         return std::unique_ptr<T, D>(data, destr);
     }
 
-    shared_state::shared_state()
+    object_context::object_context()
         : registry(nullptr)
         , aqueue(nullptr)
     {
@@ -13,13 +13,13 @@ namespace collections
         aqueue = new autorelease_queue(*registry);
     }
 
-    shared_state::~shared_state() {
+    object_context::~object_context() {
 
         delete registry;
         delete aqueue;
     }
     
-    void shared_state::u_clearState() {
+    void object_context::u_clearState() {
 
         /*  Not good, but working solution.
 
@@ -28,7 +28,7 @@ namespace collections
 
         solution: isolate objects by nullifying cross-references, then delete objects
 
-        all we need is just free all allocated memory but this will require track stl memory blocks
+        actually all I need is just free all allocated memory but this is hardly achievable
         */
 
         aqueue->u_nullify();
@@ -47,39 +47,39 @@ namespace collections
             delegate->u_cleanup();
         }
     }
-    
-    void shared_state::clearState() {
-        
+
+    void object_context::shutdown() {
         aqueue->stop();
-        
-        {
-            u_clearState();
-        }
-        
+        u_clearState();
+    }
+    
+    void object_context::clearState() {
+        aqueue->stop();
+        u_clearState();
         aqueue->start();
     }
 
-    std::vector<object_stack_ref> shared_state::filter_objects(std::function<bool(object_base& obj)> predicate) const {
+    std::vector<object_stack_ref> object_context::filter_objects(std::function<bool(object_base& obj)> predicate) const {
         return registry->filter_objects(predicate);
     }
 
-    object_base * shared_state::getObject(Handle hdl) {
+    object_base * object_context::getObject(Handle hdl) {
         return registry->getObject(hdl);
     }
 
-    object_stack_ref shared_state::getObjectRef(Handle hdl) {
+    object_stack_ref object_context::getObjectRef(Handle hdl) {
         return registry->getObjectRef(hdl);
     }
 
-    object_base * shared_state::u_getObject(Handle hdl) {
+    object_base * object_context::u_getObject(Handle hdl) {
         return registry->u_getObject(hdl);
     }
 
-    size_t shared_state::aqueueSize() {
+    size_t object_context::aqueueSize() {
         return aqueue->count();
     }
 
-    void shared_state::read_from_string(const std::string & data, const uint32_t version) {
+    void object_context::read_from_string(const std::string & data, const serialization_version version) {
         namespace io = boost::iostreams;
         io::stream<io::array_source> stream( io::array_source(data.c_str(), data.size()) );
         read_from_stream(stream, version);
@@ -87,15 +87,17 @@ namespace collections
 
     struct header {
 
-        uint32_t updateVersion;
+        serialization_version updateVersion;
 
         static header imitate_old_header() {
-            return{ kJSerializationNoHeaderVersion };
+            return{ serialization_version::no_header };
         }
 
         static header make() {
-            return{ kJSerializationCurrentVersion };
+            return{ serialization_version::current };
         }
+
+        static const char *common_version_key() { return "commonVersion"; }
 
         static header read_from_stream(std::istream & stream) {
 
@@ -106,13 +108,13 @@ namespace collections
 
             auto js = make_unique_ptr(json_loads(hdrString.c_str(), 0, nullptr), &json_decref);
 
-            return{ json_integer_value(json_object_get(js.get(), "commonVersion")) };
+            return{ (serialization_version)json_integer_value(json_object_get(js.get(), common_version_key())) };
         }
 
         static auto write_to_json() -> decltype(make_unique_ptr((json_t *)nullptr, &json_decref)) {
             auto header = make_unique_ptr(json_object(), &json_decref);
 
-            json_object_set(header.get(), "commonVersion", json_integer(kJSerializationCurrentVersion));
+            json_object_set(header.get(), common_version_key(), json_integer((json_int_t)serialization_version::current));
 
             return header;
         }
@@ -127,7 +129,7 @@ namespace collections
         }
     };
 
-    void shared_state::read_from_stream(std::istream & stream, const uint32_t version) {
+    void object_context::read_from_stream(std::istream & stream, const serialization_version version) {
 
         stream.flags(stream.flags() | std::ios::binary);
 
@@ -140,16 +142,16 @@ namespace collections
 
             auto hdr = header::make();
 
-            bool isNotSupported = kJSerializationCurrentVersion < version || version < kJJSerializationVersionPreAQueueFix;
+            bool isNotSupported = serialization_version::current < version || version < serialization_version::pre_aqueue_fix;
 
             if (isNotSupported) {
-                _FATALERROR("Unable load serialized data of version %u. Current serialization version is %u", version, kJSerializationCurrentVersion);
+                _FATALERROR("Unable load serialized data of version %u. Current serialization version is %u", version, serialization_version::current);
                 jc_assert(false);
             }
 
             if (stream.peek() != std::istream::traits_type::eof() && !isNotSupported) {
 
-                if (version <= kJSerializationNoHeaderVersion) {
+                if (version <= serialization_version::no_header) {
                     hdr = header::imitate_old_header();
                 }
                 else {
@@ -192,13 +194,13 @@ namespace collections
         aqueue->start();
     }
 
-    std::string shared_state::write_to_string() {
+    std::string object_context::write_to_string() {
         std::ostringstream stream;
         write_to_stream(stream);
         return stream.str();
     }
 
-    void shared_state::write_to_stream(std::ostream& stream) {
+    void object_context::write_to_stream(std::ostream& stream) {
 
         stream.flags(stream.flags() | std::ios::binary);
 
@@ -221,11 +223,11 @@ namespace collections
 
     //////////////////////////////////////////////////////////////////////////
 
-    void shared_state::u_applyUpdates(const uint32_t saveVersion) {
+    void object_context::u_applyUpdates(const serialization_version saveVersion) {
 
     }
 
-    void shared_state::u_postLoadMaintenance(const uint32_t saveVersion)
+    void object_context::u_postLoadMaintenance(const serialization_version saveVersion)
     {
         for (auto& obj : registry->u_container()) {
             obj->set_context(*this);

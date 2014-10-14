@@ -16,6 +16,12 @@ namespace collections {
     class object_registry;
     class autorelease_queue;
 
+    enum class serialization_version {
+        pre_aqueue_fix = 2,
+        no_header = 3,
+        current = 4,
+    };
+
     struct shared_state_delegate
     {
         virtual void u_loadAdditional(boost::archive::binary_iarchive & arch) = 0;
@@ -23,15 +29,17 @@ namespace collections {
         virtual void u_cleanup() = 0;
     };
 
-    class shared_state {
 
-        void u_applyUpdates(const uint32_t saveVersion);
-        void u_postLoadMaintenance(const uint32_t saveVersion);
+
+    class object_context {
+
+        void u_applyUpdates(const serialization_version saveVersion);
+        void u_postLoadMaintenance(const serialization_version saveVersion);
 
     public:
 
-        shared_state();
-        ~shared_state();
+        object_context();
+        ~object_context();
 
         object_registry* registry;
         autorelease_queue* aqueue;
@@ -57,9 +65,11 @@ namespace collections {
 
         void clearState();
         void u_clearState();
+        // complete shutdown, shouldn't be used for after this
+        void shutdown();
 
-        void read_from_string(const std::string & data, const uint32_t version);
-        void read_from_stream(std::istream & data, const uint32_t version);
+        void read_from_string(const std::string & data, const serialization_version version);
+        void read_from_stream(std::istream & data, const serialization_version version);
 
         std::string write_to_string();
         void write_to_stream(std::ostream& stream);

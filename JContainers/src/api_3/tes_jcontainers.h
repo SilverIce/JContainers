@@ -1,6 +1,8 @@
-namespace collections {
+namespace tes_api_3 {
 
-    class tes_jcontainers : public reflection::class_meta_mixin_t<tes_jcontainers> {
+    using namespace collections;
+
+    class tes_jcontainers : public class_meta<tes_jcontainers> {
     public:
 
         REGISTER_TES_NAME("JContainers");
@@ -15,7 +17,7 @@ namespace collections {
         REGISTERF2(isInstalled, nullptr, "returns true if JContainers plugin is installed");
 
         static UInt32 APIVersion() {
-            return kJAPIVersion;
+            return (UInt32)consts::api_version;
         }
         REGISTERF2(APIVersion, nullptr, []() {
             std::stringstream comm;
@@ -29,7 +31,7 @@ namespace collections {
         });
 
         static UInt32 featureVersion() {
-            return kJVersionMinor;
+            return (UInt32)consts::feature_version;
         }
         REGISTERF2(featureVersion, nullptr, nullptr);
 

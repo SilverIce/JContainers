@@ -1,8 +1,10 @@
 #include "boost_extras.h"
 
-namespace collections {
+namespace tes_api_3 {
 
-    class tes_form_db : public reflection::class_meta_mixin_t<tes_form_db> {
+    using namespace collections;
+
+    class tes_form_db : public class_meta<tes_form_db> {
     public:
 
         REGISTER_TES_NAME("JFormDB");

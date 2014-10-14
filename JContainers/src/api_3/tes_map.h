@@ -1,4 +1,6 @@
-namespace collections {
+namespace tes_api_3 {
+
+    using namespace collections;
 
     inline const char* tes_hash(const char* in) {
         return in;
@@ -9,7 +11,7 @@ namespace collections {
     }
 
     template<class Key, class Cnt>
-    class tes_map_t : public reflection::class_meta_mixin_t< tes_map_t<Key, Cnt> > {
+    class tes_map_t : public class_meta< tes_map_t<Key, Cnt> > {
     public:
 
         typedef typename Cnt::ref& ref;
@@ -171,13 +173,13 @@ namespace collections {
     typedef tes_map_t<TESForm *, form_map> tes_form_map;
 
     void tes_map::additionalSetup() {
-        metaInfo.className = "JMap";
+        metaInfo._className = "JMap";
         metaInfo.comment = "Associative key-value container.\n"
             "Inherits JValue functionality";
     }
 
     void tes_form_map::additionalSetup() {
-        metaInfo.className = "JFormMap";
+        metaInfo._className = "JFormMap";
         metaInfo.comment = "Associative key-value container.\n"
             "Inherits JValue functionality";
     }

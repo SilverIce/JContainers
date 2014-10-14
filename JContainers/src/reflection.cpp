@@ -18,12 +18,12 @@ namespace reflection {
             for (auto & item : meta<class_info_creator>::getListConst()) {
                 class_info& info = item();
 
-                auto found = classDB.find(info.className);
+                auto found = classDB.find(info.className());
                 if (found != classDB.end()) {
                     found->second.merge_with_extension(info);
                 }
                 else {
-                    classDB[info.className] = info;
+                    classDB[info.className()] = info;
                 }
             }
 
@@ -50,15 +50,4 @@ namespace reflection {
 
         return functionPtr;
     }
-    
-    extern "C" {
-
-        __declspec(dllexport) void produceCode() {
-
-            foreach_metaInfo_do([](const class_info& info) {
-                code_producer::produceClassToFile(info);
-            });
-        }
-    };
-
 }

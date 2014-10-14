@@ -11,7 +11,7 @@ namespace collections
 
     private:
 
-        friend class shared_state;
+        friend class object_context;
 
         registry_container _map;
         id_generator_type _idGen;

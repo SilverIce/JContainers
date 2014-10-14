@@ -16,9 +16,6 @@
     <Filter Include="collections_module\path_resolving">
       <UniqueIdentifier>{3411d9ab-af92-4e3d-bc27-14589afe0710}</UniqueIdentifier>
     </Filter>
-    <Filter Include="collections_module\tes_api">
-      <UniqueIdentifier>{a481ff76-9ab2-4bb4-91f6-f5d5e21c603c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="skse">
       <UniqueIdentifier>{ca106175-46ec-41d4-a025-c06319331cdf}</UniqueIdentifier>
     </Filter>
@@ -31,8 +28,11 @@
     <Filter Include="collections_module\lua">
       <UniqueIdentifier>{bc4ac5ac-882f-4d98-a11d-e0f0d63cb96f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="lua_scripts">
-      <UniqueIdentifier>{f6db937d-fad4-4e64-a279-41b638d8237a}</UniqueIdentifier>
+    <Filter Include="collections_module\tes_api_3">
+      <UniqueIdentifier>{a481ff76-9ab2-4bb4-91f6-f5d5e21c603c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="util">
+      <UniqueIdentifier>{b2bd77e9-b73b-4846-b0e6-6ae153b3c7f1}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -52,9 +52,6 @@
     <ClCompile Include="src\backward.compatibility.test.cpp">
       <Filter>collections_module</Filter>
     </ClCompile>
-    <ClCompile Include="src\tes_inteface.cpp">
-      <Filter>collections_module\tes_api</Filter>
-    </ClCompile>
     <ClCompile Include="src\reflection.cpp">
       <Filter>reflection</Filter>
     </ClCompile>
@@ -64,19 +61,24 @@
     <ClCompile Include="src\jc_interface.cpp">
       <Filter>plugin_interface</Filter>
     </ClCompile>
-    <ClCompile Include="src\hotfix_boost.cpp" />
     <ClCompile Include="src\lua_stuff.cpp">
       <Filter>collections_module\lua</Filter>
     </ClCompile>
     <ClCompile Include="src\string_wrapper.cpp">
-      <Filter>collections_module\tes_api</Filter>
+      <Filter>collections_module</Filter>
+    </ClCompile>
+    <ClCompile Include="src\api_3\tes_inteface.cpp">
+      <Filter>collections_module</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dll_api.cpp">
+      <Filter>plugin_interface</Filter>
+    </ClCompile>
+    <ClCompile Include="src\util.cpp">
+      <Filter>util</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\collections.h">
-      <Filter>collections_module</Filter>
-    </ClInclude>
-    <ClInclude Include="src\collections.tests.hpp">
       <Filter>collections_module</Filter>
     </ClInclude>
     <ClInclude Include="src\json_handling.h">
@@ -90,24 +92,6 @@
     </ClInclude>
     <ClInclude Include="src\tes_context.hpp">
       <Filter>collections_module</Filter>
-    </ClInclude>
-    <ClInclude Include="src\tes_array.h">
-      <Filter>collections_module\tes_api</Filter>
-    </ClInclude>
-    <ClInclude Include="src\tes_db.h">
-      <Filter>collections_module\tes_api</Filter>
-    </ClInclude>
-    <ClInclude Include="src\tes_jcontainers.h">
-      <Filter>collections_module\tes_api</Filter>
-    </ClInclude>
-    <ClInclude Include="src\tes_map.h">
-      <Filter>collections_module\tes_api</Filter>
-    </ClInclude>
-    <ClInclude Include="src\tes_object.h">
-      <Filter>collections_module\tes_api</Filter>
-    </ClInclude>
-    <ClInclude Include="src\tes_string.h">
-      <Filter>collections_module\tes_api</Filter>
     </ClInclude>
     <ClInclude Include="src\gtest.h">
       <Filter>gtest</Filter>
@@ -133,19 +117,10 @@
     <ClInclude Include="src\object_base.h">
       <Filter>object_module</Filter>
     </ClInclude>
-    <ClInclude Include="src\shared_state.h">
-      <Filter>object_module</Filter>
-    </ClInclude>
-    <ClInclude Include="src\shared_state.hpp">
-      <Filter>object_module</Filter>
-    </ClInclude>
     <ClInclude Include="src\spinlock.h">
       <Filter>object_module</Filter>
     </ClInclude>
     <ClInclude Include="src\typedefs.h" />
-    <ClInclude Include="src\tes_form_db.h">
-      <Filter>collections_module\tes_api</Filter>
-    </ClInclude>
     <ClInclude Include="src\form_handling.h">
       <Filter>collections_module</Filter>
     </ClInclude>
@@ -188,22 +163,50 @@
     <ClInclude Include="src\jc_interface.h">
       <Filter>plugin_interface</Filter>
     </ClInclude>
-    <ClInclude Include="src\tes_lua.h">
-      <Filter>collections_module\tes_api</Filter>
-    </ClInclude>
     <ClInclude Include="src\lua_stuff.h">
       <Filter>collections_module\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="src\api_3\tes_array.h">
+      <Filter>collections_module\tes_api_3</Filter>
+    </ClInclude>
+    <ClInclude Include="src\api_3\tes_db.h">
+      <Filter>collections_module\tes_api_3</Filter>
+    </ClInclude>
+    <ClInclude Include="src\api_3\tes_form_db.h">
+      <Filter>collections_module\tes_api_3</Filter>
+    </ClInclude>
+    <ClInclude Include="src\api_3\tes_jcontainers.h">
+      <Filter>collections_module\tes_api_3</Filter>
+    </ClInclude>
+    <ClInclude Include="src\api_3\tes_lua.h">
+      <Filter>collections_module\tes_api_3</Filter>
+    </ClInclude>
+    <ClInclude Include="src\api_3\tes_map.h">
+      <Filter>collections_module\tes_api_3</Filter>
+    </ClInclude>
+    <ClInclude Include="src\api_3\tes_object.h">
+      <Filter>collections_module\tes_api_3</Filter>
+    </ClInclude>
+    <ClInclude Include="src\api_3\tes_string.h">
+      <Filter>collections_module\tes_api_3</Filter>
+    </ClInclude>
+    <ClInclude Include="src\api_3\collections.tests.hpp">
+      <Filter>collections_module\tes_api_3</Filter>
+    </ClInclude>
+    <ClInclude Include="src\api_3\master.h">
+      <Filter>collections_module\tes_api_3</Filter>
+    </ClInclude>
+    <ClInclude Include="src\object_context.h">
+      <Filter>object_module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\object_context.hpp">
+      <Filter>object_module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\util.h">
+      <Filter>util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="JContainers.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="JCData\lua\jc.lua">
-      <Filter>lua_scripts</Filter>
-    </None>
-    <None Include="JCData\lua\MyModRoot.lua.example">
-      <Filter>lua_scripts</Filter>
-    </None>
   </ItemGroup>
 </Project>

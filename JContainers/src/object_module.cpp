@@ -35,7 +35,7 @@
 
 #include "jcontainers_constants.h"
 #include "object_base.h"
-#include "shared_state.h"
+#include "object_context.h"
 
 #include "object_base_serialization.h"
 
@@ -44,7 +44,7 @@
 #include "autorelease_queue.h"
 
 #include "object_base.hpp"
-#include "shared_state.hpp"
+#include "object_context.hpp"
 
 namespace collections
 {

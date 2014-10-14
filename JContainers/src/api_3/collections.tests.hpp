@@ -1,8 +1,11 @@
 #pragma once
 
 #include <future>
+#include "util.h"
 
-namespace collections {
+namespace tes_api_3 {
+
+    using namespace collections;
 
     struct JCFixture : testing::Fixture {
         tes_context context;
@@ -20,7 +23,7 @@ namespace collections {
 
 #ifndef TEST_COMPILATION_DISABLED
 
-namespace collections {
+namespace tes_api_3 {
 
     const char * jsonTestString() {
         const char *jsonString = STR(
@@ -226,7 +229,7 @@ namespace collections {
 
             namespace fs = boost::filesystem;
 
-            fs::path dir("test_data/json_loading_test");
+            auto dir = util::relative_to_dll_path("test_data/json_loading_test");
             fs::directory_iterator end;
             bool atLeastOneTested = false;
 
@@ -274,7 +277,7 @@ namespace collections {
                 auto state = ctx.write_to_string();
                 ctx.clearState();
 
-                ctx.read_from_string(state, kJSerializationCurrentVersion);
+                ctx.read_from_string(state, serialization_version::current);
 
                 jsonOut = json_serializer::create_json_value(*ctx.getObject(rootId));
                 ctx.clearState();
@@ -364,7 +367,7 @@ namespace collections {
     {
         namespace fs = boost::filesystem;
 
-        fs::path dir("test_data/backward_compatibility");
+        fs::path dir = util::relative_to_dll_path("test_data/backward_compatibility");
         fs::directory_iterator end;
         bool atLeastOneTested = false;
 
@@ -374,7 +377,7 @@ namespace collections {
 
                 std::ifstream file(itr->path().generic_string(), std::ios::in | std::ios::binary);
                 // had to pass kJSerializationNoHeaderVersion - 0.67 has no header :(
-                context.read_from_stream(file, kJSerializationNoHeaderVersion);
+                context.read_from_stream(file, serialization_version::no_header);
             }
         }
 
@@ -384,7 +387,7 @@ namespace collections {
 }
 
 // API-related tests:
-namespace collections {
+namespace tes_api_3 {
 
     JC_TEST(array,  test)
     {
@@ -453,7 +456,6 @@ namespace collections {
         EXPECT_TRUE(tes_jcontainers::isInstalled());
 
         EXPECT_FALSE(tes_jcontainers::fileExistsAtPath(nullptr));
-        EXPECT_TRUE(tes_jcontainers::fileExistsAtPath("JContainers.dll"));
         EXPECT_TRUE(!tes_jcontainers::fileExistsAtPath("abracadabra"));
     }
 
@@ -622,14 +624,14 @@ namespace collections {
 
         tes_object::cleanPool("locationA");
 
-        std::this_thread::sleep_for(std::chrono::seconds(15));
+        std::this_thread::sleep_for(std::chrono::seconds(18));
 
         auto foundObj = tes_context::instance().getObject(id);
         EXPECT_TRUE(!foundObj/* || !foundObj->has_equal_tag("temp_location_test")*/);
     }
 }
 
-namespace collections {
+namespace tes_api_3 {
 
     JC_TEST(tes_context, database)
     {
@@ -643,9 +645,7 @@ namespace collections {
 
     JC_TEST(autorelease_queue, over_release)
     {
-        using namespace std;
-
-        vector<Handle> identifiers;
+        std::vector<Handle> identifiers;
         //int countBefore = queue.count();
 
         for (int i = 0; i < 10; ++i) {
@@ -683,9 +683,7 @@ namespace collections {
 
     JC_TEST(autorelease_queue, ensure_destroys)
     {
-        using namespace std;
-
-        vector<Handle> public_identifiers, privateIds;
+        std::vector<Handle> public_identifiers, privateIds;
 
         for (int i = 0; i < 10; ++i) {
             auto obj = map::object(context);
@@ -696,13 +694,13 @@ namespace collections {
             priv->prolong_lifetime();
         }
 
-        auto allExist = [&](vector<Handle>& identifiers) {
+        auto allExist = [&](std::vector<Handle>& identifiers) {
             return std::all_of(identifiers.begin(), identifiers.end(), [&](Handle id) {
                 return context.getObject(id);
             });
         };
 
-        auto allDestroyed = [&](vector<Handle>& identifiers) {
+        auto allDestroyed = [&](std::vector<Handle>& identifiers) {
             return std::all_of(identifiers.begin(), identifiers.end(), [&](Handle id) {
                 return !context.getObject(id);
             });
