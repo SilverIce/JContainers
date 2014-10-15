@@ -61,9 +61,6 @@
     <ClCompile Include="src\jc_interface.cpp">
       <Filter>plugin_interface</Filter>
     </ClCompile>
-    <ClCompile Include="src\lua_stuff.cpp">
-      <Filter>collections_module\lua</Filter>
-    </ClCompile>
     <ClCompile Include="src\string_wrapper.cpp">
       <Filter>collections_module</Filter>
     </ClCompile>
@@ -75,6 +72,12 @@
     </ClCompile>
     <ClCompile Include="src\util.cpp">
       <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lua_api.hpp">
+      <Filter>collections_module\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lua_basics.cpp">
+      <Filter>collections_module\lua</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -146,9 +149,6 @@
     <ClInclude Include="src\collection_bind_traits.h">
       <Filter>collections_module</Filter>
     </ClInclude>
-    <ClInclude Include="src\boost_serialization_atomic.h">
-      <Filter>collections_module</Filter>
-    </ClInclude>
     <ClInclude Include="src\boost_serialization_intrusive_ptr_jc.h">
       <Filter>collections_module</Filter>
     </ClInclude>
@@ -162,9 +162,6 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\jc_interface.h">
       <Filter>plugin_interface</Filter>
-    </ClInclude>
-    <ClInclude Include="src\lua_stuff.h">
-      <Filter>collections_module\lua</Filter>
     </ClInclude>
     <ClInclude Include="src\api_3\tes_array.h">
       <Filter>collections_module\tes_api_3</Filter>
@@ -204,6 +201,12 @@
     </ClInclude>
     <ClInclude Include="src\util.h">
       <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="src\api_for_lua.h">
+      <Filter>collections_module\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="src\collection_functions.h">
+      <Filter>collections_module</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -66,7 +66,7 @@
     <ClCompile>
       <Optimization>Full</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>src;lib;lib\boost;$(SolutionDir)\dep;$(SolutionDir)\dep\skse;$(SolutionDir)\dep\jansson\jansson\src;$(SolutionDir)\dep\jansson;$(SolutionDir)\dep\lua\lua\src;$(SolutionDir)\dep\lua;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;lib;lib\boost;$(SolutionDir)\dep;$(SolutionDir)\dep\skse;$(SolutionDir)\dep\jansson\jansson\src;$(SolutionDir)\dep\jansson;$(SolutionDir)\dep\luajit\luajit-2.0\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -99,7 +99,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>src;lib;lib\boost;$(SolutionDir)\dep;$(SolutionDir)\dep\skse;$(SolutionDir)\dep\jansson\jansson\src;$(SolutionDir)\dep\jansson;$(SolutionDir)\dep\lua\lua\src;$(SolutionDir)\dep\lua;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;lib;lib\boost;$(SolutionDir)\dep;$(SolutionDir)\dep\skse;$(SolutionDir)\dep\jansson\jansson\src;$(SolutionDir)\dep\jansson;$(SolutionDir)\dep\luajit\luajit-2.0\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -136,7 +136,8 @@
     <ClCompile Include="src\backward.compatibility.test.cpp" />
     <ClCompile Include="src\dll_api.cpp" />
     <ClCompile Include="src\jc_interface.cpp" />
-    <ClCompile Include="src\lua_stuff.cpp" />
+    <ClCompile Include="src\lua_api.hpp" />
+    <ClCompile Include="src\lua_basics.cpp" />
     <ClCompile Include="src\object_module.cpp" />
     <ClCompile Include="src\gtest.cpp" />
     <ClCompile Include="src\jcontainers_pch.cpp">
@@ -160,16 +161,16 @@
     <ClInclude Include="src\api_3\tes_map.h" />
     <ClInclude Include="src\api_3\tes_object.h" />
     <ClInclude Include="src\api_3\tes_string.h" />
+    <ClInclude Include="src\api_for_lua.h" />
     <ClInclude Include="src\autorelease_queue.h" />
     <ClInclude Include="src\boost_extras.h" />
     <ClInclude Include="src\code_producer.hpp" />
     <ClInclude Include="src\collection_bind_traits.h" />
-    <ClInclude Include="src\boost_serialization_atomic.h" />
     <ClInclude Include="src\boost_serialization_intrusive_ptr_jc.h" />
     <ClInclude Include="src\collection_operators.h" />
     <ClInclude Include="src\form_handling.h" />
+    <ClInclude Include="src\collection_functions.h" />
     <ClInclude Include="src\jc_interface.h" />
-    <ClInclude Include="src\lua_stuff.h" />
     <ClInclude Include="src\object_base_serialization.h" />
     <ClInclude Include="src\path_resolving.h" />
     <ClInclude Include="src\jcontainers_constants.h" />
@@ -204,8 +205,8 @@
     <ProjectReference Include="..\dep\jansson\jansson.vcxproj">
       <Project>{f9ef3ca7-06a8-4bb2-9232-c4251e65829b}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\dep\lua\lua.vcxproj">
-      <Project>{f74a8ebf-e8f7-42d3-bcf9-65daa7119171}</Project>
+    <ProjectReference Include="..\dep\luajit\luajit.vcxproj">
+      <Project>{7d8b3c09-a91e-4c14-93af-059f314c601f}</Project>
     </ProjectReference>
     <ProjectReference Include="..\dep\skse\skse\skse.vcxproj">
       <Project>{aa0365ec-47ea-45aa-bb1f-ebbcccc466f2}</Project>

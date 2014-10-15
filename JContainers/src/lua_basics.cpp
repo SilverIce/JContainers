@@ -1,11 +1,16 @@
 #pragma once
 
+#include <boost/noncopyable.hpp>
+#include <mutex>
+#include <algorithm>
+
+extern "C" {
+
 #include "lua.h"
 #include "lualib.h"
 #include "lauxlib.h"
 
-#include <boost/noncopyable.hpp>
-#include <mutex>
+}
 
 #include "meta.h"
 #include "gtest.h"
@@ -13,6 +18,10 @@
 
 // Basic Lua-related-only things
 namespace lua {
+
+    enum  {
+        LUA_OK = 0,
+    };
 
     // Caches a strings compiled into a lua-functions:
     // Stores associations {luaString: compiledFunction} in a weak lua table
@@ -65,12 +74,6 @@ namespace lua {
             return lua_pcall(l, 1, 1, 0) == LUA_OK;
         }
 
-/*
-        bool compile_and_run(lua_State *l, const char *lua_string, int numargs, int numret) {
-            return compile(l, lua_string) && lua_pcall(l, 0, 0, 0);
-        }
-
-*/
         namespace {
             // anonymous namespace to not pollute other namespaces
             struct fixture : testing::Fixture {

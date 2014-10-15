@@ -40,16 +40,15 @@ namespace reflection { namespace binding {
         static typename T::ref convert2J(HandleT hdl) {
             return tes_context::instance().getObjectRefOfType<T>((Handle)hdl);
         }
-
     };
 
     template<> struct GetConv < object_stack_ref& > : ObjectConverter{};
     //template<> struct GetConv < object_stack_ref > : ObjectConverter{};
 
     template<> struct GetConv < object_base* > : ObjectConverter{};
-    template<> struct GetConv < array* > : ObjectConverter{};
-    template<> struct GetConv < map* > : ObjectConverter{};
-    template<> struct GetConv < form_map* > : ObjectConverter{};
+    template<> struct GetConv < array* > : ObjectConverterT< array >{};
+    template<> struct GetConv < map* > : ObjectConverterT< map >{};
+    template<> struct GetConv < form_map* > : ObjectConverterT< form_map >{};
 
     //////////////////////////////////////////////////////////////////////////
 

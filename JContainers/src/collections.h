@@ -66,6 +66,7 @@ namespace collections {
     class array;
     class map;
     class object_base;
+    class Item;
 
     enum item_type {
         no_item = 0,
@@ -81,7 +82,8 @@ namespace collections {
     {
     public:
         typedef boost::blank blank;
-        typedef boost::variant<boost::blank, SInt32, Float32, FormId, internal_object_ref, std::string> variant;
+        typedef Float32 Real;
+        typedef boost::variant<boost::blank, SInt32, Real, FormId, internal_object_ref, std::string> variant;
 
     private:
         variant _var;
@@ -145,8 +147,8 @@ namespace collections {
         //////////////////////////////////////////////////////////////////////////
 
 
-        explicit Item(Float32 val) : _var(val) {}
-        explicit Item(double val) : _var((Float32)val) {}
+        explicit Item(Real val) : _var(val) {}
+        explicit Item(double val) : _var((Real)val) {}
         explicit Item(SInt32 val) : _var(val) {}
         explicit Item(int val) : _var((SInt32)val) {}
         explicit Item(bool val) : _var((SInt32)val) {}
@@ -180,10 +182,11 @@ namespace collections {
         Item& operator = (int val) { _var = (SInt32)val; return *this;}
         //Item& operator = (bool val) { _var = (SInt32)val; return *this;}
         Item& operator = (SInt32 val) { _var = val; return *this;}
-        Item& operator = (Float32 val) { _var = val; return *this;}
-        Item& operator = (double val) { _var = (Float32)val; return *this;}
+        Item& operator = (Real val) { _var = val; return *this; }
+        Item& operator = (double val) { _var = (Real)val; return *this; }
         Item& operator = (const std::string& val) { _var = val; return *this;}
         Item& operator = (std::string&& val) { _var = val; return *this;}
+        Item& operator = (boost::blank) { _var = boost::blank(); return *this; }
 
 
         // prevent form id be saved like integral number
@@ -230,8 +233,8 @@ namespace collections {
             return nullptr;
         }
 
-        Float32 fltValue() const {
-            if (auto val = boost::get<Float32>(&_var)) {
+        Real fltValue() const {
+            if (auto val = boost::get<Item::Real>(&_var)) {
                 return *val;
             }
             else if (auto val = boost::get<SInt32>(&_var)) {
@@ -244,7 +247,7 @@ namespace collections {
             if (auto val = boost::get<SInt32>(&_var)) {
                 return *val;
             }
-            else if (auto val = boost::get<Float32>(&_var)) {
+            else if (auto val = boost::get<Item::Real>(&_var)) {
                 return *val;
             }
             return 0;
@@ -291,8 +294,8 @@ namespace collections {
             return is_type<SInt32>() && intValue() == value;
         }
 
-        bool isEqual(Float32 value) const {
-            return is_type<Float32>() && fltValue() == value;
+        bool isEqual(Real value) const {
+            return is_type<Real>() && fltValue() == value;
         }
 
         bool isEqual(const char* value) const {
@@ -330,13 +333,13 @@ namespace collections {
         }
 
         bool isNumber() const {
-            return is_type<SInt32>() || is_type<Float32>();
+            return is_type<SInt32>() || is_type<Real>();
         }
 
         template<class T> T readAs();
     };
 
-    template<> inline float Item::readAs<Float32>() {
+    template<> inline Item::Real Item::readAs<Item::Real>() {
         return fltValue();
     }
 
@@ -412,20 +415,27 @@ namespace collections {
 
         void u_nullifyObjects() override;
 
-        Item* u_getItem(size_t index) {
-            return index < _array.size() ? &_array[index] : nullptr;
+        int32_t u_convertIndex(int32_t idx) const {
+            return idx >= 0 ? idx : ((int32_t)_array.size() - idx);
         }
 
-        void setItem(size_t index, const Item& itm) {
+        Item* u_getItem(int32_t index) {
+            auto idx = u_convertIndex(index);
+            return idx < _array.size() ? &_array[idx] : nullptr;
+        }
+
+        void setItem(int32_t index, const Item& itm) {
             object_lock g(this);
-            if (index < _array.size()) {
-                _array[index] = itm;
+            auto idx = u_convertIndex(index);
+            if (idx < _array.size()) {
+                _array[idx] = itm;
             }
         }
 
-        Item getItem(size_t index) {
+        Item getItem(int32_t index) {
             object_lock lock(this);
-            return index < _array.size() ? _array[index] : Item();
+            auto idx = u_convertIndex(index);
+            return idx < _array.size() ? _array[idx] : Item();
         }
 
         iterator begin() { return _array.begin();}

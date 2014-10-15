@@ -22,8 +22,6 @@
 #include <sstream>
 #include <set>
 
-#include "boost_serialization_atomic.h"
-
 #include "gtest.h"
 
 #include "collections.h"

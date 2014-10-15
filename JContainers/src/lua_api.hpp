@@ -1,23 +1,238 @@
 #pragma once
 
-#include "lua_stuff.h"
+//#include "lua_stuff.h"
 
 #include <utility>
 #include <string>
 #include <boost/optional.hpp>
-#include <boost/filesystem.hpp>
+#include <sstream>
+//#include <boost/filesystem.hpp>
 
 #include "gtest.h"
+#include "util.h"
 
-#include "lua_basics.h"
+#include "reflection.h"
+
 
 #include "jcontainers_constants.h"
 #include "collections.h"
-#include "json_handling.h"
-#include "skse.h"
-#include "tes_context.h"
-#include "util.h"
+//#include "json_handling.h"
+//#include "skse.h"
+//#include "tes_context.h"
+#include "collection_functions.h"
 
+namespace lua_api {
+
+    using namespace collections;
+
+#   define cexport extern "C" __declspec(dllexport)
+#   define FOR_JC_C
+
+    extern "C"  {
+#       include "api_for_lua.h"
+    }
+//#   undef cexport
+
+    cexport void* JC_get_c_function(const char *functionName, const char * className) {
+        using namespace reflection;
+
+        c_function functionPtr = nullptr;
+        auto& db = class_database();
+        auto itr = db.find(className);
+        if (itr != db.end()) {
+            auto& cls = itr->second;
+
+            if (const function_info* fInfo = cls.find_function(functionName)) {
+                functionPtr = fInfo->c_func;
+            }
+        }
+
+        return functionPtr;
+    }
+
+    JCToLuaValue JCToLuaValue_None() {
+        return{ item_type::no_item, { 0 }, 0 };
+    }
+
+    cexport void JCToLuaValue_free(JCToLuaValue* v) {
+        if (v && v->type == item_type::string) {
+            free((void *)v->string);
+        }
+    }
+
+    cexport void CString_free(CString *str) {
+        if (str) {
+            free((void *)str->str);
+        }
+    }
+
+    CString CString_None() {
+        return{ nullptr, 0 };
+    }
+
+    CString CString_copy(const char *origin, size_t length = -1) {
+        if (!origin) {
+            return CString_None();
+        }
+
+        length = length != -1 ? length : strlen(origin);
+        char *string = (char *)calloc(length + 1, sizeof(char));
+        strcpy(string, origin);
+        return{ string, length };
+    }
+
+    CString CString_copy(const std::string& origin) {
+        return CString_copy(origin.c_str(), origin.size());
+    }
+
+    JCToLuaValue JCToLuaValue_fromItem(const Item& itm) {
+        struct t : public boost::static_visitor < > {
+            JCToLuaValue value;
+
+            void operator ()(const std::string& str) {
+                value.string = CString_copy(str.c_str(), str.size()).str;
+                value.stringLength = str.size();
+            }
+
+            void operator ()(const Item::Real& val) {
+                value.real = val;
+            }
+
+            void operator ()(const boost::blank&) {}
+
+            void operator ()(const collections::internal_object_ref& val) {
+                value.object = { val.get() };
+            }
+
+            void operator ()(const FormId& val) {
+                value.form = val;
+            }
+
+        } converter;
+
+        converter.value.type = itm.type();
+        itm.var().apply_visitor(converter);
+        return converter.value;
+    }
+
+    void JCValue_fillItem(const JCValue *v, Item& itm) {
+        switch (v ? v->type : item_type::no_item) {
+        case item_type::form:
+            itm = (FormId)v->form;
+            break;
+        case item_type::integer:
+            itm = v->integer;
+            break;
+        case item_type::real:
+            itm = v->real;
+            break;
+        case item_type::object:
+            itm = (object_base *)v->object;
+            break;
+        case item_type::string:
+            itm = v->string;
+            break;
+        case item_type::no_item:
+        case item_type::none:
+            itm = boost::blank();
+            break;
+        default:
+            assert(false);
+            break;
+        }
+    }
+
+    template<class JCV> std::string JCValue_toString(const JCV *v) {
+        std::stringstream str;
+        if (!v) {
+            str << "nil";
+        }
+        else {
+            switch (v->type)
+            {
+            case collections::no_item:
+                str << "no_item";
+                break;
+            case collections::none:
+                str << "none";
+                break;
+            case collections::integer:
+                str << "integer " << v->integer;
+                break;
+            case collections::real:
+                str << "real " << v->real;
+                break;
+            case collections::form:
+                str << "form " << v->form;
+                break;
+            case collections::object:
+                str << "object " << v->object;
+                break;
+            case collections::string:
+                str << "string " << (const char*)v->string;
+                break;
+            default:
+                assert(false);
+                break;
+            }
+        }
+
+        return str.str();
+    }
+    template<class JCV> std::string JCValue_toString(const JCV &v) { return JCValue_toString(&v); }
+    // API
+
+    cexport handle JValue_retain(object_base* obj) { return (obj ? obj->stack_retain(), obj : nullptr); }
+    cexport handle JValue_release(object_base* obj) { return (obj ? obj->stack_release(), nullptr : nullptr); }
+
+    cexport JCToLuaValue JArray_getValue(array* obj, index key) {
+        JCToLuaValue v(JCToLuaValue_None());
+        array_functions::doReadOp(obj, key, [=, &v](index idx) {
+            v = JCToLuaValue_fromItem(obj->u_container()[idx]);
+        });
+        std::cout << "value returned: " << JCValue_toString(v) << std::endl;
+        return v;
+    }
+
+    cexport void JArray_setValue(array* obj, index key, const JCValue* val) {
+        array_functions::doReadOp(obj, key, [=](index idx) {
+            JCValue_fillItem(val, obj->u_container()[idx]);
+        });
+
+        std::cout << "value assigned: " << JCValue_toString(val) << std::endl;
+    }
+
+    cexport CString JMap_copyNextKey(const map *obj, cstring lastKey) {
+        CString next = CString_None();
+
+        if (obj) {
+            object_lock g(obj);
+            auto& container = obj->u_container();
+            if (lastKey) {
+                auto itr = container.find(lastKey);
+                auto end = container.end();
+                if (itr != end && (++itr) != end) {
+                    next = CString_copy(itr->first);
+                }
+            }
+            else if (container.empty() == false) {
+                next = CString_copy(container.begin()->first);
+            }
+        }
+        return next;
+    }
+
+    cexport void JMap_setValue(map *obj, cstring key, const JCValue* val) {
+        map_functions::doWriteOp(obj, key, [val](Item& itm) { JCValue_fillItem(val, itm); });
+    }
+
+    cexport JCToLuaValue JMap_getValue(map *obj, cstring key) {
+        return map_functions::doReadOpR(obj, key, JCToLuaValue_None(), [](Item& itm) { return JCToLuaValue_fromItem(itm); });
+    }
+
+}
+
+#if 0
 namespace collections { namespace {
 
     template<class T> struct trait;
@@ -552,3 +767,4 @@ namespace collections {
     }
 
 }
+#endif

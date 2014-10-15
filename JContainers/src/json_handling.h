@@ -406,7 +406,7 @@ namespace collections {
                     return json_integer(val);
                 }
 
-                json_ref operator()(const Float32 & val) const {
+                json_ref operator()(const Item::Real & val) const {
                     return json_real(val);
                 }
 
