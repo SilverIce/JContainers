@@ -16,7 +16,8 @@ namespace collections {
                                     "." STR(JC_FEATURE_VERSION)   \
                                     "." STR(JC_PATCH_VERSION)
 
-#   define JC_USER_FILES    "/My Games/Skyrim/JCUser/"
+#   define JC_USER_FILES            "My Games/Skyrim/JCUser/"
+#   define JC_DATA_FILES            "JCData\\"
 
     enum class consts : uint32_t {
         storage_chunk = 'JSTR',

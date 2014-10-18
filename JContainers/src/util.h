@@ -1,3 +1,4 @@
+#pragma once
 
 namespace boost { namespace filesystem {
 
@@ -6,5 +7,6 @@ namespace boost { namespace filesystem {
 
 namespace util {
 
+    boost::filesystem::path dll_path();
     boost::filesystem::path relative_to_dll_path(const char *relative_path);
 }

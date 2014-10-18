@@ -73,10 +73,7 @@
     <ClCompile Include="src\util.cpp">
       <Filter>util</Filter>
     </ClCompile>
-    <ClCompile Include="src\lua_api.hpp">
-      <Filter>collections_module\lua</Filter>
-    </ClCompile>
-    <ClCompile Include="src\lua_basics.cpp">
+    <ClCompile Include="src\lua_api.cpp">
       <Filter>collections_module\lua</Filter>
     </ClCompile>
   </ItemGroup>
@@ -202,11 +199,14 @@
     <ClInclude Include="src\util.h">
       <Filter>util</Filter>
     </ClInclude>
-    <ClInclude Include="src\api_for_lua.h">
-      <Filter>collections_module\lua</Filter>
-    </ClInclude>
     <ClInclude Include="src\collection_functions.h">
       <Filter>collections_module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\lua_basics.h">
+      <Filter>collections_module\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="Data\SKSE\Plugins\JCData\InternalLuaScripts\api_for_lua.h">
+      <Filter>collections_module\lua</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

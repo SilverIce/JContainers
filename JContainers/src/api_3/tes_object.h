@@ -237,10 +237,7 @@ JValue.cleanTempLocation(\"uniqueLocationName\")"
                 json_dump_file(json.get(), cpath, JSON_INDENT(2));
             }
         }
-        static void _writeToFile(ref obj, const char * path) {
-            writeToFile(obj, path);
-        }
-        REGISTERF(_writeToFile, "writeToFile", "* filePath", "writes object into JSON file");
+        REGISTERF(writeToFile, "writeToFile", "* filePath", "writes object into JSON file");
 
         static SInt32 solvedValueType(object_base* obj, const char *path) {
             SInt32 type = item_type::no_item;
