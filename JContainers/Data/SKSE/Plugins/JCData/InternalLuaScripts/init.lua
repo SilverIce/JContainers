@@ -1,5 +1,9 @@
 
+-- JC supplies these paths
+local JCDataPath, JCDllPath = ...
 
+-------------------------------------------------
+-- do not allow global variable override
 setmetatable(_G, {
   __newindex = function(t, k, v)
     assert(not t[k], "it's not ok to override global variables")
@@ -7,41 +11,51 @@ setmetatable(_G, {
   end
 })
 
-
--- JC will supplies these paths
-local JCDataPath, JCDllPath = ...
-
 -- Setup globals
-do
-  package.path = ';' .. JCDataPath .. [[InternalLuaScripts\?.lua;]]
+package.path = ';' .. JCDataPath .. [[InternalLuaScripts/?.lua;]]
 
-  JConstants = {
-    DataPath = JCDataPath,
-    HeaderPath = JCDataPath .. [[InternalLuaScripts\api_for_lua.h]],
-    DllPath = JCDllPath,
-  }
+JConstants = {
+  DataPath = JCDataPath,
+  HeaderPath = JCDataPath .. [[InternalLuaScripts/api_for_lua.h]],
+  DllPath = JCDllPath,
+}
 
-  math.randomseed(os.time())
-end
+math.randomseed(os.time())
+
+JC_compileAndRun = nil
+-----------------------------------------------------------
+
+print(JCDataPath, JCDllPath)
 
 -- that's really stupid that there is no way to pass extra arguments into 'require' funtion
 local jc = require('jc')
 
-
 -- test functionality
-jc.testJC()
+--jc.testJC()
 
-
-
-local function copyLuaTable(table, copy_into)
-  local copy = copy_into or {}
-  for k,v in pairs(table) do
-    copy[k] = v
+local function printTable( t )
+  for k,v in pairs(t) do
+    print(k,v)
   end
-  
-  setmetatable(copy, getmetatable(table))
-  return copy
 end
+
+local function mixIntoTable(dest, source)
+  for k,v in pairs(source) do
+    dest[k] = v
+  end
+end
+
+-- naive implementation which doesn't takes into account
+local function copyLuaTable(source)
+  local dest = {}
+  mixIntoTable(dest, source)
+  setmetatable(dest, getmetatable(source))
+  return dest
+end
+
+-----------------------------------
+
+printTable(JConstants)
 
 ------------------------------------
 
@@ -62,12 +76,6 @@ do
   -- all JValue.evalLua* scripts sharing the one, immutable sandbox
   local sandbox = {
 
-    JArray = jc.JArray,
-    JFormMap = jc.JFormMap,
-    JMap = jc.JMap,
-    JValue = jc.JValue,
-    jc = jc,
-
     -- some standard lua modules and functions
     math = math,
     io = io,
@@ -83,20 +91,29 @@ do
     tostring = tostring,
     type = type,
     next = next,
+    print = print,
   }
 
-  -- cached results of module execution
+  -- copy public things into sandbox
+  mixIntoTable(sandbox, jc.public)
+
+  -- caches results of module execution
   local user_modules = {}
 
   -- an alternative to standard 'require' function
   local function jc_require (s)
     local mod = user_modules[s]
     if not mod then
-      local str = string.gsub(s, '.', [[\]])
-      local f, message = loadfile (JCDataPath .. [[lua\]] .. str .. '.lua')
-      if not f then error(message) end   
+
+      print('trying to load', s)
+
+      local str = string.gsub(s, '%.', [[/]])
+      print('str', str)
+      local f, message = loadfile (JCDataPath .. [[lua/]] .. str .. '.lua')
+      if not f then error(message) end
       setfenv(f, sandbox)
-      user_modules[s] = f()
+      mod = f()
+      user_modules[s] = mod
     end
     return mod
   end
@@ -108,7 +125,7 @@ do
   })
 
   
-  -- Any unknown global variable is this sandbox is treated as link to a module - and __index tries find that module
+  -- Any unknown global variable in this sandbox is treated as link to a module - and __index tries find that module
   local sandbox_2 = copyLuaTable(sandbox)
   setmetatable(sandbox_2, {
     __index = function(self, key) return jc_require(key .. '.init') end,
@@ -124,6 +141,7 @@ do
     if not func then
       local f, message = loadstring('local jobject = ...\n' .. luaString)
       if f then
+        func = f
         setfenv(f, sandbox_2)
         jc_function_cache[luaString] = f
       else
@@ -134,10 +152,15 @@ do
     return func
   end
 
+  local wrapJCHandle = jc.wrapJCHandle
+  local wrapJCHandleAsNumber = jc.wrapJCHandleAsNumber
+  local returnJCValue = jc.returnJCValue
+
   -- GLOBAL
   function JC_compileAndRun (luaString, handle)
     local func = compileAndCache(luaString)
-    if func then return returnJCValue( func(wrapJCHandle(handle)) ) end
+    assert(func)
+    if func then return returnJCValue( func(wrapJCHandleAsNumber(handle)) ) end
   end
 end
 ------------------------------------

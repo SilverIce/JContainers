@@ -39,8 +39,8 @@ end
 
 local function getNativeFunction(className, funcName, returnType, argTypes)
   local funcPtr = jclib.JC_get_c_function(funcName, className)
-  local signature = returnType .. '(__cdecl *)(' .. (argTypes and argTypes or '') .. ')'
-  print('retrieving', funcName)
+  local signature = returnType .. '(__cdecl *)(' .. (argTypes or '') .. ')'
+  --print('retrieving', funcName)
   return ffi.cast(signature, funcPtr)
 end
 
@@ -59,7 +59,7 @@ local function readonlytable_error(_,_,_) error('attempt to modify readonly tabl
 
 local function readonlytable(t)
   local mt = getmetatable(t) or {}
-  if mt.__newindex == readonlytable_error then return end
+  assert(not mt.__newindex, 'already readonly')
   mt.__newindex = readonlytable_error
   setmetatable(t, mt)
 end 
@@ -126,15 +126,9 @@ JFormMap.typeName = 'JFormMap'
 
 -------------------------------------
 
-ffi.cdef [[
-  typedef struct _CArray { void* ___id; } CArray;
-  typedef struct _CMap { void* ___id; } CMap;
-  typedef struct _CFormMap { void* ___id; } CFormMap;
-]]
-
-local CArray = ffi.typeof('CArray')
-local CMap = ffi.typeof('CMap')
-local CFormMap = ffi.typeof('CFormMap')
+local CArray = ffi.typeof('struct { void* ___id; }')
+local CMap = ffi.typeof('struct { void* ___id; }')
+local CFormMap = ffi.typeof('struct { void* ___id; }')
 
 local CTypeList = {CArray, CMap, CFormMap}
 
@@ -153,8 +147,9 @@ local JCObject_common_properties = {
 
 -- Primitive types
 
+local Handle = ffi.typeof('void *')
+
 -- Carries data from C++ to Lua
--- mark it for finalization so Lua will free its memory which was allocated on C++ side
 local JCToLuaValue = ffi.typeof('JCToLuaValue')
 
 -- Carries string from C++ to Lua
@@ -176,6 +171,10 @@ local function wrapJCHandle(handle)
 
   jclib.JValue_retain(handle)
   return ctype(handle)
+end
+
+local function wrapJCHandleAsNumber(number)
+  return wrapJCHandle(ffi.cast(Handle, number))
 end
 
 local JCValueType = {
@@ -233,7 +232,7 @@ local function returnJCValue(luaVar)
   elseif ffi.istype(CForm, luaVar) then
     v = makeJCValue('form', luaVar)
   elseif ffi.istype(CArray, luaVar) or ffi.istype(CMap, luaVar) or ffi.istype(CFormMap, luaVar) then
-    v = makeJCValue('object', luaVar)
+    v = makeJCValue('object', luaVar.___id)
   end
   
   return v
@@ -269,43 +268,51 @@ function JValue.clear (optr)
 end
 
 -- JArray
-function JArray.object()
-  return wrapJCHandle(JArrayNativeFuncs.object())
-end
+do
+  -- converts 1-based positive indexes to 0-based, doesn't change negative ones
+  local function convertIndex(idx) return idx > 0 and idx - 1 or idx end 
 
-function JArray.objectWithSize(size)
-  return wrapJCHandle(JArrayNativeFuncs.objectWithSize(size))
-end
-
-function JArray.objectFromArray (array)
-  local object = JArray.objectWithSize(#array)
-  for i,v in ipairs(array) do
-    object[i] = v
+  function JArray.object()
+    return wrapJCHandle(JArrayNativeFuncs.object())
   end
-  return object
-end
 
-function JArray.__index (optr, idx)
-  return returnLuaValue(jclib.JArray_getValue(optr.___id, idx - 1))
-end
+  function JArray.objectWithSize(size)
+    return wrapJCHandle(JArrayNativeFuncs.objectWithSize(size))
+  end
 
-function JArray.__newindex (optr, idx, value)
-  jclib.JArray_setValue(optr.___id, idx - 1, returnJCValue(value))
-end
-
-function JArray.__ipairs (optr)
-  local iterator = function(optr, idx)
-    idx = idx + 1
-    if idx <= #optr then
-      return idx, optr[idx]
+  function JArray.objectWithArray (array)
+    local object = JArray.objectWithSize(#array)
+    for i,v in ipairs(array) do
+      object[i] = v
     end
+    return object
   end
-  
-  return iterator, optr, 0
-end
 
-JArray.__pairs = JArray.__ipairs
-  
+  function JArray.insert(optr, value, idx)
+    jclib.JArray_insert(optr.___id, returnJCValue(value), convertIndex(idx or -1))
+  end
+
+  function JArray.__index (optr, idx)
+    return returnLuaValue(jclib.JArray_getValue(optr.___id, convertIndex(idx)))
+  end
+
+  function JArray.__newindex (optr, idx, value)
+    jclib.JArray_setValue(optr.___id, convertIndex(idx), returnJCValue(value))
+  end
+
+  function JArray.__ipairs (optr)
+    local iterator = function(optr, idx)
+      idx = idx + 1
+      if idx <= #optr then
+        return idx, optr[idx]
+      end
+    end
+    
+    return iterator, optr, 0
+  end
+
+  JArray.__pairs = JArray.__ipairs
+end
 --------------------------------------
 -- JMap stuff
 do
@@ -314,18 +321,10 @@ do
   end
 
   function JMap.objectWithTable (t)
-    print('JMap.objectWithTable')
     local object = JMap.object()
-    
-    local tLen = 0
     for k,v in pairs(t) do
-      print(k, v)
       object[k] = v
-      assert(object[k])
-      tLen = tLen + 1
     end
-    
-    assert(#object == tLen, 'tlen: '..tLen..' obj len: '..#object)
     return object
   end
 
@@ -478,7 +477,7 @@ local function testJC()
     
     local function expectSize2(o, size)
       local s = JValue.typeOf(o).typeName
-      --assert(size == 0 or #o > 0, s)
+      assert(size == 0 or #o > 0, s)
     end
 
     type2Func[JMap] = function ( )
@@ -519,14 +518,9 @@ local function testJC()
 
   local function hasEqualContent(o, o2)
     local otype = JValue.typeOf(o)
-    
-    if otype ~= JValue.typeOf(o2) then
-      return false
-    end
-    
-    local pairsFunc = JArray == otype and '__ipairs' or '__pairs' 
+    if otype ~= JValue.typeOf(o2) then return false end
 
-    for k,v in otype[pairsFunc](o) do
+    for k,v in pairs(o) do
       if o2[k] ~= v then return false end
     end
 
@@ -563,53 +557,29 @@ local function testJC()
   -- test randomly created objects
   for i=1,20 do
     for _, jtype in ipairs(JCTypeList) do
-      testType(JArray)
+      testType(jtype)
     end
-  end
-
-  do
-
-    local ar = JArray.objectFromArray {10, 5, 3}
-
-    readWriteJSONTest(ar)
-
-    assert(ar[1] == 10)
-
-    print('iteration began')
-
-    for i, v in ipairs(ar) do
-      print(i,v)
-    end
-
-    local map = JMap.objectWithTable {i = 'love', lua = ''}
-    
-    expectSize(map, 2)
-
-    eqTest(map, JMap.object())
-    readWriteJSONTest(map)
-
-    for i, v in pairs(map) do
-      print(i,v)
-    end
-
-    map.i = nil
-    
-    expectSize(map, 1)
   end
 end
 
-
-testJC()
-
-collectgarbage('collect')
+--testJC()
+--collectgarbage('collect')
 
 return {
-  JValue = readonlytable(JValue),
-  JArray = readonlytable(JArray),
-  JMap = readonlytable(JMap),
-  JFormMap = readonlytable(JFormMap),
-  
+
+  public = {
+      JValue = readonlytable(JValue),
+      JArray = JArray,
+      JMap = JMap,
+      JFormMap = JFormMap,
+      JDB = wrapJCHandle(jclib.JDB_instance()),
+
+      Form = CForm,
+  },
+
   testJC = testJC,
-  Form = CForm,
+  wrapJCHandle = wrapJCHandle,
+  returnJCValue = returnJCValue,
+  wrapJCHandleAsNumber = wrapJCHandleAsNumber,
 }
 

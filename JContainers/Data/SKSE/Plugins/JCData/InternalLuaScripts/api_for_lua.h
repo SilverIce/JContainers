@@ -2,7 +2,7 @@
 
 // C interface for LuaJIT FFI
 
-__declspec(dllexport) const char* JC_hello();
+const char* JC_hello();
 
 typedef const char * cstring;
 typedef int32_t index;
@@ -16,7 +16,7 @@ typedef struct _CString {
     size_t length;
 } CString;
 
-__declspec(dllexport) void CString_free(CString *str);
+void CString_free(CString *str);
 
 typedef struct _JCToLuaValue {
     uint32_t type;
@@ -43,29 +43,29 @@ typedef struct _JCValue {
 } JCValue;
 
 
-
-__declspec(dllexport) void JCToLuaValue_free(JCToLuaValue* v);
+void JCToLuaValue_free(JCToLuaValue* v);
 
 void* JC_get_c_function(const char *func, const char * classname);
 
-__declspec(dllexport) handle JValue_retain(handle obj);
-__declspec(dllexport) handle JValue_release(handle obj);
-__declspec(dllexport) handle JValue_count(handle obj);
-__declspec(dllexport) uint32_t JValue_typeId(handle obj);
+handle JValue_retain(handle obj);
+handle JValue_release(handle obj);
+handle JValue_count(handle obj);
+uint32_t JValue_typeId(handle obj);
 
-__declspec(dllexport) JCToLuaValue JArray_getValue(handle obj, index key);
-__declspec(dllexport) void JArray_setValue(handle obj, index key, const JCValue* val);
-
-//////////////////////////////////////////////////////////////////////////
-
-__declspec(dllexport) void JMap_setValue(handle, cstring key, const JCValue* val);
-__declspec(dllexport) JCToLuaValue JMap_getValue(handle, cstring key);
-__declspec(dllexport) CString JMap_nextKey(handle, cstring lastKey);
+JCToLuaValue JArray_getValue(handle obj, index key);
+void JArray_setValue(handle obj, index key, const JCValue* val);
+void JArray_insert(handle obj, JCValue* val, index key);
 
 //////////////////////////////////////////////////////////////////////////
 
-__declspec(dllexport) CForm JFormMap_nextKey(handle obj, CForm lastKey);
-__declspec(dllexport) void JFormMap_setValue(handle obj, CForm key, const JCValue* val);
-__declspec(dllexport) JCToLuaValue JFormMap_getValue(handle obj, CForm key);
+void JMap_setValue(handle, cstring key, const JCValue* val);
+JCToLuaValue JMap_getValue(handle, cstring key);
+CString JMap_nextKey(handle, cstring lastKey);
 
+//////////////////////////////////////////////////////////////////////////
 
+CForm JFormMap_nextKey(handle obj, CForm lastKey);
+void JFormMap_setValue(handle obj, CForm key, const JCValue* val);
+JCToLuaValue JFormMap_getValue(handle obj, CForm key);
+
+handle JDB_instance();
