@@ -311,5 +311,18 @@ namespace collections { namespace skse {
     bool is_fake() {
         return g_serialization == nullptr;
     }
+
+    void console_print(const char * fmt, ...) {
+        if (is_fake()) {
+            return;
+        }
+        ConsoleManager	* mgr = ConsoleManager::GetSingleton();
+        if (mgr) {
+            va_list	args;
+            va_start(args, fmt);
+            CALL_MEMBER_FN(mgr, Print)(fmt, args);
+            va_end(args);
+        }
+    }
 }
 }

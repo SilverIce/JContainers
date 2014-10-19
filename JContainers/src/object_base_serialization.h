@@ -56,8 +56,9 @@ namespace boost { namespace serialization {
             break;
         }
 
-        // trying detect objects with no owners
-        jc_assert(version == 0 || t.noOwners() == false);
+        // "trying detect objects with no owners" - not possible to do this assertion anymore:
+        // Lua retains an objects with _stack_refCount counter. Asertion disabled 
+        //jc_assert(version == 0 || t.noOwners() == false);
     }
 
 }

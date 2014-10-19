@@ -167,8 +167,10 @@ namespace lua {
 
         // Not threadsafe. Not supposed to be threadsafe!
         void close_lua() {
-            lua_close(l);
-            l = nullptr;
+            if (l) {
+                lua_close(l);
+                l = nullptr;
+            }
         }
 
     private:

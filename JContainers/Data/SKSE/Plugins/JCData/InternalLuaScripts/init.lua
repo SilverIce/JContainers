@@ -2,6 +2,10 @@
 -- JC supplies these paths
 local JCDataPath, JCDllPath = ...
 
+--if (not JCDataPath) and (not JCDllPath) then
+--  JCDataPath, JCDllPath = 
+--end
+
 -------------------------------------------------
 -- do not allow global variable override
 setmetatable(_G, {
@@ -140,7 +144,7 @@ do
   local function compileAndCache (luaString)
     local func = jc_function_cache[luaString]
     if not func then
-      local f, message = loadstring('local jobject = ...\n' .. luaString)
+      local f, message = loadstring('local jobject = ... ;' .. luaString)
       if f then
         func = f
         setfenv(f, sandbox_2)
@@ -161,9 +165,11 @@ do
   function JC_compileAndRun (luaString, handle)
     local func = compileAndCache(luaString)
     assert(func)
-    if func then return returnJCValue( func(wrapJCHandleAsNumber(handle)) ) end
+    return returnJCValue( func(wrapJCHandleAsNumber(handle)) )
   end
 end
 ------------------------------------
+
+
 
 print('BUUU')

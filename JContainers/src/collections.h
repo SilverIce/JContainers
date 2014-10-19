@@ -192,6 +192,7 @@ namespace collections {
         Item& operator = (const std::string& val) { _var = val; return *this;}
         Item& operator = (std::string&& val) { _var = val; return *this;}
         Item& operator = (boost::blank) { _var = boost::blank(); return *this; }
+        Item& operator = (boost::none_t) { _var = boost::blank(); return *this; }
         Item& operator = (object_base& v) { _var = &v; return *this; }
 
 

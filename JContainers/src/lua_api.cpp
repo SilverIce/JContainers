@@ -99,6 +99,10 @@ namespace {
                 value.real = val;
             }
 
+            void operator ()(const SInt32& val) {
+                value.integer = val;
+            }
+
             void operator ()(const boost::blank&) {}
 
             void operator ()(const collections::internal_object_ref& val) {
@@ -284,6 +288,7 @@ namespace collections {
             if (lua_gettop(l) > 0 && lua_isstring(l, -1)) {
                 const char *str = lua_tostring(l, -1);
                 _MESSAGE("Lua error: %s", str ? str : "");
+                skse::console_print(str);
             }
         }
 
@@ -358,10 +363,12 @@ namespace collections {
         {
             EXPECT_TRUE(setupLuaContext(l));
 
-            auto result = eval_lua_function_for_test(l, nullptr, STR(
-                local obj = JArray.objectWithArray {1,2,3,4,9}
-                return jc.filter(obj, function(x) return x < 3.5 end)
-                ));
+/*
+            auto result = eval_lua_function_for_test(l, &array::object(tes_context::instance()),
+                "assert(jobject);"
+                "local obj = JArray.objectWithArray {1,2,3,4,9};"
+                "return jc.filter(obj, function(x) return x < 3.5 end);"
+                );
 
             EXPECT_TRUE(result);
 
@@ -369,7 +376,30 @@ namespace collections {
             EXPECT_NOT_NIL(obj);
             auto filtered = result->object()->as<array>();
             EXPECT_NOT_NIL(filtered);
-            EXPECT_TRUE(filtered->s_count() == 3);
+            EXPECT_TRUE(filtered->s_count() == 3);*/
+
+            auto testTransporting = [&](const char *str) { return eval_lua_function_for_test(l, nullptr, str); };
+
+            EXPECT_TRUE(testTransporting("return 10")->intValue() == 10);
+            EXPECT_TRUE(testTransporting("return 'die'")->strValue() == std::string("die"));
+            EXPECT_TRUE(testTransporting("return Form(20)")->formId() == FormId(20));
+
+
+            auto db = tes_context::instance().database();
+
+            EXPECT_TRUE(testTransporting("return JDB")->object() == db);
+
+            db->setValueForKey("test", Item(10));
+            EXPECT_TRUE(db->find("test").intValue() == 10);
+
+            auto result = eval_lua_function_for_test(l, nullptr,
+                "for k,v in pairs(JDB) do print('JDB.test', k, v) end;"
+                "assert(JDB.test == 10);"
+                "return JDB.test"
+                );
+            EXPECT_TRUE(result.is_initialized());
+            EXPECT_TRUE(result->intValue() == 10);
+
         }
     }
 

@@ -236,6 +236,10 @@ namespace collections
 
         for (auto& obj : registry->u_container()) {
             obj->u_onLoaded();
+
+            if (obj->noOwners()) {
+                obj->prolong_lifetime();
+            }
         }
     }
 

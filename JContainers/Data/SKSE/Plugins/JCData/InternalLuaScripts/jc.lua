@@ -579,7 +579,7 @@ end
 return {
 
   public = {
-      JValue = readonlytable(JValue),
+      JValue = JValue,
       JArray = JArray,
       JMap = JMap,
       JFormMap = JFormMap,
