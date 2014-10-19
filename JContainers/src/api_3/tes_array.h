@@ -41,22 +41,22 @@ namespace tes_api_3 {
                 return nullptr;
             }
 
-            auto obj = array::objectWithInitializer([&](array *me) {
-                me->_array.resize(size);
+            auto& obj = array::objectWithInitializer([&](array &me) {
+                me._array.resize(size);
             },
                 tes_context::instance());
 
-            return obj;
+            return &obj;
         }
         REGISTERF2(objectWithSize, "size", "creates array of given size, filled with empty items");
 
         template<class T>
         static object_base* fromArray(VMArray<T> arr) {
-            auto obj = array::objectWithInitializer([&](array *me) {
+            auto obj = &array::objectWithInitializer([&](array &me) {
                 for (UInt32 i = 0; i < arr.Length(); ++i) {
                     T val;
                     arr.Get(&val, i);
-                    me->_array.push_back(Item(val));
+                    me._array.push_back(Item(val));
                 }
             },
                 tes_context::instance());
@@ -81,8 +81,8 @@ objectWithBooleans converts booleans into integers");
                 return nullptr;
             }
 
-            auto obj = array::objectWithInitializer([&](array *me) {
-                me->_array.insert(me->begin(), source->begin() + startIndex, source->begin() + endIndex);
+            auto obj = &array::objectWithInitializer([&](array &me) {
+                me._array.insert(me.begin(), source->begin() + startIndex, source->begin() + endIndex);
             },
                 tes_context::instance());
 
@@ -228,6 +228,7 @@ if addToIndex >= 0 it inserts value at given index. "NEGATIVE_IDX_COMMENT);
         }
         REGISTERF2(valueType, "* index", "returns type of the value at index. "NEGATIVE_IDX_COMMENT"\n"VALUE_TYPE_COMMENT);
 
+
         static void swapItems(ref obj, SInt32 idx, SInt32 idx2) {
 
             SInt32 pyIndexes[] = { idx, idx2 };
@@ -239,7 +240,6 @@ if addToIndex >= 0 it inserts value at given index. "NEGATIVE_IDX_COMMENT);
             });
         }
         REGISTERF2(swapItems, "* index1 index2", "Exchanges the items at index1 and index2. "NEGATIVE_IDX_COMMENT);
-
     };
 
     TES_META_INFO(tes_array);

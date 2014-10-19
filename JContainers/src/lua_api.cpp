@@ -306,8 +306,8 @@ namespace collections {
 
         bool setupLuaContext(lua_State *l) {
             typedef boost::filesystem::path path;
-#   define JC_DATA_FILES            "JCData/"
-            auto initScriptPath = util::relative_to_dll_path(JC_DATA_FILES "InternalLuaScripts\\init.lua");
+
+            auto initScriptPath = util::relative_to_dll_path(JC_DATA_FILES "InternalLuaScripts/init.lua");
 
             lua_pushcfunction(l, LuaErrorHandler);
             int errorHandler = lua_gettop(l);

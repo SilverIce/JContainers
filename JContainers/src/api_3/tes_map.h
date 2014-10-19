@@ -68,12 +68,12 @@ namespace tes_api_3 {
                 return nullptr;
             }
 
-            return array::objectWithInitializer([&](array *arr) {
+            return &array::objectWithInitializer([&](array &arr) {
                 object_lock g(obj);
 
-                arr->_array.reserve(obj->u_count());
+                arr._array.reserve(obj->u_count());
                 for each(auto& pair in obj->u_container()) {
-                    arr->u_push(Item(pair.first));
+                    arr.u_push(Item(pair.first));
                 }
             },
                 tes_context::instance());
@@ -85,12 +85,12 @@ namespace tes_api_3 {
                 return nullptr;
             }
 
-            return array::objectWithInitializer([&](array *arr) {
+            return &array::objectWithInitializer([&](array &arr) {
                 object_lock g(obj);
 
-                arr->_array.reserve(obj->u_count());
+                arr._array.reserve(obj->u_count());
                 for each(auto& pair in obj->u_container()) {
-                    arr->_array.push_back(pair.second);
+                    arr._array.push_back(pair.second);
                 }
             },
                 tes_context::instance());
@@ -164,4 +164,64 @@ namespace tes_api_3 {
 
     TES_META_INFO(tes_map);
     TES_META_INFO(tes_form_map);
+
+    const char *tes_map_nextKey_comment =
+        "Simplifies iteration over container's contents.\nIncrements and returns previous key, pass defaulf parameter to begin iteration. Usage:\n"
+        "string key = JMap.nextKey(map)\n"
+        "while key\n"
+        "  <retrieve values here>\n"
+        "  key = JMap.nextKey(map, key)\n"
+        "endwhile";
+
+    struct tes_map_ext : class_meta < tes_map_ext > {
+        REGISTER_TES_NAME("JMap");
+        template<class Key = const char*>
+        static Key nextKey(map* obj, const char* previousKey = nullptr) {
+            if (!obj) {
+                return nullptr;
+            }
+
+            object_lock g(obj);
+            auto& container = obj->u_container();
+            if (previousKey) {
+                auto itr = container.find(previousKey);
+                auto end = container.end();
+                if (itr != end && (++itr) != end) {
+                    return itr->first.c_str();
+                }
+            }
+            else if (container.empty() == false) {
+                return container.begin()->first.c_str();
+            }
+
+            return nullptr;
+        }
+        REGISTERF(nextKey<BSFixedString>, "nextKey", "* previousKey = \"\"", tes_map_nextKey_comment);
+    };
+
+    struct tes_form_map_ext : class_meta < tes_form_map_ext > {
+        REGISTER_TES_NAME("JFormMap");
+        static FormId nextKey(form_map* obj, FormId previousKey = FormZero) {
+            FormId key = FormZero;
+            if (obj) {
+                object_lock g(obj);
+                auto& container = obj->u_container();
+                if (previousKey) {
+                    auto itr = container.find(previousKey);
+                    auto end = container.end();
+                    if (itr != end && (++itr) != end) {
+                        key = itr->first;
+                    }
+                }
+                else if (container.empty() == false) {
+                    key = container.begin()->first;
+                }
+            }
+            return key;
+        }
+        REGISTERF(nextKey, "nextKey", "* previousKey=None", tes_map_nextKey_comment);
+    };
+
+    TES_META_INFO(tes_map_ext);
+    TES_META_INFO(tes_form_map_ext);
 }

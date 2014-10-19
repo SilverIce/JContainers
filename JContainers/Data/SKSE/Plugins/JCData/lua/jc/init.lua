@@ -30,8 +30,6 @@ Example 3 (pseudo-code)
 
 --]]
 
-print("JC module loaded!")
-
 local jc = {}
 
 
@@ -41,15 +39,6 @@ function jc.apply(collection, predicate)
     for i,v in pairs(collection) do
         if predicate(v) then return end
     end
-
-    JDB.AproposForms[actor].health = 10
-    -- or
-
-    -- local aprActrs = JDB.AproposForms
-
-    -- aprActrs[actorA].health = 10
-    -- aprActrs[actorA].friends = JArray.objectWithTable {friendA, friendB}
-    
 end
 
 -- function filters collection, returns new JArray colletion containing filtered values

@@ -40,7 +40,7 @@ It's recommended to set a tag (any unique string will fit - mod name for ex.) - 
 
         template<class T>
         static T* object() {
-            return T::object(tes_context::instance());
+            return &T::object(tes_context::instance());
         }
 
         static object_base* release(ref obj) {
@@ -102,7 +102,7 @@ It's recommended to set a tag (any unique string will fit - mod name for ex.) - 
                             location = loc;
                         }
                         else {
-                            location = array::object(tes_context::instance());
+                            location = &array::object(tes_context::instance());
                             *itmPtr = location.get();
                         }
                     }
@@ -134,10 +134,20 @@ JValue.cleanTempLocation(\"uniqueLocationName\")"
         }
         REGISTERF2(cleanPool, "poolName", nullptr);
 
+        static ref shallowCopy(ref obj) {
+            return obj ? &deep_copying::shallow_copy(tes_context::instance(), *obj) : nullptr;
+        }
+        REGISTERF2(shallowCopy, "*", "\n\nReturns shallow copy (doesn't copy child objects)");
+
+        static ref deepCopy(ref obj) {
+            return obj ? &deep_copying::deep_copy(tes_context::instance(), *obj) : nullptr;
+        }
+        REGISTERF2(deepCopy, "*", "Returns deep copy");
+
         static bool isExists(ref obj) {
             return obj != nullptr;
         }
-        REGISTERF2(isExists, "*", "\n\ntests whether given object identifier points to existing object");
+        REGISTERF2(isExists, "*", "ntests whether given object identifier points to existing object");
 
         static bool isArray(ref obj) {
             return obj->as<array>() != nullptr;
@@ -192,7 +202,7 @@ JValue.cleanTempLocation(\"uniqueLocationName\")"
             filesystem::directory_iterator end_itr;
             filesystem::path root(dirPath);
 
-            map *files = map::object(tes_context::instance()); 
+            map &files = map::object(tes_context::instance()); 
 
             for ( filesystem::directory_iterator itr( root ); itr != end_itr; ++itr ) {
 
@@ -202,12 +212,12 @@ JValue.cleanTempLocation(\"uniqueLocationName\")"
                     auto jsonObject = tes_object::readFromFile(asniString.c_str());
 
                     if (jsonObject) {
-                        files->setValueForKey(itr->path().filename().generic_string(), Item(jsonObject));
+                        files.setValueForKey(itr->path().filename().generic_string(), Item(jsonObject));
                     }  
                 }
             }
 
-            return files;
+            return &files;
         }
         REGISTERF2(readFromDirectory, "directoryPath extension=\"\"",
             "parses JSON files in directory (non recursive) and returns JMap containing {filename, container-object} pairs.\n"

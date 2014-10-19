@@ -194,13 +194,13 @@ namespace collections {
             auto type = json_typeof(val);
 
             if (type == JSON_ARRAY) {
-                object = array::object(_context);
+                object = &array::object(_context);
             }
             else if (type == JSON_OBJECT) {
                 if (!json_object_get(val, form_handling::kFormData)) {
-                    object = map::object(_context);
+                    object = &map::object(_context);
                 } else {
-                    object = form_map::object(_context);
+                    object = &form_map::object(_context);
                 }
             }
 

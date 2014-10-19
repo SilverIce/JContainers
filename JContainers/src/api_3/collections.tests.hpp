@@ -20,43 +20,9 @@ namespace tes_api_3 {
 
 namespace tes_api_3 {
 
-    const char * jsonTestString() {
-        const char *jsonString = STR(
-        {
-            "glossary": {
-                "title": "example glossary",
-                    "GlossDiv": {
-                        "title": "S",
-                            "GlossList": {
-                                "GlossEntry": {
-                                    "ID": "SGML",
-                                        "SortAs": "SGML",
-                                        "GlossTerm": "Standard Generalized Markup Language",
-                                        "Acronym": "SGML",
-                                        "Abbrev": "ISO 8879:1986",
-                                        "GlossDef": {
-                                            "para": "A meta-markup language, used to create markup languages such as DocBook.",
-                                                "GlossSeeAlso": ["GML", "XML"]
-                                    },
-                                        "GlossSee": "markup"
-                                }
-                        }
-                }
-            },
-
-                "array": [["NPC Head [Head]", 0, -0.330000]],
-
-                "fKey": "__formData|Plugin.esp|0x1234"
-        }
-
-        );
-
-        return jsonString;
-    }
-
     JC_TEST(object_base, refCount)
     {
-        auto obj = array::object(context);
+        auto obj = &array::object(context);
         EXPECT_TRUE(obj->refCount() == 0); // aqueue retains it -- no more
 
         obj->retain();
@@ -124,7 +90,7 @@ namespace tes_api_3 {
         i2 = 1.5f;
         EXPECT_FALSE(i1.isEqual(i2));
 
-        auto obj = array::object(context);
+        auto& obj = array::object(context);
         i1 = obj;
         i2 = obj;
         EXPECT_TRUE(i1.isEqual(i2));
@@ -212,8 +178,6 @@ namespace tes_api_3 {
 
         EXPECT_NIL( json_deserializer::object_from_json_data(context, "") );
         EXPECT_NIL( json_deserializer::object_from_json_data(context, nullptr) );
-
-        EXPECT_NOT_NIL( json_deserializer::object_from_json_data(context, jsonTestString()) );
     }
 
     // load json file into tes_context -> serialize into json again -> compare with original json
@@ -290,19 +254,19 @@ namespace tes_api_3 {
     JC_TEST(json_serializer, no_infinite_recursion)
     {
         {
-            map *cnt = map::object(context);
-            cnt->u_setValueForKey("cycle", Item(cnt));
+            map& cnt = map::object(context);
+            cnt.u_setValueForKey("cycle", Item(cnt));
 
-            json_serializer::create_json_data(*cnt);
+            json_serializer::create_json_data(cnt);
         }
         {
-            map *cnt1 = map::object(context);
-            map *cnt2 = map::object(context);
+            map &cnt1 = map::object(context);
+            map &cnt2 = map::object(context);
 
-            cnt1->u_setValueForKey("cnt2", Item(cnt2));
-            cnt2->u_setValueForKey("cnt1", Item(cnt1));
+            cnt1.u_setValueForKey("cnt2", Item(cnt2));
+            cnt2.u_setValueForKey("cnt1", Item(cnt1));
 
-            json_serializer::create_json_data(*cnt1);
+            json_serializer::create_json_data(cnt1);
         }
     }
 
@@ -456,12 +420,12 @@ namespace tes_api_3 {
 
     JC_TEST(map, key_case_insensitivity)
     {
-        map *cnt = map::object(context);
+        map &cnt = map::object(context);
 
         std::string name = "back in black";
-        cnt->u_setValueForKey("ACDC", Item(name));
+        cnt.u_setValueForKey("ACDC", Item(name));
 
-        EXPECT_TRUE(*cnt->u_find("acdc")->stringValue() == name);
+        EXPECT_TRUE(*cnt.u_find("acdc")->stringValue() == name);
     }
 
     TEST(path_resolving, collection_operators)
@@ -605,6 +569,20 @@ namespace tes_api_3 {
         EXPECT_TRUE(obj2->_tes_refCount == 1);
     }
 
+    TEST(tes_map, nextKey)
+    {
+        map *m = json_deserializer::object_from_json_data(tes_context::instance(), STR({ "A":0, "B" : 1, "Z" : 2 }))->as<map>();
+
+        auto key = tes_map_ext::nextKey(m);
+        auto itr = m->u_container().begin();
+        while (key) {
+            EXPECT_TRUE(key == itr->first);
+            ++itr;
+            key = tes_map_ext::nextKey(m, key);
+        }
+        EXPECT_TRUE(itr == m->u_container().end())
+    }
+
     TEST(tes_object, temp_location)
     {
         tes_context::instance().clearState();
@@ -644,7 +622,7 @@ namespace tes_api_3 {
         //int countBefore = queue.count();
 
         for (int i = 0; i < 10; ++i) {
-            auto obj = map::make(context);//rc is 0
+            auto obj = &map::make(context);//rc is 0
             identifiers.push_back(obj->public_id());
 
             EXPECT_TRUE(obj->refCount() == 0);
@@ -681,10 +659,10 @@ namespace tes_api_3 {
         std::vector<Handle> public_identifiers, privateIds;
 
         for (int i = 0; i < 10; ++i) {
-            auto obj = map::object(context);
+            auto obj = &map::object(context);
             public_identifiers.push_back(obj->uid());
 
-            auto priv = map::make(context);
+            auto priv = &map::make(context);
             privateIds.push_back(priv->public_id());
             priv->prolong_lifetime();
         }
@@ -714,25 +692,25 @@ namespace tes_api_3 {
 
     JC_TEST_DISABLED(dl, dl)
     {
-        auto obj = map::object(context);
+        auto& obj = map::object(context);
         object_lock lock(obj);
-        obj->u_setValueForKey("lol", Item(obj));
+        obj.u_setValueForKey("lol", Item(obj));
     }
 
     JC_TEST_DISABLED(deadlock, deadlock)
     {
         map::ref root = map::object(context);
-        map *elsa = map::object(context);
-        map *local = map::object(context);
+        map& elsa = map::object(context);
+        map& local = map::object(context);
 
         root->setValueForKey("elsa", Item(elsa));
-        elsa->setValueForKey("local", Item(local));
+        elsa.setValueForKey("local", Item(local));
 
         auto func = [&]() {
             printf("work started\n");
 
             auto rootId = root->tes_uid();
-            auto elsaId = elsa->uid();
+            auto elsaId = elsa.uid();
 
             int i = 0;
             while (i < 5000000) {

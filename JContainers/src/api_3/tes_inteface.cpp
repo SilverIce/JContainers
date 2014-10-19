@@ -17,11 +17,16 @@
 #include "gtest.h"
 #include "jcontainers_constants.h"
 
-#include "tes_error_code.h"
 
-#include "collections.h"
 #include "object_context.h"
+#include "object_base.h"
+
+#include "tes_error_code.h"
+#include "tes_context.h"
+#include "collections.h"
+
 #include "json_handling.h"
+#include "deep_copying.h"
 #include "path_resolving.h"
 #include "lua_stuff.h"
 

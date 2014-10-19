@@ -65,6 +65,21 @@ namespace reflection { namespace binding {
 
     //////////////////////////////////////////////////////////////////////////
 
+    template<> struct GetConv < FormId > {
+        typedef TESForm* tes_type;
+        static TESForm* convert2Tes(FormId id) {
+            return LookupFormByID(id);
+        }
+        static FormId convert2J(const TESForm* form) {
+            return form ? (FormId)form->formID : FormZero;
+        }
+    };
+
+    template<> struct j2Str < FormId > : j2Str < TESForm* > {};
+
+
+    //////////////////////////////////////////////////////////////////////////
+
     template<class T, class P> struct j2Str < boost::intrusive_ptr_jc<T, P> > {
         static function_parameter typeInfo() { return j2Str<T*>::typeInfo(); }
     };
@@ -82,6 +97,5 @@ namespace reflection { namespace binding {
     template<> struct j2Str < array * > : jc_object_type_info{};
     template<> struct j2Str < form_map * > : jc_object_type_info{};
     template<> struct j2Str < Handle > : jc_object_type_info{};
-
 }
 }

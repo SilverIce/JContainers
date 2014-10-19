@@ -11,6 +11,7 @@
 #include "common/IDebugLog.h"
 #include "skse/GameForms.h"
 
+#include "tes_context.h"
 #include "object_base.h"
 #include "skse.h"
 
@@ -21,6 +22,9 @@ namespace collections {
     template<class T>
     class collection_base : public object_base
     {
+        collection_base(const collection_base&);
+        collection_base& operator=(const collection_base&);
+
     protected:
 
         //static_assert(std::is_base_of<collection_base<T>, T>::value, "");
@@ -32,28 +36,28 @@ namespace collections {
         typedef typename object_stack_ref_template<T> ref;
         typedef typename object_stack_ref_template<const T> cref;
 
-        static T* make(tes_context& context /*= tes_context::instance()*/) {
-            auto obj = new T();
-            obj->set_context(context.obj_context());
-            obj->_registerSelf();
+        static T& make(tes_context& context /*= tes_context::instance()*/) {
+            auto& obj = *new T();
+            obj.set_context(context.obj_context());
+            obj._registerSelf();
             return obj;
         }
 
         template<class Init>
-        static T* _makeWithInitializer(Init& init, tes_context& context /*= tes_context::instance()*/) {
-            auto obj = new T();
-            obj->set_context(context.obj_context());
+        static T& _makeWithInitializer(Init& init, tes_context& context /*= tes_context::instance()*/) {
+            auto& obj = *new T();
+            obj.set_context(context.obj_context());
             init(obj);
-            obj->_registerSelf();
+            obj._registerSelf();
             return obj;
         }
 
-        static T* object(tes_context& context /*= tes_context::instance()*/) {
+        static T& object(tes_context& context /*= tes_context::instance()*/) {
             return make(context);
         }
 
         template<class Init>
-        static T* objectWithInitializer(Init& init, tes_context& context /*= tes_context::instance()*/) {
+        static T& objectWithInitializer(Init& init, tes_context& context /*= tes_context::instance()*/) {
             return _makeWithInitializer(init, context);
         }
     };
@@ -153,6 +157,7 @@ namespace collections {
         explicit Item(int val) : _var((SInt32)val) {}
         explicit Item(bool val) : _var((SInt32)val) {}
         explicit Item(FormId id) : _var(id) {}
+        explicit Item(object_base& o) : _var(o) {}
 
         explicit Item(const std::string& val) : _var(val) {}
         explicit Item(std::string&& val) : _var(val) {}
@@ -187,6 +192,7 @@ namespace collections {
         Item& operator = (const std::string& val) { _var = val; return *this;}
         Item& operator = (std::string&& val) { _var = val; return *this;}
         Item& operator = (boost::blank) { _var = boost::blank(); return *this; }
+        Item& operator = (object_base& v) { _var = &v; return *this; }
 
 
         // prevent form id be saved like integral number
@@ -373,7 +379,12 @@ namespace collections {
 
     class array : public collection_base< array >
     {
+        array(const array&);
+        array& operator=(const array&);
+
     public:
+
+        array() {}
 
         enum {
             TypeId = CollectionTypeArray,
@@ -388,6 +399,10 @@ namespace collections {
         container_type _array;
 
         container_type& u_container() {
+            return _array;
+        }
+
+        const container_type& u_container() const {
             return _array;
         }
 

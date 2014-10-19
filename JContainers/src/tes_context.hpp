@@ -26,7 +26,7 @@ namespace collections {
 
             result = getObject(_databaseId);
             if (!result) {
-                result = map::object(*this);
+                result = &map::object(*this);
                 setDataBase(result);
             }
 

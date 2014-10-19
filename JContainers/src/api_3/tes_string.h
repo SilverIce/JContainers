@@ -22,10 +22,10 @@ namespace collections {
                 return nullptr;
             }
 
-            return array::objectWithInitializer([&](array *obj) {
+            return &array::objectWithInitializer([&](array &obj) {
 
                 for (auto& str : *strings) {
-                    obj->_array.push_back(Item(str));
+                    obj._array.push_back(Item(str));
                 }
             },
                 tes_context::instance());

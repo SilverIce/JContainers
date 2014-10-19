@@ -1,9 +1,11 @@
 #pragma once
 
+#include "object_base.h"
 #include "object_context.h"
-#include "collections.h"
 #include "tes_error_code.h"
 #include "spinlock.h"
+
+#include "collections.h"
 
 namespace collections
 {
@@ -53,7 +55,7 @@ namespace collections
 
         map* database();
 
-        map::ref database_ref() {
+        object_stack_ref_template<map> database_ref() {
             return database();
         }
 
