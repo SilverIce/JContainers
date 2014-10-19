@@ -26,7 +26,9 @@ namespace boost { namespace serialization {
     template<class Archive>
     void save(Archive & ar, const cl::object_base & t, unsigned int version) {
         //jc_assert(version == 1);
-        jc_assert(t._stack_refCount.load(std::memory_order_relaxed) == 0);
+
+        // Lua retains an objects with _stack_refCount counter. Asertion disabled 
+        //jc_assert(t._stack_refCount.load(std::memory_order_relaxed) == 0);
         jc_assert(t.noOwners() == false);
 
         save_atomic(ar, t._refCount);

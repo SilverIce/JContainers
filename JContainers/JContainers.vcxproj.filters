@@ -215,4 +215,9 @@
   <ItemGroup>
     <ResourceCompile Include="JContainers.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Data\SKSE\Plugins\JCData\InternalLuaScripts\jc.lua">
+      <Filter>collections_module\lua</Filter>
+    </None>
+  </ItemGroup>
 </Project>

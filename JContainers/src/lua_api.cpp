@@ -5,6 +5,7 @@
 #include <utility>
 #include <string>
 #include <boost/optional.hpp>
+#include "boost/filesystem/path.hpp"
 #include <sstream>
 
 #include "gtest.h"
@@ -333,9 +334,7 @@ namespace collections {
 
         LUA_CONTEXT_MODIFIER(_setupLuaContext);
 
-        Item eval_lua_function_for_test(lua_State *L, object_base *object, const char *lua_string) {
-
-            Item result;
+        boost::optional<Item> eval_lua_function_for_test(lua_State *L, object_base *object, const char *lua_string) {
 
             lua_pushcfunction(L, LuaErrorHandler);
             int errorHandler = lua_gettop(L);
@@ -345,33 +344,36 @@ namespace collections {
             lua_pushlightuserdata(L, object);
 
             if (lua_pcall(L, 2, 1, errorHandler) != lua::LUA_OK) {
+                return boost::none;
             }
             else {
+                Item result;
                 JCValue *val = (JCValue *)lua_topointer(L, -1);
                 JCValue_fillItem(val, result);
+                return result;
             }
-
-            return result;
         }
 
         TEST_F(lua::fixture, Lua, evalLua_imitation)
         {
             EXPECT_TRUE(setupLuaContext(l));
 
-            Item result = eval_lua_function_for_test(l, nullptr, STR(
+            auto result = eval_lua_function_for_test(l, nullptr, STR(
                 local obj = JArray.objectWithArray {1,2,3,4,9}
                 return jc.filter(obj, function(x) return x < 3.5 end)
                 ));
 
-            auto obj = result.object();
+            EXPECT_TRUE(result);
+
+            auto obj = result->object();
             EXPECT_NOT_NIL(obj);
-            auto filtered = result.object()->as<array>();
+            auto filtered = result->object()->as<array>();
             EXPECT_NOT_NIL(filtered);
             EXPECT_TRUE(filtered->s_count() == 3);
         }
     }
 
-    Item eval_lua_function(object_base *object, const char *lua_string) {
+    boost::optional<Item> eval_lua_function(object_base *object, const char *lua_string) {
         return eval_lua_function_for_test(lua::context::instance().state(), object, lua_string);
     }
 }

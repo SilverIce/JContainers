@@ -87,6 +87,7 @@ do
     ipairs = ipairs,
     next = next,
     error = error,
+    assert = assert,
     tonumber = tonumber,
     tostring = tostring,
     type = type,

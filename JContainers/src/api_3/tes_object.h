@@ -1,3 +1,7 @@
+namespace collections {
+    extern boost::optional<Item> eval_lua_function(object_base *object, const char *lua_string);
+}
+
 namespace tes_api_3 {
 
     using namespace collections;
@@ -320,8 +324,8 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
 
         template<class T>
         static T evalLua(ref obj, const char* luaCode, T def = T(0)) {
-            assert(false);
-            return def;
+            auto result = eval_lua_function(obj, luaCode);
+            return result ? result->readAs<T>() : def;
         }
         REGISTERF(evalLua<Float32>, "evalLuaFlt", "* luaCode default=0.0", "Evaluates piece of lua code. Lua support is experimental");
         REGISTERF(evalLua<SInt32>, "evalLuaInt", "* luaCode default=0", nullptr);
@@ -332,5 +336,4 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
     };
 
     TES_META_INFO(tes_object);
-
 }

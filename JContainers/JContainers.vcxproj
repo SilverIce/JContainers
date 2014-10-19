@@ -216,6 +216,9 @@
   <ItemGroup>
     <ResourceCompile Include="JContainers.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Data\SKSE\Plugins\JCData\InternalLuaScripts\jc.lua" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

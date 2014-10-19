@@ -15,8 +15,8 @@ extern "C" {
 #include "meta.h"
 #include "gtest.h"
 #include "spinlock.h"
-#include "util.h"
-#include <boost/filesystem/path.hpp>
+//#include "util.h"
+//#include <boost/filesystem/path.hpp>
 
 // Basic Lua-related-only things
 namespace lua {

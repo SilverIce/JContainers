@@ -75,6 +75,9 @@ local JValueNativeFuncs = retrieveNativeFunctions('JValue',
       isMap = {'bool', 'handle'},
       isFormMap = {'bool', 'handle'},
       clear = {'void', 'handle'},
+
+      shallowCopy = {'handle', 'handle'},
+      deepCopy = {'handle', 'handle'},
     }
   )
 
@@ -265,6 +268,14 @@ end
 
 function JValue.clear (optr)
   JValueNativeFuncs.clear(optr.___id)
+end
+
+function JValue.shallowCopy (optr)
+  return wrapJCHandle(JValueNativeFuncs.shallowCopy(optr.___id))
+end
+
+function JValue.deepCopy (optr)
+  return wrapJCHandle(JValueNativeFuncs.deepCopy(optr.___id))
 end
 
 -- JArray
