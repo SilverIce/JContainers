@@ -62,6 +62,7 @@ local function readonlytable(t)
   assert(not mt.__newindex, 'already readonly')
   mt.__newindex = readonlytable_error
   setmetatable(t, mt)
+  return t
 end 
 
 -- Native functions -----------------
