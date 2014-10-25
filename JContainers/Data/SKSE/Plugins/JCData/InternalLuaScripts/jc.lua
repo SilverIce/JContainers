@@ -11,6 +11,11 @@
 
 local ffi = require("ffi")
 
+local function stripPath(path)
+  local limit = 40
+  return #path < limit and path or ( '..' .. string.sub(path, -(limit - 1)) )
+end
+
 local jclib
 do
   -- load declarations
@@ -22,12 +27,14 @@ do
     return content
   end
   
-  print ('loading C declarations at '..JConstants.HeaderPath)
+  print ('loading C declarations at '..stripPath(JConstants.HeaderPath))
+
   local declarations = readFileContents(JConstants.HeaderPath)
   assert(declarations and #declarations > 0, 'file ' .. JConstants.HeaderPath .. ' should not be empty')
   ffi.cdef( declarations )
   
-  print ('loading dll at '..JConstants.DllPath)
+  print ('loading dll at '..stripPath(JConstants.DllPath))
+
   jclib = ffi.load(JConstants.DllPath)
   
   assert('lua, are you there?' == ffi.string(jclib.JC_hello()))
@@ -572,6 +579,43 @@ local function testJC()
       testType(jtype)
     end
   end
+
+  local function doWithTiming(operation_name, operation)
+    local x = os.clock()
+    operation()
+    print(string.format("operation %s takes: %.2f", operation_name, os.clock() - x))
+  end
+  
+  do
+    -- ROUND 1
+    local jstrings = JValue.readFromFile('C:/lua/strings.json')
+    assert(jstrings and #jstrings == 128)
+
+    -- move content into table strings to not interfer with JC
+    local strings = {}
+    for _, v inpairs(jstrings) do
+      strings[#strings + 1] = v
+    end
+
+    doWithTiming('dumb concatenation', function()
+        local s = ''
+        for _, v inpairs(strings) do
+          s = s + v
+        end
+        print('concatenated string: ' .. s)
+      end)
+
+
+    doWithTiming('smart concatenation', function()
+        local s = {}
+        for _, v inpairs(strings) do
+          s[#s + 1] = v
+        end
+        print('concatenated string: ' .. table.concat(s))
+      end)
+
+  end
+
 end
 
 --testJC()

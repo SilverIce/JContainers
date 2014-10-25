@@ -29,13 +29,13 @@ math.randomseed(os.time())
 JC_compileAndRun = nil
 -----------------------------------------------------------
 
-print(JCDataPath, JCDllPath)
+--print(JCDataPath, JCDllPath)
 
 -- that's really stupid that there is no way to pass extra arguments into 'require' funtion
 local jc = require('jc')
 
 -- test functionality
---jc.testJC()
+jc.testJC()
 
 local function printTable( t )
   for k,v in pairs(t) do
@@ -59,7 +59,7 @@ end
 
 -----------------------------------
 
-printTable(JConstants)
+--printTable(JConstants)
 
 ------------------------------------
 
