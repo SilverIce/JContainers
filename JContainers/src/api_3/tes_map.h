@@ -14,7 +14,7 @@ namespace tes_api_3 {
     class tes_map_t : public class_meta< tes_map_t<Key, Cnt> > {
     public:
 
-        typedef typename Cnt::ref& ref;
+        typedef typename Cnt* ref;
 
         REGISTERF(tes_object::object<Cnt>, "object", "", kCommentObject);
 
@@ -28,15 +28,11 @@ namespace tes_api_3 {
             auto item = obj->u_find(tes_hash(key));
             return item ? item->readAs<T>() : def;
         }
-        template<class T>
-        static T _getItem(ref obj, Key key, T def) {
-            return getItem<T>(obj.get(), key);
-        }
-        REGISTERF(_getItem<SInt32>, "getInt", "object key default=0", "returns value associated with key");
-        REGISTERF(_getItem<Float32>, "getFlt", "object key default=0.0", "");
-        REGISTERF(_getItem<const char *>, "getStr", "object key default=\"\"", "");
-        REGISTERF(_getItem<Handle>, "getObj", "object key default=0", "");
-        REGISTERF(_getItem<TESForm*>, "getForm", "object key default=None", "");
+        REGISTERF(getItem<SInt32>, "getInt", "object key default=0", "returns value associated with key");
+        REGISTERF(getItem<Float32>, "getFlt", "object key default=0.0", "");
+        REGISTERF(getItem<const char *>, "getStr", "object key default=\"\"", "");
+        REGISTERF(getItem<object_base*>, "getObj", "object key default=0", "");
+        REGISTERF(getItem<TESForm*>, "getForm", "object key default=None", "");
 
         template<class T>
         static void setItem(Cnt *obj, Key key, T item) {
@@ -45,16 +41,11 @@ namespace tes_api_3 {
             }
             obj->setValueForKey(tes_hash(key), Item(item));
         }
-
-        template<class T>
-        static void _setItem(ref obj, Key key, T item) {
-            setItem<T>(obj.get(), key, item);
-        }
-        REGISTERF(_setItem<SInt32>, "setInt", "* key value", "creates key-value association. replaces existing value if any");
-        REGISTERF(_setItem<Float32>, "setFlt", "* key value", "");
-        REGISTERF(_setItem<const char *>, "setStr", "* key value", "");
-        REGISTERF(_setItem<object_stack_ref&>, "setObj", "* key container", "");
-        REGISTERF(_setItem<TESForm*>, "setForm", "* key value", "");
+        REGISTERF(setItem<SInt32>, "setInt", "* key value", "creates key-value association. replaces existing value if any");
+        REGISTERF(setItem<Float32>, "setFlt", "* key value", "");
+        REGISTERF(setItem<const char *>, "setStr", "* key value", "");
+        REGISTERF(setItem<object_base*>, "setObj", "* key container", "");
+        REGISTERF(setItem<TESForm*>, "setForm", "* key value", "");
 
         static bool hasKey(ref obj, Key key) {
             return valueType(obj, key) != 0;
@@ -68,7 +59,7 @@ namespace tes_api_3 {
 
             object_lock g(obj);
             auto item = obj->u_find(tes_hash(key));
-            return item ? item->which() : 0;
+            return item ? item->type() : item_type::no_item;
         }
         REGISTERF2(valueType, "* key", "returns type of the value associated with key.\n"VALUE_TYPE_COMMENT);
 
@@ -77,43 +68,34 @@ namespace tes_api_3 {
                 return nullptr;
             }
 
-            return array::objectWithInitializer([&](array *arr) {
+            return &array::objectWithInitializer([&](array &arr) {
                 object_lock g(obj);
 
-                arr->_array.reserve(obj->u_count());
+                arr._array.reserve(obj->u_count());
                 for each(auto& pair in obj->u_container()) {
-                    arr->u_push(Item(pair.first));
+                    arr.u_push(Item(pair.first));
                 }
             },
                 tes_context::instance());
         }
-
-        static object_base* _allKeys(ref obj) {
-            return allKeys(obj.get());
-        }
-        REGISTERF(_allKeys, "allKeys", "*", "returns new array containing all keys");
+        REGISTERF(allKeys, "allKeys", "*", "returns new array containing all keys");
 
         static object_base* allValues(Cnt *obj) {
             if (!obj) {
                 return nullptr;
             }
 
-            return array::objectWithInitializer([&](array *arr) {
+            return &array::objectWithInitializer([&](array &arr) {
                 object_lock g(obj);
 
-                arr->_array.reserve(obj->u_count());
+                arr._array.reserve(obj->u_count());
                 for each(auto& pair in obj->u_container()) {
-                    arr->_array.push_back(pair.second);
+                    arr._array.push_back(pair.second);
                 }
             },
                 tes_context::instance());
         }
-
-
-        static object_base* _allValues(ref obj) {
-            return allValues(obj.get());
-        }
-        REGISTERF(_allValues, "allValues", "*", "returns new array containing all values");
+        REGISTERF(allValues, "allValues", "*", "returns new array containing all values");
 
         static bool removeKey(Cnt *obj, Key key) {
             if (!obj || !key) {
@@ -123,11 +105,7 @@ namespace tes_api_3 {
             object_lock g(obj);
             return obj->u_erase(tes_hash(key));
         }
-
-        static bool _removeKey(ref obj, Key key) {
-            return removeKey(obj.get(), key);
-        }
-        REGISTERF(_removeKey, "removeKey", "* key", "destroys key-value association");
+        REGISTERF(removeKey, "removeKey", "* key", "destroys key-value association");
 
         static SInt32 count(ref obj) {
             if (!obj) {
@@ -186,4 +164,64 @@ namespace tes_api_3 {
 
     TES_META_INFO(tes_map);
     TES_META_INFO(tes_form_map);
+
+    const char *tes_map_nextKey_comment =
+        "Simplifies iteration over container's contents.\nIncrements and returns previous key, pass defaulf parameter to begin iteration. Usage:\n"
+        "string key = JMap.nextKey(map)\n"
+        "while key\n"
+        "  <retrieve values here>\n"
+        "  key = JMap.nextKey(map, key)\n"
+        "endwhile";
+
+    struct tes_map_ext : class_meta < tes_map_ext > {
+        REGISTER_TES_NAME("JMap");
+        template<class Key = const char*>
+        static Key nextKey(map* obj, const char* previousKey = nullptr) {
+            if (!obj) {
+                return nullptr;
+            }
+
+            object_lock g(obj);
+            auto& container = obj->u_container();
+            if (previousKey) {
+                auto itr = container.find(previousKey);
+                auto end = container.end();
+                if (itr != end && (++itr) != end) {
+                    return itr->first.c_str();
+                }
+            }
+            else if (container.empty() == false) {
+                return container.begin()->first.c_str();
+            }
+
+            return nullptr;
+        }
+        REGISTERF(nextKey<BSFixedString>, "nextKey", "* previousKey = \"\"", tes_map_nextKey_comment);
+    };
+
+    struct tes_form_map_ext : class_meta < tes_form_map_ext > {
+        REGISTER_TES_NAME("JFormMap");
+        static FormId nextKey(form_map* obj, FormId previousKey = FormZero) {
+            FormId key = FormZero;
+            if (obj) {
+                object_lock g(obj);
+                auto& container = obj->u_container();
+                if (previousKey) {
+                    auto itr = container.find(previousKey);
+                    auto end = container.end();
+                    if (itr != end && (++itr) != end) {
+                        key = itr->first;
+                    }
+                }
+                else if (container.empty() == false) {
+                    key = container.begin()->first;
+                }
+            }
+            return key;
+        }
+        REGISTERF(nextKey, "nextKey", "* previousKey=None", tes_map_nextKey_comment);
+    };
+
+    TES_META_INFO(tes_map_ext);
+    TES_META_INFO(tes_form_map_ext);
 }

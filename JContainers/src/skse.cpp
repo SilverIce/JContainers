@@ -25,6 +25,10 @@ namespace jc {
     extern root_interface root;
 }
 
+namespace lua {
+    extern void shutdown_all_contexts();
+}
+
 namespace collections { namespace {
 
     static PluginHandle					g_pluginHandle = kPluginHandle_Invalid;
@@ -58,6 +62,7 @@ namespace collections { namespace {
 
     void revert(SKSESerializationInterface * intfc) {
         do_with_timing("Revert", []() {
+            lua::shutdown_all_contexts();
             collections::tes_context::instance().clearState();
         });
     }
@@ -111,6 +116,8 @@ namespace collections { namespace {
         };
 
         do_with_timing("Load", [intfc]() {
+
+            lua::shutdown_all_contexts();
 
             UInt32 type = 0;
             UInt32 version = 0;
@@ -303,6 +310,19 @@ namespace collections { namespace skse {
 
     bool is_fake() {
         return g_serialization == nullptr;
+    }
+
+    void console_print(const char * fmt, ...) {
+        if (is_fake()) {
+            return;
+        }
+        ConsoleManager	* mgr = ConsoleManager::GetSingleton();
+        if (mgr) {
+            va_list	args;
+            va_start(args, fmt);
+            CALL_MEMBER_FN(mgr, Print)(fmt, args);
+            va_end(args);
+        }
     }
 }
 }

@@ -3,18 +3,21 @@
 
 namespace util {
 
-    boost::filesystem::path relative_to_dll_path(const char *relative_path) {
-        assert(relative_path);
-
+    boost::filesystem::path dll_path() {
         HMODULE hm = nullptr;
         assert(GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
             GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-            (LPCSTR)&relative_to_dll_path,
+            (LPCSTR)&dll_path,
             &hm));
 
         char path[MAX_PATH] = { '\0' };
         GetModuleFileNameA(hm, path, sizeof path);
-        return (boost::filesystem::path(path).remove_filename() /= relative_path);
+        return boost::filesystem::path(path);
+    }
+
+    boost::filesystem::path relative_to_dll_path(const char *relative_path) {
+        assert(relative_path);
+        return (dll_path().remove_filename() /= relative_path);
     }
 }
 

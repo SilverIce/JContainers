@@ -66,6 +66,11 @@ public:
         if (px != 0 && add_ref) Policy::retain(px);
     }
 
+    intrusive_ptr_jc(T & p, bool add_ref = true) : px(&p)
+    {
+        if (add_ref) Policy::retain(px);
+    }
+
 #if !defined(BOOST_NO_MEMBER_TEMPLATES) || defined(BOOST_MSVC6_MEMBER_TEMPLATES)
 
     template<class U, class UP>
@@ -187,6 +192,10 @@ public:
     void jc_nullify()
     {
         px = nullptr;
+    }
+
+    operator T * () const {
+        return px;
     }
 
 private:

@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <boost/smart_ptr/intrusive_ptr_jc.hpp>
 #include <boost/optional/optional.hpp>
+#include "boost/noncopyable.hpp"
 
 #include "spinlock.h"
 
@@ -37,8 +38,11 @@ namespace collections {
 
     typedef object_stack_ref_template<object_base> object_stack_ref;
 
-    class object_base
+    class object_base// : boost::noncopyable
     {
+        object_base(const object_base&);
+        object_base& operator=(const object_base&);
+
         friend class object_context;
     public:
         Handle _id;

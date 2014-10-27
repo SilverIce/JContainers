@@ -31,7 +31,7 @@ JDB.solveObj(\".frostfall.arrayC\") will return array containing [\"stringValue\
 
         REGISTERF(solveGetter<SInt32>, "solveInt", "path default=0", nullptr);
         REGISTERF(solveGetter<const char*>, "solveStr", "path default=\"\"", nullptr);
-        REGISTERF(solveGetter<Handle>, "solveObj", "path default=0", nullptr);
+        REGISTERF(solveGetter<object_base*>, "solveObj", "path default=0", nullptr);
         REGISTERF(solveGetter<TESForm*>, "solveForm", "path default=None", nullptr);
 
         template<class T>
@@ -43,7 +43,7 @@ JDB.solveObj(\".frostfall.arrayC\") will return array containing [\"stringValue\
             "With 'createMissingKeys=true' it creates any missing path elements: JDB.solveIntSetter(\".frostfall.keyB\", 10, true) creates {frostfall: {keyB: 10}} structure");
         REGISTERF(solveSetter<SInt32>, "solveIntSetter", "path value createMissingKeys=false", nullptr);
         REGISTERF(solveSetter<const char*>, "solveStrSetter", "path value createMissingKeys=false", nullptr);
-        REGISTERF(solveSetter<object_stack_ref&>, "solveObjSetter", "path value createMissingKeys=false", nullptr);
+        REGISTERF(solveSetter<object_base*>, "solveObjSetter", "path value createMissingKeys=false", nullptr);
         REGISTERF(solveSetter<TESForm*>, "solveFormSetter", "path value createMissingKeys=false", nullptr);
 
 

@@ -1,6 +1,6 @@
 [submodule "dep/jansson/jansson"]
 	path = dep/jansson/jansson
 	url = https://github.com/akheron/jansson.git
-[submodule "dep/lua/lua"]
-	path = dep/lua/lua
-	url = https://github.com/LuaDist/lua.git
+[submodule "dep/luajit/luajit-2.0"]
+	path = dep/luajit/luajit-2.0
+	url = http://luajit.org/git/luajit-2.0.git

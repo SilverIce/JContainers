@@ -1,3 +1,7 @@
+namespace collections {
+    extern boost::optional<Item> eval_lua_function(object_base *object, const char *lua_string);
+}
+
 namespace tes_api_3 {
 
     using namespace collections;
@@ -13,7 +17,7 @@ namespace tes_api_3 {
     class tes_object : public class_meta< tes_object > {
     public:
 
-        typedef object_stack_ref& ref;
+        typedef object_base* ref;
 
         REGISTER_TES_NAME("JValue");
 
@@ -25,7 +29,7 @@ namespace tes_api_3 {
             if (obj) {
                 obj->tes_retain();
                 obj->set_tag(tag);
-                return obj.get();
+                return obj;
             }
          
             return nullptr;
@@ -40,7 +44,7 @@ It's recommended to set a tag (any unique string will fit - mod name for ex.) - 
 
         template<class T>
         static T* object() {
-            return T::object(tes_context::instance());
+            return &T::object(tes_context::instance());
         }
 
         static object_base* release(ref obj) {
@@ -61,7 +65,7 @@ It's recommended to set a tag (any unique string will fit - mod name for ex.) - 
                 retain(newObject, tag);
             }
 
-            return newObject.get();
+            return newObject;
         }
         REGISTERF2(releaseAndRetain, "previousObject newObject tag=\"\"",
 "Just a union of retain-release calls. Releases previousObject, retains and returns newObject.\n\
@@ -102,7 +106,7 @@ It's recommended to set a tag (any unique string will fit - mod name for ex.) - 
                             location = loc;
                         }
                         else {
-                            location = array::object(tes_context::instance());
+                            location = &array::object(tes_context::instance());
                             *itmPtr = location.get();
                         }
                     }
@@ -114,7 +118,7 @@ It's recommended to set a tag (any unique string will fit - mod name for ex.) - 
                 }
             }
 
-            return obj.get();
+            return obj;
         }
         REGISTERF2(addToPool, "* poolName",
 "Handly for temporary objects (objects with no owners) - pool 'locationName' owns any amount of objects, preventing their destuction, extends lifetime.\n\
@@ -134,10 +138,20 @@ JValue.cleanTempLocation(\"uniqueLocationName\")"
         }
         REGISTERF2(cleanPool, "poolName", nullptr);
 
-        static bool isExists(ref obj) {
-            return obj.get() != nullptr;
+        static ref shallowCopy(ref obj) {
+            return obj ? &deep_copying::shallow_copy(tes_context::instance(), *obj) : nullptr;
         }
-        REGISTERF2(isExists, "*", "\n\ntests whether given object identifier points to existing object");
+        REGISTERF2(shallowCopy, "*", "\n\nReturns shallow copy (doesn't copy child objects)");
+
+        static ref deepCopy(ref obj) {
+            return obj ? &deep_copying::deep_copy(tes_context::instance(), *obj) : nullptr;
+        }
+        REGISTERF2(deepCopy, "*", "Returns deep copy");
+
+        static bool isExists(ref obj) {
+            return obj != nullptr;
+        }
+        REGISTERF2(isExists, "*", "ntests whether given object identifier points to existing object");
 
         static bool isArray(ref obj) {
             return obj->as<array>() != nullptr;
@@ -192,7 +206,7 @@ JValue.cleanTempLocation(\"uniqueLocationName\")"
             filesystem::directory_iterator end_itr;
             filesystem::path root(dirPath);
 
-            map *files = map::object(tes_context::instance()); 
+            map &files = map::object(tes_context::instance()); 
 
             for ( filesystem::directory_iterator itr( root ); itr != end_itr; ++itr ) {
 
@@ -202,12 +216,12 @@ JValue.cleanTempLocation(\"uniqueLocationName\")"
                     auto jsonObject = tes_object::readFromFile(asniString.c_str());
 
                     if (jsonObject) {
-                        files->setValueForKey(itr->path().filename().generic_string(), Item(jsonObject));
+                        files.setValueForKey(itr->path().filename().generic_string(), Item(jsonObject));
                     }  
                 }
             }
 
-            return files;
+            return &files;
         }
         REGISTERF2(readFromDirectory, "directoryPath extension=\"\"",
             "parses JSON files in directory (non recursive) and returns JMap containing {filename, container-object} pairs.\n"
@@ -237,18 +251,15 @@ JValue.cleanTempLocation(\"uniqueLocationName\")"
                 json_dump_file(json.get(), cpath, JSON_INDENT(2));
             }
         }
-        static void _writeToFile(ref obj, const char * path) {
-            writeToFile(obj.get(), path);
-        }
-        REGISTERF(_writeToFile, "writeToFile", "* filePath", "writes object into JSON file");
+        REGISTERF(writeToFile, "writeToFile", "* filePath", "writes object into JSON file");
 
         static SInt32 solvedValueType(object_base* obj, const char *path) {
-            SInt32 type = 0;
+            SInt32 type = item_type::no_item;
 
             if (obj && path) {
                 path_resolving::resolve(tes_context::instance(), obj, path, [&](Item* itmPtr) {
                     if (itmPtr) {
-                        type = itmPtr->which();
+                        type = itmPtr->type();
                     }
                 });
             }
@@ -257,22 +268,15 @@ JValue.cleanTempLocation(\"uniqueLocationName\")"
         }
 
         static bool hasPath(object_base* obj, const char *path) {
-            return solvedValueType(obj, path) != 0;
+            return solvedValueType(obj, path) != item_type::no_item;
         }
-
-        static bool _hasPath(ref obj, const char *path) {
-            return hasPath(obj.get(), path);
-        }
-        REGISTERF(_hasPath, "hasPath", "* path",
+        REGISTERF(hasPath, "hasPath", "* path",
 "Path resolving:\n\n\
 returns true, if container capable resolve given path.\n\
 for ex. JValue.hasPath(container, \".player.health\") will check if given container has 'player' which has 'health' information"
                                       );
 
-        static SInt32 _solvedValueType(ref obj, const char *path) {
-            return solvedValueType(obj.get(), path);
-        }
-        REGISTERF(_solvedValueType, "solvedValueType", "* path", "Returns type of resolved value. "VALUE_TYPE_COMMENT);
+        REGISTERF(solvedValueType, "solvedValueType", "* path", "Returns type of resolved value. "VALUE_TYPE_COMMENT);
 
         template<class T>
         static T resolveGetter(object_base *obj, const char* path, T val = T(0)) {
@@ -287,15 +291,11 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
 
             return val;
         }
-        template<class T>
-        static T _resolveGetter(ref obj, const char* path, T val) {
-            return resolveGetter<T>(obj.get(), path, val);
-        }
-        REGISTERF(_resolveGetter<Float32>, "solveFlt", "* path default=0.0", "attempts to get value at given path.\nJValue.solveInt(container, \".player.mood\") will return player's mood");
-        REGISTERF(_resolveGetter<SInt32>, "solveInt", "* path default=0", nullptr);
-        REGISTERF(_resolveGetter<const char*>, "solveStr", "* path default=\"\"", nullptr);
-        REGISTERF(_resolveGetter<Handle>, "solveObj", "* path default=0", nullptr);
-        REGISTERF(_resolveGetter<TESForm*>, "solveForm", "* path default=None", nullptr);
+        REGISTERF(resolveGetter<Float32>, "solveFlt", "* path default=0.0", "attempts to get value at given path.\nJValue.solveInt(container, \".player.mood\") will return player's mood");
+        REGISTERF(resolveGetter<SInt32>, "solveInt", "* path default=0", nullptr);
+        REGISTERF(resolveGetter<const char*>, "solveStr", "* path default=\"\"", nullptr);
+        REGISTERF(resolveGetter<Handle>, "solveObj", "* path default=0", nullptr);
+        REGISTERF(resolveGetter<TESForm*>, "solveForm", "* path default=None", nullptr);
 
         template<class T>
         static bool solveSetter(object_base* obj, const char* path, T value, bool createMissingKeys = false) {
@@ -313,24 +313,19 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
 
             return succeed;
         }
-
-        template<class T>
-        static bool _solveSetter(ref obj, const char* path, T value, bool createMissingKeys = false) {
-            return solveSetter<T>(obj.get(), path, value, createMissingKeys);
-        }
-        REGISTERF(_solveSetter<Float32>, "solveFltSetter", "* path value createMissingKeys=false",
+        REGISTERF(solveSetter<Float32>, "solveFltSetter", "* path value createMissingKeys=false",
             "Attempts to assign value. Returns false if no such path\n"
             "With 'createMissingKeys=true' it creates any missing path element: solveIntSetter(map, \".keyA.keyB\", 10, true) on empty JMap creates {keyA: {keyB: 10}} structure"
             );
-        REGISTERF(_solveSetter<SInt32>, "solveIntSetter", "* path value createMissingKeys=false", nullptr);
-        REGISTERF(_solveSetter<const char*>, "solveStrSetter", "* path value createMissingKeys=false", nullptr);
-        REGISTERF(_solveSetter<ref>, "solveObjSetter", "* path value createMissingKeys=false", nullptr);
-        REGISTERF(_solveSetter<TESForm*>, "solveFormSetter", "* path value createMissingKeys=false", nullptr);
+        REGISTERF(solveSetter<SInt32>, "solveIntSetter", "* path value createMissingKeys=false", nullptr);
+        REGISTERF(solveSetter<const char*>, "solveStrSetter", "* path value createMissingKeys=false", nullptr);
+        REGISTERF(solveSetter<ref>, "solveObjSetter", "* path value createMissingKeys=false", nullptr);
+        REGISTERF(solveSetter<TESForm*>, "solveFormSetter", "* path value createMissingKeys=false", nullptr);
 
         template<class T>
         static T evalLua(ref obj, const char* luaCode, T def = T(0)) {
-            auto item = lua_apply::process_apply_func(obj.get(), luaCode);
-            return !item.isNull() ? item.readAs<T>() : def;
+            auto result = eval_lua_function(obj, luaCode);
+            return result ? result->readAs<T>() : def;
         }
         REGISTERF(evalLua<Float32>, "evalLuaFlt", "* luaCode default=0.0", "Evaluates piece of lua code. Lua support is experimental");
         REGISTERF(evalLua<SInt32>, "evalLuaInt", "* luaCode default=0", nullptr);
@@ -341,5 +336,4 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
     };
 
     TES_META_INFO(tes_object);
-
 }
