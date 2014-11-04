@@ -133,7 +133,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\api_3\tes_inteface.cpp" />
-    <ClCompile Include="src\backward.compatibility.test.cpp" />
     <ClCompile Include="src\dll_api.cpp" />
     <ClCompile Include="src\jc_interface.cpp" />
     <ClCompile Include="src\lua_api.cpp" />
@@ -164,6 +163,7 @@
     <ClInclude Include="src\autorelease_queue.h" />
     <ClInclude Include="src\boost_extras.h" />
     <ClInclude Include="src\code_producer.hpp" />
+    <ClInclude Include="src\collections.tests.base.h" />
     <ClInclude Include="src\collection_bind_traits.h" />
     <ClInclude Include="src\boost_serialization_intrusive_ptr_jc.h" />
     <ClInclude Include="src\deep_copying.h" />

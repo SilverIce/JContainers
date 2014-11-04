@@ -49,9 +49,6 @@
     <ClCompile Include="src\skse.cpp">
       <Filter>skse</Filter>
     </ClCompile>
-    <ClCompile Include="src\backward.compatibility.test.cpp">
-      <Filter>collections_module</Filter>
-    </ClCompile>
     <ClCompile Include="src\reflection.cpp">
       <Filter>reflection</Filter>
     </ClCompile>
@@ -209,6 +206,9 @@
       <Filter>collections_module\lua</Filter>
     </ClInclude>
     <ClInclude Include="src\deep_copying.h">
+      <Filter>collections_module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\collections.tests.base.h">
       <Filter>collections_module</Filter>
     </ClInclude>
   </ItemGroup>
