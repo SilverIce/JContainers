@@ -54,11 +54,6 @@ namespace collections
         u_clearState();
     }
 
-    void object_context::shutdown() {
-        aqueue->stop();
-        u_clearState();
-    }
-    
     void object_context::clearState() {
         aqueue->stop();
         u_clearState();
