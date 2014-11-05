@@ -96,11 +96,21 @@ namespace collections {
         }
 
         template<class T> T* as() {
-            return (this && T::TypeId == _type) ? static_cast<T*>(this) : nullptr;
+            return const_cast<T*>(const_cast<const object_base*>(this)->as<T>());
         }
 
         template<class T> const T* as() const {
             return (this && T::TypeId == _type) ? static_cast<const T*>(this) : nullptr;
+        }
+
+        template<class T> T& as_link() {
+            return const_cast<T&>(const_cast<const object_base*>(this)->as_link<T>());
+        }
+
+        template<class T> const T& as_link() const {
+            auto obj = this->as<T>();
+            assert(obj);
+            return *obj;
         }
 
         object_base * retain() {

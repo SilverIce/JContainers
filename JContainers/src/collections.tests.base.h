@@ -337,6 +337,40 @@ namespace collections { namespace {
         EXPECT_TRUE(atLeastOneTested);
     }
 
+    JC_TEST(deep_copying, _)
+    {
+        {
+            // array containing himself
+            array& root = json_deserializer::object_from_json_data(context, STR(
+                ["__reference|"]
+            ))->as_link<array>();
+            //EXPECT_NOT_NIL(root);
+
+            array& copy = deep_copying::deep_copy(context, root).as_link<array>();
+            EXPECT_TRUE(&copy != &root);
+
+            EXPECT_TRUE(copy[0] == copy);
+            EXPECT_TRUE(root[0] == root);
+
+            EXPECT_TRUE(root.s_count() == 1);
+        }
+        {
+            auto& root = json_deserializer::object_from_json_data(context, STR(
+                { "c": "__reference|.b", "b": [] }
+            ))->as_link<map>();
+
+            auto& copy = deep_copying::deep_copy(context, root).as_link<map>();
+            EXPECT_TRUE(&copy != &root);
+            EXPECT_TRUE(root.s_count() == 2);
+            EXPECT_TRUE(copy.s_count() == 2);
+
+            EXPECT_TRUE(copy["c"] == copy["b"]);
+            EXPECT_TRUE(root["c"] == root["b"]);
+
+            EXPECT_TRUE(root["c"] != copy["c"]);
+            EXPECT_TRUE(root["b"] != copy["b"]);
+        }
+    }
 
 }
 }

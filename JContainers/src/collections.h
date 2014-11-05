@@ -344,6 +344,15 @@ namespace collections {
         }
 
         template<class T> T readAs();
+
+        //////////////////////////////////////////////////////////////////////////
+
+        bool operator == (const object_base *obj) const { return obj == object(); }
+        bool operator == (const object_base &obj) const { return *this == &obj; }
+
+
+        template<class T>
+        bool operator != (const T& v) const { return !(*this == v); }
     };
 
     template<> inline Item::Real Item::readAs<Item::Real>() {
@@ -448,6 +457,13 @@ namespace collections {
             }
         }
 
+        Item& operator [] (int32_t index) { return const_cast<Item&>(const_cast<const array*>(this)->operator[](index)); }
+        const Item& operator [] (int32_t index) const {
+            auto idx = u_convertIndex(index);
+            assert(idx < _array.size());
+            return _array[index];
+        }
+
         Item getItem(int32_t index) {
             object_lock lock(this);
             auto idx = u_convertIndex(index);
@@ -499,10 +515,12 @@ namespace collections {
             return cnt.find(key);
         }
 
-        Item* u_find(const key_type& key) {
-            auto itr = findItr(key);
+        const Item* u_find(const key_type& key) const {
+            auto itr = cnt.find(key);
             return itr != cnt.end() ? &(itr->second) : nullptr;
         }
+
+        Item* u_find(const key_type& key) { return const_cast<Item*>( const_cast<const basic_map_collection*>(this)->u_find(key) ); }
 
         bool erase(const key_type& key) {
             object_lock g(this);
@@ -531,6 +549,15 @@ namespace collections {
             return cnt.size();
         }
 
+        Item& operator [] (const key_type& key) {
+            return const_cast<Item&>(const_cast<const basic_map_collection&>(*this)[key]);
+        }
+
+        const Item& operator [] (const key_type& key) const {
+            auto itm = u_find(key);
+            assert(itm);
+            return *itm;
+        }
     };
 
     struct map_case_insensitive_comp {

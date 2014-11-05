@@ -71,11 +71,10 @@ namespace collections {
                 return *itr->second;
             }
             else {
-                auto copy = &shallow_copy(_context, origin);
-                assert(copy);
-                _to_traverse.push_back(copy);
-                _copyed[&origin] = copy;
-                return *copy;
+                auto& copy = shallow_copy(_context, origin);
+                _to_traverse.push_back(&copy);
+                _copyed[&origin] = &copy;
+                return copy;
             }
         }
 
