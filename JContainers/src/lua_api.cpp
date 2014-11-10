@@ -217,21 +217,7 @@ namespace {
     //////////////////////////////////////////////////////////////////////////
     cexport CString JMap_nextKey(const map *obj, cstring lastKey) {
         CString next = CString_None();
-
-        if (obj) {
-            object_lock g(obj);
-            auto& container = obj->u_container();
-            if (lastKey) {
-                auto itr = container.find(lastKey);
-                auto end = container.end();
-                if (itr != end && (++itr) != end) {
-                    next = CString_copy(itr->first);
-                }
-            }
-            else if (container.empty() == false) {
-                next = CString_copy(container.begin()->first);
-            }
-        }
+        map_functions::nextKey(obj, lastKey, [&](const std::string& key) { next = CString_copy(key); });
         return next;
     }
 
@@ -248,21 +234,7 @@ namespace {
 
     cexport FormId JFormMap_nextKey(const form_map *obj, FormId lastKey) {
         FormId next = FormZero;
-
-        if (obj) {
-            object_lock g(obj);
-            auto& container = obj->u_container();
-            if (lastKey) {
-                auto itr = container.find(lastKey);
-                auto end = container.end();
-                if (itr != end && (++itr) != end) {
-                    next = itr->first;
-                }
-            }
-            else if (container.empty() == false) {
-                next = container.begin()->first;
-            }
-        }
+        formmap_functions::nextKey(obj, lastKey, [&](const FormId& key) { next = key; });
         return next;
     }
 

@@ -6,7 +6,7 @@ namespace tes_api_3 {
 
     using namespace collections;
 
-#define NEGATIVE_IDX_COMMENT "negative index accesses items from the end of array counting backwards."
+#define NEGATIVE_IDX_COMMENT "negative index accesses items from the end of container counting backwards."
 
     class tes_array : public class_meta< tes_array >, public collections::array_functions {
     public:

@@ -176,50 +176,37 @@ namespace tes_api_3 {
     struct tes_map_ext : class_meta < tes_map_ext > {
         REGISTER_TES_NAME("JMap");
         template<class Key = const char*>
-        static Key nextKey(map* obj, const char* previousKey = nullptr) {
-            if (!obj) {
-                return nullptr;
-            }
-
-            object_lock g(obj);
-            auto& container = obj->u_container();
-            if (previousKey) {
-                auto itr = container.find(previousKey);
-                auto end = container.end();
-                if (itr != end && (++itr) != end) {
-                    return itr->first.c_str();
-                }
-            }
-            else if (container.empty() == false) {
-                return container.begin()->first.c_str();
-            }
-
-            return nullptr;
+        static Key nextKey(map* obj, const char* previousKey = "") {
+            Key str;
+            map_functions::nextKey(obj, previousKey, [&](const std::string& key) { str = key.c_str(); });
+            return str;
         }
-        REGISTERF(nextKey<BSFixedString>, "nextKey", "* previousKey = \"\"", tes_map_nextKey_comment);
+        REGISTERF(nextKey<BSFixedString>, "nextKey", "* previousKey=\"\"", tes_map_nextKey_comment);
+
+        template<class Key = const char*>
+        static Key getNthKey(map* obj, SInt32 keyIndex) {
+            Key ith;
+            map_functions::getNthKey(obj, keyIndex, [&](const std::string& key) { ith = key.c_str(); });
+            return ith;
+        }
+        REGISTERF(getNthKey<BSFixedString>, "getNthKey", "* keyIndex", "Retrieves N-th key. "NEGATIVE_IDX_COMMENT);
     };
 
     struct tes_form_map_ext : class_meta < tes_form_map_ext > {
         REGISTER_TES_NAME("JFormMap");
         static FormId nextKey(form_map* obj, FormId previousKey = FormZero) {
-            FormId key = FormZero;
-            if (obj) {
-                object_lock g(obj);
-                auto& container = obj->u_container();
-                if (previousKey) {
-                    auto itr = container.find(previousKey);
-                    auto end = container.end();
-                    if (itr != end && (++itr) != end) {
-                        key = itr->first;
-                    }
-                }
-                else if (container.empty() == false) {
-                    key = container.begin()->first;
-                }
-            }
-            return key;
+            FormId k;
+            formmap_functions::nextKey(obj, previousKey, [&](const FormId& key) { k = key; });
+            return k;
         }
         REGISTERF(nextKey, "nextKey", "* previousKey=None", tes_map_nextKey_comment);
+
+        static FormId getNthKey(form_map* obj, SInt32 keyIndex) {
+            FormId ith = FormZero;
+            formmap_functions::getNthKey(obj, keyIndex, [&](const FormId& key) { ith = key; });
+            return ith;
+        }
+        REGISTERF(getNthKey, "getNthKey", "* keyIndex", "Retrieves N-th key. "NEGATIVE_IDX_COMMENT);
     };
 
     TES_META_INFO(tes_map_ext);

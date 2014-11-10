@@ -13,7 +13,7 @@ namespace collections {
         typedef int32_t index;
         typedef boost::optional<index> maybe_index;
 
-        static maybe_index convertReadIndex(array *ar, index pyIndex) {
+        static maybe_index convertReadIndex(const object_base *ar, index pyIndex) {
             auto count = ar->u_count();
             index index = (pyIndex >= 0 ? pyIndex : (count + pyIndex));
 
@@ -21,7 +21,7 @@ namespace collections {
                 index);
         }
 
-        static maybe_index convertWriteIndex(array *ar, index pyIndex) {
+        static maybe_index convertWriteIndex(const object_base *ar, index pyIndex) {
             auto count = ar->u_count();
             index index = (pyIndex >= 0 ? pyIndex : (count + pyIndex + 1));
 
@@ -126,10 +126,50 @@ namespace collections {
                 operation(itm);
             }
         }
+
+        template<class KeyFunc, class KeyTypeIn>
+        static void nextKey(const T *obj, const KeyTypeIn& lastKey, KeyFunc keyFunc) {
+            if (obj) {
+                object_lock g(obj);
+                auto& container = obj->u_container();
+                if (CheckKey::check(lastKey)) {
+                    auto itr = container.find(lastKey);
+                    auto end = container.end();
+                    if (itr != end && (++itr) != end) {
+                        keyFunc(itr->first);
+                    }
+                }
+                else if (container.empty() == false) {
+                    keyFunc(container.begin()->first);
+                }
+            }
+        }
+
+        template<class KeyFunc>
+        static void getNthKey(const T *obj, int32_t keyIdx, KeyFunc keyFunc) {
+            if (obj) {
+                object_lock g(obj);
+                auto idx = array_functions::convertReadIndex(obj, keyIdx);
+                if (idx) {
+                    int32_t count = obj->u_count();
+                    if (*idx < count / 2) {
+                        auto itr = obj->u_container().begin();
+                        for (int32_t i = 0, dest = *idx; i != dest; ++i, ++itr) {}
+                        keyFunc(itr->first);
+                    }
+                    else {
+                        auto itr = obj->u_container().rbegin();
+                        for (int32_t i = (count - 1), dest = *idx; i != dest; --i, ++itr) {}
+                        keyFunc(itr->first);
+                    }
+                }
+            }
+        }
     };
 
     struct map_key_checker{
-        static bool check(const char *s)  { return s != nullptr; }
+        static bool check(const std::string& s)  { return !s.empty(); }
+        static bool check(const char *s)  { return s != nullptr && *s; }
         static bool check(TESForm *f)  { return f != nullptr; }
         static bool check(FormId f)  { return f != FormZero; }
     };
