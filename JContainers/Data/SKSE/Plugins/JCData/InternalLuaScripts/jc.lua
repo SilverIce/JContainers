@@ -579,7 +579,7 @@ local function testJC()
       testType(jtype)
     end
   end
-
+  --[[
   local function doWithTiming(operation_name, operation)
     local x = os.clock()
     operation()
@@ -593,7 +593,7 @@ local function testJC()
 
     -- move content into table strings to not interfer with JC
     local strings = {}
-    for _, v inpairs(jstrings) do
+    for _, v in pairs(jstrings) do
       strings[#strings + 1] = v
     end
 
@@ -615,7 +615,7 @@ local function testJC()
       end)
 
   end
-
+  --]]
 end
 
 --testJC()
