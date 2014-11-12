@@ -175,7 +175,7 @@ namespace tes_api_3 {
 
     struct tes_map_ext : class_meta < tes_map_ext > {
         REGISTER_TES_NAME("JMap");
-        template<class Key = const char*>
+        template<class Key>
         static Key nextKey(map* obj, const char* previousKey = "") {
             Key str;
             map_functions::nextKey(obj, previousKey, [&](const std::string& key) { str = key.c_str(); });
@@ -183,7 +183,7 @@ namespace tes_api_3 {
         }
         REGISTERF(nextKey<BSFixedString>, "nextKey", "* previousKey=\"\"", tes_map_nextKey_comment);
 
-        template<class Key = const char*>
+        template<class Key>
         static Key getNthKey(map* obj, SInt32 keyIndex) {
             Key ith;
             map_functions::getNthKey(obj, keyIndex, [&](const std::string& key) { ith = key.c_str(); });

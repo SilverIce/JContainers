@@ -18,12 +18,6 @@ namespace tes_api_3 {
 
 #ifndef TEST_COMPILATION_DISABLED
 
-namespace tes_api_3 {
-
-
-
-}
-
 // API-related tests:
 namespace tes_api_3 {
 
@@ -242,12 +236,12 @@ namespace tes_api_3 {
     {
         map *m = json_deserializer::object_from_json_data(tes_context::instance(), STR({ "A":0, "B" : 1, "Z" : 2 }))->as<map>();
 
-        auto key = tes_map_ext::nextKey(m);
+        auto key = tes_map_ext::nextKey<std::string>(m);
         auto itr = m->u_container().begin();
-        while (key) {
+        while (!key.empty()) {
             EXPECT_TRUE(key == itr->first);
             ++itr;
-            key = tes_map_ext::nextKey(m, key);
+            key = tes_map_ext::nextKey<std::string>(m, key.c_str());
         }
         EXPECT_TRUE(itr == m->u_container().end())
     }

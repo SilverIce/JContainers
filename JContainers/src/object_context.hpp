@@ -80,6 +80,15 @@ namespace collections
         return aqueue->count();
     }
 
+    size_t object_context::collect_garbage(object_base& root_object) {
+        aqueue->stop();
+        size_t unreachable_count = garbage_collector::u_collect(*registry, *aqueue, { root_object });
+        aqueue->start();
+        return unreachable_count;
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+
     void object_context::read_from_string(const std::string & data, const serialization_version version) {
         namespace io = boost::iostreams;
         io::stream<io::array_source> stream( io::array_source(data.c_str(), data.size()) );

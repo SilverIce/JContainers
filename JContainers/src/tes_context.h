@@ -112,6 +112,9 @@ namespace collections
         std::string write_to_string() { return _context.write_to_string(); }
         void write_to_stream(std::ostream& stream) { _context.write_to_stream(stream); }
 
+        size_t collect_garbage() {
+            return _context.collect_garbage(*database());
+        }
     };
 
 }

@@ -11,7 +11,7 @@
 #include "common/IDebugLog.h"
 #include "skse/GameForms.h"
 
-#include "tes_context.h"
+//#include "tes_context.h"
 #include "object_base.h"
 #include "skse.h"
 
@@ -476,6 +476,14 @@ namespace collections {
         reverse_iterator rbegin() { return _array.rbegin();}
         reverse_iterator rend() { return _array.rend(); }
 
+        void u_visit_referenced_objects(const std::function<void(object_base& )>& visitor) override {
+            for (auto& item : _array) {
+                if (auto obj = item.object()) {
+                    visitor(*obj);
+                }
+            }
+        }
+
         //////////////////////////////////////////////////////////////////////////
 
         template<class Archive>
@@ -558,6 +566,14 @@ namespace collections {
             assert(itm);
             return *itm;
         }
+        
+        void u_visit_referenced_objects(const std::function<void(object_base&)>& visitor) override {
+            for (auto& pair : u_container()) {
+                if (auto obj = pair.second.object()) {
+                    visitor(*obj);
+                }
+            }
+        }
     };
 
     struct map_case_insensitive_comp {
@@ -601,8 +617,8 @@ namespace collections {
             u_updateKeys();
         }
 
-        // may call release if key is invalid
-        // may also produces retain calls
+        // may invoke release if key is invalid
+        // may also cause retain calls
         void u_updateKeys();
 
         void u_nullifyObjects() override;

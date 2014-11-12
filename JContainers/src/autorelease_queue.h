@@ -19,7 +19,7 @@ namespace collections {
             }
 
             static void release(object_base * p) {
-                p->release_from_queue();
+                p->_final_release();
             }
         };
 

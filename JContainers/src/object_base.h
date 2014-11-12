@@ -132,9 +132,13 @@ namespace collections {
         }
         bool noOwners() const {
             return
-                _refCount.load() == 0 &&
-                _tes_refCount.load() == 0 &&
-                _stack_refCount.load() == 0;
+                _refCount.load() <= 0 &&
+                _tes_refCount.load() <= 0 &&
+                _stack_refCount.load() <= 0;
+        }
+
+        bool u_is_user_retains() const {
+            return _tes_refCount.load(std::memory_order_relaxed) > 0;
         }
 
 /*
@@ -158,7 +162,8 @@ namespace collections {
 
         // releases and then deletes object if no owners
         // true, if object deleted
-        bool release_from_queue();
+        bool _final_release();
+        void _delete_self();
 
         void set_context(object_context & ctx) {
             jc_assert(!_context);
@@ -214,6 +219,8 @@ namespace collections {
                 _stack_refCount == other._stack_refCount &&
                 u_count() == other.u_count();
         }
+
+        virtual void u_visit_referenced_objects(const std::function<void(object_base&)>& visitor) {}
     };
 
     inline void object_base_stack_ref_policy::retain(object_base * p) {

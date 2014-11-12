@@ -372,6 +372,31 @@ namespace collections { namespace {
         }
     }
 
+    JC_TEST(garbage_collection, circular_references)
+    {
+        EXPECT_TRUE(context.collect_garbage() == 0);
+
+        std::vector<array*> arrays;
+        std::generate_n(std::back_inserter(arrays), 20, [&]{ return &array::object(context); });
+
+        // randonly connect half of them
+        for (int i = 0; i < 10; ++i) {
+            auto rnd = rand() % 10;
+            auto cont = arrays[rnd];
+
+            for (int j = 0; j < 10; ++j) {
+                auto rnd = rand() % 10;
+
+                cont->push(Item(arrays[rnd]));
+            }
+        }
+
+        EXPECT_TRUE(std::any_of(arrays.begin(), arrays.end(), [](array* ar) { return !ar->noOwners(); }));
+
+
+        EXPECT_TRUE(context.collect_garbage() == arrays.size());
+        EXPECT_TRUE(context.collect_garbage() == 0);
+    }
 }
 }
 

@@ -196,6 +196,9 @@
     <ClInclude Include="src\util.h">
       <Filter>util</Filter>
     </ClInclude>
+    <ClInclude Include="src\garbage_collector.h">
+      <Filter>object_module\impl</Filter>
+    </ClInclude>
     <ClInclude Include="src\collection_functions.h">
       <Filter>collections_module</Filter>
     </ClInclude>

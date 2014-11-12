@@ -31,20 +31,26 @@ namespace collections
     // decreases internal ref counter - _refCount OR deletes if summ refCount is 0
     // if old refCountSumm is 1 - then release, if 0 - delete
     // true, if object deleted
-    bool object_base::release_from_queue() {
-        jc_assert(_refCount > 0);
+    bool object_base::_final_release() {
+        //jc_assert(_refCount > 0);
 
-        --_refCount;
-
-        if (noOwners()) {
-			// it's still possible to get an access at this point?
-            context().registry->removeObject(*this);
-
-            delete this;
+        if (refCount() <= 1) {
+            _refCount = 0;
+			// it's still possible that something will attepmt to access to this object now?
+            _delete_self();
             return true;
+        }
+        else {
+            --_refCount;
         }
 
         return false;
+    }
+
+    void object_base::_delete_self() {
+        // it's still possible that something will attepmt to access to this object now?
+        context().registry->removeObject(*this);
+        delete this;
     }
 
     void object_base::release_counter(std::atomic_int32_t& counter) {

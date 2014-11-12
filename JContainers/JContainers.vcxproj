@@ -170,6 +170,7 @@
     <ClInclude Include="src\collection_operators.h" />
     <ClInclude Include="src\form_handling.h" />
     <ClInclude Include="src\collection_functions.h" />
+    <ClInclude Include="src\garbage_collector.h" />
     <ClInclude Include="src\jc_interface.h" />
     <ClInclude Include="src\lua_basics.h" />
     <ClInclude Include="src\object_base_serialization.h" />
