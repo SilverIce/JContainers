@@ -219,5 +219,8 @@
     <None Include="Data\SKSE\Plugins\JCData\InternalLuaScripts\jc.lua">
       <Filter>collections_module\lua</Filter>
     </None>
+    <None Include="Data\SKSE\Plugins\JCData\InternalLuaScripts\init.lua">
+      <Filter>collections_module\lua</Filter>
+    </None>
   </ItemGroup>
 </Project>

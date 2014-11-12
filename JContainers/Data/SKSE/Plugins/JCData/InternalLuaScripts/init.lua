@@ -97,6 +97,10 @@ do
     type = type,
     next = next,
     print = print,
+
+    os = {
+      time = os.time,
+    }
   }
 
   -- copy public things into sandbox
