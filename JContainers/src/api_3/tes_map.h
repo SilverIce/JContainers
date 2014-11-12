@@ -183,13 +183,15 @@ namespace tes_api_3 {
         }
         REGISTERF(nextKey<BSFixedString>, "nextKey", "* previousKey=\"\"", tes_map_nextKey_comment);
 
+        static const char * getNthKey_comment() { return "Retrieves N-th key. "NEGATIVE_IDX_COMMENT "\nWorst complexity is O(n/2)"; }
+
         template<class Key>
         static Key getNthKey(map* obj, SInt32 keyIndex) {
             Key ith;
             map_functions::getNthKey(obj, keyIndex, [&](const std::string& key) { ith = key.c_str(); });
             return ith;
         }
-        REGISTERF(getNthKey<BSFixedString>, "getNthKey", "* keyIndex", "Retrieves N-th key. "NEGATIVE_IDX_COMMENT);
+        REGISTERF(getNthKey<BSFixedString>, "getNthKey", "* keyIndex", getNthKey_comment());
     };
 
     struct tes_form_map_ext : class_meta < tes_form_map_ext > {
@@ -206,7 +208,7 @@ namespace tes_api_3 {
             formmap_functions::getNthKey(obj, keyIndex, [&](const FormId& key) { ith = key; });
             return ith;
         }
-        REGISTERF(getNthKey, "getNthKey", "* keyIndex", "Retrieves N-th key. "NEGATIVE_IDX_COMMENT);
+        REGISTERF(getNthKey, "getNthKey", "* keyIndex", tes_map_ext::getNthKey_comment());
     };
 
     TES_META_INFO(tes_map_ext);
