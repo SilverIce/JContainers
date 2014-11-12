@@ -35,4 +35,33 @@ namespace collections {
 
         return result->as<map>();
     }
+
+    void tes_context::setDataBase(object_base *db) {
+        object_base * prev = getObject(_databaseId);
+
+        if (prev == db) {
+            return;
+        }
+
+        if (db) {
+            db->retain();
+            db->tes_retain(); // emulates a user-who-needs @db, this will prevent @db from being garbage collected
+        }
+
+        if (prev) {
+            prev->release();
+            db->tes_retain();
+        }
+
+        _databaseId = db ? db->uid() : HandleNull;
+    }
+
+    void tes_context::u_applyUpdates(const serialization_version saveVersion) {
+        if (saveVersion <= serialization_version::pre_gc) {
+            if (auto db = database()) {
+                db->tes_retain();
+            }
+        }
+    }
+
 }

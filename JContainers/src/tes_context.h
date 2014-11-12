@@ -59,27 +59,12 @@ namespace collections
             return database();
         }
 
-        void setDataBase(object_base *db) {
-            object_base * prev = getObject(_databaseId);
-
-            if (prev == db) {
-                return;
-            }
-
-            if (db) {
-                db->retain();
-            }
-
-            if (prev) {
-                prev->release();
-            }
-
-            _databaseId = db ? db->uid() : HandleNull;
-        }
+        void setDataBase(object_base *db);
 
         void u_loadAdditional(boost::archive::binary_iarchive & arch) override;
         void u_saveAdditional(boost::archive::binary_oarchive & arch) override;
         void u_cleanup() override;
+        void u_applyUpdates(const serialization_version saveVersion) override;
 
         // object_context's interface
 

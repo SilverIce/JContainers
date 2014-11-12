@@ -1,7 +1,5 @@
 #include "skse.h"
 
-#include <chrono>
-#include <exception>
 
 #include <boost/iostreams/stream.hpp>
 #include <ShlObj.h>
@@ -14,6 +12,7 @@
 #include "skse/GameData.h"
 
 #include "gtest.h"
+#include "util.h"
 #include "jc_interface.h"
 #include "reflection.h"
 #include "jcontainers_constants.h"
@@ -37,31 +36,9 @@ namespace collections { namespace {
     static SKSEPapyrusInterface			* g_papyrus = nullptr;
     static SKSEMessagingInterface       * g_messaging = nullptr;
 
-    template<class T>
-    void do_with_timing(const char *operation_name, T& func) {
-        assert(operation_name);
-        _DMESSAGE("%s started", operation_name);
-
-        namespace chr = std::chrono;
-        auto started = chr::system_clock::now();
-
-        try {
-            func();
-        }
-        catch (const std::exception& ) {
-            jc_assert(false);
-        }
-        catch (...) {
-            jc_assert(false);
-        }
-
-        auto ended = chr::system_clock::now();
-        float diff = chr::duration_cast<chr::milliseconds>(ended - started).count() / 1000.f;
-        _DMESSAGE("%s finished in %f sec", operation_name, diff);
-    }
 
     void revert(SKSESerializationInterface * intfc) {
-        do_with_timing("Revert", []() {
+        util::do_with_timing("Revert", []() {
             lua::shutdown_all_contexts();
             collections::tes_context::instance().clearState();
         });
@@ -84,7 +61,7 @@ namespace collections { namespace {
         };
 
 
-        do_with_timing("Save", [intfc]() {
+        util::do_with_timing("Save", [intfc]() {
             if (intfc->OpenRecord((UInt32)consts::storage_chunk, (UInt32)serialization_version::current)) {
                 io::stream<skse_data_sink> stream(skse_data_sink{ intfc });
                 collections::tes_context::instance().write_to_stream(stream);
@@ -115,7 +92,7 @@ namespace collections { namespace {
             SKSESerializationInterface* _source;
         };
 
-        do_with_timing("Load", [intfc]() {
+        util::do_with_timing("Load", [intfc]() {
 
             lua::shutdown_all_contexts();
 

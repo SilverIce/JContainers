@@ -1,3 +1,4 @@
+#include "util.h"
 namespace collections
 {
     template<class T, class D>
@@ -195,6 +196,15 @@ namespace collections
                 }
             }
 
+            {
+                for (auto& obj : registry->u_container()) {
+                    obj->set_context(*this);
+                }
+                for (auto& obj : registry->u_container()) {
+                    obj->u_onLoaded();
+                }
+            }
+
             u_applyUpdates(hdr.updateVersion);
             u_postLoadMaintenance(hdr.updateVersion);
 
@@ -234,22 +244,17 @@ namespace collections
     //////////////////////////////////////////////////////////////////////////
 
     void object_context::u_applyUpdates(const serialization_version saveVersion) {
-
+        if (delegate) {
+            delegate->u_applyUpdates(saveVersion);
+        }
     }
 
     void object_context::u_postLoadMaintenance(const serialization_version saveVersion)
     {
-        for (auto& obj : registry->u_container()) {
-            obj->set_context(*this);
-        }
-
-        for (auto& obj : registry->u_container()) {
-            obj->u_onLoaded();
-
-            if (obj->noOwners()) {
-                obj->prolong_lifetime();
-            }
-        }
+        util::do_with_timing("Garbage collection", [&]() {
+            uint32_t garbageCount = garbage_collector::u_collect(*registry, *aqueue, {});
+            _DMESSAGE("%u garbage objects collected", garbageCount);
+        });
     }
 
 }

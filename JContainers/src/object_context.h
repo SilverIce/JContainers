@@ -21,7 +21,8 @@ namespace collections {
     enum class serialization_version {
         pre_aqueue_fix = 2,
         no_header = 3,
-        current = 4,
+        pre_gc = 4, // next version adds GC 
+        current = 5,
     };
 
     struct object_context_delegate
@@ -29,9 +30,8 @@ namespace collections {
         virtual void u_loadAdditional(boost::archive::binary_iarchive & arch) = 0;
         virtual void u_saveAdditional(boost::archive::binary_oarchive & arch) = 0;
         virtual void u_cleanup() = 0;
+        virtual void u_applyUpdates(const serialization_version saveVersion) {}
     };
-
-
 
     class object_context {
 

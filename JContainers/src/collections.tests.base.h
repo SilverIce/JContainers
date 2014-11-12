@@ -393,7 +393,6 @@ namespace collections { namespace {
 
         EXPECT_TRUE(std::any_of(arrays.begin(), arrays.end(), [](array* ar) { return !ar->noOwners(); }));
 
-
         EXPECT_TRUE(context.collect_garbage() == arrays.size());
         EXPECT_TRUE(context.collect_garbage() == 0);
     }
