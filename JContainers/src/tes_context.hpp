@@ -50,7 +50,7 @@ namespace collections {
 
         if (prev) {
             prev->release();
-            db->tes_retain();
+            prev->tes_release();
         }
 
         _databaseId = db ? db->uid() : HandleNull;

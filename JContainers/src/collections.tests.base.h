@@ -413,12 +413,24 @@ namespace collections { namespace {
 
     JC_TEST(tes_context, database)
     {
-        using namespace std;
-
         auto db = context.database();
-
         EXPECT_TRUE(db != nullptr);
         EXPECT_TRUE(db == context.database());
+    }
+
+    JC_TEST(tes_context, database_setter)
+    {
+        auto root = &map::object(context);
+        auto rc1 = root->refCount();
+        context.setDataBase(root);
+        const auto rcDiff = root->refCount() - rc1;
+        EXPECT_TRUE(rcDiff > 0);
+
+        auto rc2 = root->refCount();
+        context.setDataBase(nullptr);
+        const auto rcDiff2 = root->refCount() - rc2;
+        // had to hardcode this - old. db gets released, gets retained by aqueue, thus -rcDiff2 != rcDiff
+        EXPECT_TRUE((1 - rcDiff2) == rcDiff);
     }
 
     JC_TEST(autorelease_queue, over_release)

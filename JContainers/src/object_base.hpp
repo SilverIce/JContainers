@@ -20,6 +20,10 @@ namespace collections
             object_lock l(this);
             if (_id == HandleNull) {
                 context().registry->registerNewObjectId(*this);
+                // TODO: should object's lifetime be prolonged if it already has owners?
+                // no owners -> should be done for sure, as we must ensure that not-owned object will not hang forever
+                // has owners (aqueue is also woner) -> lifetime will be auto-prolonged (will not be if aqueue is the only owner
+                // ) if RC will reach zero
                 context().aqueue->prolong_lifetime(*this, 0);
             }
         }
