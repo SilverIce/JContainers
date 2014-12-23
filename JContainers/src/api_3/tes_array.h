@@ -113,17 +113,18 @@ NEGATIVE_IDX_COMMENT);
             struct inserter : BGSListForm::Visitor {
 
                 virtual bool Accept(TESForm * form) override {
-                    arr->u_push(Item(form));
+                    arr->u_container().insert(arr->u_container().begin() + insertIdx, Item(form));
                     return false;
                 }
 
                 array *arr;
+                uint32_t insertIdx;
 
-                inserter(array *obj) : arr(obj) {}
+                inserter(array *obj, uint32_t insertAt) : arr(obj), insertIdx(insertAt) {}
             };
 
             doWriteOp(obj, insertAtIndex, [formList, &obj](uint32_t idx) {
-                formList->Visit(inserter(obj.get()));
+                formList->Visit(inserter(obj.get(), idx));
             });
         }
         REGISTERF2(addFromFormList, "* source insertAtIndex=-1", nullptr);
