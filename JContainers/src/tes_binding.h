@@ -3,6 +3,8 @@
 #include "skse/PapyrusNativeFunctions.h"
 #include "reflection.h"
 
+class BGSListForm;
+
 namespace reflection { namespace binding {
 
     // traits placeholders
@@ -67,6 +69,15 @@ namespace reflection { namespace binding {
     };
 
     template<class T> struct j2Str < VMArray<T> > {
+        static function_parameter typeInfo() {
+            std::string str(j2Str<T>::typeInfo().tes_type_name);
+            str += "[]";
+            function_parameter info = { str, "values" };
+            return info;
+        }
+    };
+
+    template<class T> struct j2Str < VMResultArray<T> > {
         static function_parameter typeInfo() {
             std::string str(j2Str<T>::typeInfo().tes_type_name);
             str += "[]";
@@ -269,6 +280,16 @@ namespace reflection { namespace binding {
              metaF.c_func = addr;\
              binding::metaInfoFromFieldAndOffset(this, offsetof(__Type, CONCAT(_mem_, __LINE__))).addFunction(metaF);\
          }\
+    } CONCAT(_mem_, __LINE__);
+
+#define REGISTER_TEXT(text)\
+    struct CONCAT(_struct_, __LINE__) {\
+         CONCAT(_struct_, __LINE__)() {\
+             using namespace reflection;\
+             papyrus_text_block tb;\
+             tb.set_text(text);\
+             binding::metaInfoFromFieldAndOffset(this, offsetof(__Type, CONCAT(_mem_, __LINE__))).add_text_block(tb); \
+        }\
     } CONCAT(_mem_, __LINE__);
 
 #define REGISTERF2(func, args, comment)     REGISTERF(func, #func, args, comment)

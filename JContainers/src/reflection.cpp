@@ -1,6 +1,7 @@
 #include "reflection.h"
-#include "skse\PapyrusVM.h"
 
+#include <map>
+#include "skse\PapyrusVM.h"
 #include "code_producer.hpp"
 
 namespace reflection {

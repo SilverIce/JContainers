@@ -12,7 +12,7 @@ namespace reflection {
 
         void _pushArgStr(const function_info& self, int paramIdx, std::string& str) {
             std::vector<std::string> strings;
-            boost::split( strings, std::string(self.argument_names), boost::is_space() );
+            boost::split(strings, std::string(self.argument_names ? self.argument_names : ""), boost::is_space());
 
             if (paramIdx < strings.size() && strings[paramIdx] != "*") {
                 str += strings[paramIdx];
@@ -89,6 +89,11 @@ namespace reflection {
 
             for (auto& itm : self.methods) {
                 str += function_string(itm);
+                str += "\n";
+            }
+
+            for (auto& itm : self.text_blocks) {
+                str += (itm._text ? itm._text : itm._text_generator_func());
                 str += "\n";
             }
 

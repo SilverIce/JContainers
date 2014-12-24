@@ -79,9 +79,19 @@ namespace reflection {
         return other && _strcmpi(str.c_str(), other) == 0;
     }
 
-    struct class_info {
+    struct papyrus_text_block {
+        typedef std::string(*text_generator)();
 
+        void set_text(const char * t) { _text = t; }
+        void set_text(text_generator t) { _text_generator_func = t; }
+
+        const char * _text = nullptr;
+        text_generator _text_generator_func = nullptr;
+    };
+
+    struct class_info {
         std::vector<function_info > methods;
+        std::vector<papyrus_text_block > text_blocks;
         std::string _className;
         std::string extendsClass;
         std::string comment;
@@ -101,6 +111,10 @@ namespace reflection {
 #   else
             return _className;
 #   endif
+        }
+
+        void add_text_block(const papyrus_text_block& tb) {
+            text_blocks.push_back(tb);
         }
 
         const function_info * find_function(const char* func_name) const {
