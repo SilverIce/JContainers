@@ -6,7 +6,9 @@
 #   define __STR(...)   #__VA_ARGS__
 
 #   ifdef _DEBUG
-#       define jc_assert(expr)     if (!(expr)) { __debugbreak(); }
+#       define jc_assert(expr)              if (!(expr)) { __debugbreak(); }
+#       define jc_debug(message, ...)       printf(message"\n", __VA_ARGS__);
 #   else
-#       define jc_assert(expr)     //assert(expr) // does nothing in release
+#       define jc_assert(expr)
+#       define jc_debug(message, ...)
 #   endif

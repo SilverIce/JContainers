@@ -24,7 +24,7 @@ namespace collections
                 // no owners -> should be done for sure, as we must ensure that not-owned object will not hang forever
                 // has owners (aqueue is also woner) -> lifetime will be auto-prolonged (will not be if aqueue is the only owner
                 // ) if RC will reach zero
-                context().aqueue->prolong_lifetime(*this, 0);
+                prolong_lifetime();
             }
         }
 
@@ -73,7 +73,7 @@ namespace collections
     }
 
     object_base* object_base::prolong_lifetime() {
-        context().aqueue->prolong_lifetime(*this, is_public() ? 0 : 10);
+        context().aqueue->prolong_lifetime(*this, is_public());
         return this;
     }
 }

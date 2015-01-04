@@ -480,31 +480,36 @@ namespace collections { namespace {
             public_identifiers.push_back(obj->uid());
 
             auto priv = &map::make(context);
-            privateIds.push_back(priv->public_id());
+            // function order below makes assumption about internal impl. which is bad:
             priv->prolong_lifetime();
+            privateIds.push_back(priv->public_id());
         }
 
         auto allExist = [&](std::vector<Handle>& identifiers) {
-            return std::all_of(identifiers.begin(), identifiers.end(), [&](Handle id) {
-                return context.getObject(id);
-            });
+            size_t cntEx = 0;
+            for (auto id : identifiers) {
+                cntEx += (context.getObject(id) ? 1 : 0);
+            }
+            jc_debug("%u exist of %u", cntEx, identifiers.size());
+            return cntEx == identifiers.size();
         };
 
         auto allDestroyed = [&](std::vector<Handle>& identifiers) {
-            return std::all_of(identifiers.begin(), identifiers.end(), [&](Handle id) {
-                return !context.getObject(id);
-            });
+            size_t cntDestr = 0;
+            for (auto id : identifiers) {
+                cntDestr += (context.getObject(id) ? 0 : 1);
+            }
+            jc_debug("%u destroyed of %u", cntDestr, identifiers.size());
+            return cntDestr == identifiers.size();
         };
 
-
-        std::this_thread::sleep_for(std::chrono::seconds(9));
-
-        EXPECT_FALSE(allDestroyed(privateIds));
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+        EXPECT_TRUE(allDestroyed(privateIds));
         EXPECT_TRUE(allExist(public_identifiers));
 
-        std::this_thread::sleep_for(std::chrono::seconds(5));
-
-        EXPECT_TRUE(allExist(public_identifiers) == false);
+        std::this_thread::sleep_for(std::chrono::seconds(9));
+        EXPECT_TRUE(allDestroyed(public_identifiers));
+        EXPECT_TRUE(allDestroyed(privateIds));
     }
 
     JC_TEST(deadlock, _)
