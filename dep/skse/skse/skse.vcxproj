@@ -9,6 +9,10 @@
       <Configuration>Release</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="SKSE|Win32">
+      <Configuration>SKSE</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{AA0365EC-47EA-45AA-BB1F-EBBCCCC466F2}</ProjectGuid>
@@ -30,6 +34,12 @@
     <CharacterSet>MultiByte</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='SKSE|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v120_xp</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <PlatformToolset>v120_xp</PlatformToolset>
@@ -39,6 +49,9 @@
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='SKSE|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
@@ -52,6 +65,10 @@
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <TargetName>skse_1_9_32</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='SKSE|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <TargetName>skse_1_9_32</TargetName>
   </PropertyGroup>
@@ -115,19 +132,54 @@
       <TargetMachine>MachineX86</TargetMachine>
     </Lib>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='SKSE|Win32'">
+    <ClCompile>
+      <Optimization>Full</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>$(SolutionDir)\dep\;$(SolutionDir)\dep\skse\</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_PPAPI;NDEBUG;_WINDOWS;_USRDLL;RUNTIME;RUNTIME_VERSION=0x09200000;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ForcedIncludeFiles>common/IPrefix.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <StringPooling>true</StringPooling>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <PostBuildEvent>
+      <Message>Installing DLL...</Message>
+    </PostBuildEvent>
+    <Lib>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Lib>
+  </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CommandTable.cpp" />
+    <ClCompile Include="CustomMenu.cpp" />
     <ClCompile Include="PapyrusActiveMagicEffect.cpp" />
     <ClCompile Include="PapyrusActor.cpp" />
     <ClCompile Include="PapyrusActorBase.cpp" />
+    <ClCompile Include="PapyrusActorValueInfo.cpp" />
     <ClCompile Include="PapyrusAlias.cpp" />
+    <ClCompile Include="PapyrusAmmo.cpp" />
     <ClCompile Include="PapyrusArmor.cpp" />
     <ClCompile Include="PapyrusArmorAddon.cpp" />
+    <ClCompile Include="PapyrusArt.cpp" />
     <ClCompile Include="PapyrusBook.cpp" />
     <ClCompile Include="PapyrusCell.cpp" />
     <ClCompile Include="PapyrusColorForm.cpp" />
     <ClCompile Include="PapyrusCombatStyle.cpp" />
     <ClCompile Include="PapyrusConstructibleObject.cpp" />
+    <ClCompile Include="PapyrusDefaultObjectManager.cpp" />
     <ClCompile Include="PapyrusEnchantment.cpp" />
     <ClCompile Include="PapyrusEquipSlot.cpp" />
     <ClCompile Include="PapyrusFlora.cpp" />
@@ -137,10 +189,16 @@
     <ClCompile Include="PapyrusIngredient.cpp" />
     <ClCompile Include="PapyrusInput.cpp" />
     <ClCompile Include="PapyrusKeyword.cpp" />
+    <ClCompile Include="PapyrusLeveledActor.cpp" />
+    <ClCompile Include="PapyrusLeveledItem.cpp" />
+    <ClCompile Include="PapyrusLeveledSpell.cpp" />
+    <ClCompile Include="PapyrusMagicEffect.cpp" />
     <ClCompile Include="PapyrusMath.cpp" />
     <ClCompile Include="PapyrusMisc.cpp" />
+    <ClCompile Include="PapyrusModEvent.cpp" />
     <ClCompile Include="PapyrusNetImmerse.cpp" />
     <ClCompile Include="PapyrusObjectReference.cpp" />
+    <ClCompile Include="PapyrusObjects.cpp" />
     <ClCompile Include="PapyrusPerk.cpp" />
     <ClCompile Include="PapyrusPotion.cpp" />
     <ClCompile Include="PapyrusQuest.cpp" />
@@ -153,7 +211,9 @@
     <ClCompile Include="PapyrusSpell.cpp" />
     <ClCompile Include="PapyrusStringUtil.cpp" />
     <ClCompile Include="PapyrusTextureSet.cpp" />
+    <ClCompile Include="PapyrusTree.cpp" />
     <ClCompile Include="PapyrusUI.cpp" />
+    <ClCompile Include="PapyrusUICallback.cpp" />
     <ClCompile Include="PapyrusUtility.cpp" />
     <ClCompile Include="PapyrusWeapon.cpp" />
     <ClCompile Include="PapyrusWeather.cpp" />
@@ -181,6 +241,7 @@
     <ClCompile Include="GameStreams.cpp" />
     <ClCompile Include="GameThreads.cpp" />
     <ClCompile Include="GameTypes.cpp" />
+    <ClCompile Include="PapyrusWornObject.cpp" />
     <ClCompile Include="ScaleformAPI.cpp" />
     <ClCompile Include="ScaleformCallbacks.cpp" />
     <ClCompile Include="ScaleformExtendedData.cpp" />

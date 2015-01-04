@@ -361,6 +361,48 @@
       <Filter>netimmerse</Filter>
     </ClCompile>
     <ClCompile Include="skse.cpp" />
+    <ClCompile Include="PapyrusWornObject.cpp">
+      <Filter>papyrus\functions</Filter>
+    </ClCompile>
+    <ClCompile Include="PapyrusModEvent.cpp">
+      <Filter>papyrus\functions</Filter>
+    </ClCompile>
+    <ClCompile Include="PapyrusTree.cpp">
+      <Filter>papyrus\functions</Filter>
+    </ClCompile>
+    <ClCompile Include="PapyrusAmmo.cpp">
+      <Filter>papyrus\functions</Filter>
+    </ClCompile>
+    <ClCompile Include="PapyrusLeveledActor.cpp">
+      <Filter>papyrus\functions</Filter>
+    </ClCompile>
+    <ClCompile Include="PapyrusUICallback.cpp">
+      <Filter>papyrus\functions</Filter>
+    </ClCompile>
+    <ClCompile Include="PapyrusLeveledItem.cpp">
+      <Filter>papyrus\functions</Filter>
+    </ClCompile>
+    <ClCompile Include="PapyrusArt.cpp">
+      <Filter>papyrus\functions</Filter>
+    </ClCompile>
+    <ClCompile Include="PapyrusMagicEffect.cpp">
+      <Filter>papyrus\functions</Filter>
+    </ClCompile>
+    <ClCompile Include="CustomMenu.cpp">
+      <Filter>papyrus\functions</Filter>
+    </ClCompile>
+    <ClCompile Include="PapyrusObjects.cpp">
+      <Filter>papyrus\functions</Filter>
+    </ClCompile>
+    <ClCompile Include="PapyrusActorValueInfo.cpp">
+      <Filter>papyrus\functions</Filter>
+    </ClCompile>
+    <ClCompile Include="PapyrusLeveledSpell.cpp">
+      <Filter>papyrus\functions</Filter>
+    </ClCompile>
+    <ClCompile Include="PapyrusDefaultObjectManager.cpp">
+      <Filter>papyrus\functions</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CommandTable.h">
