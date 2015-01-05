@@ -32,11 +32,12 @@ namespace collections {
 
     private:
 
-        bshared_mutex _mutex;
         object_registry& _registry;
         queue _queue;
         time_point _tickCounter;
-        std::atomic_int_fast8_t _state;
+
+        spinlock _queue_mutex;
+        spinlock _timer_mutex;
         
         // it's not overkill to use asio?
         boost::asio::io_service _io;
@@ -44,19 +45,17 @@ namespace collections {
         boost::asio::deadline_timer _timer;
         std::thread _thread;
 
-        enum queue_state : unsigned char {
-            state_none = 0x0,
-            state_run = 0x1,
-            //state_paused = 0x2,
-        };
+        // reusable array for temp objects
+        std::vector<queue_object_ref> _toRelease;
 
     public:
 
         void u_clear() {
-            u_stop();
+            stop();
             
             _tickCounter = 0;
             _queue.clear();
+            _toRelease.clear();
         }
 
         friend class boost::serialization::access;
@@ -97,8 +96,6 @@ namespace collections {
 
         explicit autorelease_queue(object_registry& registry) 
             : _tickCounter(0)
-            , _state(state_none)
-            , _mutex()
             , _registry(registry)
             // lot of dependencies :(
             , _io()
@@ -111,31 +108,17 @@ namespace collections {
         }
 
         // prolongs object lifetime for ~10 seconds
-        // reduceLifeTimeBy sets lifetime to 10 / reduceLifeTimeInNTimes, zero disables reduction
         void prolong_lifetime(object_base& object, bool isPublic) {
-            uint32_t pushedTime = (!isPublic) ? time_subtract(_tickCounter, obj_lifeInTicks - 1) : _tickCounter;
+            jc_debug("aqueue: added id - %u as %s", object._uid(), isPublic ? "public" : "private");
 
-            write_lock g(_mutex);
+            uint32_t pushedTime = isPublic ? _tickCounter : time_subtract(_tickCounter, obj_lifeInTicks);
+            spinlock::guard g(_queue_mutex);
             _queue.push_back(std::make_pair(&object, pushedTime));
-        }
-
-        // starts asynchronouos aqueue run, asynchronouosly releases objects when their time comes, starts timers, 
-        void start() {
-            if ((_state & state_run) == 0) {
-                _state = state_run;
-                
-                write_lock g(_mutex);
-                boost::system::error_code code;
-                _timer.expires_from_now(boost::posix_time::milliseconds(tick_duration_millis), code);
-                assert(!code);
-
-                u_startTimer();
-            }
         }
 
         // amount of objects in queue
         size_t count() {
-            read_lock hg(_mutex);
+            spinlock::guard g(_queue_mutex);
             return u_count();
         }
 
@@ -147,13 +130,15 @@ namespace collections {
             return _queue.size();
         }
 
+        // starts asynchronouos aqueue run, asynchronouosly releases objects when their time comes, starts timers, 
+        void start() {
+            restartTimer();
+        }
+
         // stops async. processes launched by @start function
         void stop() {
-            u_stop();
-        }
-        
-        void u_stop() {
-            _state = state_none;
+            // will wait for @tick function execution completion
+            spinlock::guard g(_timer_mutex);
             _timer.cancel();
         }
 
@@ -207,8 +192,6 @@ namespace collections {
             tick_duration = 2, // seconds, interval between ticks, interval between aqueue tests its objects for should-be-released state,
             // and releases if needed
             one_tick = 1, // em, one tick is one tick..
-
-            //sleep_duration_millis = 100, // milliseconds
         };
 
         enum {
@@ -218,51 +201,56 @@ namespace collections {
 
     private:
 
+        void restartTimer() {
+            spinlock::guard g(_timer_mutex);
+            u_startTimer();
+        }
+
         void u_startTimer() {
             boost::system::error_code code;
             _timer.expires_from_now(boost::posix_time::milliseconds(tick_duration_millis), code);
             assert(!code);
 
-            _timer.async_wait([=](const boost::system::error_code& e) {
-                if (e.value() != boost::asio::error::operation_aborted) {
-                    run(*this);
+            _timer.async_wait([&](const boost::system::error_code& e) {
+                //jc_debug("aqueue code: %s - %u", e.message().c_str(), e.value());
+                if (!e) { // i.e. means no error, successful completion
+                    tick();
                 }
             });
         }
 
-        static void run(autorelease_queue &self) {
-            using namespace std;
-            vector<queue_object_ref> toRelease;
+        void tick() {
+            spinlock::guard g(_timer_mutex);
+            
             {
-                write_lock g(self._mutex);
-                self._queue.erase(
-                    remove_if(self._queue.begin(), self._queue.end(), [&](const queue::value_type& val) {
-                        auto diff = time_subtract(self._tickCounter, val.second);
-
-                        printf("diff - %u, rc - %u\n", diff, val.first->refCount());
+                spinlock::guard g(_queue_mutex);
+                _queue.erase(
+                    std::remove_if(_queue.begin(), _queue.end(), [&](const queue::value_type& val) {
+                        auto diff = time_subtract(_tickCounter, val.second);
                         bool release = diff >= obj_lifeInTicks;
+                        jc_debug("id - %u diff - %u, rc - %u", val.first->_uid(), diff, val.first->refCount());
 
                         // just move out object reference to release it later
                         if (release)
-                            toRelease.push_back(val.first);
+                            _toRelease.push_back(std::move(val.first));
                         return release;
                     }),
-                    self._queue.end());
+                    _queue.end());
 
                 // Increments tick counter, _tickCounter += 1
-                self._tickCounter = time_add(self._tickCounter, one_tick);
+                _tickCounter = time_add(_tickCounter, one_tick);
             }
 
-            jc_debug("%u objects released", toRelease.size());
+            jc_debug("%u objects released", _toRelease.size());
 
             // How much owners an object may have right now?
             // queue - +1
             // stack may reference
             // tes ..
             // Item..
-            toRelease.clear();
+            _toRelease.clear();
 
-            self.u_startTimer();
+            u_startTimer();
         }
     };
 

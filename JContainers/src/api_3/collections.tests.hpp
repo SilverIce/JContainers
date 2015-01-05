@@ -260,7 +260,7 @@ namespace tes_api_3 {
 
         tes_object::cleanPool("locationA");
 
-        std::this_thread::sleep_for(std::chrono::seconds(18));
+        std::this_thread::sleep_for(std::chrono::seconds(16));
 
         auto foundObj = tes_context::instance().getObject(id);
         EXPECT_TRUE(!foundObj/* || !foundObj->has_equal_tag("temp_location_test")*/);
