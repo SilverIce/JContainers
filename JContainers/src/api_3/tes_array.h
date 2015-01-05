@@ -11,7 +11,7 @@ namespace tes_api_3 {
     class tes_array : public class_meta< tes_array >, public collections::array_functions {
     public:
 
-        typedef array::ref& ref;
+        typedef array* ref;
 
         REGISTER_TES_NAME("JArray");
 
@@ -77,7 +77,7 @@ objectWithBooleans converts booleans into integers");
 
             object_lock g(source);
 
-            if (!validateReadIndexRange(source.get(), startIndex, endIndex)) {
+            if (!validateReadIndexRange(source, startIndex, endIndex)) {
                 return nullptr;
             }
 
@@ -124,7 +124,7 @@ NEGATIVE_IDX_COMMENT);
             };
 
             doWriteOp(obj, insertAtIndex, [formList, &obj](uint32_t idx) {
-                formList->Visit(inserter(obj.get(), idx));
+                formList->Visit(inserter(obj, idx));
             });
         }
         REGISTERF2(addFromFormList, "* source insertAtIndex=-1", nullptr);
@@ -208,7 +208,7 @@ if addToIndex >= 0 it inserts value at given index. "NEGATIVE_IDX_COMMENT);
         REGISTERF2(count, "*", "returns number of items in array");
 
         static void clear(ref obj) {
-            tes_object::clear(obj.to_base<object_base>());
+            tes_object::clear(obj);
         }
         REGISTERF2(clear, "*", "removes all items from array");
 
