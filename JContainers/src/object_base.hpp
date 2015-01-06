@@ -37,7 +37,9 @@ namespace collections
                 // TODO: should object's lifetime be prolonged if it already has owners?
                 // no owners -> should be done for sure, as we must ensure that not-owned object will not hang forever
                 // has owners (but aqueue is also owner) -> lifetime will be auto-prolonged if RC will reach zero (will not be if aqueue is the only owner)
-                prolong_lifetime();
+                if (!_refCount) {
+                    prolong_lifetime();
+                }
             }
         }
 
@@ -48,17 +50,17 @@ namespace collections
     // decreases internal ref counter - _refCount OR deletes if summ refCount is 0
     // if old refCountSumm is 1 - then release, if 0 - delete
     // true, if object deleted
-    bool object_base::_final_release() {
+    bool object_base::_aqueue_release() {
         //jc_assert(_refCount > 0);
 
         if (refCount() <= 1) {
-            _refCount = 0;
+            _aqueue_refCount = 0;
 			// it's still possible that something will attepmt to access to this object now?
             _delete_self();
             return true;
         }
         else {
-            --_refCount;
+            --_aqueue_refCount;
         }
 
         return false;

@@ -18,11 +18,11 @@ namespace collections {
 
         struct object_lifetime_policy {
             static void retain(object_base * p) {
-                p->retain();
+                p->_aqueue_retain();
             }
 
             static void release(object_base * p) {
-                p->_final_release();
+                p->_aqueue_release();
             }
         };
 
@@ -226,6 +226,7 @@ namespace collections {
                 spinlock::guard g(_queue_mutex);
                 _queue.erase(
                     std::remove_if(_queue.begin(), _queue.end(), [&](const queue::value_type& val) {
+                        jc_assert(val.first.get());
                         auto diff = time_subtract(_tickCounter, val.second) + 1; // +1 because 0,1,2,3,4,5 is 6 ticks
                         bool release = diff >= obj_lifeInTicks;
                         jc_debug("id - %u diff - %u, rc - %u", val.first->_uid(), diff, val.first->refCount());

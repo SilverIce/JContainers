@@ -50,6 +50,7 @@ namespace collections {
         std::atomic_int32_t _refCount;
         std::atomic_int32_t _tes_refCount;
         std::atomic_int32_t _stack_refCount;
+        std::atomic_int32_t _aqueue_refCount;
 
         CollectionType _type;
         boost::optional<std::string> _tag;
@@ -70,6 +71,7 @@ namespace collections {
             : _refCount(0)      // for now autorelease queue owns object
             , _tes_refCount(0)
             , _stack_refCount(0)
+            , _aqueue_refCount(0)
             , _id(HandleNull)
             , _type(type)
             , _context(nullptr)
@@ -124,12 +126,13 @@ namespace collections {
         }
 
         int32_t refCount() {
-            return _refCount + _tes_refCount + _stack_refCount;
+            return _refCount + _tes_refCount + _stack_refCount + _aqueue_refCount;
         }
         bool noOwners() const {
             return
                 _refCount.load() <= 0 &&
                 _tes_refCount.load() <= 0 &&
+                _aqueue_refCount.load() <= 0 &&
                 _stack_refCount.load() <= 0;
         }
 
@@ -157,7 +160,8 @@ namespace collections {
 
         // releases and then deletes object if no owners
         // true, if object deleted
-        bool _final_release();
+        void _aqueue_retain() { ++_aqueue_refCount; }
+        bool _aqueue_release();
         void _delete_self();
 
         void set_context(object_context & ctx) {
