@@ -36,7 +36,7 @@ namespace collections
                 context().registry->registerNewObjectId(*this);
                 // TODO: should object's lifetime be prolonged if it already has owners?
                 // no owners -> should be done for sure, as we must ensure that not-owned object will not hang forever
-                // has owners (but aqueue is also owner) -> lifetime will be auto-prolonged if RC will reach zero (will not be if aqueue is the only owner)
+                // has owners -> lifetime will be auto-prolonged if RC will reach zero
                 if (!_refCount) {
                     prolong_lifetime();
                 }
@@ -80,6 +80,7 @@ namespace collections
             }
         }
         else {
+            context().aqueue->not_prolong_lifetime(*this);
             --_tes_refCount;
         }
     }

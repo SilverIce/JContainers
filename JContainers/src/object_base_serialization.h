@@ -32,9 +32,15 @@ namespace boost { namespace serialization {
         jc_assert(t.noOwners() == false);
 
         switch (version) {
-        case 0:
+        case 2:
+            ar << t._aqueue_push_time;
+            break;
         case 1:
             save_atomic(ar, t._refCount); // may not store it in v2.0 anymore
+            break;
+        case 0:
+        default:
+            jc_assert(false);
             break;
         }
 
@@ -49,6 +55,9 @@ namespace boost { namespace serialization {
         case 0:
         case 1:
             load_atomic(ar, t._refCount);
+            break;
+        case 2:
+            ar >> t._aqueue_push_time;
             break;
         }
 

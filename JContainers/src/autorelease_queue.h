@@ -14,7 +14,7 @@ namespace collections {
     class autorelease_queue : boost::noncopyable {
     public:
         typedef std::lock_guard<bshared_mutex> lock;
-        typedef uint32_t time_point;
+        typedef object_base::time_point time_point;
 
         struct object_lifetime_policy {
             static void retain(object_base * p) {
@@ -27,8 +27,7 @@ namespace collections {
         };
 
         typedef boost::intrusive_ptr_jc<object_base, object_lifetime_policy> queue_object_ref;
-        typedef std::vector<std::pair<Handle, time_point> > queue_old;
-        typedef std::deque<std::pair<queue_object_ref, time_point> > queue;
+        typedef std::deque<queue_object_ref> queue;
 
     private:
 
@@ -63,7 +62,7 @@ namespace collections {
 
         template<class Archive>
         void save(Archive & ar, const unsigned int version) const {
-            jc_assert(version == 1);
+            jc_assert(version == 2);
             ar & _tickCounter;
             ar & _queue;
         }
@@ -73,17 +72,31 @@ namespace collections {
             ar & _tickCounter;
 
             switch (version) {
-            case 1:
+            case 2:
                 ar & _queue;
                 break;
-            case 0: {
+            case 1: {
+                typedef std::deque<std::pair<queue_object_ref, time_point> > queue_old;
                 queue_old old;
                 ar & old;
-
+                for (const auto& pair : old) {
+                    auto object = pair.first.get();
+                    if (object) {
+                        _queue.push_back(object);
+                        object->_aqueue_push_time = pair.second;
+                    }
+                }
+                break;
+            }
+            case 0: {
+                typedef std::vector<std::pair<Handle, time_point> > queue_old;
+                queue_old old;
+                ar & old;
                 for (const auto& pair : old) {
                     auto object = _registry.u_getObject(pair.first);
                     if (object) {
-                        _queue.push_back(std::make_pair(object, pair.second));
+                        _queue.push_back(object);
+                        object->_aqueue_push_time = pair.second;
                     }
                 }
                 break;
@@ -111,9 +124,19 @@ namespace collections {
         void prolong_lifetime(object_base& object, bool isPublic) {
             jc_debug("aqueue: added id - %u as %s", object._uid(), isPublic ? "public" : "private");
 
-            uint32_t pushedTime = isPublic ? _tickCounter : time_subtract(_tickCounter, obj_lifeInTicks);
             spinlock::guard g(_queue_mutex);
-            _queue.push_back(std::make_pair(&object, pushedTime));
+            object._aqueue_push_time = isPublic ? _tickCounter : time_subtract(_tickCounter, obj_lifeInTicks);
+            if (!object.is_in_aqueue()) {
+                _queue.push_back(&object);
+            }
+        }
+
+        void not_prolong_lifetime(object_base& object) {
+            if (object.is_in_aqueue()) {
+                jc_debug("aqueue: removed id - %u", object._uid());
+                spinlock::guard g(_queue_mutex);
+                object._aqueue_push_time = time_subtract(_tickCounter, obj_lifeInTicks);
+            }
         }
 
         // amount of objects in queue
@@ -143,8 +166,8 @@ namespace collections {
         }
 
         void u_nullify() {
-            for (auto &pair : _queue) {
-                pair.first.jc_nullify();
+            for (auto &ref : _queue) {
+                ref.jc_nullify();
             }
         }
 
@@ -225,15 +248,15 @@ namespace collections {
             {
                 spinlock::guard g(_queue_mutex);
                 _queue.erase(
-                    std::remove_if(_queue.begin(), _queue.end(), [&](const queue::value_type& val) {
-                        jc_assert(val.first.get());
-                        auto diff = time_subtract(_tickCounter, val.second) + 1; // +1 because 0,1,2,3,4,5 is 6 ticks
+                    std::remove_if(_queue.begin(), _queue.end(), [&](const queue_object_ref& ref) {
+                        jc_assert(ref.get());
+                        auto diff = time_subtract(_tickCounter, ref->_aqueue_push_time) + 1; // +1 because 0,1,2,3,4,5 is 6 ticks
                         bool release = diff >= obj_lifeInTicks;
-                        jc_debug("id - %u diff - %u, rc - %u", val.first->_uid(), diff, val.first->refCount());
+                        jc_debug("id - %u diff - %u, rc - %u", ref->_uid(), diff, ref->refCount());
 
                         // just move out object reference to release it later
                         if (release)
-                            _toRelease.push_back(std::move(val.first));
+                            _toRelease.push_back(std::move(ref));
                         return release;
                     }),
                     _queue.end());
@@ -293,4 +316,4 @@ namespace collections {
     }
 }
 
-BOOST_CLASS_VERSION(collections::autorelease_queue, 1);
+BOOST_CLASS_VERSION(collections::autorelease_queue, 2);

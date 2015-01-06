@@ -23,8 +23,8 @@ namespace collections
                     }
                 }
 
-                for (auto& pair : aqueue.u_queue()) {
-                    roots.insert(pair.first.get());
+                for (auto& ref : aqueue.u_queue()) {
+                    roots.insert(ref.get());
                 }
 
                 return roots;
