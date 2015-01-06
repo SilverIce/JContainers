@@ -142,13 +142,13 @@ namespace collections {
             explicit item_converter(Item::variant& var) : varNew(var) {}
 
             template<class T> void operator() (T& val) {
-                varNew = val;
+                varNew = std::move(val);
             }
 
             void operator()(old_blank& val) {}
 
             void operator()(object_ref_old& val) {
-                varNew = internal_object_ref(val.px, false);
+                varNew = internal_object_ref(val.px);
             }
         };
 

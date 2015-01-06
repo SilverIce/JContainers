@@ -82,7 +82,7 @@ namespace collections {
                 for (const auto& pair : old) {
                     auto object = pair.first.get();
                     if (object) {
-                        _queue.push_back(object);
+                        _queue.push_back(std::move(pair.first));
                         object->_aqueue_push_time = pair.second;
                     }
                 }

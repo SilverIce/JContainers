@@ -53,9 +53,11 @@ namespace boost { namespace serialization {
     void load(Archive & ar, cl::object_base & t, unsigned int version) {
         switch (version) {
         case 0:
-        case 1:
-            load_atomic(ar, t._refCount);
+        case 1: {
+            std::atomic_int32_t unused_refCount;
+            load_atomic(ar, unused_refCount);
             break;
+        }
         case 2:
             ar >> t._aqueue_push_time;
             break;
