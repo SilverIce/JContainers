@@ -229,7 +229,6 @@ if addToIndex >= 0 it inserts value at given index. "NEGATIVE_IDX_COMMENT);
         }
         REGISTERF2(valueType, "* index", "returns type of the value at index. "NEGATIVE_IDX_COMMENT"\n"VALUE_TYPE_COMMENT);
 
-
         static void swapItems(ref obj, SInt32 idx, SInt32 idx2) {
 
             SInt32 pyIndexes[] = { idx, idx2 };
@@ -241,6 +240,26 @@ if addToIndex >= 0 it inserts value at given index. "NEGATIVE_IDX_COMMENT);
             });
         }
         REGISTERF2(swapItems, "* index1 index2", "Exchanges the items at index1 and index2. "NEGATIVE_IDX_COMMENT);
+
+        static ref sort(ref obj) {
+            if (obj) {
+                object_lock g(obj);
+                std::sort(obj->u_container().begin(), obj->u_container().end());
+            }
+            return obj;
+        }
+        REGISTERF2(sort, "*", "Sorts the items into ascending order (none < int < float < object < form < string). Returns array itself");
+
+        static ref unique(ref obj) {
+            if (obj) {
+                object_lock g(obj);
+                std::sort(obj->u_container().begin(), obj->u_container().end());
+                std::unique(obj->u_container().begin(), obj->u_container().end());
+            }
+            return obj;
+        }
+        REGISTERF2(unique, "*", "Sorts the items, removes duplicates. Returns array itself. You can treat it as JSet now");
+
     };
 
     TES_META_INFO(tes_array);

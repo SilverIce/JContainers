@@ -92,6 +92,19 @@ namespace collections {
     private:
         variant _var;
 
+    private:
+
+        template<class T> struct type2index{ };
+
+        template<> struct type2index < boost::blank >  { static const item_type index = none; };
+        template<> struct type2index < SInt32 >  { static const item_type index = integer; };
+        template<> struct type2index < Real >  { static const item_type index = real; };
+        template<> struct type2index < FormId >  { static const item_type index = form; };
+        template<> struct type2index < internal_object_ref >  { static const item_type index = object; };
+        template<> struct type2index < std::string >  { static const item_type index = string; };
+
+        static_assert(type2index<Real>::index > type2index<SInt32>::index, "Item::type2index works incorrectly");
+
     public:
 
         void u_nullifyObject() {
@@ -350,9 +363,28 @@ namespace collections {
         bool operator == (const object_base *obj) const { return obj == object(); }
         bool operator == (const object_base &obj) const { return *this == &obj; }
 
-
         template<class T>
         bool operator != (const T& v) const { return !(*this == v); }
+
+        bool operator < (const Item& other) const {
+            const auto l = type(), r = other.type();
+            return l == r ? boost::apply_visitor(lesser_comparison(), _var, other._var) : (l < r);
+        }
+
+        class lesser_comparison : public boost::static_visitor < bool > {
+        public:
+
+            template <typename T, typename U>
+            bool operator()(const T &, const U &) const {
+                return type2index<T>::index < type2index<U>::index;
+            }
+
+            template <typename T>
+            bool operator()(const T & lhs, const T & rhs) const {
+                return lhs < rhs;
+            }
+        };
+
     };
 
     template<> inline Item::Real Item::readAs<Item::Real>() {

@@ -80,7 +80,21 @@ namespace tes_api_3 {
         tes_array::swapItems(obj, 0, -1);
         //{8,1,2,3,4,5,0}
         EXPECT_TRUE(tes_array::itemAtIndex<SInt32>(obj, 0) == 8 && tes_array::itemAtIndex<SInt32>(obj, -1) == 0);
+    }
 
+    TEST(array, sort_and_unique)
+    {
+        auto sort = [&](const char *jsonText) {
+            auto& ar = tes_object::objectFromPrototype(jsonText)->as_link<array>();
+            auto countBefore = ar.u_count();
+            tes_array::sort(&ar);
+            EXPECT_TRUE(countBefore == ar.u_count());
+            EXPECT_TRUE(std::is_sorted(ar.u_container().begin(), ar.u_container().end()));
+        };
+
+        sort(STR([9, 8, 7, 20, 3]));
+        sort(STR([1.0, "tempo", 0, "__formData||0x12"]));
+        sort("[]");
     }
 
     TEST(tes_jcontainers, tes_jcontainers)

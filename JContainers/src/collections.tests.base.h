@@ -90,6 +90,15 @@ namespace collections { namespace {
         EXPECT_TRUE(i1.isEqual(i2));
     }
 
+    JC_TEST(Item, less_than)
+    {
+        EXPECT_TRUE(Item(100) < Item(2.0));
+        EXPECT_TRUE(Item(1.0) < Item(2.0));
+        EXPECT_TRUE(Item(10) < Item(FormZero));
+        EXPECT_TRUE(Item("aa") < Item("text"));
+        //EXPECT_TRUE(Item(1.0) < Item(FormZero));
+    }
+
     TEST(form_handling, test)
     {
         namespace fh = form_handling;
