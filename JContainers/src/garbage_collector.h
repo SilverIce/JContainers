@@ -11,8 +11,8 @@ namespace collections
 
         struct result
         {
-            uint32_t garbage_total; // 
-            uint32_t part_of_graphs; // 
+            size_t garbage_total; // 
+            size_t part_of_graphs; // 
         };
 
         static result u_collect(object_registry& registry, autorelease_queue& aqueue, const std::deque<std::reference_wrapper<object_base>>& root_objects) {
@@ -107,7 +107,7 @@ namespace collections
 
 
             auto collectGarbage = [&registry](const object_set& garbage) -> result {
-                uint32_t part_of_graphs = 0;
+                size_t part_of_graphs = 0;
 
                 for (auto& obj : garbage) {
                     if (obj->noOwners() == false) { // an object is part of a graph
