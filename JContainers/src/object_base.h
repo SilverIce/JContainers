@@ -144,6 +144,7 @@ namespace collections {
         // push object into the queue (which owns it)
         // after some amount of time object will be released
         object_base * prolong_lifetime();
+        object_base * zero_lifetime();
 
         void release();
         void tes_release();

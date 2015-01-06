@@ -83,9 +83,9 @@ namespace collections
 
     size_t object_context::collect_garbage(object_base& root_object) {
         aqueue->stop();
-        size_t unreachable_count = garbage_collector::u_collect(*registry, *aqueue, { root_object });
+        auto res = garbage_collector::u_collect(*registry, *aqueue, { root_object });
         aqueue->start();
-        return unreachable_count;
+        return res.garbage_total;
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -252,8 +252,8 @@ namespace collections
     void object_context::u_postLoadMaintenance(const serialization_version saveVersion)
     {
         util::do_with_timing("Garbage collection", [&]() {
-            uint32_t garbageCount = garbage_collector::u_collect(*registry, *aqueue, {});
-            _DMESSAGE("%u garbage objects collected", garbageCount);
+            auto res = garbage_collector::u_collect(*registry, *aqueue, {});
+            _DMESSAGE("%u garbage objects collected. %u objects are parts of circular graphs", res.garbage_total, res.part_of_graphs);
         });
     }
 

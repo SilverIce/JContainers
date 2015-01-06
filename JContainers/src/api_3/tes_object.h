@@ -11,7 +11,6 @@ namespace tes_api_3 {
 
 #define VALUE_TYPE_COMMENT "0 - no value, 1 - none, 2 - int, 3 - float, 4 - form, 5 - object, 6 - string"
 
-
 #define ARGS(...)   #__VA_ARGS__
 
     class tes_object : public class_meta< tes_object > {
@@ -35,11 +34,13 @@ namespace tes_api_3 {
             return nullptr;
         }
         REGISTERF2(retain, "* tag=\"\"",
-"Retains and returns the object. Purpose - extend object lifetime.\n\
-Newly created object if not retained or not referenced/contained by another container directly or indirectly gets destoyed after ~10 seconds due to absence of owners.\n\
-Retain increases amount of owners object have by 1. The retainer is responsible for releasing object later.\n\
-Object have extended lifetime if JDB or JFormDB or any other container references/owns/contains object directly or indirectly.\n\
-It's recommended to set a tag (any unique string will fit - mod name for ex.) - later you'll be able to release all objects with selected tag even if identifier was lost"
+R"===(Lifetime management functionality. See https://github.com/SilverIce/JContainers/wiki/Lifetime-Management
+
+Retains and returns the object. Purpose - extend object lifetime.
+Newly created object if not retained or not referenced/contained by another container directly or indirectly gets destoyed after ~10 seconds due to absence of owners.
+Retain increases amount of owners object have by 1. The retainer is responsible for releasing object later.
+Object have extended lifetime if JDB or JFormDB or any other container references/owns/contains object directly or indirectly.
+It's recommended to set a tag (any unique string will fit - mod name for ex.) - later you'll be able to release all objects with selected tag even if identifier was lost)==="
             );
 
         template<class T>
@@ -91,6 +92,15 @@ It's recommended to set a tag (any unique string will fit - mod name for ex.) - 
 "Complements all retain calls objects with given tag received with release calls.\n"
 "See 'object lifetime management' section for more information");
 
+        static ref zeroLifetime(ref obj) {
+            if (obj) {
+                obj->zero_lifetime();
+            }
+            return obj;
+        }
+        REGISTERF2(zeroLifetime, "*", "Sets (if possible) an object's lifetime to minimum, returns the object.\n\
+By using this function a user helps JC to delete this no-more-needed to a user object as soon as possible (ofc. the object won't be deleted if something retains or contains it)");
+
 #       define JC_OBJECT_POOL_KEY   "__tempPools"
 
         static object_base* addToPool(ref obj, const char *poolName) {
@@ -141,7 +151,7 @@ JValue.cleanTempLocation(\"uniqueLocationName\")"
         static ref shallowCopy(ref obj) {
             return obj ? &deep_copying::shallow_copy(tes_context::instance(), *obj) : nullptr;
         }
-        REGISTERF2(shallowCopy, "*", "\n\nReturns shallow copy (doesn't copy child objects)");
+        REGISTERF2(shallowCopy, "*", "Mics. functionality\n\nReturns shallow copy (doesn't copy child objects)");
 
         static ref deepCopy(ref obj) {
             return obj ? &deep_copying::deep_copy(tes_context::instance(), *obj) : nullptr;

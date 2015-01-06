@@ -27,6 +27,12 @@ namespace collections
 
     - object gets exposed second time, then gets unlinked from another object, thus @release should prolong
 
+
+    When we should NOT prolong object's lifetime?
+
+    - object has owners (another objects), gets exposed, returned to Skyrim for the first time. Why? If an object will be unlinked from another object-owner,
+      @release will be called, if RC is 0 then lifetime will be prolonged
+
     */
 
     Handle object_base::tes_uid() {
@@ -111,6 +117,11 @@ namespace collections
 
     object_base* object_base::prolong_lifetime() {
         context().aqueue->prolong_lifetime(*this, is_public());
+        return this;
+    }
+
+    object_base* object_base::zero_lifetime() {
+        context().aqueue->not_prolong_lifetime(*this);
         return this;
     }
 }
