@@ -154,11 +154,10 @@ namespace collections {
         // after some amount of time object will be released
         object_base * prolong_lifetime();
 
-        void release() { release_counter(_refCount); }
-        void tes_release() { release_counter(_tes_refCount); }
+        void release();
+        void tes_release();
         void stack_retain() { ++_stack_refCount; }
-        void stack_release() { release_counter(_stack_refCount); }
-
+        void stack_release();
 
         // releases and then deletes object if no owners
         // true, if object deleted
