@@ -101,7 +101,6 @@ namespace collections {
         map sourceObj;
         sourceObj.tes_retain();
         sourceObj.tes_retain();
-        sourceObj.retain();
         sourceObj.u_setValueForKey("test", Item(10.0));
 
         do_serialization_and_comparison(testState, sourceObj);

@@ -31,7 +31,13 @@ namespace boost { namespace serialization {
         //jc_assert(t._stack_refCount.load(std::memory_order_relaxed) == 0);
         jc_assert(t.noOwners() == false);
 
-        save_atomic(ar, t._refCount);
+        switch (version) {
+        case 0:
+        case 1:
+            save_atomic(ar, t._refCount); // may not store it in v2.0 anymore
+            break;
+        }
+
         save_atomic(ar, t._tes_refCount);
         ar << t._id;
         ar << t._tag;
@@ -39,10 +45,17 @@ namespace boost { namespace serialization {
 
     template<class Archive>
     void load(Archive & ar, cl::object_base & t, unsigned int version) {
-        load_atomic(ar, t._refCount);
+        switch (version) {
+        case 0:
+        case 1:
+            load_atomic(ar, t._refCount);
+            break;
+        }
+
         load_atomic(ar, t._tes_refCount);
 
         switch (version) {
+        case 2:
         case 1:
             ar >> t._id;
             ar >> t._tag;
@@ -65,4 +78,4 @@ namespace boost { namespace serialization {
 }
 
 BOOST_SERIALIZATION_SPLIT_FREE(collections::object_base);
-BOOST_CLASS_VERSION(collections::object_base, 1);
+BOOST_CLASS_VERSION(collections::object_base, 2);

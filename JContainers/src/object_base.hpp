@@ -22,7 +22,7 @@ namespace collections
     - object gets exposed, returned to Skyrim for the first time, has no owners. (owned for 10 sec)
     - object has owners (another objects or aqueue), gets exposed, returned to Skyrim for the first time. Why we need to prolong is this case?:
 
-      - if an object will be unlinked from another object-owner, @release will be called, if RC is 0 then lifetime will be prolonged. 
+      - if an object will be unlinked from another object-owner, @release will be called, if RC is 0 then lifetime will be prolonged. DO NOT prolong when object gets exposed
       - if an object owned by aqueue we may now know when @_final_release will be called (if no more owners, @_final_release destroys the object immediately)
 
     - object gets exposed second time, then gets unlinked from another object, thus @release should prolong

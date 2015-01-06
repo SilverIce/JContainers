@@ -44,12 +44,12 @@ namespace collections {
         }
 
         if (db) {
-            db->retain();
+            //db->retain();
             db->tes_retain(); // emulates a user-who-needs @db, this will prevent @db from being garbage collected
         }
 
         if (prev) {
-            prev->release();
+            //prev->release();
             prev->tes_release();
         }
 

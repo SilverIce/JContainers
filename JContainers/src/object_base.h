@@ -114,10 +114,6 @@ namespace collections {
         }
 
         object_base * retain() {
-            return u_retain();
-        }
-
-        object_base * u_retain() {
             ++_refCount;
             return this;
         }
