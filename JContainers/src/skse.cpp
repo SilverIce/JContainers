@@ -205,7 +205,7 @@ namespace collections { namespace {
 
 namespace collections { namespace skse {
 
-    namespace aux {
+    namespace fake_skse {
 
         enum {
             char_count = 'Z' - 'A' + 1,
@@ -272,16 +272,19 @@ namespace collections { namespace skse {
             return modInfo ? modInfo->name : nullptr;
         }
         else {
-            return aux::modname_from_index(idx);
+            return fake_skse::modname_from_index(idx);
         }
     }
 
     uint8_t modindex_from_name(const char * name) {
-        return g_serialization ? DataHandler::GetSingleton()->GetModIndex(name) : aux::modindex_from_name(name);
+        return g_serialization ? DataHandler::GetSingleton()->GetModIndex(name) : fake_skse::modindex_from_name(name);
     }
 
+    // A fake form. Made for imitating SKSE during synthetic tests
+    static char fakeTesForm[sizeof TESForm];
+
     TESForm* lookup_form(uint32_t handle) {
-        return g_serialization ? LookupFormByID(handle) : nullptr;
+        return g_serialization ? LookupFormByID(handle) : reinterpret_cast<TESForm*>(&fakeTesForm);
     }
 
     bool is_fake() {
