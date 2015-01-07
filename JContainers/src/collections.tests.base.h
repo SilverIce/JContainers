@@ -437,9 +437,9 @@ namespace collections { namespace {
 
         auto rc2 = root->refCount();
         context.setDataBase(nullptr);
-        const auto rcDiff2 = root->refCount() - rc2;
+        const auto rcDiff2 = - root->refCount() + rc2;
         // had to hardcode this - old. db gets released, gets retained by aqueue, thus -rcDiff2 != rcDiff
-        EXPECT_TRUE((1 - rcDiff2) == rcDiff);
+        EXPECT_TRUE((1 + rcDiff2) == rcDiff);
     }
 
     JC_TEST(autorelease_queue, over_release)

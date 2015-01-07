@@ -77,8 +77,7 @@ namespace collections {
         void write_to_stream(std::ostream& stream);
 
         // exposed for testing purposes only
-        //typedef std::deque<std::reference_wrapper<object_base>> not_nil_object_list;
-        size_t collect_garbage(object_base& root_object);
+        size_t collect_garbage();
     };
 
 }

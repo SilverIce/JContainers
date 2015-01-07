@@ -45,16 +45,21 @@ namespace collections {
 
         friend class object_context;
     public:
-        Handle _id;
+        typedef uint32_t time_point;
 
-        std::atomic_int32_t _refCount;
-        std::atomic_int32_t _tes_refCount;
-        std::atomic_int32_t _stack_refCount;
+    public:
+        Handle _id                              = HandleNull;
+
+        std::atomic_int32_t _refCount           = 0;
+        std::atomic_int32_t _tes_refCount       = 0;
+        std::atomic_int32_t _stack_refCount     = 0;
+        std::atomic_int32_t _aqueue_refCount    = 0;
+        time_point _aqueue_push_time            = 0;
 
         CollectionType _type;
         boost::optional<std::string> _tag;
     private:
-        object_context *_context;
+        object_context *_context                = nullptr;
 
         void release_counter(std::atomic_int32_t& counter);
 
@@ -67,12 +72,7 @@ namespace collections {
         mutable spinlock _mutex;
 
         explicit object_base(CollectionType type)
-            : _refCount(0)      // for now autorelease queue owns object
-            , _tes_refCount(0)
-            , _stack_refCount(0)
-            , _id(HandleNull)
-            , _type(type)
-            , _context(nullptr)
+            : _type(type)
         {
         }
 
@@ -114,10 +114,6 @@ namespace collections {
         }
 
         object_base * retain() {
-            return u_retain();
-        }
-
-        object_base * u_retain() {
             ++_refCount;
             return this;
         }
@@ -127,42 +123,38 @@ namespace collections {
             return this;
         }
 
-        int32_t refCount() {
-            return _refCount + _tes_refCount + _stack_refCount;
+        int32_t refCount() const {
+            return _refCount + _tes_refCount + _stack_refCount + _aqueue_refCount;
         }
         bool noOwners() const {
             return
                 _refCount.load() <= 0 &&
                 _tes_refCount.load() <= 0 &&
+                _aqueue_refCount.load() <= 0 &&
                 _stack_refCount.load() <= 0;
         }
 
         bool u_is_user_retains() const {
             return _tes_refCount.load(std::memory_order_relaxed) > 0;
         }
-
-/*
-        bool noOwners() const {
-            return
-                _refCount.load(std::memory_order_acquire) == 0 &&
-                _tes_refCount.load(std::memory_order_acquire) == 0 &&
-                _stack_refCount.load(std::memory_order_acquire) == 0;
+        bool is_in_aqueue() const {
+            return _aqueue_refCount.load(std::memory_order_relaxed) > 0;
         }
-*/
 
         // push object into the queue (which owns it)
         // after some amount of time object will be released
         object_base * prolong_lifetime();
+        object_base * zero_lifetime();
 
-        void release() { release_counter(_refCount); }
-        void tes_release() { release_counter(_tes_refCount); }
+        void release();
+        void tes_release();
         void stack_retain() { ++_stack_refCount; }
-        void stack_release() { release_counter(_stack_refCount); }
-
+        void stack_release();
 
         // releases and then deletes object if no owners
         // true, if object deleted
-        bool _final_release();
+        void _aqueue_retain() { ++_aqueue_refCount; }
+        bool _aqueue_release();
         void _delete_self();
 
         void set_context(object_context & ctx) {

@@ -98,7 +98,7 @@ namespace collections
         void write_to_stream(std::ostream& stream) { _context.write_to_stream(stream); }
 
         size_t collect_garbage() {
-            return _context.collect_garbage(*database());
+            return _context.collect_garbage();
         }
     };
 

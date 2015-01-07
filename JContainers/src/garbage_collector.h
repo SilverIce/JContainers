@@ -9,7 +9,13 @@ namespace collections
         typedef std::deque<object_base* > object_list;
         typedef std::hash_set<object_base *> object_set;
 
-        static size_t u_collect(object_registry& registry, autorelease_queue& aqueue, const std::deque<std::reference_wrapper<object_base>>& root_objects) {
+        struct result
+        {
+            size_t garbage_total; // 
+            size_t part_of_graphs; // 
+        };
+
+        static result u_collect(object_registry& registry, autorelease_queue& aqueue, const std::deque<std::reference_wrapper<object_base>>& root_objects) {
 
             auto findRootObjects = [&registry, &aqueue, &root_objects]() -> object_set {
                 object_set roots;// (root_objects.begin(), root_objects.end());
@@ -23,8 +29,8 @@ namespace collections
                     }
                 }
 
-                for (auto& pair : aqueue.u_queue()) {
-                    roots.insert(pair.first.get());
+                for (auto& ref : aqueue.u_queue()) {
+                    roots.insert(ref.get());
                 }
 
                 return roots;
@@ -100,18 +106,21 @@ namespace collections
             };*/
 
 
-            auto collectGarbage = [&registry](const object_set& garbage) -> size_t {
+            auto collectGarbage = [&registry](const object_set& garbage) -> result {
+                size_t part_of_graphs = 0;
+
                 for (auto& obj : garbage) {
                     if (obj->noOwners() == false) { // an object is part of a graph
                         // the object's ref. count in the unreachable graphs reaches zero -> all objects are moved into aqueue
                         obj->u_clear();
+                        ++part_of_graphs;
                     }
                     else {
                         obj->_delete_self();
                     }
                 }
                 
-                return garbage.size();
+                return result{ garbage.size(), part_of_graphs };
             };
 
             return collectGarbage(findNonReachable(findRootObjects()));
