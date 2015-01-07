@@ -71,7 +71,7 @@ namespace collections { namespace {
         EXPECT_TRUE(i1.isEqual(i2));
 
         i1 = "me";
-        i2 = "me";
+        i2 = "Me";
         EXPECT_TRUE(i1.isEqual(i2));
 
         i2 = "not me";

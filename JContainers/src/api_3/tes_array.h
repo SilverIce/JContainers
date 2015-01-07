@@ -150,16 +150,11 @@ NEGATIVE_IDX_COMMENT);
             int result = -1;
 
             doReadOp(obj, pySearchStartIndex, [=, &result](uint32_t idx) {
-
-                auto pred = [=](const Item& item) {
-                    return item.isEqual(value);
-                };
-
                 if (pySearchStartIndex >= 0) {
-                    auto itr = std::find_if(obj->begin() + idx, obj->end(), pred);
+                    auto itr = std::find(obj->begin() + idx, obj->end(), Item(value));
                     result = itr != obj->end() ? (itr - obj->begin()) : -1;
                 } else {
-                    auto itr = std::find_if(obj->rbegin() + (-pySearchStartIndex - 1), obj->rend(), pred);
+                    auto itr = std::find(obj->rbegin() + (-pySearchStartIndex - 1), obj->rend(), Item(value));
                     result = itr != obj->rend() ? (obj->rend() - itr) : -1;
                 }
             });

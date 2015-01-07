@@ -308,6 +308,10 @@ namespace collections {
             bool operator()( const T & lhs, const T & rhs ) const {
                 return lhs == rhs;
             }
+
+            template <> bool operator()(const std::string & lhs, const std::string & rhs) const {
+                return _stricmp(lhs.c_str(), rhs.c_str()) == 0;
+            }
         };
 
         bool isEqual(SInt32 value) const {
@@ -321,7 +325,7 @@ namespace collections {
         bool isEqual(const char* value) const {
             auto str1 = strValue();
             auto str2 = value;
-            return is_type<std::string>() && ( (str1 && str2 && strcmp(str1, str2) == 0) || (!str1 && !str2) );
+            return str1 && str2 && _stricmp(str1, str2) == 0;
         }
 
         bool isEqual(const object_base *value) const {
@@ -340,14 +344,6 @@ namespace collections {
             return boost::apply_visitor(are_strict_equals(), _var, other._var);
         }
 
-        bool operator == (const Item& other) const {
-            return isEqual(other);
-        }
-
-        bool operator != (const Item& other) const {
-            return !isEqual(other);
-        }
-
         bool isNull() const {
             return is_type<boost::blank>();
         }
@@ -359,6 +355,9 @@ namespace collections {
         template<class T> T readAs();
 
         //////////////////////////////////////////////////////////////////////////
+
+        bool operator == (const Item& other) const { return isEqual(other);}
+        bool operator != (const Item& other) const { return !isEqual(other);}
 
         bool operator == (const object_base *obj) const { return obj == object(); }
         bool operator == (const object_base &obj) const { return *this == &obj; }

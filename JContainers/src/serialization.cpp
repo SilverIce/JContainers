@@ -90,7 +90,7 @@ namespace collections {
             Item tmp;
             ia >> tmp;
 
-            EXPECT_TRUE( itm.isEqual(tmp) );
+            EXPECT_TRUE( itm == tmp );
 
 
         }
