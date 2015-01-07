@@ -19,19 +19,18 @@ namespace collections
 
     When we need to prolong object's lifetime?
     
-    - object gets exposed, returned to Skyrim for the first time, has no owners. (owned for 10 sec)
-    - object has owners (another objects or aqueue), gets exposed, returned to Skyrim for the first time. Why we need to prolong is this case?:
-
-      - if an object will be unlinked from another object-owner, @release will be called, if RC is 0 then lifetime will be prolonged. DO NOT prolong when object gets exposed
-      - if an object owned by aqueue we may now know when @_final_release will be called (if no more owners, @_final_release destroys the object immediately)
-
-    - object gets exposed second time, then gets unlinked from another object, thus @release should prolong
-
+    - object gets exposed, returned to Skyrim for the first time and HAS NO owners. (owned for 10 sec)
+    - unlinked from another object,  RC is 0, @release should prolong
 
     When we should NOT prolong object's lifetime?
 
-    - object has owners (another objects), gets exposed, returned to Skyrim for the first time. Why? If an object will be unlinked from another object-owner,
-      @release will be called, if RC is 0 then lifetime will be prolonged
+    - object has owners (another objects), gets exposed, returned to Skyrim for the first time. If an object will be unlinked from another object-owner,
+      @release will be called, and if RC is 0 then lifetime will be prolonged
+
+    STOP prolong if:
+
+    - an object gets retained by a user
+    - an object gets retained by another object
 
     */
 
@@ -40,9 +39,7 @@ namespace collections
             object_lock l(this);
             if (_id == HandleNull) {
                 context().registry->registerNewObjectId(*this);
-                // TODO: should object's lifetime be prolonged if it already has owners?
                 // no owners -> should be done for sure, as we must ensure that not-owned object will not hang forever
-                // has owners -> lifetime will be auto-prolonged if RC will reach zero
                 if (!_refCount) {
                     prolong_lifetime();
                 }
