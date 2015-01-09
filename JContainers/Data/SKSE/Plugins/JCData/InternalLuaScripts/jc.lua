@@ -628,7 +628,7 @@ return {
       JArray = JArray,
       JMap = JMap,
       JFormMap = JFormMap,
-      JDB = wrapJCHandle(jclib.JDB_instance()),
+      JDB = wrapJCHandle(jclib.JDB_instance(JConstants.Context)),
 
       Form = CForm,
   },

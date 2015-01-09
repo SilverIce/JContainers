@@ -428,7 +428,7 @@ namespace collections {
         array() {}
 
         enum {
-            TypeId = CollectionTypeArray,
+            TypeId = CollectionType::Array,
         };
 
         typedef SInt32 Index;
@@ -619,7 +619,7 @@ namespace collections {
     public:
 
         enum  {
-            TypeId = CollectionTypeMap,
+            TypeId = CollectionType::Map,
         };
 
         void u_nullifyObjects() override;
@@ -635,7 +635,7 @@ namespace collections {
     {
     public:
         enum  {
-            TypeId = CollectionTypeFormMap,
+            TypeId = CollectionType::FormMap,
         };
 
 /*

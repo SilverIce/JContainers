@@ -29,7 +29,6 @@
 #include "json_handling.h"
 #include "deep_copying.h"
 #include "path_resolving.h"
-#include "lua_stuff.h"
 
 #include "collection_bind_traits.h"
 

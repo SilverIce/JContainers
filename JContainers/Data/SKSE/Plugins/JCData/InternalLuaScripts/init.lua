@@ -1,12 +1,17 @@
 
--- JC supplies these paths
-local JCDataPath, JCDllPath = ...
+-- JC supplies these paths and variables
+-- path to JCData dir
+-- path to JContainers.dll
+-- JC's context of type tes_context
+local JCDataPath, JCDllPath, JContext = ...
 
 --if (not JCDataPath) and (not JCDllPath) then
 --  JCDataPath, JCDllPath = 
 --end
+--print(JCDataPath, JCDllPath)
 
--------------------------------------------------
+---------- Setup Lua, basic Lua, globals
+
 -- do not allow global variable override
 setmetatable(_G, {
   __newindex = function(t, k, v)
@@ -15,6 +20,8 @@ setmetatable(_G, {
   end
 })
 
+math.randomseed(os.time())
+
 -- Setup globals
 package.path = ';' .. JCDataPath .. [[InternalLuaScripts/?.lua;]]
 
@@ -22,20 +29,12 @@ JConstants = {
   DataPath = JCDataPath,
   HeaderPath = JCDataPath .. [[InternalLuaScripts/api_for_lua.h]],
   DllPath = JCDllPath,
+  Context = JContext,
 }
 
-math.randomseed(os.time())
-
 JC_compileAndRun = nil
------------------------------------------------------------
 
---print(JCDataPath, JCDllPath)
-
--- that's really stupid that there is no way to pass extra arguments into 'require' funtion
-local jc = require('jc')
-
--- test functionality
-jc.testJC()
+---------- MISC. STUFF
 
 local function printTable( t )
   for k,v in pairs(t) do
@@ -63,6 +62,14 @@ end
 
 ------------------------------------
 
+
+-- load a module which initializes JC lua API
+local jc = require('jc')
+
+-- test functionality
+jc.testJC()
+
+
 -- SANDBOXING
 
 --[[
@@ -75,11 +82,10 @@ Problems? ^^
 --]]
 
 -- JValue.evalLua* sandbox
-do
 
+local function createTwoSandboxes()
   -- all JValue.evalLua* scripts sharing the one, immutable sandbox
   local sandbox = {
-
     -- some standard lua modules and functions
     math = math,
     io = io,
@@ -103,7 +109,7 @@ do
     }
   }
 
-  -- copy public things into sandbox
+  -- copy public things from @jc.public into sandbox
   mixIntoTable(sandbox, jc.public)
 
   -- caches results of module execution
@@ -141,39 +147,45 @@ do
     __newindex = function(_, _, _) error("attempt to modify script's sandbox") end,
   })
 
-  -- Caches compiled JValue.evalLua* string (weak cache)
-  local jc_function_cache = {}
-  setmetatable(jc_function_cache, {__mode = 'v' })
-
-  local function compileAndCache (luaString)
-    local func = jc_function_cache[luaString]
-    if not func then
-      local f, message = loadstring('local jobject = ... ;' .. luaString)
-      if f then
-        func = f
-        setfenv(f, sandbox_2)
-        jc_function_cache[luaString] = f
-      else
-        error(message)
-      end
-    end
-
-    return func
-  end
-
-  local wrapJCHandle = jc.wrapJCHandle
-  local wrapJCHandleAsNumber = jc.wrapJCHandleAsNumber
-  local returnJCValue = jc.returnJCValue
-
-  -- GLOBAL
-  function JC_compileAndRun (luaString, handle)
-    local func = compileAndCache(luaString)
-    assert(func)
-    return returnJCValue( func(wrapJCHandleAsNumber(handle)) )
-  end
+  return sandbox, sandbox_2
 end
+
+
+
+local sandbox, sandbox_2 = createTwoSandboxes()
+
+-------------------------------------------------------------
+-- Caches compiled JValue.evalLua* string (weak cache)
+local jc_function_cache = {}
+setmetatable(jc_function_cache, {__mode = 'v' })
+
+local function compileAndCache (luaString)
+  local func = jc_function_cache[luaString]
+  if not func then
+    local f, message = loadstring('local jobject = ... ;' .. luaString)
+    if f then
+      func = f
+      setfenv(f, sandbox_2)
+      jc_function_cache[luaString] = f
+    else
+      error(message)
+    end
+  end
+
+  return func
+end
+
+local wrapJCHandle = jc.wrapJCHandle
+local wrapJCHandleAsNumber = jc.wrapJCHandleAsNumber
+local returnJCValue = jc.returnJCValue
+
+-- GLOBAL
+function JC_compileAndRun (luaString, handle)
+  local func = compileAndCache(luaString)
+  assert(func)
+  return returnJCValue( func(wrapJCHandleAsNumber(handle)) )
+end
+
 ------------------------------------
 
 
-
-print('BUUU')

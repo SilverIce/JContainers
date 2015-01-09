@@ -1,27 +1,19 @@
 #pragma once
 
-//#include "lua_stuff.h"
+namespace lua {
+    using array = collections::array;
+    using map = collections::map;
+    using form_map = collections::form_map;
 
-#include <utility>
-#include <string>
-#include <boost/optional.hpp>
-#include "boost/filesystem/path.hpp"
-#include <sstream>
+    using map_functions = collections::map_functions;
+    using formmap_functions = collections::formmap_functions;
+    using array_functions = collections::array_functions;
+    using CollectionType = collections::CollectionType;
+}
 
-#include "gtest.h"
-#include "util.h"
+namespace lua { namespace aux {
 
-#include "reflection.h"
-#include "lua_basics.h"
-
-#include "jcontainers_constants.h"
-#include "collections.h"
-#include "tes_context.h"
-#include "collection_functions.h"
-
-namespace {
-
-    using namespace collections;
+    //using namespace collections;
 
 #   define cexport extern "C" __declspec(dllexport)
 
@@ -188,7 +180,7 @@ namespace {
 
     cexport handle JValue_retain(object_base* obj) { return (obj ? obj->stack_retain(), obj : nullptr); }
     cexport handle JValue_release(object_base* obj) { return (obj ? obj->stack_release(), nullptr : nullptr); }
-    cexport collections::CollectionType JValue_typeId(object_base* obj) { return (obj ? obj->_type : CollectionTypeNone); }
+    cexport collections::CollectionType JValue_typeId(object_base* obj) { return (obj ? obj->_type : CollectionType::None); }
 
     cexport JCToLuaValue JArray_getValue(array* obj, index key) {
         JCToLuaValue v(JCToLuaValue_None());
@@ -233,7 +225,7 @@ namespace {
     static_assert(sizeof FormId == sizeof CForm, "");
 
     cexport FormId JFormMap_nextKey(const form_map *obj, FormId lastKey) {
-        FormId next = FormZero;
+        FormId next = FormId::FormZero;
         formmap_functions::nextKey(obj, lastKey, [&](const FormId& key) { next = key; });
         return next;
     }
@@ -246,136 +238,8 @@ namespace {
         return formmap_functions::doReadOpR(obj, key, JCToLuaValue_None(), [](Item& itm) { return JCToLuaValue_fromItem(itm); });
     }
 
-    cexport handle JDB_instance() {
-        return tes_context::instance().database();
+    cexport handle JDB_instance(tes_context *jc_context) {
+        return jc_context->database();
     }
-
 }
-
-namespace collections {
-
-    namespace {
-
-        void printLuaError(lua_State *l) {
-            if (lua_gettop(l) > 0 && lua_isstring(l, -1)) {
-                const char *str = lua_tostring(l, -1);
-                _MESSAGE("Lua error: %s", str ? str : "");
-                //skse::console_print(str);
-            }
-        }
-
-        int LuaErrorHandler(lua_State *l) {
-            
-            int message = lua_gettop(l);//1
-            printLuaError(l);
-
-            lua_getglobal(l, "debug");//2
-            lua_pushstring(l, "traceback");
-            lua_gettable(l, 2); 
-            int function = lua_gettop(l);
-
-            lua_call(l, 0, 1);
-
-            printLuaError(l);
-
-            lua_pushvalue(l, message);
-            return 1;
-        }
-
-        bool setupLuaContext(lua_State *l) {
-            typedef boost::filesystem::path path;
-
-            auto initScriptPath = util::relative_to_dll_path(JC_DATA_FILES "InternalLuaScripts/init.lua");
-
-            lua_pushcfunction(l, LuaErrorHandler);
-            int errorHandler = lua_gettop(l);
-
-            if (luaL_loadfile(l, initScriptPath.generic_string().c_str()) != lua::LUA_OK) {
-                printLuaError(l);
-                return false;
-            }
-
-            // push data path, dll path
-            lua_pushstring(l, util::relative_to_dll_path(JC_DATA_FILES).generic_string().c_str());
-            lua_pushstring(l, util::dll_path().generic_string().c_str());
-
-            if (lua_pcall(l, 2, LUA_MULTRET, errorHandler) != lua::LUA_OK) {
-                printLuaError(l);
-                return false;
-            }
-
-            return true;
-        }
-
-        void _setupLuaContext(lua_State *l) { setupLuaContext(l); }
-
-        LUA_CONTEXT_MODIFIER(_setupLuaContext);
-
-        boost::optional<Item> eval_lua_function_for_test(lua_State *L, object_base *object, const char *lua_string) {
-
-            lua_pushcfunction(L, LuaErrorHandler);
-            int errorHandler = lua_gettop(L);
-
-            lua_getglobal(L, "JC_compileAndRun");
-            lua_pushstring(L, lua_string);
-            lua_pushlightuserdata(L, object);
-
-            if (lua_pcall(L, 2, 1, errorHandler) != lua::LUA_OK) {
-                return boost::none;
-            }
-            else {
-                Item result;
-                JCValue *val = (JCValue *)lua_topointer(L, -1);
-                JCValue_fillItem(val, result);
-                return result;
-            }
-        }
-
-        TEST_F(lua::fixture, Lua, evalLua_imitation)
-        {
-            EXPECT_TRUE(setupLuaContext(l));
-
-/*
-            auto result = eval_lua_function_for_test(l, &array::object(tes_context::instance()),
-                "assert(jobject);"
-                "local obj = JArray.objectWithArray {1,2,3,4,9};"
-                "return jc.filter(obj, function(x) return x < 3.5 end);"
-                );
-
-            EXPECT_TRUE(result);
-
-            auto obj = result->object();
-            EXPECT_NOT_NIL(obj);
-            auto filtered = result->object()->as<array>();
-            EXPECT_NOT_NIL(filtered);
-            EXPECT_TRUE(filtered->s_count() == 3);*/
-
-            auto testTransporting = [&](const char *str) { return eval_lua_function_for_test(l, nullptr, str); };
-
-            EXPECT_TRUE(testTransporting("return 10")->intValue() == 10);
-            EXPECT_TRUE(testTransporting("return 'die'")->strValue() == std::string("die"));
-            EXPECT_TRUE(testTransporting("return Form(20)")->formId() == FormId(20));
-
-
-            auto db = tes_context::instance().database();
-
-            EXPECT_TRUE(testTransporting("return JDB")->object() == db);
-
-            db->setValueForKey("test", Item(10));
-            EXPECT_TRUE(db->find("test").intValue() == 10);
-
-            auto result = eval_lua_function_for_test(l, nullptr,
-                "for k,v in pairs(JDB) do print('JDB.test', k, v) end;"
-                "assert(JDB.test == 10);"
-                "return JDB.test"
-                );
-            EXPECT_TRUE(result.is_initialized());
-            EXPECT_TRUE(result->intValue() == 10);
-
-        }
-    }
-
-    boost::optional<Item> eval_lua_function(object_base *object, const char *lua_string) {
-        return eval_lua_function_for_test(lua::context::instance().state(), object, lua_string);
-    }
 }

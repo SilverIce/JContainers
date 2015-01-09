@@ -135,7 +135,7 @@
     <ClCompile Include="src\api_3\tes_inteface.cpp" />
     <ClCompile Include="src\dll_api.cpp" />
     <ClCompile Include="src\jc_interface.cpp" />
-    <ClCompile Include="src\lua_api.cpp" />
+    <ClCompile Include="src\lua_module.cpp" />
     <ClCompile Include="src\object_module.cpp" />
     <ClCompile Include="src\gtest.cpp" />
     <ClCompile Include="src\jcontainers_pch.cpp">
@@ -172,7 +172,8 @@
     <ClInclude Include="src\collection_functions.h" />
     <ClInclude Include="src\garbage_collector.h" />
     <ClInclude Include="src\jc_interface.h" />
-    <ClInclude Include="src\lua_basics.h" />
+    <ClInclude Include="src\lua_module.h" />
+    <ClInclude Include="src\lua_native_funcs.hpp" />
     <ClInclude Include="src\object_base_serialization.h" />
     <ClInclude Include="src\path_resolving.h" />
     <ClInclude Include="src\jcontainers_constants.h" />
@@ -220,6 +221,7 @@
   <ItemGroup>
     <None Include="Data\SKSE\Plugins\JCData\InternalLuaScripts\init.lua" />
     <None Include="Data\SKSE\Plugins\JCData\InternalLuaScripts\jc.lua" />
+    <None Include="jc_debug.py" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

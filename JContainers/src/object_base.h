@@ -20,12 +20,11 @@ namespace collections {
     class object_base;
     class object_context;
 
-    enum CollectionType
-    {
-        CollectionTypeNone = 0,
-        CollectionTypeArray,
-        CollectionTypeMap,
-        CollectionTypeFormMap,
+    enum CollectionType {
+        None = 0,
+        Array,
+        Map,
+        FormMap,
     };
 
     struct object_base_stack_ref_policy {
