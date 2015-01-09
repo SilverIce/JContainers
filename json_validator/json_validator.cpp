@@ -11,6 +11,18 @@
 int errorCounter = 0;
 int filesTotal = 0;
 
+bool is_likely_utf8_bom(FILE *file) {
+    if (fseek(file, 0, SEEK_SET) != 0) {
+        return false; // error occured, so unk
+    }
+
+    const char utf8_BOM[4] = { 0xEF, 0xBB, 0xBF, 0};
+    char bytes[4] = { 0, 0, 0, 0 };
+    size_t bytes_read = fread_s(bytes, 3, 1, 3, file);
+
+    return bytes_read == 3 && strcmp(bytes, utf8_BOM) == 0;
+}
+
 void validate_file(const _TCHAR *path) {
 
     FILE *file = nullptr;
@@ -28,6 +40,11 @@ void validate_file(const _TCHAR *path) {
         printf("line %u column %u\n", error.line, error.column);
         printf("%s\n", error.text);
         printf("source: %s\n", error.source);
+
+        if (is_likely_utf8_bom(file)) {
+            printf("likely incorrect encoding. re-save the file using \"UTF-8 without BOM\" encoding format\n");
+        }
+
         printf("\n");
 
         ++errorCounter;
@@ -86,7 +103,7 @@ int _tmain(int argc, _TCHAR* argv[])
         ++i;
     }
 
-    printf("%u errors found. %u files validated\n", errorCounter, filesTotal);
+    printf("%u errors found. %u files total\n", errorCounter, filesTotal);
     printf("press any key to close\n");
 
     _getch();
