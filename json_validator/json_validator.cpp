@@ -2,6 +2,7 @@
 //
 
 #include "stdafx.h"
+#include "resource.h"
 
 #include <jansson/src/jansson.h>
 #include <stdio.h>
@@ -87,25 +88,24 @@ void handle_path(_TCHAR *path) {
 
 int _tmain(int argc, _TCHAR* argv[])
 {
+    if (argc > 1) {
+        int i = 1;
 
-    if (argc <= 1) {
-        return 0;
+        while (i < argc) {
+            _TCHAR *path = argv[i];
+
+            handle_path(path);
+
+            ++i;
+        }
+
+        printf("%u errors found. %u files total\n", errorCounter, filesTotal);
+    }
+    else {
+        printf(APP_DESCRIPTION"\n");
     }
 
-
-    int i = 1;
-
-    while (i < argc) {
-        _TCHAR *path = argv[i];
-
-        handle_path(path);
-
-        ++i;
-    }
-
-    printf("%u errors found. %u files total\n", errorCounter, filesTotal);
     printf("press any key to close\n");
-
     _getch();
 	return 0;
 }

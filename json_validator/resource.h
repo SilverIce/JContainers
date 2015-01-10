@@ -12,3 +12,5 @@
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
+
+#define APP_DESCRIPTION     "Utility for batch JSON file validation. Drag JSON files or folders onto executable (the file) to validate"
