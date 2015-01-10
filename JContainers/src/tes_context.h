@@ -11,12 +11,26 @@ namespace collections
 {
     class map;
 
+    class dependent_context {
+    public:
+        //virtual ~dependent_context() {}
+        virtual void clear_state() = 0;
+    };
+
     class tes_context : public object_context_delegate
     {
         object_context _context;
         std::atomic<Handle> _databaseId;
         std::atomic_uint_fast16_t _lastError;
         spinlock _lazyDBLock;
+
+        spinlock _dependent_contexts_mutex;
+        std::vector<dependent_context*> _dependent_contexts;
+
+        // complete shutdown, the context shouldn't be used for after this
+        void shutdown() {
+            _context.shutdown();
+        }
 
     public:
 
@@ -87,9 +101,9 @@ namespace collections
         object_stack_ref getObjectRef(Handle hdl) { return _context.getObjectRef(hdl); }
         object_base * u_getObject(Handle hdl) { return _context.u_getObject(hdl); }
 
-        void clearState() { _context.clearState(); }
-        // complete shutdown, shouldn't be used for after this
-        void shutdown() { _context.shutdown(); }
+        void clearState();
+        void add_dependent_context(dependent_context& ctx);
+        void remove_dependent_context(dependent_context& ctx);
 
         void read_from_string(const std::string & data, const serialization_version version) { _context.read_from_string(data, version); }
         void read_from_stream(std::istream & data, const serialization_version version) { _context.read_from_stream(data, version); }

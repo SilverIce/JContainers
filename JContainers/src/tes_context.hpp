@@ -13,6 +13,13 @@ namespace collections {
     }
 
     void tes_context::u_cleanup() {
+        {
+            spinlock::guard g(_dependent_contexts_mutex);
+            for (auto& ctx : _dependent_contexts) {
+                ctx->clear_state();
+            }
+        }
+
         _databaseId = HandleNull;
         _lastError = 0;
     }
@@ -63,5 +70,22 @@ namespace collections {
             }
         }
     }
+
+    void tes_context::clearState() {
+        _context.clearState();
+    }
+
+    void tes_context::add_dependent_context(dependent_context& ctx) {
+        spinlock::guard g(_dependent_contexts_mutex);
+        if (std::find(_dependent_contexts.begin(), _dependent_contexts.end(), &ctx) == _dependent_contexts.end()) {
+            _dependent_contexts.push_back(&ctx);
+        }
+    }
+
+    void tes_context::remove_dependent_context(dependent_context& ctx) {
+        spinlock::guard g(_dependent_contexts_mutex);
+        _dependent_contexts.erase(std::remove(_dependent_contexts.begin(), _dependent_contexts.end(), &ctx), _dependent_contexts.end());
+    }
+
 
 }

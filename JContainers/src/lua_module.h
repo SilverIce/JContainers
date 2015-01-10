@@ -10,6 +10,5 @@ namespace boost {
 }
 
 namespace lua {
-    void shutdown_all_contexts();
     boost::optional<collections::Item> eval_lua_function(collections::object_base *object, const char *lua_string);
 }

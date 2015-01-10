@@ -49,7 +49,7 @@ namespace lua { namespace aux {
         LUA_OK = 0,
     };
 
-    class context : boost::noncopyable {
+    class context : public collections::dependent_context, boost::noncopyable {
 
         lua_State *l = nullptr;
         tes_context& tcontext;
@@ -62,10 +62,14 @@ namespace lua { namespace aux {
 
         explicit context(tes_context& context) : tcontext(context) {
             reopen_if_closed();
+            context.add_dependent_context(*this);
+            _DMESSAGE("Lua context created");
         }
 
         ~context() {
+            tcontext.remove_dependent_context(*this);
             close();
+            _DMESSAGE("Lua context destructed");
         }
 
         boost::optional<Item> eval_lua_function(object_base *object, const char *lua_string) {
@@ -105,6 +109,11 @@ namespace lua { namespace aux {
                 lua_close(l);
                 l = nullptr;
             }
+        }
+
+        void clear_state() override {
+            close();
+            _DMESSAGE("Lua context cleaned from clear_state");
         }
 
     private:
@@ -175,48 +184,20 @@ namespace lua { namespace aux {
             context * ctx = __state.get();
             if (!ctx) {
                 __state.reset( ctx = new context(tes_context::instance()) );
-                add_context(*ctx);
             }
             ctx->reopen_if_closed();
             return *ctx;
         }
 
-        static void shutdown_all() {
-            guard g(_contexts_lock);
-            for (auto& c : _contexts) {
-                c->close();
-            }
-        }
 
         // Will be called when thread-local @__state will be destructed (at thread destruction)
         static void destructor(context *c) {
-            remove_context(*c);
-            c->close();
-        }
-        
-    private:
-
-        static std::vector<context *> _contexts;
-        static collections::spinlock _contexts_lock;
-        typedef std::lock_guard<collections::spinlock> guard;
-
-        static void add_context(context &c) {
-            guard g(_contexts_lock);
-            if (std::find(_contexts.begin(), _contexts.end(), &c) == _contexts.end()) {
-                _contexts.push_back(&c);
-            }
-        }
-
-        static void remove_context(context &c) {
-            guard g(_contexts_lock);
-            _contexts.erase(std::remove(_contexts.begin(), _contexts.end(), &c), _contexts.end());
+            jc_debug("Lua: threadlocal_context dtor")
+            delete c;
         }
     };
 
     boost::thread_specific_ptr<context> threadlocal_context::__state(&threadlocal_context::destructor);
-
-    std::vector<context *> threadlocal_context::_contexts;
-    collections::spinlock threadlocal_context::_contexts_lock;
 
     struct fixture : testing::Fixture {
         tes_context tc;
@@ -272,10 +253,6 @@ namespace lua { namespace aux {
 }
 
 namespace lua {
-
-    void shutdown_all_contexts() {
-        aux::threadlocal_context::shutdown_all();
-    }
 
     boost::optional<Item> eval_lua_function(object_base *object, const char *lua_string) {
         return aux::threadlocal_context::instance().eval_lua_function(object, lua_string);
