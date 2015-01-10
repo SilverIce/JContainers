@@ -30,7 +30,7 @@ then JDB.solveFlt(\".frostfall.exposureRate\") will return 0.5 and\n\
 JDB.solveObj(\".frostfall.arrayC\") will return array containing [\"stringValue\", 1.5, 10, 1.14] values");
 
         REGISTERF(solveGetter<SInt32>, "solveInt", "path default=0", nullptr);
-        REGISTERF(solveGetter<const char*>, "solveStr", "path default=\"\"", nullptr);
+        REGISTERF(solveGetter<BSFixedString>, "solveStr", "path default=\"\"", nullptr);
         REGISTERF(solveGetter<object_base*>, "solveObj", "path default=0", nullptr);
         REGISTERF(solveGetter<TESForm*>, "solveForm", "path default=None", nullptr);
 

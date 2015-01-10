@@ -136,7 +136,7 @@ namespace tes_api_3 {
         }
         REGISTERF(solveGetter<Float32>, "solveFlt", "fKey path default=0.0", "attempts to get value associated with path.");
         REGISTERF(solveGetter<SInt32>, "solveInt", "fKey path default=0", nullptr);
-        REGISTERF(solveGetter<const char*>, "solveStr", "fKey path default=\"\"", nullptr);
+        REGISTERF(solveGetter<BSFixedString>, "solveStr", "fKey path default=\"\"", nullptr);
         REGISTERF(solveGetter<Handle>, "solveObj", "fKey path default=0", nullptr);
         REGISTERF(solveGetter<TESForm*>, "solveForm", "fKey path default=None", nullptr);
 
@@ -181,9 +181,10 @@ namespace tes_api_3 {
             subpath_extractor sub(path);
             return tes_map::getItem<T>( findMapEntry(sub.storageName(), form), sub.rest());
         }
+        // TODO: where is default value parameter?
         REGISTERF(getItem<SInt32>, "getInt", "fKey key", "returns value associated with key");
         REGISTERF(getItem<Float32>, "getFlt", "fKey key", "");
-        REGISTERF(getItem<const char *>, "getStr", "fKey key", "");
+        REGISTERF(getItem<BSFixedString>, "getStr", "fKey key", "");
         REGISTERF(getItem<object_base *>, "getObj", "fKey key", "");
         REGISTERF(getItem<TESForm*>, "getForm", "fKey key", "");
 
@@ -254,10 +255,12 @@ namespace tes_api_3 {
 
         const char *path = ".forms.object";
 
-        tes_form_db::setItem(fakeForm, path, tes_array::objectWithSize(0));
+        auto ar = tes_array::objectWithSize(0);
+        EXPECT_NOT_NIL(ar);
+        tes_form_db::setItem(fakeForm, path, ar);
 
-        EXPECT_NOT_NIL( tes_form_db::getItem<object_base*>(fakeForm, path) );
-        EXPECT_NOT_NIL( tes_form_db::solveGetter<object_base*>(fakeForm, path) );
+        EXPECT_TRUE(ar == tes_form_db::getItem<object_base*>(fakeForm, path));
+        EXPECT_TRUE(ar == tes_form_db::solveGetter<object_base*>(fakeForm, path));
     }
 
 

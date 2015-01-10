@@ -16,4 +16,4 @@ if __name__ == '__main__':
     print sys.argv
     location = sys.argv[1]
     lib = JCLib(location)
-    ib.runTests()
+    lib.runTests()

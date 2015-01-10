@@ -86,7 +86,7 @@ namespace tes_api_3 {
             return comm.str();
         });
 
-        static const char* lastErrorString() {
+        static BSFixedString lastErrorString() {
             return JErrorCodeToString(tes_context::instance().lastError());
         }
         REGISTERF2(lastErrorString, nullptr, "returns string that describes last error");

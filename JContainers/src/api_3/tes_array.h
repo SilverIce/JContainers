@@ -140,7 +140,7 @@ NEGATIVE_IDX_COMMENT);
         REGISTERF(itemAtIndex<SInt32>, "getInt", "* index default=0", "returns item at index. getObj function returns container.\n"
             NEGATIVE_IDX_COMMENT);
         REGISTERF(itemAtIndex<Float32>, "getFlt", "* index default=0.0", "");
-        REGISTERF(itemAtIndex<const char *>, "getStr", "* index default=\"\"", "");
+        REGISTERF(itemAtIndex<BSFixedString>, "getStr", "* index default=\"\"", "");
         REGISTERF(itemAtIndex<object_base*>, "getObj", "* index default=0", "");
         REGISTERF(itemAtIndex<TESForm*>, "getForm", "* index default=None", "");
 

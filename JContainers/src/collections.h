@@ -398,12 +398,15 @@ namespace collections {
         return strValue();
     }
 
-/*
+    template<> inline std::string Item::readAs<std::string>() {
+        auto str = stringValue();
+        return str ? *str : std::string();
+    }
+
     template<> inline BSFixedString Item::readAs<BSFixedString>() {
         const char *chr = strValue();
-        return chr ? BSFixedString(chr) : nullptr;
-    }*/
-
+        return chr ? BSFixedString(chr) : BSFixedString();
+    }
 
     template<> inline Handle Item::readAs<Handle>() {
         auto obj = object();

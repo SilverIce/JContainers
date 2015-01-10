@@ -30,7 +30,7 @@ namespace tes_api_3 {
         }
         REGISTERF(getItem<SInt32>, "getInt", "object key default=0", "returns value associated with key");
         REGISTERF(getItem<Float32>, "getFlt", "object key default=0.0", "");
-        REGISTERF(getItem<const char *>, "getStr", "object key default=\"\"", "");
+        REGISTERF(getItem<BSFixedString>, "getStr", "object key default=\"\"", "");
         REGISTERF(getItem<object_base*>, "getObj", "object key default=0", "");
         REGISTERF(getItem<TESForm*>, "getForm", "object key default=None", "");
 

@@ -93,6 +93,7 @@ namespace reflection { namespace binding {
     template <class R, class Arg0, class Arg1, R (*func)( Arg0, Arg1 ) >
     struct proxy<R (*)(Arg0, Arg1), func>
     {
+        typedef R return_type;
         static std::vector<type_info_func> type_strings() {
             type_info_func types[] = {
                 &j2Str<R>::typeInfo,
@@ -128,6 +129,7 @@ namespace reflection { namespace binding {
     template <class Arg0, class Arg1, void (*func)( Arg0, Arg1 ) >
     struct proxy<void (*)(Arg0, Arg1), func>
     {
+        typedef void return_type;
         static std::vector<type_info_func> type_strings() {
             type_info_func types[] = {
                 &j2Str<void>::typeInfo,
@@ -173,7 +175,8 @@ namespace reflection { namespace binding {
     #define MAKE_PROXY_NTH(N) \
         template <class R DO_##N(TARGS_NTH, COMA, COMA, NOTHING), R (*func)( DO_##N(PARAM_NAMELESS_NTH, NOTHING, COMA, NOTHING) ) >     \
         struct proxy<R (*)(DO_##N(PARAM_NAMELESS_NTH, NOTHING, COMA, NOTHING)), func>     \
-        {     \
+            {     \
+            typedef R return_type; \
             static std::vector<type_info_func> type_strings() {\
                 type_info_func types[] = {\
                     &j2Str<R>::typeInfo,\
@@ -202,6 +205,7 @@ namespace reflection { namespace binding {
         template <DO_##N(TARGS_NTH, NOTHING, COMA, COMA) void (*func)( DO_##N(PARAM_NAMELESS_NTH, NOTHING, COMA, NOTHING) ) >     \
         struct proxy<void (*)(DO_##N(PARAM_NAMELESS_NTH, NOTHING, COMA, NOTHING)), func>     \
         {     \
+            typedef void return_type; \
             static std::vector<type_info_func> type_strings() {\
                 type_info_func types[] = {\
                     &j2Str<void>::typeInfo,\
@@ -269,6 +273,7 @@ namespace reflection { namespace binding {
              using namespace reflection;\
              function_info metaF;\
              typedef binding::proxy<decltype(binding::msvc_identity(&(func))), &(func)> binder;\
+             static_assert( false == std::is_same<binder::return_type, const char *>::value, "a trap for const char * return types" ); \
              metaF.registrator = &binder::bind;\
              metaF.param_list_func = &binder::type_strings;\
              \

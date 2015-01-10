@@ -31,6 +31,8 @@ namespace collections {
     typedef decltype(make_unique_ptr((json_t*)nullptr, json_decref)) json_unique_ref;
 
     namespace reference_serialization {
+        // In current state it does not YET requires UTF-8 support
+
         const char prefix[] = "__reference|";
         const char separator = '|';
 
