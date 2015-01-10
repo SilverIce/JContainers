@@ -75,11 +75,11 @@ namespace tes_api_3 {
         REGISTERF(_userDirectory, "userDirectory", "", "A path to user-specific directory - "JC_USER_FILES);
 
         static SInt32 lastError() {
-            return tes_context::instance().lastError();
+            return 0;
         }
         REGISTERF2(lastError, nullptr, []() {
             std::stringstream comm;
-            comm << "returns last occured error (error code):";
+            comm << "DEPRECATE. Returns last occured error (error code):";
             for (int i = 0; i < JErrorCount; ++i) {
                comm << std::endl << i << " - " << JErrorCodeToString((JErrorCode)i);
             }
@@ -87,9 +87,9 @@ namespace tes_api_3 {
         });
 
         static BSFixedString lastErrorString() {
-            return JErrorCodeToString(tes_context::instance().lastError());
+            return "";
         }
-        REGISTERF2(lastErrorString, nullptr, "returns string that describes last error");
+        REGISTERF2(lastErrorString, nullptr, "DEPRECATE. Returns string that describes last error");
     };
 
     TES_META_INFO(tes_jcontainers);

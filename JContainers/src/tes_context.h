@@ -21,7 +21,6 @@ namespace collections
     {
         object_context _context;
         std::atomic<Handle> _databaseId;
-        std::atomic_uint_fast16_t _lastError;
         spinlock _lazyDBLock;
 
         spinlock _dependent_contexts_mutex;
@@ -36,7 +35,6 @@ namespace collections
 
         tes_context()
             : _databaseId(HandleNull)
-            , _lastError(0)
         {
             _context.delegate = this;
         }
@@ -47,15 +45,6 @@ namespace collections
 
         object_context& obj_context() {
             return _context;
-        }
-
-        void setLastError(JErrorCode code) {
-            _lastError = code;
-        }
-
-        JErrorCode lastError() {
-            uint_fast16_t code = _lastError.exchange(0);
-            return (JErrorCode)code;
         }
 
         static tes_context& instance() {

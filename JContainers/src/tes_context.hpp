@@ -21,7 +21,6 @@ namespace collections {
         }
 
         _databaseId = HandleNull;
-        _lastError = 0;
     }
 
     map* tes_context::database() {
