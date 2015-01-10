@@ -1,4 +1,5 @@
 #include "util.h"
+
 namespace collections
 {
     template<class T, class D>
@@ -9,18 +10,28 @@ namespace collections
     object_context::object_context()
         : registry(nullptr)
         , aqueue(nullptr)
+        , _root_object_id(HandleNull)
     {
         registry = new object_registry();
         aqueue = new autorelease_queue(*registry);
     }
 
     object_context::~object_context() {
+        shutdown();
 
         delete registry;
         delete aqueue;
     }
     
     void object_context::u_clearState() {
+        {
+            spinlock::guard g(_dependent_contexts_mutex);
+            for (auto& ctx : _dependent_contexts) {
+                ctx->clear_state();
+            }
+        }
+
+        _root_object_id = HandleNull;
 
         /*  Not good, but working solution.
 
@@ -32,22 +43,19 @@ namespace collections
         actually all I need is just free all allocated memory but this is hardly achievable
 
         */
+        {
+            aqueue->u_nullify();
 
-        if (delegate) {
-            delegate->u_cleanup();
+            for (auto& obj : registry->u_container()) {
+                obj->u_nullifyObjects();
+            }
+            for (auto& obj : registry->u_container()) {
+                delete obj;
+            }
+
+            registry->u_clear();
+            aqueue->u_clear();
         }
-
-        aqueue->u_nullify();
-
-        for (auto& obj : registry->u_container()) {
-            obj->u_nullifyObjects();
-        }
-        for (auto& obj : registry->u_container()) {
-            delete obj;
-        }
-
-        registry->u_clear();
-        aqueue->u_clear();
     }
 
     void object_context::shutdown() {
@@ -174,10 +182,7 @@ namespace collections
                 try {
                     archive >> *registry;
                     archive >> *aqueue;
-
-                    if (delegate) {
-                        delegate->u_loadAdditional(archive);
-                    }
+                    boost::serialization::load_atomic(archive, _root_object_id);
                 }
                 catch (const std::exception& exc) {
                     _FATALERROR("caught exception (%s) during archive load - '%s'",
@@ -231,10 +236,8 @@ namespace collections
             boost::archive::binary_oarchive arch(stream);
             arch << *registry;
             arch << *aqueue;
+            boost::serialization::save_atomic(arch, _root_object_id);
 
-            if (delegate) {
-                delegate->u_saveAdditional(arch);
-            }
             _DMESSAGE("%lu objects total", registry->u_container().size());
             _DMESSAGE("%lu objects in aqueue", aqueue->u_count());
         }
@@ -244,8 +247,10 @@ namespace collections
     //////////////////////////////////////////////////////////////////////////
 
     void object_context::u_applyUpdates(const serialization_version saveVersion) {
-        if (delegate) {
-            delegate->u_applyUpdates(saveVersion);
+        if (saveVersion <= serialization_version::pre_gc) {
+            if (auto db = root()) {
+                db->tes_retain();
+            }
         }
     }
 
@@ -256,5 +261,46 @@ namespace collections
             _DMESSAGE("%u garbage objects collected. %u objects are parts of cyclic graphs", res.garbage_total, res.part_of_graphs);
         });
     }
+
+    //////////////////////////////////////////////////////////////////////////
+
+    object_base* object_context::root() {
+        return getObject(_root_object_id);
+    }
+
+    void object_context::set_root(object_base *db) {
+        object_base * prev = getObject(_root_object_id);
+
+        if (prev == db) {
+            return;
+        }
+
+        if (db) {
+            //db->retain();
+            db->tes_retain(); // emulates a user-who-needs @root, this will prevent @db from being garbage collected
+        }
+
+        if (prev) {
+            //prev->release();
+            prev->tes_release();
+        }
+
+        _root_object_id = db ? db->uid() : HandleNull;
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+
+    void object_context::add_dependent_context(dependent_context& ctx) {
+        spinlock::guard g(_dependent_contexts_mutex);
+        if (std::find(_dependent_contexts.begin(), _dependent_contexts.end(), &ctx) == _dependent_contexts.end()) {
+            _dependent_contexts.push_back(&ctx);
+        }
+    }
+
+    void object_context::remove_dependent_context(dependent_context& ctx) {
+        spinlock::guard g(_dependent_contexts_mutex);
+        _dependent_contexts.erase(std::remove(_dependent_contexts.begin(), _dependent_contexts.end(), &ctx), _dependent_contexts.end());
+    }
+
 
 }

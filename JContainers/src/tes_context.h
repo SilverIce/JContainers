@@ -11,68 +11,39 @@ namespace collections
 {
     class map;
 
-    class dependent_context {
-    public:
-        //virtual ~dependent_context() {}
-        virtual void clear_state() = 0;
-    };
-
-    class tes_context : public object_context_delegate
+    class tes_context : public object_context
     {
-        object_context _context;
-        std::atomic<Handle> _databaseId;
-        spinlock _lazyDBLock;
-
-        spinlock _dependent_contexts_mutex;
-        std::vector<dependent_context*> _dependent_contexts;
-
-        // complete shutdown, the context shouldn't be used for after this
-        void shutdown() {
-            _context.shutdown();
-        }
-
     public:
-
-        tes_context()
-            : _databaseId(HandleNull)
-        {
-            _context.delegate = this;
-        }
-
-        ~tes_context() {
-            shutdown();
-        }
-
-        object_context& obj_context() {
-            return _context;
-        }
 
         static tes_context& instance() {
             static tes_context st;
             return st;
         }
 
-        Handle databaseId() const {
-            return _databaseId;
-        }
-
-        map* database();
-
         object_stack_ref_template<map> database_ref() {
             return database();
         }
 
-        void setDataBase(object_base *db);
+        map* database() {
+            object_base * result = getObject(_root_object_id);
 
-        void u_loadAdditional(boost::archive::binary_iarchive & arch) override;
-        void u_saveAdditional(boost::archive::binary_oarchive & arch) override;
-        void u_cleanup() override;
-        void u_applyUpdates(const serialization_version saveVersion) override;
+            if (!result) {
+                _lazyDBLock.lock();
 
-        // object_context's interface
+                result = getObject(_root_object_id);
+                if (!result) {
+                    result = &map::object(*this);
+                    set_root(result);
+                }
 
-        std::vector<object_stack_ref> filter_objects(std::function<bool(object_base& obj)> predicate) const {
-            return _context.filter_objects(predicate);
+                _lazyDBLock.unlock();
+            }
+
+            return result->as<map>();
+        }
+
+        void setDataBase(map *db) {
+            set_root(db);
         }
 
         template<class T>
@@ -85,24 +56,6 @@ namespace collections
             return getObjectRef(hdl)->as<T>();
         }
 
-        size_t aqueueSize() { return _context.aqueueSize(); }
-        object_base * getObject(Handle hdl) { return _context.getObject(hdl); }
-        object_stack_ref getObjectRef(Handle hdl) { return _context.getObjectRef(hdl); }
-        object_base * u_getObject(Handle hdl) { return _context.u_getObject(hdl); }
-
-        void clearState();
-        void add_dependent_context(dependent_context& ctx);
-        void remove_dependent_context(dependent_context& ctx);
-
-        void read_from_string(const std::string & data, const serialization_version version) { _context.read_from_string(data, version); }
-        void read_from_stream(std::istream & data, const serialization_version version) { _context.read_from_stream(data, version); }
-
-        std::string write_to_string() { return _context.write_to_string(); }
-        void write_to_stream(std::ostream& stream) { _context.write_to_stream(stream); }
-
-        size_t collect_garbage() {
-            return _context.collect_garbage();
-        }
     };
 
 }

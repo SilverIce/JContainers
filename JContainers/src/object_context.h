@@ -18,6 +18,14 @@ namespace collections {
     class object_registry;
     class autorelease_queue;
 
+
+    class dependent_context {
+    public:
+        //virtual ~dependent_context() {}
+        virtual void clear_state() = 0;
+    };
+
+
     enum class serialization_version {
         pre_aqueue_fix = 2,
         no_header = 3,
@@ -39,14 +47,13 @@ namespace collections {
         void u_postLoadMaintenance(const serialization_version saveVersion);
 
     public:
-
-        object_context();
-        ~object_context();
-
         object_registry* registry;
         autorelease_queue* aqueue;
 
-        object_context_delegate *delegate;
+    public:
+
+        object_context();
+        ~object_context();
 
         std::vector<object_stack_ref> filter_objects(std::function<bool(object_base& obj)> predicate) const;
 
@@ -78,6 +85,25 @@ namespace collections {
 
         // exposed for testing purposes only
         size_t collect_garbage();
+
+    protected:
+        std::atomic<Handle> _root_object_id;
+        spinlock _lazyDBLock;
+
+    public:
+        Handle root_id() const { return _root_object_id;}
+
+        object_base* root();
+        void set_root(object_base *db);
+
+    private:
+        spinlock _dependent_contexts_mutex;
+        std::vector<dependent_context*> _dependent_contexts;
+
+    public:
+        void add_dependent_context(dependent_context& ctx);
+        void remove_dependent_context(dependent_context& ctx);
+
     };
 
 }

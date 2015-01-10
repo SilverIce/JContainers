@@ -75,7 +75,7 @@ namespace lua { namespace aux {
         boost::optional<Item> eval_lua_function(object_base *object, const char *lua_string) {
 
             assert(lua_string);
-            assert(!object || &object->context() == &tcontext.obj_context());
+            assert(!object || &object->context() == &tcontext);
 
             lua_pushcfunction(l, LuaErrorHandler);
             int errorHandler = lua_gettop(l);
@@ -106,8 +106,9 @@ namespace lua { namespace aux {
 
         void close() {
             if (l) {
-                lua_close(l);
+                auto lua = l;
                 l = nullptr;
+                lua_close(lua);
             }
         }
 

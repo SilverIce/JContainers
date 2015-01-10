@@ -18,7 +18,7 @@ namespace boost { namespace serialization {
 
     template<class Archive, class T>
     void load_atomic (Archive& ar, std::atomic<T> & v) {
-        T refCnt = 0;
+        T refCnt = (T)0;
         ar & refCnt;
         v.store(refCnt, std::memory_order_relaxed);
     }

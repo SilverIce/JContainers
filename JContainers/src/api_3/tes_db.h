@@ -87,13 +87,9 @@ for ex. JDB.setObj(\"frostfall\", frostFallInformation) will associate 'frostall
         REGISTERF2(writeToFile, "path", "writes storage data into JSON file at given path");
 
         static void readFromFile(const char *path) {
-            auto& context = tes_context::instance();
-            auto objNew = json_deserializer::object_from_file(context, path);
-            context.setDataBase(objNew);
         }
         REGISTERF2(readFromFile, "path",
-"reads information from a file at given path and fills storage with it's JSON content\n\
-NOTE: it will replace all existing JDB contents!");
+"DEPRECATE. Reads information from a file at given path and fills storage with it's JSON content");
 
     };
 
