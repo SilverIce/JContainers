@@ -12,34 +12,28 @@ namespace collections
         struct result
         {
             size_t garbage_total; // 
-            size_t part_of_graphs; // 
+            size_t part_of_graphs; //
+            size_t root_count;
         };
 
-        static result u_collect(object_registry& registry, autorelease_queue& aqueue, const std::deque<std::reference_wrapper<object_base>>& root_objects) {
+        static result u_collect(object_registry& registry, autorelease_queue& aqueue) {
 
-            auto findRootObjects = [&registry, &aqueue, &root_objects]() -> object_set {
-                object_set roots;// (root_objects.begin(), root_objects.end());
-                std::transform(root_objects.begin(), root_objects.end(), std::inserter(roots, roots.begin()), [](object_base& obj) {
-                    return &obj;
-                });
+            auto findRootObjects = [&registry, &aqueue]() -> object_list {
+                object_list roots;// (root_objects.begin(), root_objects.end());
 
                 for (auto& obj : registry.u_container()) {
-                    if (obj->u_is_user_retains()) {
-                        roots.insert(obj);
+                    if (obj->u_is_user_retains() || obj->is_in_aqueue()) {
+                        roots.push_back(obj);
                     }
-                }
-
-                for (auto& ref : aqueue.u_queue()) {
-                    roots.insert(ref.get());
                 }
 
                 return roots;
             };
 
             // all-objects minus reachable-objects
-            auto findNonReachable = [&registry](const object_set& root_objects) -> object_set {
+            auto findNonReachable = [&registry](const object_list& root_objects) -> object_set {
 
-                object_list objects_to_visit(root_objects.begin(), root_objects.end());
+                object_list objects_to_visit(root_objects);
                 object_set not_reachable = registry.u_container(); // potentially huge op ?
 
                 for (auto& root : root_objects) {
@@ -49,8 +43,8 @@ namespace collections
                 std::function<void(object_base&)> visitor = [&objects_to_visit, &not_reachable](object_base& referenced) {
 
                     auto itr = not_reachable.find(&referenced);
+                    // is in not_reachable set? then is wasn't visited yet
                     if (itr != not_reachable.end()) {
-                        // will succeed in most cases
                         not_reachable.erase(itr);
                         objects_to_visit.push_back(&referenced);
                     }

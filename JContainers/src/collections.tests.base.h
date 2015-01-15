@@ -381,6 +381,19 @@ namespace collections { namespace {
         }
     }
 
+    JC_TEST(garbage_collection, no_deadlopp_proof)
+    {
+        auto obj = json_deserializer::object_from_json_data(context, STR([[[ "__reference|" ]]]));
+        EXPECT_NOT_NIL(obj);
+        obj->tes_retain();
+
+        EXPECT_TRUE(context.collect_garbage() == 0);
+
+        obj = json_deserializer::object_from_json_data(context, STR([["__reference|"]]));
+        EXPECT_NOT_NIL(obj);
+        context.collect_garbage();
+    }
+
     JC_TEST(garbage_collection, circular_references)
     {
         EXPECT_TRUE(context.collect_garbage() == 0);

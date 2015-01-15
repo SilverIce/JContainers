@@ -91,7 +91,7 @@ namespace collections
 
     size_t object_context::collect_garbage() {
         aqueue->stop();
-        auto res = garbage_collector::u_collect(*registry, *aqueue, {});
+        auto res = garbage_collector::u_collect(*registry, *aqueue);
         aqueue->start();
         return res.garbage_total;
     }
@@ -257,7 +257,7 @@ namespace collections
     void object_context::u_postLoadMaintenance(const serialization_version saveVersion)
     {
         util::do_with_timing("Garbage collection", [&]() {
-            auto res = garbage_collector::u_collect(*registry, *aqueue, {});
+            auto res = garbage_collector::u_collect(*registry, *aqueue);
             _DMESSAGE("%u garbage objects collected. %u objects are parts of cyclic graphs", res.garbage_total, res.part_of_graphs);
         });
     }
