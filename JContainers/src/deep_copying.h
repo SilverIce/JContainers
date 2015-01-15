@@ -17,6 +17,18 @@ namespace collections {
 
         deep_copying(tes_context& context) : _context(context) {}
 
+        struct shallow_copy_helper {
+            tes_context* _context;
+
+            template<class T> object_base& operator () (const T& origin) const {
+                return T::objectWithInitializer([&](T& self) {
+                    object_lock lock(origin);
+                    self.u_container() = origin.u_container();
+                },
+                    *_context);
+            }
+        };
+
     public:
 
         static object_base& deep_copy(tes_context& context, const object_base & origin) {
@@ -24,18 +36,7 @@ namespace collections {
         }
 
         static object_base& shallow_copy(tes_context& context, const object_base& parent) {
-            object_lock lock(parent);
-            if (auto obj = parent.as<array>()) {
-                return shallow_copy_helper(context, *obj);
-            }
-            else if (auto obj = parent.as<map>()) {
-                return shallow_copy_helper(context, *obj);
-            }
-            else if (auto obj = parent.as<form_map>()) {
-                return shallow_copy_helper(context, *obj);
-            }
-            assert(false);
-            return *(object_base*)nullptr;
+            return perform_on_object_and_return<object_base&>(parent, shallow_copy_helper{ &context });
         }
 
     private:
@@ -55,14 +56,6 @@ namespace collections {
             }
 
             return root_copy;
-        }
-
-        template<class T>
-        static object_base& shallow_copy_helper(tes_context& context, const T& origin) {
-            return T::objectWithInitializer([&](T& copy) {
-                copy.u_container() = origin.u_container();
-            },
-                context);
         }
 
         object_base& unique_copy(const object_base & origin) {

@@ -62,6 +62,56 @@ namespace collections {
         }
     };
 
+    
+    template<class R, class F>
+    inline R perform_on_object_and_return(object_base & container, F& func) {
+        if (auto obj = container.as<array>()) {
+            return func(*obj);
+        }
+        else if (auto obj = container.as<map>()) {
+            return func(*obj);
+        }
+        else if (auto obj = container.as<form_map>()) {
+            return func(*obj);
+        }
+        else {
+            assert(false);
+            noreturn_func();
+        }
+    }
+    
+
+    template<class R, class F>
+    inline R perform_on_object_and_return(const object_base & container, F& func) {
+        return perform_on_object_and_return<R>(const_cast<object_base&>(container), func);
+    }
+
+    // Type SAfe version!!!!
+    // How to know in COMPILE time  that all @func handles ALL types?
+    // - invoke fun
+    template<class F>
+    inline void perform_on_object(object_base & container, F& func) {
+
+        if (auto obj = container.as<array>()) {
+            func(*obj);
+        }
+        else if (auto obj = container.as<map>()) {
+            func(*obj);
+        }
+        else if (auto obj = container.as<form_map>()) {
+            func(*obj);
+        }
+        else {
+            assert(false);
+            noreturn_func();
+        }
+    }
+
+    template<class F>
+    inline void perform_on_object(const object_base & container, F& func) {
+        perform_on_object(const_cast<object_base&>(container), func);
+    }
+
     enum FormId : UInt32 {
         FormZero = 0,
         FormGlobalPrefix = 0xFF,

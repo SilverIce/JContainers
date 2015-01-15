@@ -159,38 +159,38 @@ namespace collections {
         }
 
         void fill_object(object_base& object, json_ref val) {
-            object_lock lock(object);
 
-            if (array *arr = object.as<array>()) {
-                /* array is a JSON array */
-                size_t index = 0;
-                json_t *value = nullptr;
-
-                json_array_foreach(val, index, value) {
-                    arr->u_push(make_item(value, object, index));
-                }
-            }
-            else if (map *cnt = object.as<map>()) {
-                const char *key;
-                json_t *value;
-
-                json_object_foreach(val, key, value) {
-                    cnt->u_setValueForKey(key, make_item(value, object, key));
-                }
-            }
-            else if (form_map *cnt = object.as<form_map>()) {
-                const char *key;
-                json_t *value;
-
-                json_object_foreach(val, key, value) {
-                    auto fkey = form_handling::from_string(key);
-                    if (fkey) {
-                        cnt->u_setValueForKey(*fkey, make_item(value, object, *fkey));
+            struct helper {
+                json_deserializer* self;
+                json_ref val;
+                void operator()(array& arr) {
+                    size_t index = 0;
+                    json_t *value = nullptr;
+                    json_array_foreach(val, index, value) {
+                        arr.u_push(self->make_item(value, arr, index));
                     }
                 }
-            }
-            else
-                assert(false);
+                void operator()(map& cnt) {
+                    const char *key;
+                    json_t *value;
+                    json_object_foreach(val, key, value) {
+                        cnt.u_setValueForKey(key, self->make_item(value, cnt, key));
+                    }
+                }
+                void operator()(form_map& cnt) {
+                    const char *key;
+                    json_t *value;
+                    json_object_foreach(val, key, value) {
+                        auto fkey = form_handling::from_string(key);
+                        if (fkey) {
+                            cnt.u_setValueForKey(*fkey, self->make_item(value, cnt, *fkey));
+                        }
+                    }
+                }
+            };
+
+            object_lock lock(object);
+            perform_on_object(object, helper{ this, val });
         }
 
         object_base& make_placeholder(json_ref val) {
@@ -243,7 +243,7 @@ namespace collections {
                 } else {
                     if (form_handling::is_form_string(string)) {
                         /*  having dilemma here:
-                            if string looks likes form-string and plugin name can't be resolved:
+                            if string looks like form-string and plugin name can't be resolved:
                             a. lost info and convert it to FormZero
                             b. save info and convert it to string
                         */
@@ -350,34 +350,38 @@ namespace collections {
         }
 
         void fill_json_object(object_base& cnt, json_ref object) {
+            struct helper {
+                json_serializer * self;
+                json_ref object;
 
-            object_lock lock(cnt);
-
-            if (cnt.as<array>()) {
-                size_t index = 0;
-                for (auto& itm : cnt.as<array>()->u_container()) {
-                    fill_key_info(itm, cnt, index++);
-                    json_array_append_new(object, create_value(itm));
-                }
-            }
-            else if (cnt.as<map>()) {
-                for (auto& pair : cnt.as<map>()->u_container()) {
-                    fill_key_info(pair.second, cnt, pair.first);
-                    json_object_set_new(object, pair.first.c_str(), create_value(pair.second));
-                }
-            }
-            else if (cnt.as<form_map>()) {
-                // mark object as form_map container
-                json_object_set_new(object, form_handling::kFormData, json_null());
-
-                for (auto& pair : cnt.as<form_map>()->u_container()) {
-                    auto key = form_handling::to_string(pair.first);
-                    if (key) {
-                        fill_key_info(pair.second, cnt, pair.first);
-                        json_object_set_new(object, (*key).c_str(), create_value(pair.second));
+                void operator () (array& cnt) {
+                    size_t index = 0;
+                    for (auto& itm : cnt.as<array>()->u_container()) {
+                        self->fill_key_info(itm, cnt, index++);
+                        json_array_append_new(object, self->create_value(itm));
                     }
                 }
-            }
+                void operator () (map& cnt) {
+                    for (auto& pair : cnt.as<map>()->u_container()) {
+                        self->fill_key_info(pair.second, cnt, pair.first);
+                        json_object_set_new(object, pair.first.c_str(), self->create_value(pair.second));
+                    }
+                }
+                void operator () (form_map& cnt) {
+                    json_object_set_new(object, form_handling::kFormData, json_null());
+
+                    for (auto& pair : cnt.as<form_map>()->u_container()) {
+                        auto key = form_handling::to_string(pair.first);
+                        if (key) {
+                            self->fill_key_info(pair.second, cnt, pair.first);
+                            json_object_set_new(object, (*key).c_str(), self->create_value(pair.second));
+                        }
+                    }
+                }
+            };
+
+            object_lock lock(cnt);
+            perform_on_object(cnt, helper{ this, object });
         }
 
         template<class Key>

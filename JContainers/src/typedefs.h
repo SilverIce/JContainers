@@ -14,3 +14,6 @@
 #       define jc_assert(expr)
 #       define jc_debug(message, ...)
 #   endif
+
+__declspec(noreturn) inline void noreturn_func() {}
+
