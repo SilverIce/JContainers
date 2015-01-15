@@ -67,7 +67,7 @@ end
 local jc = require('jc')
 
 -- test functionality
-jc.testJC()
+-- jc.testJC()
 
 
 -- SANDBOXING
@@ -83,6 +83,8 @@ Problems? ^^
 
 -- JValue.evalLua* sandbox
 
+
+-- First environment is for Lua scripts, second - for JValue.evalLua scripts
 local function createTwoSandboxes()
   -- all JValue.evalLua* scripts sharing the one, immutable sandbox
   local sandbox = {
@@ -115,7 +117,8 @@ local function createTwoSandboxes()
   -- caches results of module execution
   local user_modules = {}
 
-  -- an alternative to standard 'require' function
+  -- an alternative to standard lua 'require' function
+  -- usage the same: require 'modname.LuaFile'
   local function jc_require (s)
     local mod = user_modules[s]
     if not mod then
@@ -133,13 +136,13 @@ local function createTwoSandboxes()
     return mod
   end
 
-  sandbox.require = jc_require
+  sandbox.jrequire = jc_require
 
   setmetatable(sandbox, {
     __newindex = function(_, _, _) error("attempt to modify script's sandbox") end,
   })
 
-  
+  -- sandbox_2 is environment for JValue.evalLua scripts
   -- Any unknown global variable in this sandbox is treated as link to a module - and __index tries find that module
   local sandbox_2 = copyLuaTable(sandbox)
   setmetatable(sandbox_2, {
@@ -152,7 +155,7 @@ end
 
 
 
-local sandbox, sandbox_2 = createTwoSandboxes()
+local sandbox, evallua_sandbox = createTwoSandboxes()
 
 -------------------------------------------------------------
 -- Caches compiled JValue.evalLua* string (weak cache)
@@ -165,7 +168,7 @@ local function compileAndCache (luaString)
     local f, message = loadstring('local jobject = ... ;' .. luaString)
     if f then
       func = f
-      setfenv(f, sandbox_2)
+      setfenv(f, evallua_sandbox)
       jc_function_cache[luaString] = f
     else
       error(message)
