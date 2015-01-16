@@ -144,7 +144,7 @@
     </ClCompile>
     <ClCompile Include="src\path_resolving.cpp" />
     <ClCompile Include="src\reflection.cpp" />
-    <ClCompile Include="src\serialization.cpp" />
+    <ClCompile Include="src\collections.cpp" />
     <ClCompile Include="src\skse.cpp" />
     <ClCompile Include="src\string_wrapper.cpp" />
     <ClCompile Include="src\util.cpp" />

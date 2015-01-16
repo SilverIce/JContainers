@@ -34,6 +34,7 @@
 BOOST_CLASS_EXPORT_GUID(collections::array, "kJArray");
 BOOST_CLASS_EXPORT_GUID(collections::map, "kJMap");
 BOOST_CLASS_EXPORT_GUID(collections::form_map, "kJFormMap");
+BOOST_CLASS_EXPORT_GUID(collections::integer_map, "kJIntegerMap");
 
 BOOST_CLASS_VERSION(collections::Item, 2)
 
@@ -245,6 +246,8 @@ namespace collections {
         ar & _var;
     }
 
+    //////////////////////////////////////////////////////////////////////////
+
     template<class Archive>
     void array::serialize(Archive & ar, const unsigned int version) {
         ar & boost::serialization::base_object<object_base>(*this);
@@ -257,40 +260,51 @@ namespace collections {
         ar & cnt;
     }
 
+    template<class Archive>
+    void form_map::serialize(Archive & ar, const unsigned int version) {
+        ar & boost::serialization::base_object<object_base>(*this);
+        ar & cnt;
+    }
+
+    template<class Archive>
+    void integer_map::serialize(Archive & ar, const unsigned int version) {
+        ar & boost::serialization::base_object<object_base>(*this);
+        ar & cnt;
+    }
+
     //////////////////////////////////////////////////////////////////////////
 
-    template<class Archive>
-    void form_map::save(Archive & ar, const unsigned int version) const {
-        ar & boost::serialization::base_object<object_base>(*this);
-        ar & cnt;
-    }
+    void form_map::u_onLoaded() {
 
-    template<class Archive>
-    void form_map::load(Archive & ar, const unsigned int version) {
-        ar & boost::serialization::base_object<object_base>(*this);
-        ar & cnt;
-    }
+        for (auto itr = cnt.begin(); itr != cnt.end(); ) {
 
-    void form_map::u_updateKeys() {
-
-        std::vector<FormId> keys;
-        keys.reserve(cnt.size());
-        for (auto& pair : cnt) {
-            keys.push_back(pair.first);
-        }
-
-        for(const auto& oldKey : keys) {
-			FormId newKey = form_handling::resolve_handle(oldKey);
+            const FormId& oldKey = itr->first;
+            FormId newKey = form_handling::resolve_handle(oldKey);
 
             if (oldKey == newKey) {
-                ;
+                ++itr; // fine
             }
-            else if (newKey == 0) {
-                cnt.erase(oldKey);
-            } else if (newKey != oldKey) {
-                Item item = cnt[oldKey];
-                cnt.erase(oldKey);
-                cnt[newKey] = item;
+            else if (newKey == FormZero) {
+                itr = cnt.erase(itr);
+            }
+            else if (oldKey != newKey) { // and what if newKey will replace another oldKey???
+
+                // There is one issue. Given two plugins
+                // .... A ... B..
+                // both plugins gets swapped
+                // and two form Id's swapped too: 0xaa001 swapped with 0xbb001
+                // form from the A replaces form from the B
+
+                auto anotherOldKeyItr = cnt.find(newKey);
+                if (anotherOldKeyItr != cnt.end()) { // exactly that rare case, newKey equals to some other oldKey
+                    // do not insert as it will replace other oldKey, SWAP values instead
+                    std::swap(anotherOldKeyItr->second, itr->second);
+                    ++itr;
+                }
+                else {
+                    cnt.insert(container_type::value_type(newKey, std::move(itr->second)));
+                    itr = cnt.erase(itr);
+                }
             }
         }
     }
@@ -303,15 +317,5 @@ namespace collections {
         }
     }
 
-    void form_map::u_nullifyObjects() {
-        for (auto& pair : cnt) {
-            pair.second.u_nullifyObject();
-        }
-    }
-
-    void map::u_nullifyObjects() {
-        for (auto& pair : cnt) {
-            pair.second.u_nullifyObject();
-        }
-    }
+    //////////////////////////////////////////////////////////////////////////
 }

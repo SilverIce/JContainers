@@ -338,10 +338,9 @@ namespace collections {
             if (object.as<array>()) {
                 placeholder = json_array();
             }
-            else if (object.as<map>() || object.as<form_map>()) {
+            else {
                 placeholder = json_object();
             }
-            jc_assert(placeholder);
 
             _toFill.push_back( objects_to_fill::value_type(&object, placeholder) );
             _serializedObjects.insert(&object);

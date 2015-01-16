@@ -658,6 +658,12 @@ namespace collections {
                 }
             }
         }
+
+        void u_nullifyObjects() override {
+            for (auto& pair : u_container()) {
+                pair.second.u_nullifyObject();
+            }
+        }
     };
 
     struct map_case_insensitive_comp {
@@ -670,12 +676,9 @@ namespace collections {
     class map : public basic_map_collection< map, std::map<std::string, Item, map_case_insensitive_comp > >
     {
     public:
-
         enum  {
             TypeId = CollectionType::Map,
         };
-
-        void u_nullifyObjects() override;
 
         //////////////////////////////////////////////////////////////////////////
 
@@ -691,30 +694,22 @@ namespace collections {
             TypeId = CollectionType::FormMap,
         };
 
-/*
-        Item& operator [] (FormId key) {
-            return cnt[key];
-        }
-*/
-
-        void u_onLoaded() override {
-            u_updateKeys();
-        }
-
-        // may invoke release if key is invalid
-        // may also cause retain calls
-        void u_updateKeys();
-
-        void u_nullifyObjects() override;
+        void u_onLoaded() override;
 
         //////////////////////////////////////////////////////////////////////////
 
-        friend class boost::serialization::access;
-        BOOST_SERIALIZATION_SPLIT_MEMBER();
+        template<class Archive>
+        void serialize(Archive & ar, const unsigned int version);
+    };
+
+    class integer_map : public basic_map_collection < integer_map, std::map<int32_t, Item> >
+    {
+    public:
+        enum  {
+            TypeId = CollectionType::IntegerMap,
+        };
 
         template<class Archive>
-        void save(Archive & ar, const unsigned int version) const;
-        template<class Archive>
-        void load(Archive & ar, const unsigned int version);
+        void serialize(Archive & ar, const unsigned int version);
     };
 }

@@ -25,6 +25,7 @@ namespace collections {
         Array,
         Map,
         FormMap,
+        IntegerMap,
     };
 
     struct object_base_stack_ref_policy {
