@@ -180,5 +180,6 @@ namespace collections {
 
     typedef map_functions_templ<map> map_functions;
     typedef map_functions_templ<form_map> formmap_functions;
+    typedef map_functions_templ<integer_map> integer_map_functions;
 
 }

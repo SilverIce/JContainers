@@ -130,10 +130,24 @@ namespace tes_api_3 {
         REGISTERF2(addPairs, "* source overrideDuplicates", "inserts key-value pairs from the source map");
 
         void additionalSetup();
+
+        //////////////////////////////////////////////////////////////////////////
+
+        static Key nextKey(ref obj, Key previousKey, Key endKey) {
+            map_functions::nextKey(obj, previousKey, [&](const typename Cnt::key_type & key) { endKey = key; });
+            return endKey;
+        }
+
+        static Key getNthKey(ref obj, SInt32 keyIndex) {
+            Key ith;
+            map_functions::getNthKey(obj, keyIndex, [&](const typename Cnt::key_type& key) { ith = key; });
+            return ith;
+        }
     };
 
     typedef tes_map_t<const char*, map > tes_map;
     typedef tes_map_t<FormId, form_map> tes_form_map;
+    typedef tes_map_t<SInt32, integer_map> tes_integer_map;
 
     void tes_map::additionalSetup() {
         metaInfo._className = "JMap";
@@ -143,8 +157,15 @@ namespace tes_api_3 {
         metaInfo._className = "JFormMap";
     }
 
+    void tes_integer_map::additionalSetup() {
+        metaInfo._className = "JIntMap";
+    }
+
     TES_META_INFO(tes_map);
     TES_META_INFO(tes_form_map);
+    TES_META_INFO(tes_integer_map);
+
+    //////////////////////////////////////////////////////////////////////////
 
     const char *tes_map_nextKey_comment =
         "Simplifies iteration over container's contents.\nIncrements and returns previous key, pass defaulf parameter to begin iteration. Usage:\n"
@@ -177,21 +198,18 @@ namespace tes_api_3 {
 
     struct tes_form_map_ext : class_meta < tes_form_map_ext > {
         REGISTER_TES_NAME("JFormMap");
-        static FormId nextKey(form_map* obj, FormId previousKey = FormZero, FormId endKey = FormZero) {
-            FormId k = endKey;
-            formmap_functions::nextKey(obj, previousKey, [&](const FormId& key) { k = key; });
-            return k;
-        }
-        REGISTERF(nextKey, "nextKey", STR(* previousKey=None endKey=None), tes_map_nextKey_comment);
+        REGISTERF(tes_form_map::nextKey, "nextKey", STR(* previousKey=None endKey=None), tes_map_nextKey_comment);
+        REGISTERF(tes_form_map::getNthKey, "getNthKey", "* keyIndex", tes_map_ext::getNthKey_comment());
+    };
 
-        static FormId getNthKey(form_map* obj, SInt32 keyIndex) {
-            FormId ith = FormZero;
-            formmap_functions::getNthKey(obj, keyIndex, [&](const FormId& key) { ith = key; });
-            return ith;
-        }
-        REGISTERF(getNthKey, "getNthKey", "* keyIndex", tes_map_ext::getNthKey_comment());
+    struct tes_integer_map_ext : class_meta < tes_integer_map_ext > {
+        REGISTER_TES_NAME("JIntMap");
+        REGISTERF(tes_integer_map::nextKey, "nextKey", STR(* previousKey=0 endKey=0), tes_map_nextKey_comment);
+        REGISTERF(tes_integer_map::getNthKey, "getNthKey", "* keyIndex", tes_map_ext::getNthKey_comment());
     };
 
     TES_META_INFO(tes_map_ext);
     TES_META_INFO(tes_form_map_ext);
+    TES_META_INFO(tes_integer_map_ext);
+
 }
