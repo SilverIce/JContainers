@@ -14,6 +14,11 @@ namespace tes_api_3 {
     class tes_map_t : public class_meta< tes_map_t<Key, Cnt> > {
     public:
 
+        tes_map_t() {
+            metaInfo.comment = "Associative key-value container.\n"
+                "Inherits JValue functionality";
+        }
+
         typedef typename Cnt* ref;
 
         REGISTERF(tes_object::object<Cnt>, "object", "", kCommentObject);
@@ -152,14 +157,10 @@ namespace tes_api_3 {
 
     void tes_map::additionalSetup() {
         metaInfo._className = "JMap";
-        metaInfo.comment = "Associative key-value container.\n"
-            "Inherits JValue functionality";
     }
 
     void tes_form_map::additionalSetup() {
         metaInfo._className = "JFormMap";
-        metaInfo.comment = "Associative key-value container.\n"
-            "Inherits JValue functionality";
     }
 
     TES_META_INFO(tes_map);
@@ -176,12 +177,12 @@ namespace tes_api_3 {
     struct tes_map_ext : class_meta < tes_map_ext > {
         REGISTER_TES_NAME("JMap");
         template<class Key>
-        static Key nextKey(map* obj, const char* previousKey = "") {
-            Key str;
+        static Key nextKey(map* obj, const char* previousKey = "", const char * endKey = "") {
+            Key str(endKey);
             map_functions::nextKey(obj, previousKey, [&](const std::string& key) { str = key.c_str(); });
             return str;
         }
-        REGISTERF(nextKey<BSFixedString>, "nextKey", "* previousKey=\"\"", tes_map_nextKey_comment);
+        REGISTERF(nextKey<BSFixedString>, "nextKey", STR(* previousKey="" endKey=""), tes_map_nextKey_comment);
 
         static const char * getNthKey_comment() { return "Retrieves N-th key. "NEGATIVE_IDX_COMMENT "\nWorst complexity is O(n/2)"; }
 
@@ -196,12 +197,12 @@ namespace tes_api_3 {
 
     struct tes_form_map_ext : class_meta < tes_form_map_ext > {
         REGISTER_TES_NAME("JFormMap");
-        static FormId nextKey(form_map* obj, FormId previousKey = FormZero) {
-            FormId k;
+        static FormId nextKey(form_map* obj, FormId previousKey = FormZero, FormId endKey = FormZero) {
+            FormId k = endKey;
             formmap_functions::nextKey(obj, previousKey, [&](const FormId& key) { k = key; });
             return k;
         }
-        REGISTERF(nextKey, "nextKey", "* previousKey=None", tes_map_nextKey_comment);
+        REGISTERF(nextKey, "nextKey", STR(* previousKey=None endKey=None), tes_map_nextKey_comment);
 
         static FormId getNthKey(form_map* obj, SInt32 keyIndex) {
             FormId ith = FormZero;
