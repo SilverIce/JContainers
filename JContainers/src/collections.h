@@ -112,7 +112,7 @@ namespace collections {
         perform_on_object(const_cast<object_base&>(container), func);
     }
 
-    enum FormId : UInt32 {
+    enum FormId : uint32_t {
         FormZero = 0,
         FormGlobalPrefix = 0xFF,
     };
@@ -189,8 +189,8 @@ namespace collections {
             return boost::get<T>(&_var) != nullptr;
         }
 
-        uint32_t type() const {
-            return _var.which() + 1;
+        item_type type() const {
+            return item_type(_var.which() + 1);
         }
 
         template<class T> T* get() {

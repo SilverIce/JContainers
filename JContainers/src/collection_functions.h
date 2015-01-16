@@ -89,14 +89,24 @@ namespace collections {
         }
     };
 
-    template<class T, class CheckKey>
+    //template<class T>
+    struct map_key_checker {
+        static bool check(const std::string& s)  { return !s.empty(); }
+        static bool check(const char *s)  { return s != nullptr && *s; }
+        static bool check(TESForm *f)  { return f != nullptr; }
+        static bool check(FormId f)  { return f != FormZero; }
+        static bool check(int32_t)  { return true; }
+    };
+
+    template<class T>
     class map_functions_templ {
     public:
+        using key_checker = map_key_checker/*<T>*/;
         ///typedef typename T::key_type key_type;
 
         template<class Op, class R,/* class RAlter, */class key_type>
         static R doReadOpR(T * obj, const key_type& key, R default, Op& operation) {
-            if (obj && CheckKey::check(key)) {
+            if (obj && key_checker::check(key)) {
                 object_lock g(obj);
                 Item *itm = obj->u_find(key);
                 return itm ? operation(*itm) : default;
@@ -108,7 +118,7 @@ namespace collections {
 
         template<class Op, class key_type>
         static void doReadOp(T * obj, const key_type& key, Op& operation) {
-            if (obj && CheckKey::check(key)) {
+            if (obj && key_checker::check(key)) {
                 object_lock g(obj);
                 Item *itm = obj->u_find(key);
                 if (itm) {
@@ -120,7 +130,7 @@ namespace collections {
         // force write into an item
         template<class Op, class key_type>
         static void doWriteOp(T * obj, const key_type& key, Op& operation) {
-            if (obj && CheckKey::check(key)) {
+            if (obj && key_checker::check(key)) {
                 object_lock g(obj);
                 Item &itm = obj->u_container()[key];
                 operation(itm);
@@ -132,7 +142,7 @@ namespace collections {
             if (obj) {
                 object_lock g(obj);
                 auto& container = obj->u_container();
-                if (CheckKey::check(lastKey)) {
+                if (key_checker::check(lastKey)) {
                     auto itr = container.find(lastKey);
                     auto end = container.end();
                     if (itr != end && (++itr) != end) {
@@ -167,14 +177,8 @@ namespace collections {
         }
     };
 
-    struct map_key_checker{
-        static bool check(const std::string& s)  { return !s.empty(); }
-        static bool check(const char *s)  { return s != nullptr && *s; }
-        static bool check(TESForm *f)  { return f != nullptr; }
-        static bool check(FormId f)  { return f != FormZero; }
-    };
 
-    typedef map_functions_templ<map, map_key_checker> map_functions;
-    typedef map_functions_templ<form_map, map_key_checker> formmap_functions;
+    typedef map_functions_templ<map> map_functions;
+    typedef map_functions_templ<form_map> formmap_functions;
 
 }

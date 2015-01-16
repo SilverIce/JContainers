@@ -2,36 +2,25 @@ namespace tes_api_3 {
 
     using namespace collections;
 
-    inline const char* tes_hash(const char* in) {
-        return in;
-    }
-
-    inline FormId tes_hash(TESForm * in) {
-        return (FormId) (in ? in->formID : 0); 
-    }
 
     template<class Key, class Cnt>
     class tes_map_t : public class_meta< tes_map_t<Key, Cnt> > {
     public:
+
+        using map_functions = map_functions_templ < Cnt >;
+        typedef typename Cnt* ref;
 
         tes_map_t() {
             metaInfo.comment = "Associative key-value container.\n"
                 "Inherits JValue functionality";
         }
 
-        typedef typename Cnt* ref;
-
         REGISTERF(tes_object::object<Cnt>, "object", "", kCommentObject);
 
         template<class T>
         static T getItem(Cnt *obj, Key key, T def = T(0)) {
-            if (!obj || !key) {
-                return def;
-            }
-
-            object_lock g(obj);
-            auto item = obj->u_find(tes_hash(key));
-            return item ? item->readAs<T>() : def;
+            map_functions::doReadOp(obj, key, [&](Item& itm) { def = itm.readAs<T>(); });
+            return def;
         }
         REGISTERF(getItem<SInt32>, "getInt", "object key default=0", "returns value associated with key");
         REGISTERF(getItem<Float32>, "getFlt", "object key default=0.0", "");
@@ -41,10 +30,7 @@ namespace tes_api_3 {
 
         template<class T>
         static void setItem(Cnt *obj, Key key, T item) {
-            if (!obj || !key) {
-                return;
-            }
-            obj->setValueForKey(tes_hash(key), Item(item));
+            map_functions::doWriteOp(obj, key, [&](Item& itm) { itm = item; });
         }
         REGISTERF(setItem<SInt32>, "setInt", "* key value", "creates key-value association. replaces existing value if any");
         REGISTERF(setItem<Float32>, "setFlt", "* key value", "");
@@ -58,13 +44,9 @@ namespace tes_api_3 {
         REGISTERF2(hasKey, "* key", "returns true, if something associated with key");
 
         static SInt32 valueType(ref obj, Key key) {
-            if (!obj || !key) {
-                return 0;
-            }
-
-            object_lock g(obj);
-            auto item = obj->u_find(tes_hash(key));
-            return item ? item->type() : item_type::no_item;
+            auto type = item_type::no_item;
+            map_functions::doReadOp(obj, key, [&](Item& itm) { type = itm.type(); });
+            return (SInt32)type;
         }
         REGISTERF2(valueType, "* key", "returns type of the value associated with key.\n"VALUE_TYPE_COMMENT);
 
@@ -78,7 +60,7 @@ namespace tes_api_3 {
 
                 arr._array.reserve(obj->u_count());
                 for each(auto& pair in obj->u_container()) {
-                    arr.u_push(Item(pair.first));
+                    arr.u_container().push_back(Item(pair.first));
                 }
             },
                 tes_context::instance());
@@ -103,12 +85,10 @@ namespace tes_api_3 {
         REGISTERF(allValues, "allValues", "*", "returns new array containing all values");
 
         static bool removeKey(Cnt *obj, Key key) {
-            if (!obj || !key) {
-                return 0;
+            if (obj && map_key_checker::check(key)) {
+                return obj->erase(key);
             }
-
-            object_lock g(obj);
-            return obj->u_erase(tes_hash(key));
+            return false;
         }
         REGISTERF(removeKey, "removeKey", "* key", "destroys key-value association");
 
@@ -153,7 +133,7 @@ namespace tes_api_3 {
     };
 
     typedef tes_map_t<const char*, map > tes_map;
-    typedef tes_map_t<TESForm *, form_map> tes_form_map;
+    typedef tes_map_t<FormId, form_map> tes_form_map;
 
     void tes_map::additionalSetup() {
         metaInfo._className = "JMap";
