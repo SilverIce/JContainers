@@ -46,9 +46,9 @@ namespace collections
         };
 
         template<class T, class V>
-        static bool _map_visit_helper(tes_context& context, T *container, path_type path, const V& func)
+        static bool _map_visit_helper(tes_context& context, T& container, path_type path, const V& func)
         {
-            if (!container || path.empty()) {
+            if (path.empty()) {
                 return false;
             }
 
@@ -67,7 +67,7 @@ namespace collections
                 return false;
             }
 
-            auto copy = container->container_copy();
+            auto copy = container.container_copy();
 
             if (isKeyVisit) {
                 for (auto &pair : copy) {
@@ -151,21 +151,32 @@ namespace collections
                     }
                 };
 
-                if (collection->as<array>()) {
+                struct 
+                {
+                    decltype(context)       context;
+                    decltype(rightPath)     *rightPath;
+                    decltype(itemVisitFunc) *visitFunc;
 
-                    // have to copy array to prevent its modification during iteration
-                    auto array_copy = collection->as<array>()->container_copy();
-
-                    for (auto &itm : array_copy) {
-                        resolve(context, itm, rightPath.begin(), itemVisitFunc);
+                    void operator()(array& arr) {
+                        // have to copy array to prevent its modification during iteration
+                        auto array_copy = arr.container_copy();
+                        for (auto &itm : array_copy) {
+                            resolve(context, itm, rightPath->begin(), *visitFunc);
+                        }
                     }
-                }
-                else if (collection->as<map>()) {
-                    _map_visit_helper(context, collection->as<map>(), rightPath, itemVisitFunc);
-                }
-                else if (collection->as<form_map>()) {
-                    _map_visit_helper(context, collection->as<form_map>(), rightPath, itemVisitFunc);
-                }
+                    void operator()(map& cnt) {
+                        _map_visit_helper(context, cnt, *rightPath, *visitFunc);
+                    }
+                    void operator()(form_map& cnt) {
+                        _map_visit_helper(context, cnt, *rightPath, *visitFunc);
+                    }
+                    void operator()(integer_map& cnt) {
+                        _map_visit_helper(context, cnt, *rightPath, *visitFunc);
+                    }
+
+                } helper{ context, &rightPath, &itemVisitFunc };
+
+                perform_on_object(*collection, helper);
 
                 return state(true,
                     [=](object_base *) mutable -> Item* { return &sharedItem;},
@@ -237,11 +248,11 @@ namespace collections
                     return state(false, st);
                 }
 
-                UInt32 indexOrFormId = 0;
+                int32_t indexOrFormId = 0;
 
                 if (!form_handling::is_form_string(indexRange.begin())) {
                     try {
-                        indexOrFormId = std::stoul(ss::string(indexRange.begin(), indexRange.end()), nullptr, 0);
+                        indexOrFormId = std::stoi(ss::string(indexRange.begin(), indexRange.end()), nullptr, 0);
                     }
                     catch (const std::invalid_argument& ) {
                         return state(false, st);
@@ -273,7 +284,11 @@ namespace collections
                                     }
                                     else if (container->as<form_map>()) {
                                         return container->as<form_map>()->u_find((FormId)indexOrFormId);
-                                    } else {
+                                    }
+                                    else if (container->as<integer_map>()) {
+                                        return container->as<integer_map>()->u_find(indexOrFormId);
+                                    }
+                                    else {
                                         return (Item *)nullptr;
                                     } 
                                 },
