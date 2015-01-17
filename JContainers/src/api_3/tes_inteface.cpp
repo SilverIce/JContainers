@@ -27,7 +27,7 @@
 #include "collections.h"
 
 #include "json_handling.h"
-#include "deep_copying.h"
+#include "collection_copying.h"
 #include "path_resolving.h"
 
 #include "collection_bind_traits.h"

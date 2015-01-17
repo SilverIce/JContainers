@@ -51,7 +51,7 @@ namespace collections {
                 tmp.swap(_to_traverse);
 
                 for (auto& obj : tmp) {
-                    copy_childs(*obj);
+                    perform_on_object(*obj, copy_child_objects{ this });
                 }
             }
 
@@ -71,32 +71,26 @@ namespace collections {
             }
         }
 
-        void copy_childs(object_base& parent) {
-            object_lock lock(parent);
-            if (auto obj = parent.as<array>()) {
-                for (auto& itm : obj->u_container()) {
+        struct copy_child_objects {
+            deep_copying *const self;
+            void operator () (array& ar) {
+                object_lock lock(ar);
+                for (auto& itm : ar.u_container()) {
                     copy_child(itm);
                 }
             }
-            else if (auto obj = parent.as<map>()) {
-                for (auto& pair : obj->u_container()) {
+            template<class T> void operator () (T& map) {
+                object_lock lock(map);
+                for (auto& pair : map.u_container()) {
                     copy_child(pair.second);
                 }
             }
-            else if (auto obj = parent.as<form_map>()) {
-                for (auto& pair : obj->u_container()) {
-                    copy_child(pair.second);
+            void copy_child(Item& itm) {
+                auto origin_child = itm.object();
+                if (origin_child) {
+                    itm = &self->unique_copy(*origin_child);
                 }
             }
-            else
-                assert(false);
-        }
-
-        void copy_child(Item& itm) {
-            auto origin_child = itm.object();
-            if (origin_child) {
-                itm = &unique_copy(*origin_child);
-            }
-        }
+        };
     };
 }
