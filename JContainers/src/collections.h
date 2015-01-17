@@ -65,45 +65,45 @@ namespace collections {
     
     template<class R, class F>
     inline R perform_on_object_and_return(object_base & container, F& func) {
-        if (auto obj = container.as<array>()) {
-            return func(*obj);
-        }
-        else if (auto obj = container.as<map>()) {
-            return func(*obj);
-        }
-        else if (auto obj = container.as<form_map>()) {
-            return func(*obj);
-        }
-        else {
+        switch (container.type()) {
+        case array::TypeId:
+            return func(container.as_link<array>());
+        case map::TypeId:
+            return func(container.as_link<map>());
+        case form_map::TypeId:
+            return func(container.as_link<form_map>());
+        case integer_map::TypeId:
+            return func(container.as_link<integer_map>());
+        default:
             assert(false);
             noreturn_func();
+            break;
         }
     }
-    
 
     template<class R, class F>
     inline R perform_on_object_and_return(const object_base & container, F& func) {
         return perform_on_object_and_return<R>(const_cast<object_base&>(container), func);
     }
 
-    // Type SAfe version!!!!
-    // How to know in COMPILE time  that all @func handles ALL types?
-    // - invoke fun
     template<class F>
     inline void perform_on_object(object_base & container, F& func) {
-
-        if (auto obj = container.as<array>()) {
-            func(*obj);
-        }
-        else if (auto obj = container.as<map>()) {
-            func(*obj);
-        }
-        else if (auto obj = container.as<form_map>()) {
-            func(*obj);
-        }
-        else {
+        switch (container.type()) {
+        case array::TypeId:
+            func(container.as_link<array>());
+            break;
+        case map::TypeId:
+            func(container.as_link<map>());
+            break;
+        case form_map::TypeId:
+            func(container.as_link<form_map>());
+            break;
+        case integer_map::TypeId:
+            func(container.as_link<integer_map>());
+            break;
+        default:
             assert(false);
-            noreturn_func();
+            break;
         }
     }
 

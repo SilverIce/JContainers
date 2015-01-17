@@ -145,7 +145,7 @@ namespace collections { namespace {
             EXPECT_TRUE(fh::is_form_string(unresolveableFString));
             EXPECT_FALSE(fh::from_string(unresolveableFString));
 
-            // is invalid in sythetic test only: all plugin indexes except 'A'-'Z' are invalid
+            // @invalidFormId is invalid in sythetic test only: all plugin indexes except 'A'-'Z' are invalid
             FormId invalidFormId = (FormId)fh::construct('%', 0x14);
             EXPECT_FALSE(fh::to_string(invalidFormId));
         }
