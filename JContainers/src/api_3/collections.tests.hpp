@@ -99,7 +99,7 @@ namespace tes_api_3 {
 
     TEST(tes_jcontainers, tes_jcontainers)
     {
-        EXPECT_TRUE(tes_jcontainers::isInstalled());
+        EXPECT_TRUE(tes_jcontainers::__isInstalled());
 
         EXPECT_FALSE(tes_jcontainers::fileExistsAtPath(nullptr));
         EXPECT_TRUE(!tes_jcontainers::fileExistsAtPath("abracadabra"));
