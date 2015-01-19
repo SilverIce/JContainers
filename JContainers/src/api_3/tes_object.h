@@ -31,13 +31,10 @@ namespace tes_api_3 {
             return nullptr;
         }
         REGISTERF2(retain, "* tag=\"\"",
-R"===(Lifetime management functionality. See https://github.com/SilverIce/JContainers/wiki/Lifetime-Management
+R"===(--- Lifetime management functionality.
+Read this https://github.com/SilverIce/JContainers/wiki/Lifetime-Management before using any of lifetime management functions
 
-Retains and returns the object. Purpose - extend object lifetime.
-Newly created object if not retained or not referenced/contained by another container directly or indirectly gets destoyed after ~10 seconds due to absence of owners.
-Retain increases amount of owners object have by 1. The retainer is responsible for releasing object later.
-Object have extended lifetime if JDB or JFormDB or any other container references/owns/contains object directly or indirectly.
-It's recommended to set a tag (any unique string will fit - mod name for ex.) - later you'll be able to release all objects with selected tag even if identifier was lost)==="
+Retains and returns the object. Purpose - extend object lifetime)==="
             );
 
         template<class T>
@@ -52,7 +49,7 @@ It's recommended to set a tag (any unique string will fit - mod name for ex.) - 
 
             return nullptr;
         }
-        REGISTERF2(release, "*", "releases the object and returns zero, so you can release and nullify with one line of code: object = JValue.release(object)");
+        REGISTERF2(release, "*", "Releases the object and returns zero, so you can release and nullify with one line of code: object = JValue.release(object)");
 
         static object_base* releaseAndRetain(ref previousObject, ref newObject, const char* tag = nullptr) {
             if (previousObject != newObject) {
@@ -66,8 +63,7 @@ It's recommended to set a tag (any unique string will fit - mod name for ex.) - 
             return newObject;
         }
         REGISTERF2(releaseAndRetain, "previousObject newObject tag=\"\"",
-"Just a union of retain-release calls. Releases previousObject, retains and returns newObject.\n\
-It's recommended to set a tag (any unique string will fit - mod name for ex.) - later you'll be able to release all objects with selected tag even if identifier was lost.");
+"Just a union of retain-release calls. Releases previousObject, retains and returns newObject.");
 
         static void releaseObjectsWithTag(const char *tag) {
             if (!tag) {
@@ -95,8 +91,8 @@ It's recommended to set a tag (any unique string will fit - mod name for ex.) - 
             }
             return obj;
         }
-        REGISTERF2(zeroLifetime, "*", "Sets (if possible) an object's lifetime to minimum, returns the object.\n\
-By using this function a user helps JC to delete this no-more-needed to a user object as soon as possible (ofc. the object won't be deleted if something retains or contains it)");
+        REGISTERF2(zeroLifetime, "*", "Reduces the time JC temporarily owns the object to a minimal value, returns the object.\n\
+By using this function a user helps JC to get rid of no-more-needed to the user object as soon as possible (ofc. the object won't be deleted if something retains or contains it)");
 
 #       define JC_OBJECT_POOL_KEY   "__tempPools"
 
@@ -148,7 +144,7 @@ JValue.cleanTempLocation(\"uniqueLocationName\")"
         static ref shallowCopy(ref obj) {
             return obj ? &deep_copying::shallow_copy(tes_context::instance(), *obj) : nullptr;
         }
-        REGISTERF2(shallowCopy, "*", "Mics. functionality\n\nReturns shallow copy (doesn't copy child objects)");
+        REGISTERF2(shallowCopy, "*", "--- Mics. functionality\n\nReturns shallow copy (doesn't copy child objects)");
 
         static ref deepCopy(ref obj) {
             return obj ? &deep_copying::deep_copy(tes_context::instance(), *obj) : nullptr;
