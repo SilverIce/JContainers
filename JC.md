@@ -1,3 +1,6 @@
+> **NOTE**
+>
+> **This document is outdated. New wiki located [here](https://github.com/SilverIce/JContainers/wiki)**
 
 ## Motivation & Overview
 
