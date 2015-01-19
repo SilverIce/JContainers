@@ -144,7 +144,7 @@
     </ClCompile>
     <ClCompile Include="src\path_resolving.cpp" />
     <ClCompile Include="src\reflection.cpp" />
-    <ClCompile Include="src\serialization.cpp" />
+    <ClCompile Include="src\collections.cpp" />
     <ClCompile Include="src\skse.cpp" />
     <ClCompile Include="src\string_wrapper.cpp" />
     <ClCompile Include="src\util.cpp" />
@@ -166,7 +166,7 @@
     <ClInclude Include="src\collections.tests.base.h" />
     <ClInclude Include="src\collection_bind_traits.h" />
     <ClInclude Include="src\boost_serialization_intrusive_ptr_jc.h" />
-    <ClInclude Include="src\deep_copying.h" />
+    <ClInclude Include="src\collection_copying.h" />
     <ClInclude Include="src\collection_operators.h" />
     <ClInclude Include="src\form_handling.h" />
     <ClInclude Include="src\collection_functions.h" />

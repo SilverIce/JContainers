@@ -36,9 +36,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\serialization.cpp">
-      <Filter>collections_module</Filter>
-    </ClCompile>
     <ClCompile Include="src\gtest.cpp">
       <Filter>gtest</Filter>
     </ClCompile>
@@ -72,6 +69,9 @@
     </ClCompile>
     <ClCompile Include="src\lua_module.cpp">
       <Filter>collections_module\lua</Filter>
+    </ClCompile>
+    <ClCompile Include="src\collections.cpp">
+      <Filter>collections_module</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -205,9 +205,6 @@
     <ClInclude Include="Data\SKSE\Plugins\JCData\InternalLuaScripts\api_for_lua.h">
       <Filter>collections_module\lua</Filter>
     </ClInclude>
-    <ClInclude Include="src\deep_copying.h">
-      <Filter>collections_module</Filter>
-    </ClInclude>
     <ClInclude Include="src\collections.tests.base.h">
       <Filter>collections_module</Filter>
     </ClInclude>
@@ -216,6 +213,9 @@
     </ClInclude>
     <ClInclude Include="src\lua_native_funcs.hpp">
       <Filter>collections_module\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="src\collection_copying.h">
+      <Filter>collections_module</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

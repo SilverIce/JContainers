@@ -25,6 +25,7 @@ namespace collections {
         Array,
         Map,
         FormMap,
+        IntegerMap,
     };
 
     struct object_base_stack_ref_policy {
@@ -79,13 +80,9 @@ namespace collections {
         // registers (or returns already registered) identifier
         Handle public_id();
 
-        Handle _uid() const {
-            return _id;
-        }
-
-        Handle uid() {
-            return tes_uid();
-        }
+        CollectionType type() const { return _type; }
+        Handle _uid() const {  return _id; }
+        Handle uid() {  return tes_uid();}
 
         // will mark object as publicly exposed
         Handle tes_uid();

@@ -145,7 +145,7 @@ namespace collections { namespace {
             EXPECT_TRUE(fh::is_form_string(unresolveableFString));
             EXPECT_FALSE(fh::from_string(unresolveableFString));
 
-            // is invalid in sythetic test only: all plugin indexes except 'A'-'Z' are invalid
+            // @invalidFormId is invalid in sythetic test only: all plugin indexes except 'A'-'Z' are invalid
             FormId invalidFormId = (FormId)fh::construct('%', 0x14);
             EXPECT_FALSE(fh::to_string(invalidFormId));
         }
@@ -209,12 +209,13 @@ namespace collections { namespace {
         void do_comparison(const char *file_path) {
             EXPECT_NOT_NIL(file_path);
 
-            tes_context ctx;
-
-            auto root = json_deserializer::object_from_file(ctx, file_path);
-            EXPECT_NOT_NIL(root);
-            auto jsonOut = json_serializer::create_json_value(*root);
-            ctx.clearState();
+            auto jsonOut = make_unique_ptr((json_t*)nullptr, &json_decref);
+            {
+                tes_context ctx;
+                auto root = json_deserializer::object_from_file(ctx, file_path);
+                EXPECT_NOT_NIL(root);
+                jsonOut = json_serializer::create_json_value(*root);
+            }
 
             auto originJson = json_deserializer::json_from_file(file_path);
             EXPECT_NOT_NIL(originJson);
@@ -242,7 +243,6 @@ namespace collections { namespace {
                 ctx.read_from_string(state, serialization_version::current);
 
                 jsonOut = json_serializer::create_json_value(*ctx.getObject(rootId));
-                ctx.clearState();
             }
 
             auto originJson = json_deserializer::json_from_file(file_path);

@@ -160,20 +160,14 @@ JValue.cleanTempLocation(\"uniqueLocationName\")"
         }
         REGISTERF2(isExists, "*", "ntests whether given object identifier points to existing object");
 
-        static bool isArray(ref obj) {
-            return obj->as<array>() != nullptr;
+        template<class T> static bool isCast(ref obj) {
+            return obj->as<T>() != nullptr;
         }
-        REGISTERF2(isArray, "*", "returns true if object is map, array or formmap container");
 
-        static bool isMap(ref obj) {
-            return obj->as<map>() != nullptr;
-        }
-        REGISTERF2(isMap, "*", nullptr);
-
-        static bool isFormMap(ref obj) {
-            return obj->as<form_map>() != nullptr;
-        }
-        REGISTERF2(isFormMap, "*", nullptr);
+        REGISTERF(isCast<array>, "isArray", "*", "returns true if object is map, array or formmap container");
+        REGISTERF(isCast<map>, "isMap", "*", nullptr);
+        REGISTERF(isCast<form_map>, "isFormMap", "*", nullptr);
+        REGISTERF(isCast<integer_map>, "isIntegerMap", "*", nullptr);
 
         static bool empty(ref obj) {
             return count(obj) == 0;

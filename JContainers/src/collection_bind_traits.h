@@ -49,6 +49,7 @@ namespace reflection { namespace binding {
     template<> struct GetConv < array* > : ObjectConverterT< array >{};
     template<> struct GetConv < map* > : ObjectConverterT< map >{};
     template<> struct GetConv < form_map* > : ObjectConverterT< form_map >{};
+    template<> struct GetConv < integer_map* > : ObjectConverterT < integer_map >{};
 
     //////////////////////////////////////////////////////////////////////////
 
@@ -96,6 +97,7 @@ namespace reflection { namespace binding {
     template<> struct j2Str < map * > : jc_object_type_info{};
     template<> struct j2Str < array * > : jc_object_type_info{};
     template<> struct j2Str < form_map * > : jc_object_type_info{};
+    template<> struct j2Str < integer_map * > : jc_object_type_info{};
     template<> struct j2Str < Handle > : jc_object_type_info{};
 }
 }
