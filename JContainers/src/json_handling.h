@@ -223,7 +223,7 @@ namespace collections {
                     json_object_foreach(val, key, value) {
                         try {
                             temp = key;
-                            int32_t intKey = std::stoi(temp);
+                            int32_t intKey = std::stoi(temp, nullptr, 0);
                             cnt.u_container()[intKey] = self->make_item(value, cnt, intKey);
                         }
                         catch (const std::invalid_argument&) {}
@@ -452,7 +452,7 @@ namespace collections {
 
                     for (auto& pair : cnt.u_container()) {
                         self->fill_key_info(pair.second, cnt, pair.first);
-                        assert(-1 != sprintf_s(key_string, STR("%d"), pair.first));
+                        assert(-1 != sprintf_s(key_string, "%d", pair.first));
                         json_object_set_new(object, key_string, self->create_value(pair.second));
                     }
                 }
