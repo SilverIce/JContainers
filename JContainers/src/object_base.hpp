@@ -75,16 +75,18 @@ namespace collections
         delete this;
     }
 
+    object_base* object_base::tes_retain() {
+        ++_tes_refCount;
+        context().aqueue->not_prolong_lifetime(*this);
+        return this;
+    }
+
     void object_base::tes_release() {
-        if (_tes_refCount <= 1) {
-            _tes_refCount = 0;
-            if (noOwners()) {
-                _delete_self();
-            }
-        }
-        else {
-            context().aqueue->not_prolong_lifetime(*this);
+        if (_tes_refCount > 0) {
             --_tes_refCount;
+            if (noOwners()) {
+                context().aqueue->prolong_lifetime(*this, false);
+            }
         }
     }
 

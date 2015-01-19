@@ -114,10 +114,7 @@ namespace collections {
             return this;
         }
 
-        object_base * tes_retain() {
-            ++_tes_refCount;
-            return this;
-        }
+        object_base * tes_retain();
 
         int32_t refCount() const {
             return _refCount + _tes_refCount + _stack_refCount + _aqueue_refCount;
