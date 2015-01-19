@@ -15,18 +15,24 @@
 #include <shlobj.h>
 
 #include "gtest.h"
+#include "util.h"
 #include "jcontainers_constants.h"
 
-#include "tes_error_code.h"
 
-#include "collections.h"
 #include "object_context.h"
+#include "object_base.h"
+
+#include "tes_error_code.h"
+#include "tes_context.h"
+#include "collections.h"
+
 #include "json_handling.h"
+#include "collection_copying.h"
 #include "path_resolving.h"
-#include "lua_stuff.h"
 
 #include "collection_bind_traits.h"
 
+#include "collections.tests.base.h"
 #include "api_3/master.h"
 
 namespace collections {

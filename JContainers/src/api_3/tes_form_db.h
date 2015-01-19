@@ -84,7 +84,7 @@ namespace tes_api_3 {
             return name && *name;
         }
 
-        static void setEntry(const char *storageName, TESForm *formKey, object_stack_ref& entry) {
+        static void setEntry(const char *storageName, FormId formKey, object_stack_ref& entry) {
             if (!validate_storage_name(storageName) || !formKey) {
                 return;
             }
@@ -100,7 +100,7 @@ namespace tes_api_3 {
         }
         REGISTERF2(setEntry, "storageName fKey entry", "associates given form key and entry (container). set entry to zero to destroy association");
 
-        static map *makeMapEntry(const char *storageName, TESForm *form) {
+        static map *makeMapEntry(const char *storageName, FormId form) {
             if (!form || !validate_storage_name(storageName)) {
                 return nullptr;
             }
@@ -116,32 +116,32 @@ namespace tes_api_3 {
         }
         REGISTERF(makeMapEntry, "makeEntry", "storageName fKey", "returns (or creates new if not found) JMap entry for given storage and form");
 
-        static object_base *findEntry(const char *storageName, TESForm *form) {
+        static object_base *findEntry(const char *storageName, FormId form) {
             auto db = tes_context::instance().database();
             form_map *fmap = tes_map::getItem<object_base*>(db, storageName)->as<form_map>();
             return tes_form_map::getItem<object_base*>(fmap, form);
         }
         REGISTERF2(findEntry, "storageName fKey", "search for entry for given storage and form");
 
-        static map *findMapEntry(const char *storageName, TESForm *form) {
+        static map *findMapEntry(const char *storageName, FormId form) {
             return findEntry(storageName, form)->as<map>();
         }
 
         //////////////////////////////////////////////////////////////////////////
 
         template<class T>
-        static T solveGetter(TESForm *form, const char* path, T t = T(0)) {
+        static T solveGetter(FormId form, const char* path, T t = T(0)) {
             subpath_extractor sub(path, is_path);
             return tes_object::resolveGetter<T>(findEntry(sub.storageName(), form), sub.rest(), t); 
         }
         REGISTERF(solveGetter<Float32>, "solveFlt", "fKey path default=0.0", "attempts to get value associated with path.");
         REGISTERF(solveGetter<SInt32>, "solveInt", "fKey path default=0", nullptr);
-        REGISTERF(solveGetter<const char*>, "solveStr", "fKey path default=\"\"", nullptr);
+        REGISTERF(solveGetter<BSFixedString>, "solveStr", "fKey path default=\"\"", nullptr);
         REGISTERF(solveGetter<Handle>, "solveObj", "fKey path default=0", nullptr);
         REGISTERF(solveGetter<TESForm*>, "solveForm", "fKey path default=None", nullptr);
 
         template<class T>
-        static bool solveSetter(TESForm *form, const char* path, T value, bool createMissingKeys = false) {
+        static bool solveSetter(FormId form, const char* path, T value, bool createMissingKeys = false) {
             subpath_extractor sub(path, is_path);
             return tes_object::solveSetter(findEntry(sub.storageName(), form), sub.rest(), value, createMissingKeys);
         }
@@ -153,7 +153,7 @@ namespace tes_api_3 {
         REGISTERF(solveSetter<object_stack_ref&>, "solveObjSetter", "fKey path value createMissingKeys=false", nullptr);
         REGISTERF(solveSetter<TESForm*>, "solveFormSetter", "fKey path value createMissingKeys=false", nullptr);
 
-        static bool hasPath(TESForm *form, const char* path) {
+        static bool hasPath(FormId form, const char* path) {
             subpath_extractor sub(path);
             return tes_object::hasPath(findMapEntry(sub.storageName(), form), sub.rest());
         }
@@ -161,7 +161,7 @@ namespace tes_api_3 {
 
         //////////////////////////////////////////////////////////////////////////
 
-        static object_base* allKeys(TESForm *form, const char *path) {
+        static object_base* allKeys(FormId form, const char *path) {
             subpath_extractor sub(path);
             return tes_map::allKeys( findMapEntry(sub.storageName(), form) );
         }
@@ -170,25 +170,26 @@ namespace tes_api_3 {
             "\n"
             "returns new array containing all keys");
 
-        static object_base* allValues(TESForm *form, const char *path) {
+        static object_base* allValues(FormId form, const char *path) {
             subpath_extractor sub(path);
             return tes_map::allValues( findMapEntry(sub.storageName(), form) );
         }
         REGISTERF2(allValues, "fKey key", "returns new array containing all values");
 
         template<class T>
-        static T getItem(TESForm *form, const char* path) {
+        static T getItem(FormId form, const char* path) {
             subpath_extractor sub(path);
             return tes_map::getItem<T>( findMapEntry(sub.storageName(), form), sub.rest());
         }
+        // TODO: where is default value parameter?
         REGISTERF(getItem<SInt32>, "getInt", "fKey key", "returns value associated with key");
         REGISTERF(getItem<Float32>, "getFlt", "fKey key", "");
-        REGISTERF(getItem<const char *>, "getStr", "fKey key", "");
+        REGISTERF(getItem<BSFixedString>, "getStr", "fKey key", "");
         REGISTERF(getItem<object_base *>, "getObj", "fKey key", "");
         REGISTERF(getItem<TESForm*>, "getForm", "fKey key", "");
 
         template<class T>
-        static void setItem(TESForm *form, const char* path, T item) {
+        static void setItem(FormId form, const char* path, T item) {
             subpath_extractor sub(path);
             tes_map::setItem( makeMapEntry(sub.storageName(), form), sub.rest(), item);
         }
@@ -236,9 +237,7 @@ namespace tes_api_3 {
         EXPECT_NOT_NIL(formStorage);
         EXPECT_EQ( formStorage, tes_form_db::makeFormStorage(storageName));
 
-        char formData[sizeof TESForm];
-        TESForm *fakeForm = (TESForm *)&formData;
-        fakeForm->formID = 0x14;
+        FormId fakeForm = (FormId)0x14;
 
         auto entry = tes_form_db::makeMapEntry(storageName, fakeForm);
         EXPECT_NOT_NIL(entry);
@@ -248,16 +247,16 @@ namespace tes_api_3 {
 
     TEST(tes_form_db, get_set)
     {
-        char formData[sizeof TESForm];
-        TESForm *fakeForm = (TESForm *)&formData;
-        fakeForm->formID = 0x14;
+        FormId fakeForm = (FormId)0x14;
 
         const char *path = ".forms.object";
 
-        tes_form_db::setItem(fakeForm, path, tes_array::objectWithSize(0));
+        auto ar = tes_array::objectWithSize(0);
+        EXPECT_NOT_NIL(ar);
+        tes_form_db::setItem(fakeForm, path, ar);
 
-        EXPECT_NOT_NIL( tes_form_db::getItem<object_base*>(fakeForm, path) );
-        EXPECT_NOT_NIL( tes_form_db::solveGetter<object_base*>(fakeForm, path) );
+        EXPECT_TRUE(ar == tes_form_db::getItem<object_base*>(fakeForm, path));
+        EXPECT_TRUE(ar == tes_form_db::solveGetter<object_base*>(fakeForm, path));
     }
 
 

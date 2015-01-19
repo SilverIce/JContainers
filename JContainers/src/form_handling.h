@@ -36,7 +36,7 @@ namespace collections {
                 return (FormId)skse::resolve_handle((uint32_t)handle);
             }
             else {
-                return handle;
+                return skse::lookup_form((uint32_t)handle) ? handle : FormZero;
             }
         }
 

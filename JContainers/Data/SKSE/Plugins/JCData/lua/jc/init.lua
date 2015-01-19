@@ -30,22 +30,27 @@ Example 3 (pseudo-code)
 
 --]]
 
+local jc = {}
 
--- global JC container object (collection) on whom operation will be performed
-jobject = nil
 
--- namespace
-jc = {}
-
--- Native functions (placeholders):
-
--- apply is a native function, which iterates through collection elements
+-- function which iterates over collection's elements
 -- @predicate parameter is a function which accepts collection's item, returns true to stop iteration
-function jc.apply(collection, predicate) end
+function jc.apply(collection, predicate)
+    for i,v in pairs(collection) do
+        if predicate(v) then return end
+    end
+end
 
 -- function filters collection, returns new JArray colletion containing filtered values
 -- @predicate parameter is a function which accepts collection's item, returns true if item satisfying predicate
-function jc.filter(collection, predicate) end
+function jc.filter(collection, predicate)
+    local array = JArray.object()
+    for k,v in pairs(collection) do
+        if predicate(v) then JArray.insert(array, v) end
+    end
+
+    return array
+end
 
 
 -- Lua functions:
@@ -54,35 +59,18 @@ function jc.filter(collection, predicate) end
 function jc.count(collection, predicate)
     local matchCnt = 0
 
-    jc.apply(collection,
-        function(x)
-            if predicate(x) then
-                matchCnt = matchCnt + 1
-            end
+    for _,v in pairs(collection) do
+        if predicate(v) then matchCnt = matchCnt + 1 end
+    end
 
-            return false
-        end
-    )
     return matchCnt
 end
 
--- returns first index of item in collection satisfying predicate
+-- returns first index/key of item in collection satisfying predicate
 function jc.find(collection, predicate)
-    local index = -1
-    local foundIndex = -1
-
-    jc.apply(collection,
-        function(x)
-            index = index + 1
-            if predicate(x) then
-                foundIndex = index
-                return true
-            else
-                return false
-            end
-        end
-    )
-    return foundIndex
+    for k,v in pairs(collection) do
+        if predicate(v) then return k end
+    end
 end
 
 

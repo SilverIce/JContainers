@@ -11,10 +11,10 @@ namespace tes_api_3 {
             metaInfo.comment = "Various utility methods";
         }
 
-        static bool isInstalled() {
+        static bool __isInstalled() {
             return true;
         }
-        REGISTERF2(isInstalled, nullptr, "returns true if JContainers plugin is installed");
+        REGISTERF2(__isInstalled, nullptr, "NOT part of public API");
 
         static UInt32 APIVersion() {
             return (UInt32)consts::api_version;
@@ -59,8 +59,9 @@ namespace tes_api_3 {
                 return std::string();
             }
 
-            strcat_s(path, sizeof(path), JC_USER_FILES);
+            strcat_s(path, sizeof(path), "/" JC_USER_FILES);
 
+            // race condition possible. hope it's not critical
             if (!boost::filesystem::exists(path) && (boost::filesystem::create_directories(path), !boost::filesystem::exists(path))) {
                 return std::string();
             }
@@ -74,21 +75,33 @@ namespace tes_api_3 {
         REGISTERF(_userDirectory, "userDirectory", "", "A path to user-specific directory - "JC_USER_FILES);
 
         static SInt32 lastError() {
-            return tes_context::instance().lastError();
+            return 0;
         }
         REGISTERF2(lastError, nullptr, []() {
             std::stringstream comm;
-            comm << "returns last occured error (error code):";
+            comm << "DEPRECATE. Returns last occured error (error code):";
             for (int i = 0; i < JErrorCount; ++i) {
                comm << std::endl << i << " - " << JErrorCodeToString((JErrorCode)i);
             }
             return comm.str();
         });
 
-        static const char* lastErrorString() {
-            return JErrorCodeToString(tes_context::instance().lastError());
+        static BSFixedString lastErrorString() {
+            return "";
         }
-        REGISTERF2(lastErrorString, nullptr, "returns string that describes last error");
+        REGISTERF2(lastErrorString, nullptr, "DEPRECATE. Returns string that describes last error");
+
+        REGISTER_TEXT([]() {
+            const char* fmt = R"===(
+; Returns true if JContainers plugin installed properly
+bool function isInstalled() global
+    return __isInstalled() && %u == APIVersion() && %u == featureVersion()
+endfunction
+)===";
+            char buff[1024] = { 0 };
+            assert(-1 != sprintf_s(buff, fmt, consts::api_version, consts::feature_version));
+            return std::string(buff);
+        });
     };
 
     TES_META_INFO(tes_jcontainers);

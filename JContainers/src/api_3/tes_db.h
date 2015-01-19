@@ -30,8 +30,8 @@ then JDB.solveFlt(\".frostfall.exposureRate\") will return 0.5 and\n\
 JDB.solveObj(\".frostfall.arrayC\") will return array containing [\"stringValue\", 1.5, 10, 1.14] values");
 
         REGISTERF(solveGetter<SInt32>, "solveInt", "path default=0", nullptr);
-        REGISTERF(solveGetter<const char*>, "solveStr", "path default=\"\"", nullptr);
-        REGISTERF(solveGetter<Handle>, "solveObj", "path default=0", nullptr);
+        REGISTERF(solveGetter<BSFixedString>, "solveStr", "path default=\"\"", nullptr);
+        REGISTERF(solveGetter<object_base*>, "solveObj", "path default=0", nullptr);
         REGISTERF(solveGetter<TESForm*>, "solveForm", "path default=None", nullptr);
 
         template<class T>
@@ -43,7 +43,7 @@ JDB.solveObj(\".frostfall.arrayC\") will return array containing [\"stringValue\
             "With 'createMissingKeys=true' it creates any missing path elements: JDB.solveIntSetter(\".frostfall.keyB\", 10, true) creates {frostfall: {keyB: 10}} structure");
         REGISTERF(solveSetter<SInt32>, "solveIntSetter", "path value createMissingKeys=false", nullptr);
         REGISTERF(solveSetter<const char*>, "solveStrSetter", "path value createMissingKeys=false", nullptr);
-        REGISTERF(solveSetter<object_stack_ref&>, "solveObjSetter", "path value createMissingKeys=false", nullptr);
+        REGISTERF(solveSetter<object_base*>, "solveObjSetter", "path value createMissingKeys=false", nullptr);
         REGISTERF(solveSetter<TESForm*>, "solveFormSetter", "path value createMissingKeys=false", nullptr);
 
 
@@ -87,13 +87,9 @@ for ex. JDB.setObj(\"frostfall\", frostFallInformation) will associate 'frostall
         REGISTERF2(writeToFile, "path", "writes storage data into JSON file at given path");
 
         static void readFromFile(const char *path) {
-            auto& context = tes_context::instance();
-            auto objNew = json_deserializer::object_from_file(context, path);
-            context.setDataBase(objNew);
         }
         REGISTERF2(readFromFile, "path",
-"reads information from a file at given path and fills storage with it's JSON content\n\
-NOTE: it will replace all existing JDB contents!");
+"DEPRECATE. Reads information from a file at given path and fills storage with it's JSON content");
 
     };
 

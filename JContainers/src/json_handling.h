@@ -31,6 +31,8 @@ namespace collections {
     typedef decltype(make_unique_ptr((json_t*)nullptr, json_decref)) json_unique_ref;
 
     namespace reference_serialization {
+        // In current state it does not YET requires UTF-8 support
+
         const char prefix[] = "__reference|";
         const char separator = '|';
 
@@ -48,10 +50,28 @@ namespace collections {
         }
     }
 
+    namespace json_object_serialization_consts {
+
+        static const char * kMetaInfo = "__metaInfo";
+        static const char * kMetaInfoLegacy = "__formData";
+        static const char * kTypeName = "typeName";
+
+        template<class T> inline const char* type2name();
+
+        template<> inline const char* type2name<form_map>() { return "JFormMap"; }
+        template<> inline const char* type2name<integer_map>() { return "JIntMap"; }
+
+        template<class T> inline void put_metainfo(json_t* object) {
+            auto metaInfo = json_object();
+            json_object_set_new(metaInfo, kTypeName, json_string(type2name<T>()));
+            json_object_set_new(object, kMetaInfo, metaInfo);
+        }
+    }
+
     class json_deserializer {
         typedef std::vector<std::pair<object_base*, json_ref> > objects_to_fill;
 
-        typedef boost::variant<size_t, std::string, FormId> key_variant;
+        typedef boost::variant<int32_t, std::string, FormId> key_variant;
         // path - <container, key> pairs relationship
         typedef std::map<std::string, std::vector<std::pair<object_base*, key_variant > > > key_info_map;
 
@@ -96,7 +116,10 @@ namespace collections {
                 return nullptr;
             }
 
-            auto& root = make_placeholder(ref);
+            auto root = make_placeholder(ref);
+            if (!root) {
+                return nullptr;
+            }
 
             while (_toFill.empty() == false) {
                 objects_to_fill toFill;
@@ -107,9 +130,9 @@ namespace collections {
                 }
             }
 
-            resolve_references(root);
+            resolve_references(*root);
 
-            return &root;
+            return root;
         }
 
         void resolve_references(object_base& root) {
@@ -129,84 +152,132 @@ namespace collections {
                 }
 
                 for (auto& obj2Key : pair.second) {
-                    struct value_setter : boost::static_visitor < > {
-                        object_base& obj;
+
+                    namespace bs = boost;
+
+                    struct value_setter {
                         object_base* val;
+                        const key_variant* key;
 
-                        value_setter(object_base& o, object_base* value) : obj(o), val(value) {}
-
-                        void operator()(const std::string & key) const {
-                            obj.as<map>()->setValueForKey(key, Item(val));
+                        void operator()(array& cnt) const {
+                            if (auto k = bs::get<int32_t>(key)) {
+                                cnt.setItem(*k, Item(val));
+                            }
                         }
-
-                        void operator()(const size_t& key) const {
-                            obj.as<array>()->setItem(key, Item(val));
+                        void operator()(map& cnt) const {
+                            if (auto k = bs::get<std::string>(key)) {
+                                cnt.setValueForKey(*k, Item(val));
+                            }
                         }
-
-                        void operator()(const FormId& key) const {
-                            obj.as<form_map>()->setValueForKey(key, Item(val));
+                        void operator()(form_map& cnt) const {
+                            if (auto k = bs::get<FormId>(key)) {
+                                cnt.setValueForKey(*k, Item(val));
+                            }
+                        }
+                        void operator()(integer_map& cnt) const {
+                            if (auto k = bs::get<int32_t>(key)) {
+                                cnt.setValueForKey(*k, Item(val));
+                            }
                         }
                     };
 
-                    boost::apply_visitor(
-                        value_setter(*obj2Key.first, resolvedObject),
-                        obj2Key.second);
+                    perform_on_object(*obj2Key.first, value_setter{ resolvedObject, &obj2Key.second });
                 }
             }
 
         }
 
         void fill_object(object_base& object, json_ref val) {
-            object_lock lock(object);
 
-            if (array *arr = object.as<array>()) {
-                /* array is a JSON array */
-                size_t index = 0;
-                json_t *value = nullptr;
-
-                json_array_foreach(val, index, value) {
-                    arr->u_push(make_item(value, object, index));
-                }
-            }
-            else if (map *cnt = object.as<map>()) {
-                const char *key;
-                json_t *value;
-
-                json_object_foreach(val, key, value) {
-                    cnt->u_setValueForKey(key, make_item(value, object, key));
-                }
-            }
-            else if (form_map *cnt = object.as<form_map>()) {
-                const char *key;
-                json_t *value;
-
-                json_object_foreach(val, key, value) {
-                    auto fkey = form_handling::from_string(key);
-                    if (fkey) {
-                        cnt->u_setValueForKey(*fkey, make_item(value, object, *fkey));
+            struct helper {
+                json_deserializer* self;
+                json_ref val;
+                void operator()(array& arr) {
+                    size_t index = 0;
+                    json_t *value = nullptr;
+                    json_array_foreach(val, index, value) {
+                        arr.u_push(self->make_item(value, arr, index));
                     }
                 }
-            }
+                void operator()(map& cnt) {
+                    const char *key;
+                    json_t *value;
+                    json_object_foreach(val, key, value) {
+                        cnt.u_setValueForKey(key, self->make_item(value, cnt, key));
+                    }
+                }
+                void operator()(form_map& cnt) {
+                    const char *key;
+                    json_t *value;
+                    json_object_foreach(val, key, value) {
+                        auto fkey = form_handling::from_string(key);
+                        if (fkey) {
+                            cnt.u_setValueForKey(*fkey, self->make_item(value, cnt, *fkey));
+                        }
+                    }
+                }
+                void operator()(integer_map& cnt) {
+                    const char *key;
+                    json_t *value;
+                    std::string temp;
+                    json_object_foreach(val, key, value) {
+                        try {
+                            temp = key;
+                            int32_t intKey = std::stoi(temp, nullptr, 0);
+                            cnt.u_container()[intKey] = self->make_item(value, cnt, intKey);
+                        }
+                        catch (const std::invalid_argument&) {}
+                        catch (const std::out_of_range&) {}
+                    }
+                }
+            };
+
+            object_lock lock(object);
+            perform_on_object(object, helper{ this, val });
         }
 
-        object_base& make_placeholder(json_ref val) {
+        object_base* make_placeholder(json_ref val) {
             object_base *object = nullptr;
             auto type = json_typeof(val);
 
             if (type == JSON_ARRAY) {
-                object = array::object(_context);
+                object = &array::object(_context);
             }
             else if (type == JSON_OBJECT) {
-                if (!json_object_get(val, form_handling::kFormData)) {
-                    object = map::object(_context);
-                } else {
-                    object = form_map::object(_context);
+                namespace jsc = json_object_serialization_consts;
+
+                json_t* metaInfo = json_object_get(val, jsc::kMetaInfo);
+                if (!metaInfo) { // legacy key
+                    metaInfo = json_object_get(val, jsc::kMetaInfoLegacy);
+                }
+
+                if (json_is_null(metaInfo)) { // legacy format
+                    object = &form_map::object(_context);
+                }
+                else if (json_is_object(metaInfo)) { // handle metaInfo
+                    auto typeName = json_string_value(json_object_get(metaInfo, jsc::kTypeName));
+                    if (strcmp(jsc::type2name<form_map>(), typeName) == 0) {
+                        object = &form_map::object(_context);
+                    }
+                    else if (strcmp(jsc::type2name<integer_map>(), typeName) == 0) {
+                        object = &integer_map::object(_context);
+                    }
+                }
+                else {
+                    object = &map::object(_context);
+                }
+
+                if (metaInfo) {
+                    json_object_del(val, jsc::kMetaInfo);
+                    json_object_del(val, jsc::kMetaInfoLegacy);
                 }
             }
 
-            jc_assert(object);
-            _toFill.push_back(std::make_pair(object, val));
-            return *object;
+            if (object) {
+                _toFill.push_back(std::make_pair(object, val));
+            }
+
+            return object;
         }
 
         template<class K>
@@ -229,7 +300,7 @@ namespace collections {
             {
             case JSON_OBJECT:
             case JSON_ARRAY:
-                item = &make_placeholder(val);
+                item = make_placeholder(val);
                 break;
             case JSON_STRING:{
                 auto string = json_string_value(val);
@@ -239,14 +310,17 @@ namespace collections {
                 } else {
                     if (form_handling::is_form_string(string)) {
                         /*  having dilemma here:
-                            if string looks likes form-string and plugin name can't be resolved:
+                            if string looks like form-string and plugin name can't be resolved:
                             a. lost info and convert it to FormZero
                             b. save info and convert it to string
                         */
                         item = form_handling::from_string(string).get_value_or(FormZero);
                     }
-                    else if (schedule_ref_resolving(string, container, item_key)) {
+                    else if (schedule_ref_resolving(string, container, item_key)) { // otherwise it's reference string?
                         ;
+                    }
+                    else {  // otherwise it's just a string, althought it starts with "__"
+                        item = string;
                     }
                 }
 
@@ -282,7 +356,7 @@ namespace collections {
         objects_to_fill _toFill;
 
         // contained - <container, key> relationship
-        typedef boost::variant<size_t, std::string, FormId> key_variant;
+        typedef boost::variant<int32_t, std::string, FormId> key_variant;
         typedef std::map<const object_base*, std::pair<const object_base*, key_variant > > key_info_map;
         key_info_map _keyInfo;
 
@@ -331,10 +405,9 @@ namespace collections {
             if (object.as<array>()) {
                 placeholder = json_array();
             }
-            else if (object.as<map>() || object.as<form_map>()) {
+            else {
                 placeholder = json_object();
             }
-            jc_assert(placeholder);
 
             _toFill.push_back( objects_to_fill::value_type(&object, placeholder) );
             _serializedObjects.insert(&object);
@@ -343,34 +416,50 @@ namespace collections {
         }
 
         void fill_json_object(object_base& cnt, json_ref object) {
+            struct helper {
+                json_serializer * self;
+                json_ref object;
 
-            object_lock lock(cnt);
-
-            if (cnt.as<array>()) {
-                size_t index = 0;
-                for (auto& itm : cnt.as<array>()->u_container()) {
-                    fill_key_info(itm, cnt, index++);
-                    json_array_append_new(object, create_value(itm));
-                }
-            }
-            else if (cnt.as<map>()) {
-                for (auto& pair : cnt.as<map>()->u_container()) {
-                    fill_key_info(pair.second, cnt, pair.first);
-                    json_object_set_new(object, pair.first.c_str(), create_value(pair.second));
-                }
-            }
-            else if (cnt.as<form_map>()) {
-                // mark object as form_map container
-                json_object_set_new(object, form_handling::kFormData, json_null());
-
-                for (auto& pair : cnt.as<form_map>()->u_container()) {
-                    auto key = form_handling::to_string(pair.first);
-                    if (key) {
-                        fill_key_info(pair.second, cnt, pair.first);
-                        json_object_set_new(object, (*key).c_str(), create_value(pair.second));
+                void operator () (array& cnt) {
+                    size_t index = 0;
+                    for (auto& itm : cnt.u_container()) {
+                        self->fill_key_info(itm, cnt, index++);
+                        json_array_append_new(object, self->create_value(itm));
                     }
                 }
-            }
+                void operator () (map& cnt) {
+                    for (auto& pair : cnt.u_container()) {
+                        self->fill_key_info(pair.second, cnt, pair.first);
+                        json_object_set_new(object, pair.first.c_str(), self->create_value(pair.second));
+                    }
+                }
+                void operator () (form_map& cnt) {
+                    json_object_serialization_consts::put_metainfo<form_map>(object);
+
+                    for (auto& pair : cnt.u_container()) {
+                        auto key = form_handling::to_string(pair.first);
+                        if (key) {
+                            self->fill_key_info(pair.second, cnt, pair.first);
+                            json_object_set_new(object, (*key).c_str(), self->create_value(pair.second));
+                        }
+                    }
+                }
+                void operator () (integer_map& cnt) {
+
+                    json_object_serialization_consts::put_metainfo<integer_map>(object);
+
+                    char key_string[number_to_string_buffer_size] = { 0 };
+
+                    for (auto& pair : cnt.u_container()) {
+                        self->fill_key_info(pair.second, cnt, pair.first);
+                        assert(-1 != sprintf_s(key_string, "%d", pair.first));
+                        json_object_set_new(object, key_string, self->create_value(pair.second));
+                    }
+                }
+            };
+
+            object_lock lock(cnt);
+            perform_on_object(cnt, helper{ this, object });
         }
 
         template<class Key>
@@ -406,7 +495,7 @@ namespace collections {
                     return json_integer(val);
                 }
 
-                json_ref operator()(const Float32 & val) const {
+                json_ref operator()(const Item::Real & val) const {
                     return json_real(val);
                 }
 
@@ -441,6 +530,10 @@ namespace collections {
             return val;
         }
 
+        enum  {
+            number_to_string_buffer_size = 20,
+        };
+
         std::string path_to_object(const object_base& obj) const {
 
             std::string path;
@@ -455,9 +548,9 @@ namespace collections {
                     p.append(key);
                 }
 
-                void operator()(const size_t& idx) const {
-                    char data[20] = { 0 };
-                    sprintf_s(data, "[%lu]", idx);
+                void operator()(const int32_t& idx) const {
+                    char data[number_to_string_buffer_size] = { 0 };
+                    assert(-1 != sprintf_s(data, "[%d]", idx));
                     p.append(data);
                 }
 

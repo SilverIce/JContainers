@@ -16,5 +16,6 @@ namespace collections {
         TESForm* lookup_form(uint32_t handle);
 
         bool is_fake();
+        void console_print(const char * fmt, ...);
     }
 }

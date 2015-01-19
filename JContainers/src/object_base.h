@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <boost/smart_ptr/intrusive_ptr_jc.hpp>
 #include <boost/optional/optional.hpp>
+#include "boost/noncopyable.hpp"
 
 #include "spinlock.h"
 
@@ -19,12 +20,12 @@ namespace collections {
     class object_base;
     class object_context;
 
-    enum CollectionType
-    {
-        CollectionTypeNone = 0,
-        CollectionTypeArray,
-        CollectionTypeMap,
-        CollectionTypeFormMap,
+    enum CollectionType {
+        None = 0,
+        Array,
+        Map,
+        FormMap,
+        IntegerMap,
     };
 
     struct object_base_stack_ref_policy {
@@ -37,20 +38,28 @@ namespace collections {
 
     typedef object_stack_ref_template<object_base> object_stack_ref;
 
-    class object_base
+    class object_base// : boost::noncopyable
     {
+        object_base(const object_base&);
+        object_base& operator=(const object_base&);
+
         friend class object_context;
     public:
-        Handle _id;
+        typedef uint32_t time_point;
 
-        std::atomic_int32_t _refCount;
-        std::atomic_int32_t _tes_refCount;
-        std::atomic_int32_t _stack_refCount;
+    public:
+        Handle _id                              = HandleNull;
+
+        std::atomic_int32_t _refCount           = 0;
+        std::atomic_int32_t _tes_refCount       = 0;
+        std::atomic_int32_t _stack_refCount     = 0;
+        std::atomic_int32_t _aqueue_refCount    = 0;
+        time_point _aqueue_push_time            = 0;
 
         CollectionType _type;
         boost::optional<std::string> _tag;
     private:
-        object_context *_context;
+        object_context *_context                = nullptr;
 
         void release_counter(std::atomic_int32_t& counter);
 
@@ -63,12 +72,7 @@ namespace collections {
         mutable spinlock _mutex;
 
         explicit object_base(CollectionType type)
-            : _refCount(0)      // for now autorelease queue owns object
-            , _tes_refCount(0)
-            , _stack_refCount(0)
-            , _id(HandleNull)
-            , _type(type)
-            , _context(nullptr)
+            : _type(type)
         {
         }
 
@@ -76,13 +80,9 @@ namespace collections {
         // registers (or returns already registered) identifier
         Handle public_id();
 
-        Handle _uid() const {
-            return _id;
-        }
-
-        Handle uid() {
-            return tes_uid();
-        }
+        CollectionType type() const { return _type; }
+        Handle _uid() const {  return _id; }
+        Handle uid() {  return tes_uid();}
 
         // will mark object as publicly exposed
         Handle tes_uid();
@@ -92,59 +92,63 @@ namespace collections {
         }
 
         template<class T> T* as() {
-            return (this && T::TypeId == _type) ? static_cast<T*>(this) : nullptr;
+            return const_cast<T*>(const_cast<const object_base*>(this)->as<T>());
         }
 
         template<class T> const T* as() const {
             return (this && T::TypeId == _type) ? static_cast<const T*>(this) : nullptr;
         }
 
-        object_base * retain() {
-            return u_retain();
+        template<class T> T& as_link() {
+            return const_cast<T&>(const_cast<const object_base*>(this)->as_link<T>());
         }
 
-        object_base * u_retain() {
+        template<class T> const T& as_link() const {
+            auto obj = this->as<T>();
+            assert(obj);
+            return *obj;
+        }
+
+        object_base * retain() {
             ++_refCount;
             return this;
         }
 
-        object_base * tes_retain() {
-            ++_tes_refCount;
-            return this;
-        }
+        object_base * tes_retain();
 
-        int32_t refCount() {
-            return _refCount + _tes_refCount + _stack_refCount;
+        int32_t refCount() const {
+            return _refCount + _tes_refCount + _stack_refCount + _aqueue_refCount;
         }
         bool noOwners() const {
             return
-                _refCount.load() == 0 &&
-                _tes_refCount.load() == 0 &&
-                _stack_refCount.load() == 0;
+                _refCount.load() <= 0 &&
+                _tes_refCount.load() <= 0 &&
+                _aqueue_refCount.load() <= 0 &&
+                _stack_refCount.load() <= 0;
         }
 
-/*
-        bool noOwners() const {
-            return
-                _refCount.load(std::memory_order_acquire) == 0 &&
-                _tes_refCount.load(std::memory_order_acquire) == 0 &&
-                _stack_refCount.load(std::memory_order_acquire) == 0;
+        bool u_is_user_retains() const {
+            return _tes_refCount.load(std::memory_order_relaxed) > 0;
         }
-*/
+        bool is_in_aqueue() const {
+            return _aqueue_refCount.load(std::memory_order_relaxed) > 0;
+        }
 
         // push object into the queue (which owns it)
         // after some amount of time object will be released
         object_base * prolong_lifetime();
+        object_base * zero_lifetime();
 
-        void release() { release_counter(_refCount); }
-        void tes_release() { release_counter(_tes_refCount); }
+        void release();
+        void tes_release();
         void stack_retain() { ++_stack_refCount; }
-        void stack_release() { release_counter(_stack_refCount); }
-
+        void stack_release();
 
         // releases and then deletes object if no owners
         // true, if object deleted
-        bool release_from_queue();
+        void _aqueue_retain() { ++_aqueue_refCount; }
+        bool _aqueue_release();
+        void _delete_self();
 
         void set_context(object_context & ctx) {
             jc_assert(!_context);
@@ -200,6 +204,8 @@ namespace collections {
                 _stack_refCount == other._stack_refCount &&
                 u_count() == other.u_count();
         }
+
+        virtual void u_visit_referenced_objects(const std::function<void(object_base&)>& visitor) {}
     };
 
     inline void object_base_stack_ref_policy::retain(object_base * p) {

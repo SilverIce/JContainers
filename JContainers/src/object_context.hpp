@@ -1,3 +1,5 @@
+#include "util.h"
+
 namespace collections
 {
     template<class T, class D>
@@ -8,18 +10,28 @@ namespace collections
     object_context::object_context()
         : registry(nullptr)
         , aqueue(nullptr)
+        , _root_object_id(HandleNull)
     {
         registry = new object_registry();
         aqueue = new autorelease_queue(*registry);
     }
 
     object_context::~object_context() {
+        shutdown();
 
         delete registry;
         delete aqueue;
     }
     
     void object_context::u_clearState() {
+        {
+            spinlock::guard g(_dependent_contexts_mutex);
+            for (auto& ctx : _dependent_contexts) {
+                ctx->clear_state();
+            }
+        }
+
+        _root_object_id = HandleNull;
 
         /*  Not good, but working solution.
 
@@ -29,22 +41,20 @@ namespace collections
         solution: isolate objects by nullifying cross-references, then delete objects
 
         actually all I need is just free all allocated memory but this is hardly achievable
+
         */
+        {
+            aqueue->u_nullify();
 
-        aqueue->u_nullify();
+            for (auto& obj : registry->u_container()) {
+                obj->u_nullifyObjects();
+            }
+            for (auto& obj : registry->u_container()) {
+                delete obj;
+            }
 
-        for (auto& obj : registry->u_container()) {
-            obj->u_nullifyObjects();
-        }
-        for (auto& obj : registry->u_container()) {
-            delete obj;
-        }
-
-        registry->u_clear();
-        aqueue->u_clear();
-        
-        if (delegate) {
-            delegate->u_cleanup();
+            registry->u_clear();
+            aqueue->u_clear();
         }
     }
 
@@ -52,7 +62,7 @@ namespace collections
         aqueue->stop();
         u_clearState();
     }
-    
+
     void object_context::clearState() {
         aqueue->stop();
         u_clearState();
@@ -78,6 +88,15 @@ namespace collections
     size_t object_context::aqueueSize() {
         return aqueue->count();
     }
+
+    size_t object_context::collect_garbage() {
+        aqueue->stop();
+        auto res = garbage_collector::u_collect(*registry, *aqueue);
+        aqueue->start();
+        return res.garbage_total;
+    }
+
+    //////////////////////////////////////////////////////////////////////////
 
     void object_context::read_from_string(const std::string & data, const serialization_version version) {
         namespace io = boost::iostreams;
@@ -163,10 +182,7 @@ namespace collections
                 try {
                     archive >> *registry;
                     archive >> *aqueue;
-
-                    if (delegate) {
-                        delegate->u_loadAdditional(archive);
-                    }
+                    boost::serialization::load_atomic(archive, _root_object_id);
                 }
                 catch (const std::exception& exc) {
                     _FATALERROR("caught exception (%s) during archive load - '%s'",
@@ -182,6 +198,15 @@ namespace collections
 
                     // force whole app to crash
                     jc_assert(false);
+                }
+            }
+
+            {
+                for (auto& obj : registry->u_container()) {
+                    obj->set_context(*this);
+                }
+                for (auto& obj : registry->u_container()) {
+                    obj->u_onLoaded();
                 }
             }
 
@@ -211,10 +236,8 @@ namespace collections
             boost::archive::binary_oarchive arch(stream);
             arch << *registry;
             arch << *aqueue;
+            boost::serialization::save_atomic(arch, _root_object_id);
 
-            if (delegate) {
-                delegate->u_saveAdditional(arch);
-            }
             _DMESSAGE("%lu objects total", registry->u_container().size());
             _DMESSAGE("%lu objects in aqueue", aqueue->u_count());
         }
@@ -224,18 +247,60 @@ namespace collections
     //////////////////////////////////////////////////////////////////////////
 
     void object_context::u_applyUpdates(const serialization_version saveVersion) {
-
+        if (saveVersion <= serialization_version::pre_gc) {
+            if (auto db = root()) {
+                db->tes_retain();
+            }
+        }
     }
 
     void object_context::u_postLoadMaintenance(const serialization_version saveVersion)
     {
-        for (auto& obj : registry->u_container()) {
-            obj->set_context(*this);
+        util::do_with_timing("Garbage collection", [&]() {
+            auto res = garbage_collector::u_collect(*registry, *aqueue);
+            _DMESSAGE("%u garbage objects collected. %u objects are parts of cyclic graphs", res.garbage_total, res.part_of_graphs);
+        });
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+
+    object_base* object_context::root() {
+        return getObject(_root_object_id);
+    }
+
+    void object_context::set_root(object_base *db) {
+        object_base * prev = getObject(_root_object_id);
+
+        if (prev == db) {
+            return;
         }
 
-        for (auto& obj : registry->u_container()) {
-            obj->u_onLoaded();
+        if (db) {
+            //db->retain();
+            db->tes_retain(); // emulates a user-who-needs @root, this will prevent @db from being garbage collected
+        }
+
+        if (prev) {
+            //prev->release();
+            prev->tes_release();
+        }
+
+        _root_object_id = db ? db->uid() : HandleNull;
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+
+    void object_context::add_dependent_context(dependent_context& ctx) {
+        spinlock::guard g(_dependent_contexts_mutex);
+        if (std::find(_dependent_contexts.begin(), _dependent_contexts.end(), &ctx) == _dependent_contexts.end()) {
+            _dependent_contexts.push_back(&ctx);
         }
     }
+
+    void object_context::remove_dependent_context(dependent_context& ctx) {
+        spinlock::guard g(_dependent_contexts_mutex);
+        _dependent_contexts.erase(std::remove(_dependent_contexts.begin(), _dependent_contexts.end(), &ctx), _dependent_contexts.end());
+    }
+
 
 }

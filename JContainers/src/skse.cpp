@@ -1,7 +1,5 @@
 #include "skse.h"
 
-#include <chrono>
-#include <exception>
 
 #include <boost/iostreams/stream.hpp>
 #include <ShlObj.h>
@@ -14,6 +12,7 @@
 #include "skse/GameData.h"
 
 #include "gtest.h"
+#include "util.h"
 #include "jc_interface.h"
 #include "reflection.h"
 #include "jcontainers_constants.h"
@@ -33,31 +32,9 @@ namespace collections { namespace {
     static SKSEPapyrusInterface			* g_papyrus = nullptr;
     static SKSEMessagingInterface       * g_messaging = nullptr;
 
-    template<class T>
-    void do_with_timing(const char *operation_name, T& func) {
-        assert(operation_name);
-        _DMESSAGE("%s started", operation_name);
-
-        namespace chr = std::chrono;
-        auto started = chr::system_clock::now();
-
-        try {
-            func();
-        }
-        catch (const std::exception& ) {
-            jc_assert(false);
-        }
-        catch (...) {
-            jc_assert(false);
-        }
-
-        auto ended = chr::system_clock::now();
-        float diff = chr::duration_cast<chr::milliseconds>(ended - started).count() / 1000.f;
-        _DMESSAGE("%s finished in %f sec", operation_name, diff);
-    }
 
     void revert(SKSESerializationInterface * intfc) {
-        do_with_timing("Revert", []() {
+        util::do_with_timing("Revert", []() {
             collections::tes_context::instance().clearState();
         });
     }
@@ -79,7 +56,7 @@ namespace collections { namespace {
         };
 
 
-        do_with_timing("Save", [intfc]() {
+        util::do_with_timing("Save", [intfc]() {
             if (intfc->OpenRecord((UInt32)consts::storage_chunk, (UInt32)serialization_version::current)) {
                 io::stream<skse_data_sink> stream(skse_data_sink{ intfc });
                 collections::tes_context::instance().write_to_stream(stream);
@@ -110,7 +87,7 @@ namespace collections { namespace {
             SKSESerializationInterface* _source;
         };
 
-        do_with_timing("Load", [intfc]() {
+        util::do_with_timing("Load", [intfc]() {
 
             UInt32 type = 0;
             UInt32 version = 0;
@@ -129,8 +106,7 @@ namespace collections { namespace {
 
     extern "C" {
 
-        __declspec(dllexport) bool SKSEPlugin_Query(const SKSEInterface * skse, PluginInfo * info)
-        {
+        __declspec(dllexport) bool SKSEPlugin_Query(const SKSEInterface * skse, PluginInfo * info) {
             gLog.OpenRelative(CSIDL_MYDOCUMENTS, "\\My Games\\Skyrim\\SKSE\\"JC_PLUGIN_NAME".log");
             gLog.SetPrintLevel(IDebugLog::kLevel_Error);
             gLog.SetLogLevel(IDebugLog::kLevel_DebugMessage);
@@ -222,7 +198,7 @@ namespace collections { namespace {
 
 namespace collections { namespace skse {
 
-    namespace aux {
+    namespace fake_skse {
 
         enum {
             char_count = 'Z' - 'A' + 1,
@@ -289,20 +265,36 @@ namespace collections { namespace skse {
             return modInfo ? modInfo->name : nullptr;
         }
         else {
-            return aux::modname_from_index(idx);
+            return fake_skse::modname_from_index(idx);
         }
     }
 
     uint8_t modindex_from_name(const char * name) {
-        return g_serialization ? DataHandler::GetSingleton()->GetModIndex(name) : aux::modindex_from_name(name);
+        return g_serialization ? DataHandler::GetSingleton()->GetModIndex(name) : fake_skse::modindex_from_name(name);
     }
 
+    // A fake form. Made for imitating SKSE during synthetic tests
+    static char fakeTesForm[sizeof TESForm];
+
     TESForm* lookup_form(uint32_t handle) {
-        return g_serialization ? LookupFormByID(handle) : nullptr;
+        return g_serialization ? LookupFormByID(handle) : reinterpret_cast<TESForm*>(&fakeTesForm);
     }
 
     bool is_fake() {
         return g_serialization == nullptr;
+    }
+
+    void console_print(const char * fmt, ...) {
+        if (is_fake()) {
+            return;
+        }
+        ConsoleManager	* mgr = ConsoleManager::GetSingleton();
+        if (mgr) {
+            va_list	args;
+            va_start(args, fmt);
+            CALL_MEMBER_FN(mgr, Print)(fmt, args);
+            va_end(args);
+        }
     }
 }
 }

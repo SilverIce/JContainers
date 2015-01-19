@@ -2,6 +2,7 @@
 //
 
 #include "stdafx.h"
+#include "resource.h"
 
 #include <jansson/src/jansson.h>
 #include <stdio.h>
@@ -10,6 +11,18 @@
 
 int errorCounter = 0;
 int filesTotal = 0;
+
+bool is_likely_utf8_bom(FILE *file) {
+    if (fseek(file, 0, SEEK_SET) != 0) {
+        return false; // error occured, so unk
+    }
+
+    const char utf8_BOM[4] = { 0xEF, 0xBB, 0xBF, 0};
+    char bytes[4] = { 0, 0, 0, 0 };
+    size_t bytes_read = fread_s(bytes, 3, 1, 3, file);
+
+    return bytes_read == 3 && strcmp(bytes, utf8_BOM) == 0;
+}
 
 void validate_file(const _TCHAR *path) {
 
@@ -28,6 +41,11 @@ void validate_file(const _TCHAR *path) {
         printf("line %u column %u\n", error.line, error.column);
         printf("%s\n", error.text);
         printf("source: %s\n", error.source);
+
+        if (is_likely_utf8_bom(file)) {
+            printf("likely incorrect encoding. re-save the file using \"UTF-8 without BOM\" encoding format\n");
+        }
+
         printf("\n");
 
         ++errorCounter;
@@ -70,25 +88,24 @@ void handle_path(_TCHAR *path) {
 
 int _tmain(int argc, _TCHAR* argv[])
 {
+    if (argc > 1) {
+        int i = 1;
 
-    if (argc <= 1) {
-        return 0;
+        while (i < argc) {
+            _TCHAR *path = argv[i];
+
+            handle_path(path);
+
+            ++i;
+        }
+
+        printf("%u errors found. %u files total\n", errorCounter, filesTotal);
+    }
+    else {
+        printf(APP_DESCRIPTION"\n");
     }
 
-
-    int i = 1;
-
-    while (i < argc) {
-        _TCHAR *path = argv[i];
-
-        handle_path(path);
-
-        ++i;
-    }
-
-    printf("%u errors found. %u files validated\n", errorCounter, filesTotal);
     printf("press any key to close\n");
-
     _getch();
 	return 0;
 }

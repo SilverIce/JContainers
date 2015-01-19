@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <mutex>
 
 namespace collections {
 
@@ -22,5 +23,7 @@ namespace collections {
         void unlock() {
             _lock.clear(std::memory_order_release);  
         }
+
+        typedef std::lock_guard<spinlock> guard;
     };
 }

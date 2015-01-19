@@ -1,12 +1,12 @@
 {
   "vMYC": {
     "ActorBaseMap": {
-      "__formData": null,
+      "__metaInfo": {"typeName": "JFormMap"},
       "__formData|D|0x189e6": "Odri"
     },
     "PlayerInventory": {
       "__formData|D|0x7e8c5": 1,
-      "__formData": null,
+      "__metaInfo": {"typeName": "JFormMap"},
       "__formData|D|0xd78b": 1,
       "__formData|D|0xd3ac2": 1,
       "__formData|D|0x34d22": 1,
@@ -515,7 +515,7 @@
         ],
         "Inventory": {
           "__formData|D|0x7e8c5": 1,
-          "__formData": null,
+          "__metaInfo": {"typeName": "JFormMap"},
           "__formData|D|0xd78b": 1,
           "__formData|D|0xd3ac2": 1,
           "__formData|D|0x34d22": 1,
@@ -1181,7 +1181,7 @@
         ],
         "Inventory": {
           "__formData|D|0x7e8c5": 1,
-          "__formData": null,
+          "__metaInfo": {"typeName": "JFormMap"},
           "__formData|D|0xd78b": 1,
           "__formData|D|0xd3ac2": 1,
           "__formData|D|0x34d22": 1,

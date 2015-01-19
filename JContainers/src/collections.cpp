@@ -22,8 +22,6 @@
 #include <sstream>
 #include <set>
 
-#include "boost_serialization_atomic.h"
-
 #include "gtest.h"
 
 #include "collections.h"
@@ -36,6 +34,7 @@
 BOOST_CLASS_EXPORT_GUID(collections::array, "kJArray");
 BOOST_CLASS_EXPORT_GUID(collections::map, "kJMap");
 BOOST_CLASS_EXPORT_GUID(collections::form_map, "kJFormMap");
+BOOST_CLASS_EXPORT_GUID(collections::integer_map, "kJIntegerMap");
 
 BOOST_CLASS_VERSION(collections::Item, 2)
 
@@ -43,97 +42,8 @@ BOOST_CLASS_IMPLEMENTATION(boost::blank, boost::serialization::primitive_type);
 
 namespace collections {
 
-#ifndef TEST_COMPILATION_DISABLED
-
-    template<class T>
-    void do_serialization_and_comparison(testing::State& testState, const T& sourceObj) {
-        std::ostringstream data;
-        ::boost::archive::binary_oarchive arch(data);
-
-        arch << sourceObj;
-
-        // reading
-        std::string string = data.str();
-        std::istringstream istr(string);
-        boost::archive::binary_iarchive ia(istr);
-
-        T clone;
-        ia >> clone;
-
-        EXPECT_TRUE(clone.is_equal_to(sourceObj));
-    }
-
-    TEST(Item, serialization)
-    {
-        std::ostringstream data;
-        ::boost::archive::binary_oarchive arch(data);
-
-        Item tst((const char*)nullptr);
-
-
-        Item items[] = {
-            Item(2.0),
-            Item(2),
-            Item("the most fatal mistake"),
-            //Item(array::object()),
-           // Item(map::object())
-        };
-
-        for (auto& itm : items) {
-            arch << itm;
-        }
-
-        // reading
-        std::string string = data.str();
-        std::istringstream istr(string);
-        boost::archive::binary_iarchive ia(istr);
-
-        for (const auto& itm : items) {
-            Item tmp;
-            ia >> tmp;
-
-            EXPECT_TRUE( itm.isEqual(tmp) );
-
-
-        }
-    }
-
-    TEST(map, serialization)
-    {
-        map sourceObj;
-        sourceObj.tes_retain();
-        sourceObj.tes_retain();
-        sourceObj.retain();
-        sourceObj.u_setValueForKey("test", Item(10.0));
-
-        do_serialization_and_comparison(testState, sourceObj);
-    }
-
-    TEST(array, serialization)
-    {
-        array sourceObj;
-        sourceObj.tes_retain();
-        sourceObj.tes_retain();
-        sourceObj.u_push(Item(10.0));
-
-        do_serialization_and_comparison(testState, sourceObj);
-    }
-
-#endif
-
-    // deprecate in 0.67:
-    enum ItemType : unsigned char
-    {
-        ItemTypeNone = 0,
-        ItemTypeInt32 = 1,
-        ItemTypeFloat32 = 2,
-        ItemTypeCString = 3,
-        ItemTypeObject = 4,
-        ItemTypeForm = 5,
-    };
-
     // 0.67 to 0.68:
-    namespace conv_1_to_2 {
+    namespace conv_067_to_3 {
 
         struct old_blank {
             template<class Archive>
@@ -155,13 +65,13 @@ namespace collections {
             explicit item_converter(Item::variant& var) : varNew(var) {}
 
             template<class T> void operator() (T& val) {
-                varNew = val;
+                varNew = std::move(val);
             }
 
             void operator()(old_blank& val) {}
 
             void operator()(object_ref_old& val) {
-                varNew = internal_object_ref(val.px, false);
+                varNew = internal_object_ref(val.px);
             }
         };
 
@@ -175,6 +85,58 @@ namespace collections {
         }
     }
     
+    namespace conv_066 {
+        // deprecate in 0.67:
+        enum ItemType : unsigned char {
+            ItemTypeNone = 0,
+            ItemTypeInt32 = 1,
+            ItemTypeFloat32 = 2,
+            ItemTypeCString = 3,
+            ItemTypeObject = 4,
+            ItemTypeForm = 5,
+        };
+
+        template<class Archive>
+        void read(Archive & ar, Item& itm) {
+            ItemType type = ItemTypeNone;
+            ar & type;
+
+            switch (type) {
+            case ItemTypeInt32: {
+                SInt32 val = 0;
+                ar & val;
+                itm = val;
+                break;
+            }
+            case ItemTypeFloat32: {
+                Float32 val = 0;
+                ar & val;
+                itm = val;
+                break;
+            }
+            case ItemTypeCString: {
+                std::string string;
+                ar & string;
+                itm = string;
+                break;
+            }
+            case ItemTypeObject: {
+                object_base *object = nullptr;
+                ar & object;
+                itm.var() = internal_object_ref(object, false);
+                break;
+            }
+            case ItemTypeForm: {
+                UInt32 oldId = 0;
+                ar & oldId;
+                itm.var() = (FormId)oldId;
+                break;
+            }
+            default:
+                break;
+            }
+        }
+    }
 
     template<class Archive>
     void Item::load(Archive & ar, const unsigned int version)
@@ -188,49 +150,11 @@ namespace collections {
             ar & _var;
             break;
         case 1: {
-            conv_1_to_2::do_conversion(ar, _var);
+            conv_067_to_3::do_conversion(ar, _var);
             break;
         }
-        case 0: {
-            ItemType type = ItemTypeNone;
-            ar & type;
-
-            switch (type)
-            {
-            case ItemTypeInt32: {
-                SInt32 val = 0;
-                ar & val;
-                *this = val;
-                break;
-            }
-            case ItemTypeFloat32: {
-                Float32 val = 0;
-                ar & val;
-                *this = val;
-                break;
-            }
-            case ItemTypeCString: {
-                std::string string;
-                ar & string;
-                *this = string;
-                break;
-            }
-            case ItemTypeObject: {
-                object_base *object = nullptr;
-                ar & object;
-                _var = internal_object_ref(object, false);
-                break;
-            }
-            case ItemTypeForm: {
-                UInt32 oldId = 0;
-                ar & oldId;
-                *this = (FormId)oldId;
-                break;
-            }
-            default:
-                break;
-            }
-        }
+        case 0:
+            conv_066::read(ar, *this);
             break;
         }
 
@@ -244,6 +168,8 @@ namespace collections {
         ar & _var;
     }
 
+    //////////////////////////////////////////////////////////////////////////
+
     template<class Archive>
     void array::serialize(Archive & ar, const unsigned int version) {
         ar & boost::serialization::base_object<object_base>(*this);
@@ -256,40 +182,51 @@ namespace collections {
         ar & cnt;
     }
 
+    template<class Archive>
+    void form_map::serialize(Archive & ar, const unsigned int version) {
+        ar & boost::serialization::base_object<object_base>(*this);
+        ar & cnt;
+    }
+
+    template<class Archive>
+    void integer_map::serialize(Archive & ar, const unsigned int version) {
+        ar & boost::serialization::base_object<object_base>(*this);
+        ar & cnt;
+    }
+
     //////////////////////////////////////////////////////////////////////////
 
-    template<class Archive>
-    void form_map::save(Archive & ar, const unsigned int version) const {
-        ar & boost::serialization::base_object<object_base>(*this);
-        ar & cnt;
-    }
+    void form_map::u_onLoaded() {
 
-    template<class Archive>
-    void form_map::load(Archive & ar, const unsigned int version) {
-        ar & boost::serialization::base_object<object_base>(*this);
-        ar & cnt;
-    }
+        for (auto itr = cnt.begin(); itr != cnt.end(); ) {
 
-    void form_map::u_updateKeys() {
-
-        std::vector<FormId> keys;
-        keys.reserve(cnt.size());
-        for (auto& pair : cnt) {
-            keys.push_back(pair.first);
-        }
-
-        for(const auto& oldKey : keys) {
-			FormId newKey = form_handling::resolve_handle(oldKey);
+            const FormId& oldKey = itr->first;
+            FormId newKey = form_handling::resolve_handle(oldKey);
 
             if (oldKey == newKey) {
-                ;
+                ++itr; // fine
             }
-            else if (newKey == 0) {
-                cnt.erase(oldKey);
-            } else if (newKey != oldKey) {
-                Item item = cnt[oldKey];
-                cnt.erase(oldKey);
-                cnt[newKey] = item;
+            else if (newKey == FormZero) {
+                itr = cnt.erase(itr);
+            }
+            else if (oldKey != newKey) { // and what if newKey will replace another oldKey???
+
+                // There is one issue. Given two plugins
+                // .... A ... B..
+                // both plugins gets swapped
+                // and two form Id's swapped too: 0xaa001 swapped with 0xbb001
+                // form from the A replaces form from the B
+
+                auto anotherOldKeyItr = cnt.find(newKey);
+                if (anotherOldKeyItr != cnt.end()) { // exactly that rare case, newKey equals to some other oldKey
+                    // do not insert as it will replace other oldKey, SWAP values instead
+                    std::swap(anotherOldKeyItr->second, itr->second);
+                    ++itr;
+                }
+                else {
+                    cnt.insert(container_type::value_type(newKey, std::move(itr->second)));
+                    itr = cnt.erase(itr);
+                }
             }
         }
     }
@@ -302,15 +239,5 @@ namespace collections {
         }
     }
 
-    void form_map::u_nullifyObjects() {
-        for (auto& pair : cnt) {
-            pair.second.u_nullifyObject();
-        }
-    }
-
-    void map::u_nullifyObjects() {
-        for (auto& pair : cnt) {
-            pair.second.u_nullifyObject();
-        }
-    }
+    //////////////////////////////////////////////////////////////////////////
 }

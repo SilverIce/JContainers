@@ -3,6 +3,8 @@
 #include "skse/Utilities.h"
 #include "skse/PapyrusVM.h"
 
+#include <vector>
+
 class VMState;
 class VMValue;
 class VMClassRegistry;
@@ -12,12 +14,12 @@ class EffectSetting;
 class VMArgList
 {
 public:
-	VMArgList();
-	~VMArgList();
+    VMArgList();
+    ~VMArgList();
 
-	MEMBER_FN_PREFIX(VMArgList);
-	DEFINE_MEMBER_FN(GetOffset, UInt32, 0x00C3A620, VMState * state);
-	DEFINE_MEMBER_FN(Get, VMValue *, 0x00C3AC40, VMState * state, UInt32 idx, UInt32 offset);
+    MEMBER_FN_PREFIX(VMArgList);
+    DEFINE_MEMBER_FN(GetOffset, UInt32, 0x00C3A620, VMState * state);
+    DEFINE_MEMBER_FN(Get, VMValue *, 0x00C3AC40, VMState * state, UInt32 idx, UInt32 offset);
 };
 
 
@@ -25,15 +27,56 @@ template <typename T>
 class VMArray
 {
 public:
-	VMValue::ArrayData	* arr;
-	UInt32 Length() const				{ return arr ? arr->len : 0; }
-	void Get(T * dst, const UInt32 idx)	{ UnpackValue(dst, arr->GetData()+idx); }
-	void Set(T * src, const UInt32 idx)
-	{
-		VMClassRegistry * registry = (*g_skyrimVM)->GetClassRegistry();
-		PackValue(arr->GetData()+idx, src, registry);
-	}
+    VMValue::ArrayData      * arr;
+    UInt32 Length() const                           { return arr ? arr->len : 0; }
+    void Get(T * dst, const UInt32 idx)     { UnpackValue(dst, arr->GetData() + idx); }
+    void Set(T * src, const UInt32 idx)
+    {
+        VMClassRegistry * registry = (*g_skyrimVM)->GetClassRegistry();
+        PackValue(arr->GetData() + idx, src, registry);
+    }
 };
+
+template<typename T>
+class VMResultArray : public std::vector < T >
+{
+public:
+    void PackArray(VMValue::ArrayData * data, VMClassRegistry * registry)
+    {
+        // Copy the contents from the reference array to the VM array
+        UInt32 i = 0;
+        for (std::vector<T>::iterator it = begin(); it != end(); ++it, i++)
+            PackValue(data->GetData() + i, (T*)&(*it), registry);
+    }
+};
+
+template <typename T>
+void PackValue(VMValue * dst, VMResultArray<T> * src, VMClassRegistry * registry)
+{
+    // Clear out old contents if any
+    dst->SetNone();
+    if (src->size() > 0) {
+        VMValue::ArrayData * data = NULL;
+        // Request the VM allocate a new array
+        registry->CreateArray(dst, src->size(), &data);
+        if (data) {
+            src->PackArray(data, registry);
+
+            // Set the appropriate TypeID and assign the new data array
+            dst->type = GetTypeID<VMResultArray<T>>(registry);
+            dst->data.arr = data;
+        }
+    }
+
+    // Clear the temp contents of the reference array
+    src->clear();
+}
+
+template <typename T>
+void UnpackValue(VMArray<T*> * dst, VMValue * src)
+{
+    UnpackArray(dst, src, GetTypeIDFromFormTypeID(T::kTypeID, (*g_skyrimVM)->GetClassRegistry()) | VMValue::kType_Identifier);
+}
 
 template <typename T>
 void PackValue(VMValue * dst, T * src, VMClassRegistry * registry);
@@ -56,8 +99,8 @@ void PackHandle(VMValue * dst, void * src, UInt32 typeID, VMClassRegistry * regi
 template <typename T>
 void PackValue(VMValue * dst, T ** src, VMClassRegistry * registry)
 {
-	typedef remove_pointer <T>::type	BaseType;
-	PackHandle(dst, *src, BaseType::kTypeID, registry);
+    typedef remove_pointer <T>::type        BaseType;
+    PackHandle(dst, *src, BaseType::kTypeID, registry);
 }
 
 template <> void UnpackValue <float>(float * dst, VMValue * src);
@@ -77,21 +120,21 @@ void * UnpackHandle(VMValue * src, UInt32 typeID);
 template <typename T>
 void UnpackValue(T ** dst, VMValue * src)
 {
-	*dst = (T *)UnpackHandle(src, T::kTypeID);
+    *dst = (T *)UnpackHandle(src, T::kTypeID);
 }
 
 template <typename T>
 void UnpackArray(VMArray<T> * dst, VMValue * src, const UInt32 type)
 {
-	VMValue::ArrayData * arrData;
+    VMValue::ArrayData * arrData;
 
-	if (src->type != type || (arrData = src->data.arr, !arrData))
-	{
-		dst->arr = NULL;
-		return;
-	}
+    if (src->type != type || (arrData = src->data.arr, !arrData))
+    {
+        dst->arr = NULL;
+        return;
+    }
 
-	dst->arr = arrData;
+    dst->arr = arrData;
 }
 
 UInt32 GetTypeIDFromFormTypeID(UInt32 formTypeID, VMClassRegistry * registry);
@@ -111,45 +154,60 @@ template <> UInt32 GetTypeID <VMArray<float>>(VMClassRegistry * registry);
 template <> UInt32 GetTypeID <VMArray<bool>>(VMClassRegistry * registry);
 template <> UInt32 GetTypeID <VMArray<BSFixedString>>(VMClassRegistry * registry);
 
+template <> UInt32 GetTypeID <VMResultArray<UInt32>>(VMClassRegistry * registry);
+template <> UInt32 GetTypeID <VMResultArray<SInt32>>(VMClassRegistry * registry);
+template <> UInt32 GetTypeID <VMResultArray<int>>(VMClassRegistry * registry);
+template <> UInt32 GetTypeID <VMResultArray<float>>(VMClassRegistry * registry);
+template <> UInt32 GetTypeID <VMResultArray<bool>>(VMClassRegistry * registry);
+template <> UInt32 GetTypeID <VMResultArray<BSFixedString>>(VMClassRegistry * registry);
+
 template<typename T>
 struct IsArrayType
 {
-	enum { value = 0 };
-	typedef T TypedArg;
+    enum { value = 0 };
+    typedef T TypedArg;
 };
 
 template<typename T>
-struct IsArrayType<VMArray<T*>>
+struct IsArrayType < VMArray<T*> >
 {
-	enum { value = 1 };
-	typedef T TypedArg;
+    enum { value = 1 };
+    typedef T TypedArg;
+};
+
+template<typename T>
+struct IsArrayType < VMResultArray<T*> >
+{
+    enum { value = 1 };
+    typedef T TypedArg;
 };
 
 template <typename T>
 UInt32 GetTypeID <T *>(VMClassRegistry * registry)
 {
-	UInt32		result;
+    UInt32          result;
 
-	typedef remove_pointer <IsArrayType<T>::TypedArg>::type	BaseType;
-	if(!IsArrayType<T>::value) {
-		result = GetTypeIDFromFormTypeID(BaseType::kTypeID, registry);
-	} else { // Arrays are ClassInfo ptr + 1
-		result = GetTypeIDFromFormTypeID(BaseType::kTypeID, registry) | VMValue::kType_Identifier;
-	}
+    typedef remove_pointer <IsArrayType<T>::TypedArg>::type BaseType;
+    if (!IsArrayType<T>::value) {
+        result = GetTypeIDFromFormTypeID(BaseType::kTypeID, registry);
+    }
+    else { // Arrays are ClassInfo ptr + 1
+        result = GetTypeIDFromFormTypeID(BaseType::kTypeID, registry) | VMValue::kType_Identifier;
+    }
 
-	return result;
+    return result;
 }
 
 template <class T>
 struct IsStaticType
 {
-	enum { value = 0 };
+    enum { value = 0 };
 };
 
 template <>
-struct IsStaticType <StaticFunctionTag>
+struct IsStaticType < StaticFunctionTag >
 {
-	enum { value = 1 };
+    enum { value = 1 };
 };
 
 
@@ -176,8 +234,9 @@ const char * GetTypeNameFromFormTypeID(UInt32 formTypeID, VMClassRegistry * regi
 template <typename T>
 const char * GetArgumentTypeName <T *>(VMClassRegistry * registry)
 {
-	typedef remove_pointer <T>::type	BaseType;
-	
-	return GetTypeNameFromFormTypeID(BaseType::kTypeID, registry);
+    typedef remove_pointer <T>::type        BaseType;
+
+    return GetTypeNameFromFormTypeID(BaseType::kTypeID, registry);
 }
 #endif
+

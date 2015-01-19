@@ -20,7 +20,7 @@ namespace serialization {
     void load(Archive & ar, intrusive_ptr_jc<T, P> & v, const unsigned int version) {
         T* value = nullptr;
         ar >> BOOST_SERIALIZATION_NVP(value);
-        v = intrusive_ptr_jc<T, P>(value, false);
+        v = intrusive_ptr_jc<T, P>(value); 
     }
 
     template<class Archive, class T, class P>

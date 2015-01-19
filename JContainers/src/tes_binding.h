@@ -3,6 +3,8 @@
 #include "skse/PapyrusNativeFunctions.h"
 #include "reflection.h"
 
+class BGSListForm;
+
 namespace reflection { namespace binding {
 
     // traits placeholders
@@ -75,6 +77,15 @@ namespace reflection { namespace binding {
         }
     };
 
+    template<class T> struct j2Str < VMResultArray<T> > {
+        static function_parameter typeInfo() {
+            std::string str(j2Str<T>::typeInfo().tes_type_name);
+            str += "[]";
+            function_parameter info = { str, "values" };
+            return info;
+        }
+    };
+
     //////////////////////////////////////////////////////////////////////////
 
     template <typename T, T func> struct proxy;
@@ -82,6 +93,7 @@ namespace reflection { namespace binding {
     template <class R, class Arg0, class Arg1, R (*func)( Arg0, Arg1 ) >
     struct proxy<R (*)(Arg0, Arg1), func>
     {
+        typedef R return_type;
         static std::vector<type_info_func> type_strings() {
             type_info_func types[] = {
                 &j2Str<R>::typeInfo,
@@ -117,6 +129,7 @@ namespace reflection { namespace binding {
     template <class Arg0, class Arg1, void (*func)( Arg0, Arg1 ) >
     struct proxy<void (*)(Arg0, Arg1), func>
     {
+        typedef void return_type;
         static std::vector<type_info_func> type_strings() {
             type_info_func types[] = {
                 &j2Str<void>::typeInfo,
@@ -162,7 +175,8 @@ namespace reflection { namespace binding {
     #define MAKE_PROXY_NTH(N) \
         template <class R DO_##N(TARGS_NTH, COMA, COMA, NOTHING), R (*func)( DO_##N(PARAM_NAMELESS_NTH, NOTHING, COMA, NOTHING) ) >     \
         struct proxy<R (*)(DO_##N(PARAM_NAMELESS_NTH, NOTHING, COMA, NOTHING)), func>     \
-        {     \
+            {     \
+            typedef R return_type; \
             static std::vector<type_info_func> type_strings() {\
                 type_info_func types[] = {\
                     &j2Str<R>::typeInfo,\
@@ -191,6 +205,7 @@ namespace reflection { namespace binding {
         template <DO_##N(TARGS_NTH, NOTHING, COMA, COMA) void (*func)( DO_##N(PARAM_NAMELESS_NTH, NOTHING, COMA, NOTHING) ) >     \
         struct proxy<void (*)(DO_##N(PARAM_NAMELESS_NTH, NOTHING, COMA, NOTHING)), func>     \
         {     \
+            typedef void return_type; \
             static std::vector<type_info_func> type_strings() {\
                 type_info_func types[] = {\
                     &j2Str<void>::typeInfo,\
@@ -249,8 +264,8 @@ namespace reflection { namespace binding {
             using namespace reflection;\
             auto& mInfo = binding::metaInfoFromFieldAndOffset( this, offsetof(__Type, CONCAT(_mem_, __LINE__)) );\
             mInfo._className = (ScriptTesName);\
-        }\
-    } CONCAT(_mem_, __LINE__);
+            }\
+        } CONCAT(_mem_, __LINE__);
 
 #define REGISTERF(func, _funcname, _args, _comment)\
     struct CONCAT(_struct_, __LINE__) {\
@@ -258,6 +273,7 @@ namespace reflection { namespace binding {
              using namespace reflection;\
              function_info metaF;\
              typedef binding::proxy<decltype(binding::msvc_identity(&(func))), &(func)> binder;\
+             static_assert( false == std::is_same<binder::return_type, const char *>::value, "a trap for const char * return types" ); \
              metaF.registrator = &binder::bind;\
              metaF.param_list_func = &binder::type_strings;\
              \
@@ -265,8 +281,20 @@ namespace reflection { namespace binding {
              metaF.setComment(_comment);\
              metaF.name = (_funcname);\
              metaF.tes_func = &binder::tes_func;\
+             auto addr = &(func);\
+             metaF.c_func = addr;\
              binding::metaInfoFromFieldAndOffset(this, offsetof(__Type, CONCAT(_mem_, __LINE__))).addFunction(metaF);\
          }\
+    } CONCAT(_mem_, __LINE__);
+
+#define REGISTER_TEXT(text)\
+    struct CONCAT(_struct_, __LINE__) {\
+         CONCAT(_struct_, __LINE__)() {\
+             using namespace reflection;\
+             papyrus_text_block tb;\
+             tb.set_text(text);\
+             binding::metaInfoFromFieldAndOffset(this, offsetof(__Type, CONCAT(_mem_, __LINE__))).add_text_block(tb); \
+        }\
     } CONCAT(_mem_, __LINE__);
 
 #define REGISTERF2(func, args, comment)     REGISTERF(func, #func, args, comment)
