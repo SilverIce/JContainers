@@ -1,6 +1,6 @@
 #### JContainers
 
-JContainers is a Skyrim plugin that extends Papyrus by adding various data structures. Also it is simple NoSQL database. It features:
+JContainers is a Skyrim plugin that extends Papyrus by adding various data structures. It features:
 
 * Various containers that capable to store anything inside - number, string, form or another container
 * Encode or decode container's contents into JSON data
