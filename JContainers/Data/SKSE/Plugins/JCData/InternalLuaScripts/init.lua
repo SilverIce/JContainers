@@ -122,16 +122,31 @@ local function createTwoSandboxes()
   local function jc_require (s)
     local mod = user_modules[s]
     if not mod then
-
       print('trying to load', s)
 
-      local str = string.gsub(s, '%.', [[/]])
-      print('str', str)
-      local f, message = loadfile (JCDataPath .. [[lua/]] .. str .. '.lua')
-      if not f then error(message) end
-      setfenv(f, sandbox)
-      mod = f()
-      user_modules[s] = mod
+      local function isFileExists(name)
+        local f = io.open(name,"r")
+        if f ~= nil then io.close(f) return true else return false end
+      end
+
+      -- either jc - jc/init either jc.trololo -  jc/trololo
+      local function loadModule(pseudo_path)
+        -- replace . with /
+        local str = string.gsub(pseudo_path, '%.', [[/]])
+        --print('str', str)
+        local file_path = JCDataPath .. [[lua/]] .. str .. '.lua'
+
+        if not isFileExists(file_path) then return false end
+
+        local f, message = loadfile (file_path)
+        if not f then error(message) end
+        setfenv(f, sandbox)
+        mod = f()
+        user_modules[pseudo_path] = mod
+        return true
+      end
+
+      local nothing = loadModule(s .. ".init") or loadModule(s) 
     end
     return mod
   end
