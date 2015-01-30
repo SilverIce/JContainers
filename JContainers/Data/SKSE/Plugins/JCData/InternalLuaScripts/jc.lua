@@ -401,7 +401,7 @@ do
   end
 
   function JFormMap.__newindex (optr, key, value)
-    if value ~= 0 then
+    if value then
       jclib.JFormMap_setValue(optr.___id, key, returnJCValue(value))
     else
       JFormMapNativeFuncs.removeKey(optr.___id, key)
@@ -453,7 +453,14 @@ local function testJC()
     assert(#o == size, 'expected object size is '..size..', got '..#o..' . type: '..s)
   end
 
-  local function makeRandomContainerOfType(jtype)
+  local function makeRandomContainerOfType(jtype, ...)
+    local op_table = ...
+
+    local function getOptOrDef(key, default)
+      return (op_table and op_table[key] ~= nil) and op_table[key] or default
+    end
+
+    local len = getOptOrDef('minLength',0) + math.random(0, 10)
 
     local function randomString()
       local len = math.random(1, 10)
@@ -485,7 +492,6 @@ local function testJC()
     local type2Func = {}
 
     type2Func[JArray] = function ( )
-      local len = math.random(0, 10)
       local object = JArray.objectWithSize(len)
       for i=1,len do
         object[i] = randomValue()
@@ -500,7 +506,6 @@ local function testJC()
     end
 
     type2Func[JMap] = function ( )
-      local len = math.random(0, 10)
       local object = JMap.object()
       for i=1,len do
         object[randomString()] = randomValue()
@@ -510,7 +515,6 @@ local function testJC()
     end
 
     type2Func[JFormMap] = function ( )
-      local len = math.random(0, 10)
       local object = JFormMap.object()
       for i=1,len do
         object[randomForm()] = randomValue()
@@ -573,12 +577,35 @@ local function testJC()
     assert(#o == 0)
   end
 
+
+  local function testMapType(jtype)
+    print('testMapType: ', jtype.typeName)
+    
+    do
+      local o = makeRandomContainerOfType(jtype, {minLength = 1})
+      assert(#o > 0)
+      local len = #o
+      local any_key = jtype.allKeys(o)[math.random(1, #o)]
+      assert(any_key, "nil keys is not ok")
+      o[any_key] = nil
+      assert(#o + 1 == len, "length not decreased by 1")
+    end
+
+  end
+
   -- test randomly created objects
   for i=1,20 do
     for _, jtype in ipairs(JCTypeList) do
       testType(jtype)
     end
   end
+
+  for i=1,20 do
+    for _, jtype in ipairs({JMap, JFormMap}) do
+      testMapType(jtype)
+    end
+  end
+
   --[[
   local function doWithTiming(operation_name, operation)
     local x = os.clock()
