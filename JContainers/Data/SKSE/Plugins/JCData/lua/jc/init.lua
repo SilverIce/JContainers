@@ -72,6 +72,7 @@ function jc.find(collection, predicate)
     for k,v in pairs(collection) do
         if predicate(v) then return k end
     end
+    return nil
 end
 
 
