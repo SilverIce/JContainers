@@ -10,8 +10,8 @@ namespace util {
             (LPCSTR)&dll_path,
             &hm));
 
-        char path[MAX_PATH] = { '\0' };
-        GetModuleFileNameA(hm, path, sizeof path);
+        wchar_t path[MAX_PATH] = { '\0' };
+        GetModuleFileNameW(hm, path, sizeof path);
         return boost::filesystem::path(path);
     }
 

@@ -1,9 +1,8 @@
 
 --[[
 
-For testing purposes only!
-
-You may add more functionality via creating a new .lua file in JCData/lua/ directory
+Do not modify this file!
+You may add more functionality via creating a new init.lua file in 'JCData/lua/Mod-Specific-Folder' directory
 
 Example 1
 
@@ -11,8 +10,9 @@ Example 1
 
 Example 2
 
-    int obj = JValue.objectFromPrototype("[1,2,3,4,5,6]")
-    JValue.evalLuaInt( obj, "return jc.count(jobject, jc.less(6))" ) ; should return 5
+    int obj = JValue.objectFromPrototype("[5,3,1,4,5,6]")
+    -- Counts an items where values are lesser than 6. Returns 5
+    JValue.evalLuaInt( obj, "return jc.count(jobject, jc.less(6))" )
 
 Example 3 (pseudo-code)
 
@@ -26,7 +26,8 @@ Example 3 (pseudo-code)
             }
         ]
     
-    JValue.evalLuaInt(obj, "return jc.find(jobject, function(x) return x.theSearchString == 'b' end") is 1
+    -- returns an index where x.theSearchString == 'b'. Since Lua indexing is one-based, 'evalLuaInt' returns 2
+    JValue.evalLuaInt(obj, "return jc.find(jobject, function(x) return x.theSearchString == 'b' end")
 
 --]]
 
@@ -66,11 +67,12 @@ function jc.count(collection, predicate)
     return matchCnt
 end
 
--- returns first index/key of item in collection satisfying predicate
+-- returns first index or key of item in collection satisfying predicate
 function jc.find(collection, predicate)
     for k,v in pairs(collection) do
         if predicate(v) then return k end
     end
+    return nil
 end
 
 

@@ -24,7 +24,9 @@ namespace jc {
     extern root_interface root;
 }
 
-namespace collections { namespace {
+namespace skse { namespace {
+
+    using namespace collections;
 
     static PluginHandle					g_pluginHandle = kPluginHandle_Invalid;
 
@@ -196,7 +198,7 @@ namespace collections { namespace {
 
 }
 
-namespace collections { namespace skse {
+namespace skse {
 
     namespace fake_skse {
 
@@ -284,17 +286,20 @@ namespace collections { namespace skse {
         return g_serialization == nullptr;
     }
 
-    void console_print(const char * fmt, ...) {
+    void console_print(const char * fmt, const va_list& args) {
         if (is_fake()) {
             return;
         }
         ConsoleManager	* mgr = ConsoleManager::GetSingleton();
         if (mgr) {
-            va_list	args;
-            va_start(args, fmt);
             CALL_MEMBER_FN(mgr, Print)(fmt, args);
-            va_end(args);
         }
     }
-}
+
+    void console_print(const char * fmt, ...) {
+        va_list	args;
+        va_start(args, fmt);
+        console_print(fmt, args);
+        va_end(args);
+    }
 }
