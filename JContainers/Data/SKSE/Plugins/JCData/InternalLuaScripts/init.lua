@@ -12,18 +12,8 @@ local JCDataPath, JCDllPath, JContext = ...
 
 ---------- Setup Lua, basic Lua, globals
 
--- do not allow global variable override
-setmetatable(_G, {
-  __newindex = function(t, k, v)
-    assert(not t[k], "it's not ok to override global variables")
-    rawset(t, k, v)
-  end
-})
 
-math.randomseed(os.time())
 
--- Setup globals
-package.path = ';' .. JCDataPath .. [[InternalLuaScripts/?.lua;]]
 
 JConstants = {
   DataPath = JCDataPath,
@@ -63,11 +53,8 @@ end
 ------------------------------------
 
 
--- load a module which initializes JC lua API
-local jc = require('jc')
 
--- test functionality
--- jc.testJC()
+
 
 
 -- SANDBOXING
@@ -83,7 +70,7 @@ Problems? ^^
 
 -- JValue.evalLua* sandbox
 
-
+-- Creates and returns two Lua environments
 -- First environment is for Lua scripts, second - for JValue.evalLua scripts
 local function createTwoSandboxes()
   -- all JValue.evalLua* scripts sharing the one, immutable sandbox
@@ -106,11 +93,19 @@ local function createTwoSandboxes()
     next = next,
     print = print,
 
+    pcall = pcall,
+    xpcall = xpcall,
+
     os = {
       time = os.time,
-    }
+    },
+
+    debug = {
+      traceback = debug.traceback,
+    },
   }
 
+  local jc = require 'jc'
   -- copy public things from @jc.public into sandbox
   mixIntoTable(sandbox, jc.public)
 
@@ -169,41 +164,66 @@ local function createTwoSandboxes()
 end
 
 
-
-local sandbox, evallua_sandbox = createTwoSandboxes()
-
 -------------------------------------------------------------
--- Caches compiled JValue.evalLua* string (weak cache)
-local jc_function_cache = {}
-setmetatable(jc_function_cache, {__mode = 'v' })
 
-local function compileAndCache (luaString)
-  local func = jc_function_cache[luaString]
-  if not func then
-    local f, message = loadstring('local jobject = ... ;' .. luaString)
-    if f then
-      func = f
-      setfenv(f, evallua_sandbox)
-      jc_function_cache[luaString] = f
-    else
-      error(message)
+-- creates evalLua* entry point, the function
+local function makeEvalLuaFunction()
+
+  local jc = require 'jc'
+  local wrapJCHandleAsNumber = jc.wrapJCHandleAsNumber
+  local returnJCValue = jc.returnJCValue
+
+  local sandbox, evallua_sandbox = createTwoSandboxes()
+
+  -- Caches compiled JValue.evalLua* string (weak cache). Used by .compileAndCache
+  local jc_function_cache = {}
+  setmetatable(jc_function_cache, {__mode = 'v' })
+
+  -- Caches compiled JValue.evalLua* string (weak cache).
+  local function compileAndCache (luaString)
+    local func = jc_function_cache[luaString]
+    if not func then
+      local f, message = loadstring('local jobject = ... ;' .. luaString)
+      if f then
+        func = f
+        setfenv(f, evallua_sandbox)
+        jc_function_cache[luaString] = f
+      else
+        error(message)
+      end
     end
+    return func
   end
 
-  return func
+  return function(luaString, handle)
+    local func = compileAndCache(luaString)
+    assert(func)
+    return returnJCValue( func(wrapJCHandleAsNumber(handle)) )
+  end
 end
 
-local wrapJCHandle = jc.wrapJCHandle
-local wrapJCHandleAsNumber = jc.wrapJCHandleAsNumber
-local returnJCValue = jc.returnJCValue
-
--- GLOBAL
-function JC_compileAndRun (luaString, handle)
-  local func = compileAndCache(luaString)
-  assert(func)
-  return returnJCValue( func(wrapJCHandleAsNumber(handle)) )
-end
 
 ------------------------------------
 
+local function mainRoutine()
+  -- do not allow global variable override
+  setmetatable(_G, {
+    __newindex = function(t, k, v)
+      assert(not t[k], "it's not ok to override global variables")
+      rawset(t, k, v)
+    end
+  })
 
+  math.randomseed(os.time())
+  -- Setup globals
+  package.path = ';' .. JCDataPath .. [[InternalLuaScripts/?.lua;]]
+
+
+  JC_compileAndRun = makeEvalLuaFunction()
+
+end
+
+mainRoutine()
+
+
+--JC_compileAndRun('testing.perform()')

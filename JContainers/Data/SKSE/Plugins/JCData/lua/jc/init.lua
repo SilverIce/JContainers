@@ -86,4 +86,40 @@ function jc.greater(than)
     return function(x) return x > than end
 end
 
+--[[
+
+Accumulate function group intended to replace collection operators. Usage:
+
+    int obj = JValue.objectWithPrototype("[1,1,2,3,5,8,13]")
+    -- returns maximum number - 13
+    JValua.evalLuaFlt(obj, "return jc.accumulateValues(jobject, math.max)")
+    -- returns summ
+    JValua.evalLuaFlt(obj, "return jc.accumulateValues(jobject, function(a,b) return a + b end)")
+
+--]]
+
+function jc.accumulateValues(collection, binary_function)
+    local next_key_func, coll, nil_key = pairs(collection)
+    local key = next_key_func(coll, nil_key)
+    local init = collection[key]
+    local key = next_key_func(coll, key)
+    while key do
+        init = binary_function(init, collection[key])
+        key = next_key_func(coll, key)
+    end
+    return init
+end
+
+function jc.accumulateKeys(collection, binary_function)
+    local next_key_func, coll, nil_key = pairs(collection)
+    local key = next_key_func(coll, nil_key)
+    local init = key
+    local key = next_key_func(coll, key)
+    while key do
+        init = binary_function(init, key)
+        key = next_key_func(coll, key)
+    end
+    return init
+end
+
 return jc
