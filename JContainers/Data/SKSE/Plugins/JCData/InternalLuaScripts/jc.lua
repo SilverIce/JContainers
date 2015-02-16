@@ -10,13 +10,15 @@
 ----------------------------------------------
 
 local ffi = require("ffi")
+local jclib
+-- cache a pointer to JC' tes_context
+local jc_context = JConstants.Context
 
 local function stripPath(path)
   local limit = 40
   return #path < limit and path or ( '..' .. string.sub(path, -(limit - 1)) )
 end
 
-local jclib
 do
   -- load declarations
   local function readFileContents(file)
@@ -79,6 +81,7 @@ local JValueNativeFuncs = retrieveNativeFunctions('JValue',
       count = {'int32_t', 'handle'},
       writeToFile = {'void', 'handle, cstring'},
       readFromFile = {'handle', 'cstring'},
+      objectFromPrototype = {'handle', 'cstring'},
       isArray = {'bool', 'handle'},
       isMap = {'bool', 'handle'},
       isFormMap = {'bool', 'handle'},
@@ -215,7 +218,7 @@ local function returnLuaValue(item)
     v = item.real
   elseif tp == JCValueType.form then
     v = item.form
-  elseif item.type == JCValueType.object then
+  elseif tp == JCValueType.object then
     v = wrapJCHandle(item.object)
   end
   --print('returnLuaValue result', v)
@@ -274,6 +277,10 @@ function JValue.writeToFile  ( optr, path )
   JValueNativeFuncs.writeToFile(optr.___id, path)
 end
 
+function JValue.objectFromPrototype(json_proto)
+  return wrapJCHandle( JValueNativeFuncs.objectFromPrototype(json_proto) )
+end
+
 function JValue.clear (optr)
   JValueNativeFuncs.clear(optr.___id)
 end
@@ -286,10 +293,14 @@ function JValue.deepCopy (optr)
   return wrapJCHandle(JValueNativeFuncs.deepCopy(optr.___id))
 end
 
+function JValue.solvePath(optr, path)
+  return returnLuaValue(jclib.JValue_solvePath(jc_context, optr.___id, path))
+end
+
 -- JArray
 do
   -- converts 1-based positive indexes to 0-based, doesn't change negative ones
-  local function convertIndex(idx) return idx > 0 and idx - 1 or idx end 
+  local function convertIndex(idx) return idx >= 0 and idx - 1 or idx end 
 
   function JArray.object()
     return wrapJCHandle(JArrayNativeFuncs.object())

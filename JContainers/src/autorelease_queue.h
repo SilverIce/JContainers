@@ -122,7 +122,7 @@ namespace collections {
 
         // prolongs object lifetime for ~10 seconds
         void prolong_lifetime(object_base& object, bool isPublic) {
-            jc_debug("aqueue: added id - %u as %s", object._uid(), isPublic ? "public" : "private");
+            //jc_debug("aqueue: added id - %u as %s", object._uid(), isPublic ? "public" : "private");
 
             spinlock::guard g(_queue_mutex);
             object._aqueue_push_time = isPublic ? _tickCounter : time_subtract(_tickCounter, obj_lifeInTicks);
@@ -252,7 +252,7 @@ namespace collections {
                         jc_assert(ref.get());
                         auto diff = time_subtract(_tickCounter, ref->_aqueue_push_time) + 1; // +1 because 0,1,2,3,4,5 is 6 ticks
                         bool release = diff >= obj_lifeInTicks;
-                        jc_debug("id - %u diff - %u, rc - %u", ref->_uid(), diff, ref->refCount());
+                        //jc_debug("id - %u diff - %u, rc - %u", ref->_uid(), diff, ref->refCount());
 
                         // just move out object reference to release it later
                         if (release)
@@ -265,7 +265,7 @@ namespace collections {
                 _tickCounter = time_add(_tickCounter, one_tick);
             }
 
-            jc_debug("%u objects released", _toRelease.size());
+            //jc_debug("%u objects released", _toRelease.size());
 
             // How much owners an object may have right now?
             // queue - +1

@@ -28,6 +28,7 @@ extern "C" {
 #include "collections.h"
 #include "tes_context.h"
 #include "collection_functions.h"
+#include "path_resolving.h"
 
 // Module imports:
 
@@ -247,6 +248,11 @@ namespace lua { namespace aux {
         EXPECT_TRUE(result.is_initialized());
         EXPECT_TRUE(result->intValue() == 10);
 
+    }
+
+    TEST_F(fixture, Lua, launch_all_lua_tests)
+    {
+        EXPECT_TRUE(lc.eval_lua_function(nullptr, "return testing.perform()")->intValue() != 0);
     }
 
 

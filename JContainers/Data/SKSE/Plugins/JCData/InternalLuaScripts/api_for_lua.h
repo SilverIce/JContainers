@@ -51,6 +51,7 @@ handle JValue_retain(handle obj);
 handle JValue_release(handle obj);
 handle JValue_count(handle obj);
 uint32_t JValue_typeId(handle obj);
+JCToLuaValue JValue_solvePath(handle context, handle obj, cstring path);
 
 JCToLuaValue JArray_getValue(handle obj, index key);
 void JArray_setValue(handle obj, index key, const JCValue* val);

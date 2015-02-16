@@ -96,15 +96,32 @@ Accumulate function group intended to replace collection operators. Usage:
     -- returns summ
     JValua.evalLuaFlt(obj, "return jc.accumulateValues(jobject, function(a,b) return a + b end)")
 
+    obj = [
+        {"magnitude": -9},
+        {"magnitude": 11},
+        {"magnitude": 3}
+      ]
+
+    JValua.evalLuaFlt(obj, "return jc.accumulateValues(obj, math.max, '.magnitude')") is 11
+
 --]]
 
-function jc.accumulateValues(collection, binary_function)
+function jc.accumulateValues(collection, binary_function, ...)
+    local value_path = ...
+
+    local value_getter = value_path and function(obj)
+        return JValue.solvePath(obj, value_path)
+    end
+    or function (v)
+        return v
+    end
+
     local next_key_func, coll, nil_key = pairs(collection)
     local key = next_key_func(coll, nil_key)
-    local init = collection[key]
-    local key = next_key_func(coll, key)
+    local init = value_getter(collection[key])
+    key = next_key_func(coll, key)
     while key do
-        init = binary_function(init, collection[key])
+        init = binary_function(value_getter(collection[key]), init)
         key = next_key_func(coll, key)
     end
     return init
@@ -114,7 +131,7 @@ function jc.accumulateKeys(collection, binary_function)
     local next_key_func, coll, nil_key = pairs(collection)
     local key = next_key_func(coll, nil_key)
     local init = key
-    local key = next_key_func(coll, key)
+    key = next_key_func(coll, key)
     while key do
         init = binary_function(init, key)
         key = next_key_func(coll, key)

@@ -111,6 +111,10 @@ namespace lua { namespace aux {
         itm.var().apply_visitor(converter);
         return converter.value;
     }
+    
+    JCToLuaValue JCToLuaValue_fromItem(const Item* itm) {
+        return itm ? JCToLuaValue_fromItem(*itm) : JCToLuaValue_None();
+    }
 
     void JCValue_fillItem(const JCValue *v, Item& itm) {
         switch (v ? v->type : item_type::no_item) {
@@ -181,6 +185,17 @@ namespace lua { namespace aux {
     cexport handle JValue_retain(object_base* obj) { return (obj ? obj->stack_retain(), obj : nullptr); }
     cexport handle JValue_release(object_base* obj) { return (obj ? obj->stack_release(), nullptr : nullptr); }
     cexport collections::CollectionType JValue_typeId(object_base* obj) { return (obj ? obj->_type : CollectionType::None); }
+
+    cexport JCToLuaValue JValue_solvePath(tes_context *context, object_base *obj, cstring path) {
+        assert(context && "context is null");
+        auto value = JCToLuaValue_None();
+        if (obj) {
+            collections::path_resolving::resolve(*context, obj, path, [&value](Item *itm) {
+                value = JCToLuaValue_fromItem(itm);
+            });
+        }
+        return value;
+    }
 
     cexport JCToLuaValue JArray_getValue(array* obj, index key) {
         JCToLuaValue v(JCToLuaValue_None());
