@@ -505,13 +505,13 @@ namespace collections {
             return _array;
         }
 
-        void push(const Item& item) {
+        template<class T> void push(T&& item) {
             object_lock g(this);
             u_push(item);
         }
 
-        void u_push(const Item& item) {
-            _array.push_back(item);
+        template<class T> void u_push(T&& item) {
+            _array.emplace_back(std::forward<T>(item));
         }
 
         void u_clear() override {
@@ -628,13 +628,13 @@ namespace collections {
             cnt.clear();
         }
 
-        void u_setValueForKey(const key_type& key, const Item& value) {
-            cnt[key] = value;
+        template<class T> void u_setValueForKey(const key_type& key, T&& value) {
+            cnt[key] = std::forward<T>(value);
         }
 
-        void setValueForKey(const key_type& key, const Item& value) {
+        template<class T>void setValueForKey(const key_type& key, T&& value) {
             object_lock g(this);
-            cnt[key] = value;
+            u_setValueForKey(key, value);
         }
 
         SInt32 u_count() const override {
