@@ -218,7 +218,7 @@ namespace collections {
             old.load(ar);
 
             std::sort(old.m_freeNums.begin(), old.m_freeNums.end());
-            std::unique(old.m_freeNums.begin(), old.m_freeNums.end());
+            m_freeNums.erase(std::unique(old.m_freeNums.begin(), old.m_freeNums.end()), m_freeNums.end());
 
             for (const auto& num : old.m_freeNums) {
 

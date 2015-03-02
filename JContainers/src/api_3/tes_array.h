@@ -249,7 +249,8 @@ if addToIndex >= 0 it inserts value at given index. "NEGATIVE_IDX_COMMENT);
             if (obj) {
                 object_lock g(obj);
                 std::sort(obj->u_container().begin(), obj->u_container().end());
-                std::unique(obj->u_container().begin(), obj->u_container().end());
+                auto newEnd = std::unique(obj->u_container().begin(), obj->u_container().end());
+                obj->u_container().erase(newEnd, obj->u_container().end());
             }
             return obj;
         }

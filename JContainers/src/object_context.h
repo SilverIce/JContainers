@@ -74,7 +74,7 @@ namespace collections {
 
         void clearState();
         void u_clearState();
-        // complete shutdown, shouldn't be used for after this
+        // complete shutdown, this context shouldn't be used for now
         void shutdown();
 
         void read_from_string(const std::string & data, const serialization_version version);
