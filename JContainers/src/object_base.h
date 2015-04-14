@@ -3,10 +3,10 @@
 #include <mutex>
 #include <atomic>
 #include <assert.h>
-#include <boost/smart_ptr/intrusive_ptr_jc.hpp>
 #include <boost/optional/optional.hpp>
 #include "boost/noncopyable.hpp"
 
+#include "intrusive_ptr.hpp"
 #include "spinlock.h"
 
 namespace collections {
@@ -78,6 +78,7 @@ namespace collections {
 
         // for test purpose only!
         // registers (or returns already registered) identifier
+		// never prolongs lifetime (unlike @uid() func.)
         Handle public_id();
 
         CollectionType type() const { return _type; }

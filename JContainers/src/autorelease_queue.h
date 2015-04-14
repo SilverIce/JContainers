@@ -10,7 +10,7 @@ namespace collections {
 
     class object_registry;
 
-    // The purpose of autorelease_queue is to increase object's lifetime, delay object's release
+    // The purpose of autorelease_queue (aqueue) is to temporarily own an object and increase an object's lifetime
     class autorelease_queue : boost::noncopyable {
     public:
         typedef std::lock_guard<bshared_mutex> lock;
@@ -172,8 +172,8 @@ namespace collections {
         }
 
         ~autorelease_queue() {
-            // at this point of time aqueue should be empty as whole system is in half-alive-half-destroyed state
-            // if not empty -> object_base::release_from_queue -> accesses died object_registry::removeObject
+            // at this point of time aqueue should be empty as the whole system is in half-alive-half-destroyed state
+            // if aqueue is not empty -> object_base::release_from_queue -> accesses died object_registry::removeObject -> crash
 
             stop();
             _io.stop();
@@ -238,7 +238,10 @@ namespace collections {
                 //jc_debug("aqueue code: %s - %u", e.message().c_str(), e.value());
                 if (!e) { // i.e. means no error, successful completion
                     tick();
-                }
+				}
+				else {
+					jc_debug("aqueue timer was cancelled");
+				}
             });
         }
 

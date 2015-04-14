@@ -15,8 +15,8 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 
-#include "boost/smart_ptr/intrusive_ptr.hpp"
-#include "boost_serialization_intrusive_ptr_jc.h"
+#include "intrusive_ptr.hpp"
+#include "intrusive_ptr_serialization.hpp"
 
 #include <fstream>
 #include <sstream>

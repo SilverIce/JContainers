@@ -2,6 +2,7 @@
 #include "reflection.h"
 #include "gtest.h"
 
+// C API for python scripts as a part of bundling and testing functionality
 extern "C" {
 
     __declspec(dllexport) const char * JC_versionString() {

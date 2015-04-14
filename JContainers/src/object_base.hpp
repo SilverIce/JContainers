@@ -39,8 +39,8 @@ namespace collections
             object_lock l(this);
             if (_id == HandleNull) {
                 context().registry->registerNewObjectId(*this);
-                // no owners -> should be done for sure, as we must ensure that not-owned object will not hang forever
                 if (!_refCount) {
+                // no objects-owners -> should be done for sure, as we must ensure that not-owned object will not hang forever
                     prolong_lifetime();
                 }
             }
@@ -50,15 +50,14 @@ namespace collections
         return _id;
     }
 
-    // decreases internal ref counter - _refCount OR deletes if summ refCount is 0
-    // if old refCountSumm is 1 - then release, if 0 - delete
-    // true, if object deleted
+	// AQueue is the only caller of the function. The function invoked when the object's lifetime expires.
+    // Decreases _aqueue_refCount OR deletes the object if AQueue is the ownly owner of the object
+    // Returns true, if object deleted
     bool object_base::_aqueue_release() {
         //jc_assert(_refCount > 0);
 
         if (refCount() <= 1) {
             _aqueue_refCount = 0;
-			// it's still possible that something will attepmt to access to this object now?
             _delete_self();
             return true;
         }
@@ -70,7 +69,7 @@ namespace collections
     }
 
     void object_base::_delete_self() {
-        // it's still possible that something will attepmt to access to this object now?
+        // it's still possible that something will attepmt to access this object now?
         context().registry->removeObject(*this);
         delete this;
     }

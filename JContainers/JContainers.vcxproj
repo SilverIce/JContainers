@@ -67,7 +67,7 @@
       <Optimization>Full</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <AdditionalIncludeDirectories>src;lib;lib\boost;$(SolutionDir)\dep;$(SolutionDir)\dep\skse;$(SolutionDir)\dep\jansson\jansson\src;$(SolutionDir)\dep\jansson;$(SolutionDir)\dep\luajit\luajit-2.0\src;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
@@ -100,8 +100,8 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>src;lib;lib\boost;$(SolutionDir)\dep;$(SolutionDir)\dep\skse;$(SolutionDir)\dep\jansson\jansson\src;$(SolutionDir)\dep\jansson;$(SolutionDir)\dep\luajit\luajit-2.0\src;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
@@ -110,7 +110,7 @@
       <ForcedIncludeFiles>jcontainers_pch.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <SDLCheck>true</SDLCheck>
-      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <AdditionalOptions> -D_SCL_SECURE_NO_WARNINGS</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -133,7 +133,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\api_3\tes_inteface.cpp" />
-    <ClCompile Include="src\dll_api.cpp" />
+    <ClCompile Include="src\testing_api.cpp" />
     <ClCompile Include="src\jc_interface.cpp" />
     <ClCompile Include="src\lua_module.cpp" />
     <ClCompile Include="src\object_module.cpp" />
@@ -165,12 +165,12 @@
     <ClInclude Include="src\code_producer.hpp" />
     <ClInclude Include="src\collections.tests.base.h" />
     <ClInclude Include="src\collection_bind_traits.h" />
-    <ClInclude Include="src\boost_serialization_intrusive_ptr_jc.h" />
     <ClInclude Include="src\collection_copying.h" />
     <ClInclude Include="src\collection_operators.h" />
     <ClInclude Include="src\form_handling.h" />
     <ClInclude Include="src\collection_functions.h" />
     <ClInclude Include="src\garbage_collector.h" />
+    <ClInclude Include="src\intrusive_ptr.hpp" />
     <ClInclude Include="src\jc_interface.h" />
     <ClInclude Include="src\lua_module.h" />
     <ClInclude Include="src\lua_native_funcs.hpp" />

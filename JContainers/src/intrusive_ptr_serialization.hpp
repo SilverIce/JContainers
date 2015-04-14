@@ -1,6 +1,6 @@
 #pragma once
 
-#include "boost/smart_ptr/intrusive_ptr_jc.hpp"
+#include "intrusive_ptr.hpp"
 
 #include <boost/serialization/split_free.hpp>
 #include <boost/serialization/nvp.hpp>

@@ -61,9 +61,6 @@
     <ClCompile Include="src\api_3\tes_inteface.cpp">
       <Filter>collections_module</Filter>
     </ClCompile>
-    <ClCompile Include="src\dll_api.cpp">
-      <Filter>plugin_interface</Filter>
-    </ClCompile>
     <ClCompile Include="src\util.cpp">
       <Filter>util</Filter>
     </ClCompile>
@@ -72,6 +69,9 @@
     </ClCompile>
     <ClCompile Include="src\collections.cpp">
       <Filter>collections_module</Filter>
+    </ClCompile>
+    <ClCompile Include="src\testing_api.cpp">
+      <Filter>plugin_interface</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -143,9 +143,6 @@
     <ClInclude Include="src\collection_bind_traits.h">
       <Filter>collections_module</Filter>
     </ClInclude>
-    <ClInclude Include="src\boost_serialization_intrusive_ptr_jc.h">
-      <Filter>collections_module</Filter>
-    </ClInclude>
     <ClInclude Include="src\object_base_serialization.h">
       <Filter>object_module</Filter>
     </ClInclude>
@@ -215,6 +212,9 @@
       <Filter>collections_module\lua</Filter>
     </ClInclude>
     <ClInclude Include="src\collection_copying.h">
+      <Filter>collections_module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\intrusive_ptr.hpp">
       <Filter>collections_module</Filter>
     </ClInclude>
   </ItemGroup>
