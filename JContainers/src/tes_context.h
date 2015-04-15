@@ -3,7 +3,7 @@
 #include "object_base.h"
 #include "object_context.h"
 #include "tes_error_code.h"
-#include "spinlock.h"
+#include "util/spinlock.h"
 
 #include "collections.h"
 

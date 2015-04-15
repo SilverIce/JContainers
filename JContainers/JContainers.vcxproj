@@ -147,7 +147,7 @@
     <ClCompile Include="src\collections.cpp" />
     <ClCompile Include="src\skse.cpp" />
     <ClCompile Include="src\string_wrapper.cpp" />
-    <ClCompile Include="src\util.cpp" />
+    <ClCompile Include="src\util\util.cpp" />
     <ClInclude Include="Data\SKSE\Plugins\JCData\InternalLuaScripts\api_for_lua.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\api_3\collections.tests.hpp" />
@@ -180,7 +180,8 @@
     <ClInclude Include="src\skse.h" />
     <ClInclude Include="src\reflection.h" />
     <ClInclude Include="src\typedefs.h" />
-    <ClInclude Include="src\util.h" />
+    <ClInclude Include="src\util\spinlock.h" />
+    <ClInclude Include="src\util\util.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\collections.h" />
@@ -195,7 +196,6 @@
     <ClInclude Include="src\rw_mutex.h" />
     <ClInclude Include="src\object_context.h" />
     <ClInclude Include="src\object_context.hpp" />
-    <ClInclude Include="src\spinlock.h" />
     <ClInclude Include="src\tes_binding.h" />
     <ClInclude Include="src\tes_context.h" />
     <ClInclude Include="src\tes_context.hpp" />

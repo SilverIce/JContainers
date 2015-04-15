@@ -19,9 +19,9 @@ extern "C" {
 }
 
 #include "meta.h"
-#include "util.h"
+#include "util/util.h"
 #include "gtest.h"
-#include "spinlock.h"
+#include "util/spinlock.h"
 
 #include "reflection.h"
 #include "jcontainers_constants.h"

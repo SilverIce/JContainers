@@ -7,7 +7,7 @@
 #include "boost/noncopyable.hpp"
 
 #include "intrusive_ptr.hpp"
-#include "spinlock.h"
+#include "util/spinlock.h"
 
 namespace collections {
 
@@ -35,8 +35,8 @@ namespace collections {
 
     template <class T>
     using object_stack_ref_template = boost::intrusive_ptr_jc<T, object_base_stack_ref_policy>;
-
-    typedef object_stack_ref_template<object_base> object_stack_ref;
+	using object_stack_ref = object_stack_ref_template<object_base>;
+	using spinlock = util::spinlock;
 
     class object_base// : boost::noncopyable
     {

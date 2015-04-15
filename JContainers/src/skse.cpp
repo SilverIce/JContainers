@@ -12,7 +12,7 @@
 #include "skse/GameData.h"
 
 #include "gtest.h"
-#include "util.h"
+#include "util/util.h"
 #include "jc_interface.h"
 #include "reflection.h"
 #include "jcontainers_constants.h"

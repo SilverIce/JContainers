@@ -61,9 +61,6 @@
     <ClCompile Include="src\api_3\tes_inteface.cpp">
       <Filter>collections_module</Filter>
     </ClCompile>
-    <ClCompile Include="src\util.cpp">
-      <Filter>util</Filter>
-    </ClCompile>
     <ClCompile Include="src\lua_module.cpp">
       <Filter>collections_module\lua</Filter>
     </ClCompile>
@@ -72,6 +69,9 @@
     </ClCompile>
     <ClCompile Include="src\testing_api.cpp">
       <Filter>plugin_interface</Filter>
+    </ClCompile>
+    <ClCompile Include="src\util\util.cpp">
+      <Filter>util</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -112,9 +112,6 @@
       <Filter>object_module\impl</Filter>
     </ClInclude>
     <ClInclude Include="src\object_base.h">
-      <Filter>object_module</Filter>
-    </ClInclude>
-    <ClInclude Include="src\spinlock.h">
       <Filter>object_module</Filter>
     </ClInclude>
     <ClInclude Include="src\typedefs.h" />
@@ -190,9 +187,6 @@
     <ClInclude Include="src\object_context.hpp">
       <Filter>object_module</Filter>
     </ClInclude>
-    <ClInclude Include="src\util.h">
-      <Filter>util</Filter>
-    </ClInclude>
     <ClInclude Include="src\garbage_collector.h">
       <Filter>object_module\impl</Filter>
     </ClInclude>
@@ -216,6 +210,12 @@
     </ClInclude>
     <ClInclude Include="src\intrusive_ptr.hpp">
       <Filter>collections_module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\util\spinlock.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="src\util\util.h">
+      <Filter>util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -3,7 +3,7 @@
 #include <atomic>
 #include <mutex>
 
-namespace collections {
+namespace util {
 
     class spinlock
     {

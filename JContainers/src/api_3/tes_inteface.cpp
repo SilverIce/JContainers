@@ -15,7 +15,7 @@
 #include <shlobj.h>
 
 #include "gtest.h"
-#include "util.h"
+#include "util/util.h"
 #include "jcontainers_constants.h"
 
 
