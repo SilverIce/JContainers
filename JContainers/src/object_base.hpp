@@ -34,7 +34,7 @@ namespace collections
 
     */
 
-    Handle object_base::tes_uid() {
+    Handle object_base::uid() {
         if (_id == HandleNull) {
             object_lock l(this);
             if (_id == HandleNull) {

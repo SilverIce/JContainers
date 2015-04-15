@@ -83,10 +83,7 @@ namespace collections {
 
         CollectionType type() const { return _type; }
         Handle _uid() const {  return _id; }
-        Handle uid() {  return tes_uid();}
-
-        // will mark object as publicly exposed
-        Handle tes_uid();
+		Handle uid();
 
         bool is_public() const {
             return _id != HandleNull;
