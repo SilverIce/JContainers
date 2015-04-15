@@ -21,7 +21,7 @@ namespace collections
             auto findRootObjects = [&registry, &aqueue]() -> object_list {
                 object_list roots;// (root_objects.begin(), root_objects.end());
 
-                for (auto& obj : registry.u_container()) {
+                for (auto& obj : registry.u_all_objects()) {
                     if (obj->u_is_user_retains() || obj->is_in_aqueue()) {
                         roots.push_back(obj);
                     }
@@ -34,7 +34,7 @@ namespace collections
             auto findNonReachable = [&registry](const object_list& root_objects) -> object_set {
 
                 object_list objects_to_visit(root_objects);
-                object_set not_reachable = registry.u_container(); // potentially huge op ?
+                object_set not_reachable = registry.u_all_objects(); // potentially huge op ?
 
                 for (auto& root : root_objects) {
                     not_reachable.erase(root);

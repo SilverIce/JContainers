@@ -125,7 +125,7 @@ namespace collections
             _all_objects.clear();
         }
 
-        all_objects_set& u_container() {
+        all_objects_set& u_all_objects() {
             return _all_objects;
         }
 
@@ -180,13 +180,13 @@ namespace collections
         explicit all_objects_lock(object_registry & registry)
             : _registry(registry)
         {
-            for (auto& obj : registry.u_container()) {
+            for (auto& obj : registry.u_all_objects()) {
                 obj->_mutex.lock();
             }
         }
 
         ~all_objects_lock() {
-            for (auto& obj : _registry.u_container()) {
+            for (auto& obj : _registry.u_all_objects()) {
                 obj->_mutex.unlock();
             }
         }

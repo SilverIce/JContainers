@@ -36,20 +36,20 @@ namespace collections
         /*  Not good, but working solution.
 
         purpose: free allocated memory
-        problem: regular delete call won't help as delete call will access memory of possible deleted object
+        problem: a regular delete call won't help as the delete will access memory of possible deleted objects
 
-        solution: isolate objects by nullifying cross-references, then delete objects
+        solution: isolate the objects by nullifying cross-references, then delete the objects
 
-        actually all I need is just free all allocated memory but this is hardly achievable
+        actually all I need is just free all allocated memory, but this is hardly achievable
 
         */
         {
             aqueue->u_nullify();
 
-            for (auto& obj : registry->u_container()) {
+            for (auto& obj : registry->u_all_objects()) {
                 obj->u_nullifyObjects();
             }
-            for (auto& obj : registry->u_container()) {
+            for (auto& obj : registry->u_all_objects()) {
                 delete obj;
             }
 
@@ -202,10 +202,10 @@ namespace collections
             }
 
             {
-                for (auto& obj : registry->u_container()) {
+                for (auto& obj : registry->u_all_objects()) {
                     obj->set_context(*this);
                 }
-                for (auto& obj : registry->u_container()) {
+                for (auto& obj : registry->u_all_objects()) {
                     obj->u_onLoaded();
                 }
             }
@@ -213,7 +213,7 @@ namespace collections
             u_applyUpdates(hdr.updateVersion);
             u_postLoadMaintenance(hdr.updateVersion);
 
-            _DMESSAGE("%lu objects total", registry->u_container().size());
+            _DMESSAGE("%lu objects total", registry->u_all_objects().size());
             _DMESSAGE("%lu objects in aqueue", aqueue->u_count());
         }
         aqueue->start();
@@ -238,7 +238,7 @@ namespace collections
             arch << *aqueue;
             boost::serialization::save_atomic(arch, _root_object_id);
 
-            _DMESSAGE("%lu objects total", registry->u_container().size());
+            _DMESSAGE("%lu objects total", registry->u_all_objects().size());
             _DMESSAGE("%lu objects in aqueue", aqueue->u_count());
         }
         aqueue->start();
