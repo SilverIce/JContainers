@@ -11,7 +11,7 @@ namespace lua {
     using CollectionType = collections::CollectionType;
 }
 
-namespace lua { namespace aux {
+namespace lua { namespace api {
 
     //using namespace collections;
 
