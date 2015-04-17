@@ -493,6 +493,9 @@ namespace lua { namespace aux_wip {
 		std::thread t1(task), t2(task);
 		std::this_thread::sleep_for(std::chrono::seconds(5));
 		stop.store(1, std::memory_order_release);
+
+		t1.join();
+		t2.join();
 	}
 
 
