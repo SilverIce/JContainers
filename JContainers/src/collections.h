@@ -432,6 +432,11 @@ namespace collections {
             bool operator()(const T & lhs, const T & rhs) const {
                 return lhs < rhs;
             }
+
+            bool operator()(const std::string & lhs, const std::string & rhs) const {
+                return _stricmp(lhs.c_str(), rhs.c_str()) < 0;
+            }
+
         };
 
     };
