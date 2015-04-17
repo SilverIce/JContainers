@@ -358,8 +358,8 @@ namespace collections { namespace {
             array& copy = deep_copying::deep_copy(context, root).as_link<array>();
             EXPECT_TRUE(&copy != &root);
 
-            EXPECT_TRUE(copy[0] == copy);
-            EXPECT_TRUE(root[0] == root);
+            EXPECT_TRUE(copy[0] == copy.base());
+            EXPECT_TRUE(root[0] == root.base());
 
             EXPECT_TRUE(root.s_count() == 1);
         }
@@ -379,6 +379,19 @@ namespace collections { namespace {
             EXPECT_TRUE(root["c"] != copy["c"]);
             EXPECT_TRUE(root["b"] != copy["b"]);
         }
+		{
+			auto& orig = json_deserializer::object_from_json_data(context, STR(
+				{ "c": 8.0, "obj" : [] }
+			))->as_link<map>();
+
+			auto& copy = deep_copying::shallow_copy(context, orig).as_link<map>();
+            EXPECT_TRUE(&copy != &orig);
+            EXPECT_TRUE(orig.s_count() == 2);
+			EXPECT_TRUE(copy.s_count() == 2);
+
+			EXPECT_TRUE(orig["c"] == copy["c"]);
+			EXPECT_TRUE(orig["obj"] == copy["obj"]);
+		}
     }
 
     JC_TEST(garbage_collection, no_deadlopp_proof)

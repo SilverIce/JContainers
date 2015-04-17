@@ -133,7 +133,7 @@ JValue.cleanTempLocation(\"uniqueLocationName\")"
 
         static void cleanPool(const char *poolName) {
             if (poolName) {
-                auto locationsMap = tes_context::instance().database()->find(JC_OBJECT_POOL_KEY).object()->as<map>();
+                auto locationsMap = tes_context::instance().database()->findOrDef(JC_OBJECT_POOL_KEY).object()->as<map>();
                 if (locationsMap) {
                     locationsMap->erase(poolName);
                 }

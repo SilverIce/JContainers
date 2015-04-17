@@ -33,6 +33,10 @@ namespace collections {
 
     public:
 
+        // just for convence to not use static_cast's
+        object_base& base() { return *this; }
+        const object_base& base() const { return *this; }
+
         typedef typename object_stack_ref_template<T> ref;
         typedef typename object_stack_ref_template<const T> cref;
 
@@ -405,21 +409,58 @@ namespace collections {
         template<class T> T readAs();
 
         //////////////////////////////////////////////////////////////////////////
+    private:
+        static_assert(std::is_same<
+            boost::variant<boost::blank, SInt32, Real, FormId, internal_object_ref, std::string>,
+            variant
+        >::value, "update _user2variant code below");
+
+        // maps input user type to variant type:
+        template<class T> struct _user2variant { using variant_type = T; };
+        template<class V> struct _variant_type { using variant_type = V; };
+
+        template<> struct _user2variant<uint32_t> : _variant_type<SInt32>{};
+        template<> struct _user2variant<int32_t> : _variant_type<SInt32>{};
+        template<> struct _user2variant<bool> : _variant_type<SInt32>{};
+
+        template<> struct _user2variant<double> : _variant_type<Real>{};
+
+        template<> struct _user2variant<const char*> : _variant_type<std::string>{};
+
+        //template<> struct _user2variant<object_base> : _variant_type<internal_object_ref>{};
+        template<> struct _user2variant<const object_base*> : _variant_type<internal_object_ref>{};
+
+    public:
 
         bool operator == (const Item& other) const { return isEqual(other);}
         bool operator != (const Item& other) const { return !isEqual(other);}
 
-        bool operator == (const object_base *obj) const { return obj == object(); }
+        //bool operator == (const object_base *obj) const { return obj == object(); }
         bool operator == (const object_base &obj) const { return *this == &obj; }
+
+
+/*
+        static_assert(std::is_same<
+            internal_object_ref,
+            _user2variant<std::remove_const< const object_base*  >::type >::variant_type
+        >::value, "");*/
+
+		template<class T>
+		bool operator == (const T& v) const {
+            auto thisV = boost::get<typename _user2variant<T>::variant_type >(&_var);
+            return thisV && *thisV == v;
+        }
 
         template<class T>
         bool operator != (const T& v) const { return !(*this == v); }
+
+		//////////////////////////////////////////////////////////////////////////
 
         bool operator < (const Item& other) const {
             const auto l = type(), r = other.type();
             return l == r ? boost::apply_visitor(lesser_comparison(), _var, other._var) : (l < r);
         }
-
+    private:
         class lesser_comparison : public boost::static_visitor < bool > {
         public:
 
@@ -602,16 +643,18 @@ namespace collections {
             return cnt;
         }
 
-        Item find(const key_type& key) {
+        Item findOrDef(const key_type& key) {
             object_lock g(this);
             auto result = u_find(key);
             return result ? *result : Item();
         }
 
+/*
         typename container_type::iterator findItr(const key_type& key) {
             return cnt.find(key);
         }
 
+*/
         const Item* u_find(const key_type& key) const {
             auto itr = cnt.find(key);
             return itr != cnt.end() ? &(itr->second) : nullptr;
@@ -625,7 +668,7 @@ namespace collections {
         }
 
         bool u_erase(const key_type& key) {
-            auto itr = findItr(key);
+            auto itr = cnt.find(key);
             return itr != cnt.end() ? (cnt.erase(itr), true) : false;
         }
 
