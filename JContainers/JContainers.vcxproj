@@ -180,6 +180,7 @@
     <ClInclude Include="src\skse.h" />
     <ClInclude Include="src\reflection.h" />
     <ClInclude Include="src\typedefs.h" />
+    <ClInclude Include="src\util\istring.h" />
     <ClInclude Include="src\util\spinlock.h" />
     <ClInclude Include="src\util\util.h" />
   </ItemGroup>
