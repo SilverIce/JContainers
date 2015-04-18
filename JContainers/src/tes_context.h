@@ -1,7 +1,7 @@
 #pragma once
 
-#include "object_base.h"
-#include "object_context.h"
+#include "object/object_base.h"
+#include "object/object_context.h"
 #include "tes_error_code.h"
 #include "util/spinlock.h"
 

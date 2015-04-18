@@ -27,7 +27,7 @@
 #include "collections.h"
 #include "tes_context.h"
 #include "form_handling.h"
-#include "object_base_serialization.h"
+#include "object/object_base_serialization.h"
 
 #include "tes_context.hpp"
 
@@ -215,7 +215,7 @@ namespace collections {
                 // .... A ... B..
                 // both plugins gets swapped
                 // and two form Id's swapped too: 0xaa001 swapped with 0xbb001
-                // form from the A replaces form from the B
+                // the form-id from the A replaces the form-id from the B
 
                 auto anotherOldKeyItr = cnt.find(newKey);
                 if (anotherOldKeyItr != cnt.end()) { // exactly that rare case, newKey equals to some other oldKey

@@ -193,16 +193,6 @@ namespace collections {
             return _tag && tag ? _strcmpi(_tag.get().c_str(), tag) == 0 : false;
         }
 
-        virtual bool is_equal_to(const object_base& other) const {
-            return
-                _id == other._id &&
-                _type == other._type &&
-                _refCount == other._refCount &&
-                _tes_refCount == other._tes_refCount &&
-                _stack_refCount == other._stack_refCount &&
-                u_count() == other.u_count();
-        }
-
         virtual void u_visit_referenced_objects(const std::function<void(object_base&)>& visitor) {}
     };
 

@@ -12,7 +12,7 @@
 #include "skse/GameForms.h"
 
 //#include "tes_context.h"
-#include "object_base.h"
+#include "object/object_base.h"
 #include "skse.h"
 
 namespace collections {

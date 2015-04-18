@@ -133,10 +133,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\api_3\tes_inteface.cpp" />
+    <ClCompile Include="src\object\object_module.cpp" />
     <ClCompile Include="src\testing_api.cpp" />
     <ClCompile Include="src\jc_interface.cpp" />
     <ClCompile Include="src\lua_module.cpp" />
-    <ClCompile Include="src\object_module.cpp" />
     <ClCompile Include="src\gtest.cpp" />
     <ClCompile Include="src\jcontainers_pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -160,7 +160,6 @@
     <ClInclude Include="src\api_3\tes_map.h" />
     <ClInclude Include="src\api_3\tes_object.h" />
     <ClInclude Include="src\api_3\tes_string.h" />
-    <ClInclude Include="src\autorelease_queue.h" />
     <ClInclude Include="src\boost_extras.h" />
     <ClInclude Include="src\code_producer.hpp" />
     <ClInclude Include="src\collections.tests.base.h" />
@@ -169,12 +168,19 @@
     <ClInclude Include="src\collection_operators.h" />
     <ClInclude Include="src\form_handling.h" />
     <ClInclude Include="src\collection_functions.h" />
-    <ClInclude Include="src\garbage_collector.h" />
     <ClInclude Include="src\intrusive_ptr.hpp" />
     <ClInclude Include="src\jc_interface.h" />
     <ClInclude Include="src\lua_module.h" />
     <ClInclude Include="src\lua_native_funcs.hpp" />
-    <ClInclude Include="src\object_base_serialization.h" />
+    <ClInclude Include="src\object\autorelease_queue.h" />
+    <ClInclude Include="src\object\garbage_collector.h" />
+    <ClInclude Include="src\object\id_generator.h" />
+    <ClInclude Include="src\object\object_base.h" />
+    <ClInclude Include="src\object\object_base.hpp" />
+    <ClInclude Include="src\object\object_base_serialization.h" />
+    <ClInclude Include="src\object\object_context.h" />
+    <ClInclude Include="src\object\object_context.hpp" />
+    <ClInclude Include="src\object\object_registry.h" />
     <ClInclude Include="src\path_resolving.h" />
     <ClInclude Include="src\jcontainers_constants.h" />
     <ClInclude Include="src\skse.h" />
@@ -187,16 +193,9 @@
   <ItemGroup>
     <ClInclude Include="src\collections.h" />
     <ClInclude Include="src\gtest.h" />
-    <ClInclude Include="src\id_generator.h" />
     <ClInclude Include="src\jcontainers_pch.h" />
     <ClInclude Include="src\json_handling.h" />
     <ClInclude Include="src\meta.h" />
-    <ClInclude Include="src\object_base.h" />
-    <ClInclude Include="src\object_base.hpp" />
-    <ClInclude Include="src\object_registry.h" />
-    <ClInclude Include="src\rw_mutex.h" />
-    <ClInclude Include="src\object_context.h" />
-    <ClInclude Include="src\object_context.hpp" />
     <ClInclude Include="src\tes_binding.h" />
     <ClInclude Include="src\tes_context.h" />
     <ClInclude Include="src\tes_context.hpp" />

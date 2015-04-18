@@ -19,8 +19,8 @@
 #include "jcontainers_constants.h"
 
 
-#include "object_context.h"
-#include "object_base.h"
+#include "object/object_context.h"
+#include "object/object_base.h"
 
 #include "tes_error_code.h"
 #include "tes_context.h"
