@@ -98,6 +98,8 @@ local function createTwoSandboxes()
 
     os = {
       time = os.time,
+	  tmpname = os.tmpname,
+	  remove = os.remove,
     },
 
     debug = {

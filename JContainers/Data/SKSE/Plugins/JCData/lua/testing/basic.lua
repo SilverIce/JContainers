@@ -114,16 +114,19 @@ return function()
   local function readWriteJSONTest( o )
     assert(o)
 
-    local path = 'C:/lua/i_love_lua2.txt'
-    JValue.writeToFile(o, path)
+    local path = os.tmpname()
+	do
+      JValue.writeToFile(o, path)
 
-    local o2 = JValue.readFromFile(path)
-    assert(o2)
-    assert(o ~= o2)
-    assert(JValue.typeOf(o) == JValue.typeOf(o2), 'types are not equal. '..JValue.typeOf(o).typeName..'!='..JValue.typeOf(o2).typeName)
-    assert(#o == #o2, 'lengths ' .. #o .. ' ~= ' .. #o2)
+      local o2 = JValue.readFromFile(path)
+      assert(o2, "can't read from "..path)
+      assert(o ~= o2)
+      assert(JValue.typeOf(o) == JValue.typeOf(o2), 'types are not equal. '..JValue.typeOf(o).typeName..'!='..JValue.typeOf(o2).typeName)
+      assert(#o == #o2, 'lengths ' .. #o .. ' ~= ' .. #o2)
 
-    assert(hasEqualContent(o, o2))
+      assert(hasEqualContent(o, o2))
+	end
+	os.remove (path)
   end
 
   local function testType(jtype)
