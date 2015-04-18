@@ -187,7 +187,7 @@ namespace tes_api_3 {
         });
 
         path_resolving::resolve(tes_context::instance(), obj, ".fmap[__formData|S|0x20]", [&](Item * item) {
-            EXPECT_TRUE(item && item->isEqual(8.f));
+            EXPECT_TRUE(item && *item == 8.f);
         });
 
         shouldSucceed(".nonExistingKey", false);

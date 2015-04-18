@@ -67,27 +67,27 @@ namespace collections { namespace {
         EXPECT_TRUE(i1.isNull());
         EXPECT_TRUE(i2.isNull());
 
-        EXPECT_TRUE(i1.isEqual(i1));
-        EXPECT_TRUE(i1.isEqual(i2));
+        EXPECT_TRUE(i1 == i1);
+        EXPECT_TRUE(i1 == i2);
 
         i1 = "me";
         i2 = "Me";
-        EXPECT_TRUE(i1.isEqual(i2));
+        EXPECT_TRUE(i1 == i2);
 
         i2 = "not me";
-        EXPECT_FALSE(i1.isEqual(i2));
+        EXPECT_FALSE(i1 == i2);
 
         i1 = 1u;
         i2 = 1u;
-        EXPECT_TRUE(i1.isEqual(i2));
+        EXPECT_TRUE(i1 == i2);
 
         i2 = 1.5f;
-        EXPECT_FALSE(i1.isEqual(i2));
+        EXPECT_FALSE(i1 == i2);
 
         auto& obj = array::object(context);
         i1 = obj;
         i2 = obj;
-        EXPECT_TRUE(i1.isEqual(i2));
+        EXPECT_TRUE(i1 == i2);
     }
 
     JC_TEST(Item, less_than)
@@ -96,6 +96,8 @@ namespace collections { namespace {
         EXPECT_TRUE(Item(1.0) < Item(2.0));
         EXPECT_TRUE(Item(10) < Item(FormZero));
         EXPECT_TRUE(Item("aa") < Item("text"));
+        EXPECT_TRUE(Item("A") < Item("b"));
+
         //EXPECT_TRUE(Item(1.0) < Item(FormZero));
     }
 

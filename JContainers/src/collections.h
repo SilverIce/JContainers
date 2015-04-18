@@ -229,7 +229,7 @@ namespace collections {
         explicit Item(const std::string& val) : _var(val) {}
         explicit Item(std::string&& val) : _var(val) {}
 
-        // these are none if data pointers zero
+        // the Item is none if the pointers below are zero:
         explicit Item(const TESForm *val) {
             *this = val;
         }
@@ -252,7 +252,7 @@ namespace collections {
 
         Item& operator = (unsigned int val) { _var = (SInt32)val; return *this;}
         Item& operator = (int val) { _var = (SInt32)val; return *this;}
-        //Item& operator = (bool val) { _var = (SInt32)val; return *this;}
+        Item& operator = (bool val) { _var = (SInt32)val; return *this;}
         Item& operator = (SInt32 val) { _var = val; return *this;}
         Item& operator = (Real val) { _var = val; return *this; }
         Item& operator = (double val) { _var = (Real)val; return *this; }
@@ -263,8 +263,8 @@ namespace collections {
         Item& operator = (object_base& v) { _var = &v; return *this; }
 
 
-        // prevent form id be saved like integral number
         Item& operator = (FormId formId) {
+            // prevent zero FormId from being saved
             if (formId) {
                 _var = formId;
             } else {
@@ -274,7 +274,7 @@ namespace collections {
         }
 
         template<class T>
-        Item& _assignToPtr(T *ptr) {
+        Item& _assignPtr(T *ptr) {
             if (ptr) {
                 _var = ptr;
             } else {
@@ -284,11 +284,11 @@ namespace collections {
         }
 
         Item& operator = (const char *val) {
-            return _assignToPtr(val);
+            return _assignPtr(val);
         }
 
         Item& operator = (object_base *val) {
-            return _assignToPtr(val);
+            return _assignPtr(val);
         }
 
         Item& operator = (const TESForm *val) {
@@ -368,32 +368,6 @@ namespace collections {
             }
         };
 
-        bool isEqual(SInt32 value) const {
-            return is_type<SInt32>() && intValue() == value;
-        }
-
-        bool isEqual(Real value) const {
-            return is_type<Real>() && fltValue() == value;
-        }
-
-        bool isEqual(const char* value) const {
-            auto str1 = strValue();
-            auto str2 = value;
-            return str1 && str2 && _stricmp(str1, str2) == 0;
-        }
-
-        bool isEqual(const object_base *value) const {
-            return is_type<internal_object_ref>() && object() == value;
-        }
-
-        bool isEqual(const object_stack_ref& value) const {
-            return isEqual(value.get());
-        }
-
-        bool isEqual(const TESForm *value) const {
-            return is_type<FormId>() && formId() == (value ? value->formID : 0);
-        }
-
         bool isEqual(const Item& other) const {
             return boost::apply_visitor(are_strict_equals(), _var, other._var);
         }
@@ -435,15 +409,7 @@ namespace collections {
         bool operator == (const Item& other) const { return isEqual(other);}
         bool operator != (const Item& other) const { return !isEqual(other);}
 
-        //bool operator == (const object_base *obj) const { return obj == object(); }
         bool operator == (const object_base &obj) const { return *this == &obj; }
-
-
-/*
-        static_assert(std::is_same<
-            internal_object_ref,
-            _user2variant<std::remove_const< const object_base*  >::type >::variant_type
-        >::value, "");*/
 
 		template<class T>
 		bool operator == (const T& v) const {
@@ -649,12 +615,6 @@ namespace collections {
             return result ? *result : Item();
         }
 
-/*
-        typename container_type::iterator findItr(const key_type& key) {
-            return cnt.find(key);
-        }
-
-*/
         const Item* u_find(const key_type& key) const {
             auto itr = cnt.find(key);
             return itr != cnt.end() ? &(itr->second) : nullptr;
