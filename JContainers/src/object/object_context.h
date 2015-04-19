@@ -46,6 +46,8 @@ namespace collections {
         void u_applyUpdates(const serialization_version saveVersion);
         void u_postLoadMaintenance(const serialization_version saveVersion);
 
+        void u_print_stats() const;
+
     public:
         object_registry* registry;
         autorelease_queue* aqueue;

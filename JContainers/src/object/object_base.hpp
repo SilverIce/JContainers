@@ -40,22 +40,21 @@ namespace collections
             if (_id == HandleNull) {
                 context().registry->registerNewObjectId(*this);
                 if (!_refCount) {
-                // no objects-owners -> should be done for sure, as we must ensure that not-owned object will not hang forever
+                    // prolong_lifetime if the object is not referenced by another objects -> should be done,
+                    // as we must ensure that not-owned object will not hang forever
                     prolong_lifetime();
                 }
             }
         }
 
-        // it's possible that release from queue will arrive just before public id will be exposed?
+        // it's possible that release from queue will happen just before public id will be exposed?
         return _id;
     }
 
 	// AQueue is the only caller of the function. The function invoked when the object's lifetime expires.
-    // Decreases _aqueue_refCount OR deletes the object if AQueue is the ownly owner of the object
+    // Decreases _aqueue_refCount OR deletes the object if AQueue is the only owner of the object
     // Returns true, if object deleted
     bool object_base::_aqueue_release() {
-        //jc_assert(_refCount > 0);
-
         if (refCount() <= 1) {
             _aqueue_refCount = 0;
             _delete_self();
@@ -84,18 +83,18 @@ namespace collections
         if (_tes_refCount > 0) {
             --_tes_refCount;
             if (noOwners()) {
+                // a user releases the object, no owners - I may even delete it immediately
                 context().aqueue->prolong_lifetime(*this, false);
             }
         }
     }
 
     void object_base::stack_release() {
-        // an object can be simultaneously released in diff. threads twice (example - tes_context.setDatabase) -- assertion disabled:
-        //jc_assert(_refCount > 0);
-
         if (_stack_refCount > 0) {
             --_stack_refCount;
             if (noOwners()) {
+                // the object no more referenced by Lua or stack, no owners - I may even delete it immediately
+                // (immediately if not exposed to Skyrim)
                 prolong_lifetime();
             }
         }
@@ -108,6 +107,8 @@ namespace collections
         if (_refCount > 0) {
             --_refCount;
             if (noOwners()) {
+                // the object get's erased from another object, no owners - I may even delete it immediately
+                // (immediately if not exposed to Skyrim)
                 prolong_lifetime();
             }
         }

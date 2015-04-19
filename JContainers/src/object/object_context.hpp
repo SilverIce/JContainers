@@ -213,8 +213,7 @@ namespace collections
             u_applyUpdates(hdr.updateVersion);
             u_postLoadMaintenance(hdr.updateVersion);
 
-            _DMESSAGE("%lu objects total", registry->u_all_objects().size());
-            _DMESSAGE("%lu objects in aqueue", aqueue->u_count());
+            u_print_stats();
         }
         aqueue->start();
     }
@@ -238,10 +237,15 @@ namespace collections
             arch << *aqueue;
             boost::serialization::save_atomic(arch, _root_object_id);
 
-            _DMESSAGE("%lu objects total", registry->u_all_objects().size());
-            _DMESSAGE("%lu objects in aqueue", aqueue->u_count());
+            u_print_stats();
         }
         aqueue->start();
+    }
+
+    void object_context::u_print_stats() const {
+        _DMESSAGE("%lu objects total", registry->u_all_objects().size());
+        _DMESSAGE("%lu public objects", registry->u_public_object_count());
+        _DMESSAGE("%lu objects in aqueue", aqueue->u_count());
     }
 
     //////////////////////////////////////////////////////////////////////////

@@ -107,18 +107,6 @@ namespace collections
             return nullptr;
         }
 
-        template<class T>
-        T *getObjectOfType(Handle hdl) const {
-            auto obj = getObject(hdl);
-            return obj->as<T>();
-        }
-
-        template<class T>
-        T *u_getObjectOfType(Handle hdl) const {
-            auto obj = u_getObject(hdl);
-            return obj->as<T>();
-        }
-
         void u_clear() {
             _map.clear();
             _idGen.u_clear();
@@ -127,6 +115,10 @@ namespace collections
 
         all_objects_set& u_all_objects() {
             return _all_objects;
+        }
+
+        size_t u_public_object_count() const {
+            return _map.size();
         }
 
         friend class boost::serialization::access;
@@ -172,28 +164,6 @@ namespace collections
             }
         }
     };
-
-    struct all_objects_lock
-    {
-        object_registry &_registry;
-
-        explicit all_objects_lock(object_registry & registry)
-            : _registry(registry)
-        {
-            for (auto& obj : registry.u_all_objects()) {
-                obj->_mutex.lock();
-            }
-        }
-
-        ~all_objects_lock() {
-            for (auto& obj : _registry.u_all_objects()) {
-                obj->_mutex.unlock();
-            }
-        }
-
-    };
-
-
 }
 
 BOOST_CLASS_VERSION(collections::object_registry, 1);
