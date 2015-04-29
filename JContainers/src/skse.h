@@ -4,7 +4,7 @@
 
 class TESForm;
 
-// Wraps calls to SKSE. Fakes them when SKSE/Skyrim inactive (during synthetic tests)
+// Wraps calls to SKSE. Fakes the calls when SKSE/Skyrim inactive (during synthetic tests)
 namespace skse {
     // pass static form ids here only
     const char * modname_from_index(uint8_t idx);
