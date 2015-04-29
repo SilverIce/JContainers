@@ -217,6 +217,12 @@
     <ClInclude Include="src\object\id_generator.h">
       <Filter>object_module\impl</Filter>
     </ClInclude>
+    <ClInclude Include="src\collection_item.h">
+      <Filter>collections_module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\collection_types.h">
+      <Filter>collections_module</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="JContainers.rc" />

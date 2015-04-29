@@ -165,7 +165,9 @@
     <ClInclude Include="src\collections.tests.base.h" />
     <ClInclude Include="src\collection_bind_traits.h" />
     <ClInclude Include="src\collection_copying.h" />
+    <ClInclude Include="src\collection_item.h" />
     <ClInclude Include="src\collection_operators.h" />
+    <ClInclude Include="src\collection_types.h" />
     <ClInclude Include="src\form_handling.h" />
     <ClInclude Include="src\collection_functions.h" />
     <ClInclude Include="src\intrusive_ptr.hpp" />
