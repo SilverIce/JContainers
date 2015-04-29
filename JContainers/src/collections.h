@@ -6,6 +6,7 @@
 
 #include <boost/serialization/split_member.hpp>
 #include <boost/variant.hpp>
+#include <boost/optional.hpp>
 
 #include "common/ITypes.h"
 #include "common/IDebugLog.h"
@@ -512,7 +513,7 @@ namespace collections {
             return _array;
         }
 
-        container_type container_copy() {
+        container_type container_copy() const {
             object_lock g(this);
             return _array;
         }
@@ -536,34 +537,46 @@ namespace collections {
 
         void u_nullifyObjects() override;
 
-        int32_t u_convertIndex(int32_t idx) const {
-            return idx >= 0 ? idx : ((int32_t)_array.size() - idx);
+        void u_visit_referenced_objects(const std::function<void(object_base&)>& visitor) override {
+            for (auto& item : _array) {
+                if (auto obj = item.object()) {
+                    visitor(*obj);
+                }
+            }
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+
+        boost::optional<int32_t> u_convertIndex(int32_t pyIndex) const {
+            int32_t count = (int32_t)_array.size();
+            int32_t index = (pyIndex >= 0 ? pyIndex : (count + pyIndex));
+            return{ index >= 0 && index < count, index };
         }
 
         Item* u_getItem(int32_t index) {
             auto idx = u_convertIndex(index);
-            return idx < _array.size() ? &_array[idx] : nullptr;
+            return idx ? &_array[*idx] : nullptr;
         }
 
         void setItem(int32_t index, const Item& itm) {
             object_lock g(this);
             auto idx = u_convertIndex(index);
-            if (idx < _array.size()) {
-                _array[idx] = itm;
+            if (idx) {
+                _array[*idx] = itm;
             }
         }
 
         Item& operator [] (int32_t index) { return const_cast<Item&>(const_cast<const array*>(this)->operator[](index)); }
         const Item& operator [] (int32_t index) const {
             auto idx = u_convertIndex(index);
-            assert(idx < _array.size());
-            return _array[index];
+            assert(idx);
+            return _array[*idx];
         }
 
         Item getItem(int32_t index) {
             object_lock lock(this);
-            auto idx = u_convertIndex(index);
-            return idx < _array.size() ? _array[idx] : Item();
+            auto itm = u_getItem(index);
+            return itm ? *itm : Item();
         }
 
         iterator begin() { return _array.begin();}
@@ -572,13 +585,6 @@ namespace collections {
         reverse_iterator rbegin() { return _array.rbegin();}
         reverse_iterator rend() { return _array.rend(); }
 
-        void u_visit_referenced_objects(const std::function<void(object_base& )>& visitor) override {
-            for (auto& item : _array) {
-                if (auto obj = item.object()) {
-                    visitor(*obj);
-                }
-            }
-        }
 
         //////////////////////////////////////////////////////////////////////////
 

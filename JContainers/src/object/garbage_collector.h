@@ -22,6 +22,7 @@ namespace collections
                 object_list roots;// (root_objects.begin(), root_objects.end());
 
                 for (auto& obj : registry.u_all_objects()) {
+                    // stack ref. count not taken into account as this ref.count is not persistent
                     if (obj->u_is_user_retains() || obj->is_in_aqueue()) {
                         roots.push_back(obj);
                     }

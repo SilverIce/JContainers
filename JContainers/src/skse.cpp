@@ -254,7 +254,7 @@ namespace skse {
         if (g_serialization) {
             UInt64 newId = handle;
             g_serialization->ResolveHandle(handle, &newId);
-            return newId;
+            return (uint32_t)newId;
         }
 
         return handle;
