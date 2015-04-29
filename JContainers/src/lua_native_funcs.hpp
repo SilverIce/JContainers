@@ -26,20 +26,8 @@ namespace lua { namespace api {
     }
 
     cexport void* JC_get_c_function(const char *functionName, const char * className) {
-        using namespace reflection;
-
-        c_function functionPtr = nullptr;
-        auto& db = class_database();
-        auto itr = db.find(className);
-        if (itr != db.end()) {
-            auto& cls = itr->second;
-
-            if (const function_info* fInfo = cls.find_function(functionName)) {
-                functionPtr = fInfo->c_func;
-            }
-        }
-
-        return functionPtr;
+        auto fi = reflection::find_function_of_class(functionName, className);
+        return fi ? fi->c_func : nullptr;
     }
 
     JCToLuaValue JCToLuaValue_None() {

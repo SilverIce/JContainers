@@ -88,6 +88,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <Version>0.66</Version>
+      <Profile>true</Profile>
     </Link>
     <PostBuildEvent />
     <Bscmake />
@@ -123,6 +124,7 @@
       <SubSystem>Console</SubSystem>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <Profile>true</Profile>
     </Link>
     <PostBuildEvent />
     <Bscmake />

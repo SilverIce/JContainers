@@ -4,94 +4,28 @@
 
 namespace util {
 
-    class istring {
-    public:
-        using str = std::string;
-        using elem = string::value_type;
-        using selem = const elem*;
+    struct istring_traits : public std::char_traits<char> {
 
-    private:
-        str _str;
-
-    public:
-
-        istring() {}
-        
-        istring(const elem * s) : _str(s) {}
-        istring(const string& s) : _str(s) {}
-        istring(const istring& s) : _str(s._str) {}
-
-        istring(istring&& s) : _str(std::move(s._str)) {}
-        istring(string&& s) : _str(s) {}
-
-        istring& operator = (const char* s) {
-            _str = s;
-            return *this;
+        static bool eq(char c1, char c2) {
+            return tolower(c1) == tolower(c2);
         }
-        istring& operator = (const istring& s) {
-            _str = s._str;
-            return *this;
+        static bool lt(char c1, char c2) {
+            return tolower(c1) < tolower(c2);
         }
-        istring& operator = (const string& s) {
-            _str = s;
-            return *this;
+        static int compare(const char* s1, const char* s2, size_t n) {
+            return n > 0 ? _stricmp(s1, s2) : 0;
         }
-
-        istring& operator = (istring&& s) {
-            _str = std::move(s._str);
-            return *this;
+        static const char* find(const char* s, int n, char a) {
+            while (n-- > 0 && tolower(*s) != tolower(a)) {
+                ++s;
+            }
+            return s;
         }
-        istring& operator = (string&& s) {
-            _str = s;
-            return *this;
+        static bool eq_int_type(const int_type& _Left, const int_type& _Right)
+        {	// test for metacharacter equality
+            return (tolower(_Left) == tolower(_Right));
         }
-
-        selem c_str() const {
-            return _str.c_str();
-        }
-
-        str& string() { return _str; }
-        const str& string() const { return _str; }
     };
 
-    namespace istring_comparison {
-
-        namespace {
-            template<class T>
-            istring::selem get_char(const T& l) {
-                return l.c_str();
-            }
-            istring::selem& get_char(istring::selem& l) {
-                return l;
-            }
-
-            template<class T, class U>
-            int compare(const T& l, const U& r) {
-                return _stricmp(get_char(l), get_char(r));
-            }
-        }
-
-        template<class T>
-        bool operator == (const istring& l, const T& r) { return compare(l, r) == 0; }
-
-        template<class T>
-        bool operator != (const T& l, const istring& r) { return !(r == l); }
-
-        //////////////////////////////////////////////////////////////////////////
-
-        template<class T>
-        bool operator < (const istring& l, const T& r) { return compare(l, r) < 0; }
-
-        template<class T>
-        bool operator < (const T& l, const istring& r) { return compare(l, r) < 0; }
-
-        //////////////////////////////////////////////////////////////////////////
-
-        template<class T>
-        bool operator > (const istring& l, const T& r) { return compare(l, r) > 0; }
-
-        template<class T>
-        bool operator > (const T& l, const istring& r) { return compare(l, r) > 0; }
-
-    }
+    typedef std::basic_string<char, istring_traits, std::allocator<char> > istring;
 }

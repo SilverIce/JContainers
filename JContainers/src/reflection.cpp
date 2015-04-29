@@ -7,14 +7,14 @@
 namespace reflection {
 
     void function_info::bind(VMClassRegistry *registry, const char *className) const {
-        registrator(registry, className, name);
-        registry->SetFunctionFlags(className, name, VMClassRegistry::kFunctionFlag_NoWait);
+        registrator(registry, className, name.c_str());
+        registry->SetFunctionFlags(className, name.c_str(), VMClassRegistry::kFunctionFlag_NoWait);
     }
 
-    const std::map<std::string, class_info, string_icomparison>& class_database() {
+    const std::map<istring, class_info>& class_database() {
 
         auto makeDB = []() {
-            std::map<std::string, class_info, string_icomparison> classDB;
+            std::map<istring, class_info> classDB;
 
             for (auto & item : meta<class_info_creator>::getListConst()) {
                 class_info& info = item();
@@ -31,24 +31,21 @@ namespace reflection {
             return classDB;
         };
 
-        static std::map<std::string, class_info, string_icomparison> classDB = makeDB();
+        static std::map<istring, class_info> classDB = makeDB();
         return classDB;
     }
 
-    void* find_tes_function_of_class(const char * functionName, const char *className) {
+    const function_info* find_function_of_class(const char * functionName, const char *className) {
 
-        void * functionPtr = nullptr;
+        const function_info * fInfo = nullptr;
 
         auto& db = class_database();
         auto itr = db.find(className);
         if (itr != db.end()) {
             auto& cls = itr->second;
-
-            if (const function_info* fInfo = cls.find_function(functionName)) {
-                functionPtr = fInfo->tes_func;
-            }
+            fInfo = cls.find_function(functionName);
         }
 
-        return functionPtr;
+        return fInfo;
     }
 }

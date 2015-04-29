@@ -11,11 +11,11 @@ namespace reflection {
     namespace code_producer {
 
         void _pushArgStr(const function_info& self, int paramIdx, std::string& str) {
-            std::vector<std::string> strings;
-            boost::split(strings, std::string(self.argument_names ? self.argument_names : ""), boost::is_space());
+            std::vector<istring> strings;
+            boost::split(strings, self.argument_names, boost::is_space());
 
             if (paramIdx < strings.size() && strings[paramIdx] != "*") {
-                str += strings[paramIdx];
+                str += strings[paramIdx].c_str();
             }
             else {
                 auto types = self.param_list_func();
@@ -55,7 +55,7 @@ namespace reflection {
             }
 
             str += "function ";
-            str += self.name;
+            str += self.name.c_str();
             str += '(';
             for (int i = 1; i < types.size(); ++i) {
                 str += types[i]().tes_type_name;
@@ -79,10 +79,10 @@ namespace reflection {
             _pushComment(self.comment, str);
 
             str += "Scriptname ";
-            str += self.className();
+            str += self.className().c_str();
 
             if (!self.extendsClass.empty()) {
-                (str += " extends ") += self.extendsClass;
+                (str += " extends ") += self.extendsClass.c_str();
             }
 
             str += " Hidden\n\n";
@@ -101,7 +101,7 @@ namespace reflection {
         }
 
         void produceClassToFile(const class_info& self, const std::string& directoryPath) {
-            auto path = (!directoryPath.empty() ? (directoryPath + "\\") : "") + self.className() + ".psc";
+            auto path = (!directoryPath.empty() ? (directoryPath + "\\") : "") + self.className().c_str() + ".psc";
             auto file = fopen(path.c_str(), "w");
             assert(file);
             if (file) {
