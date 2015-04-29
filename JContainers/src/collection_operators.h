@@ -4,18 +4,14 @@
 
 #include <thread>
 #include "meta.h"
+#include "util/istring.h"
 
 namespace collections {
 
     namespace collection_operators
     {
+        using istring = util::istring;
         typedef void (*operator_func)(const Item& item, Item& state);
-
-        struct case_insensitive { 
-            bool operator() (const std::string& lhs, const std::string& rhs) const {
-                return _stricmp(lhs.c_str(), rhs.c_str()) < 0;
-            }
-        };
 
         struct coll_operator {
             operator_func func;
@@ -28,7 +24,7 @@ namespace collections {
             }
         };
 
-        typedef std::map<std::string, coll_operator*, case_insensitive> operator_map;
+        typedef std::map<istring, coll_operator*> operator_map;
 
 #define COLLECTION_OPERATOR(func, descr) \
     static ::meta<coll_operator> g_collection_operator_##func(coll_operator::make(func, #func, descr));

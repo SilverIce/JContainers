@@ -137,7 +137,7 @@ namespace collections
                     return state(false, st);
                 }
 
-                auto opr = collection_operators::get_operator(operationStr);
+                auto opr = collection_operators::get_operator(operationStr.c_str());
 
                 if (!opr) {
                     return state(false, st);
