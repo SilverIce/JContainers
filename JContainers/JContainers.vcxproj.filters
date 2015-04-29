@@ -73,6 +73,9 @@
     <ClCompile Include="src\object\object_module.cpp">
       <Filter>object_module\impl</Filter>
     </ClCompile>
+    <ClCompile Include="src\skse_api.cpp">
+      <Filter>plugin_interface</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\collections.h">

@@ -88,7 +88,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <Version>0.66</Version>
-      <Profile>true</Profile>
     </Link>
     <PostBuildEvent />
     <Bscmake />
@@ -124,7 +123,6 @@
       <SubSystem>Console</SubSystem>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <Profile>true</Profile>
     </Link>
     <PostBuildEvent />
     <Bscmake />
@@ -136,6 +134,7 @@
   <ItemGroup>
     <ClCompile Include="src\api_3\tes_inteface.cpp" />
     <ClCompile Include="src\object\object_module.cpp" />
+    <ClCompile Include="src\skse_api.cpp" />
     <ClCompile Include="src\testing_api.cpp" />
     <ClCompile Include="src\jc_interface.cpp" />
     <ClCompile Include="src\lua_module.cpp" />

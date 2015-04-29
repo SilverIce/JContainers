@@ -14,6 +14,7 @@ namespace skse {
     TESForm* lookup_form(uint32_t handle);
 
     bool is_fake();
+    void set_no_fake();
     void console_print(const char * fmt, ...);
     void console_print(const char * fmt, const va_list& args);
 }
