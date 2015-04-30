@@ -66,7 +66,7 @@ namespace tes_api_3 {
         REGISTERF(fromArray<SInt32>, "objectWithInts", "values",
 "creates new array that contains given values\n\
 objectWithBooleans converts booleans into integers");
-        REGISTERF(fromArray<BSFixedString>, "objectWithStrings",  "values", nullptr);
+        REGISTERF(fromArray<skse::string_ref>, "objectWithStrings",  "values", nullptr);
         REGISTERF(fromArray<Float32>, "objectWithFloats",  "values", nullptr);
         REGISTERF(fromArray<bool>, "objectWithBooleans",  "values", nullptr);
 
@@ -140,7 +140,7 @@ NEGATIVE_IDX_COMMENT);
         REGISTERF(itemAtIndex<SInt32>, "getInt", "* index default=0", "returns item at index. getObj function returns container.\n"
             NEGATIVE_IDX_COMMENT);
         REGISTERF(itemAtIndex<Float32>, "getFlt", "* index default=0.0", "");
-        REGISTERF(itemAtIndex<BSFixedString>, "getStr", "* index default=\"\"", "");
+        REGISTERF(itemAtIndex<skse::string_ref>, "getStr", "* index default=\"\"", "");
         REGISTERF(itemAtIndex<object_base*>, "getObj", "* index default=0", "");
         REGISTERF(itemAtIndex<TESForm*>, "getForm", "* index default=None", "");
 

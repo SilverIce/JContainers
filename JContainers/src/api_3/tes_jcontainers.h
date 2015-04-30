@@ -69,7 +69,7 @@ namespace tes_api_3 {
             return path;
         }
 
-        static BSFixedString _userDirectory() {
+        static skse::string_ref _userDirectory() {
             return userDirectory().c_str();
         }
         REGISTERF(_userDirectory, "userDirectory", "", "A path to user-specific directory - "JC_USER_FILES);
@@ -86,7 +86,7 @@ namespace tes_api_3 {
             return comm.str();
         });
 
-        static BSFixedString lastErrorString() {
+        static skse::string_ref lastErrorString() {
             return "";
         }
         REGISTERF2(lastErrorString, nullptr, "DEPRECATE. Returns string that describes last error");

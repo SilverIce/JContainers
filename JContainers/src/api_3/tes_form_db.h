@@ -136,7 +136,7 @@ namespace tes_api_3 {
         }
         REGISTERF(solveGetter<Float32>, "solveFlt", "fKey path default=0.0", "attempts to get value associated with path.");
         REGISTERF(solveGetter<SInt32>, "solveInt", "fKey path default=0", nullptr);
-        REGISTERF(solveGetter<BSFixedString>, "solveStr", "fKey path default=\"\"", nullptr);
+        REGISTERF(solveGetter<skse::string_ref>, "solveStr", "fKey path default=\"\"", nullptr);
         REGISTERF(solveGetter<Handle>, "solveObj", "fKey path default=0", nullptr);
         REGISTERF(solveGetter<TESForm*>, "solveForm", "fKey path default=None", nullptr);
 
@@ -184,7 +184,7 @@ namespace tes_api_3 {
         // TODO: where is default value parameter?
         REGISTERF(getItem<SInt32>, "getInt", "fKey key", "returns value associated with key");
         REGISTERF(getItem<Float32>, "getFlt", "fKey key", "");
-        REGISTERF(getItem<BSFixedString>, "getStr", "fKey key", "");
+        REGISTERF(getItem<skse::string_ref>, "getStr", "fKey key", "");
         REGISTERF(getItem<object_base *>, "getObj", "fKey key", "");
         REGISTERF(getItem<TESForm*>, "getForm", "fKey key", "");
 

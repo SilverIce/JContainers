@@ -290,7 +290,7 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
         }
         REGISTERF(resolveGetter<Float32>, "solveFlt", "* path default=0.0", "attempts to get value at given path.\nJValue.solveInt(container, \".player.mood\") will return player's mood");
         REGISTERF(resolveGetter<SInt32>, "solveInt", "* path default=0", nullptr);
-        REGISTERF(resolveGetter<BSFixedString>, "solveStr", "* path default=\"\"", nullptr);
+        REGISTERF(resolveGetter<skse::string_ref>, "solveStr", "* path default=\"\"", nullptr);
         REGISTERF(resolveGetter<Handle>, "solveObj", "* path default=0", nullptr);
         REGISTERF(resolveGetter<TESForm*>, "solveForm", "* path default=None", nullptr);
 
@@ -326,7 +326,7 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
         }
         REGISTERF(evalLua<Float32>, "evalLuaFlt", "* luaCode default=0.0", "Evaluates piece of lua code. Lua support is experimental");
         REGISTERF(evalLua<SInt32>, "evalLuaInt", "* luaCode default=0", nullptr);
-        REGISTERF(evalLua<BSFixedString>, "evalLuaStr", "* luaCode default=\"\"", nullptr);
+        REGISTERF(evalLua<skse::string_ref>, "evalLuaStr", "* luaCode default=\"\"", nullptr);
         REGISTERF(evalLua<Handle>, "evalLuaObj", "* luaCode default=0", nullptr);
         REGISTERF(evalLua<TESForm*>, "evalLuaForm", "* luaCode default=None", nullptr);
 

@@ -24,7 +24,7 @@ namespace tes_api_3 {
         }
         REGISTERF(getItem<SInt32>, "getInt", "object key default=0", "returns value associated with key");
         REGISTERF(getItem<Float32>, "getFlt", "object key default=0.0", "");
-        REGISTERF(getItem<BSFixedString>, "getStr", "object key default=\"\"", "");
+        REGISTERF(getItem<skse::string_ref>, "getStr", "object key default=\"\"", "");
         REGISTERF(getItem<object_base*>, "getObj", "object key default=0", "");
         REGISTERF(getItem<TESForm*>, "getForm", "object key default=None", "");
 
@@ -183,7 +183,7 @@ namespace tes_api_3 {
             map_functions::nextKey(obj, previousKey, [&](const std::string& key) { str = key.c_str(); });
             return str;
         }
-        REGISTERF(nextKey<BSFixedString>, "nextKey", STR(* previousKey="" endKey=""), tes_map_nextKey_comment);
+        REGISTERF(nextKey<skse::string_ref>, "nextKey", STR(* previousKey="" endKey=""), tes_map_nextKey_comment);
 
         static const char * getNthKey_comment() { return "Retrieves N-th key. "NEGATIVE_IDX_COMMENT "\nWorst complexity is O(n/2)"; }
 
@@ -193,7 +193,7 @@ namespace tes_api_3 {
             map_functions::getNthKey(obj, keyIndex, [&](const std::string& key) { ith = key.c_str(); });
             return ith;
         }
-        REGISTERF(getNthKey<BSFixedString>, "getNthKey", "* keyIndex", getNthKey_comment());
+        REGISTERF(getNthKey<skse::string_ref>, "getNthKey", "* keyIndex", getNthKey_comment());
     };
 
     struct tes_form_map_ext : class_meta < tes_form_map_ext > {

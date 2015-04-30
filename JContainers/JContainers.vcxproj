@@ -188,6 +188,8 @@
     <ClInclude Include="src\jcontainers_constants.h" />
     <ClInclude Include="src\skse.h" />
     <ClInclude Include="src\reflection.h" />
+    <ClInclude Include="src\skse_papyrus_args.hpp" />
+    <ClInclude Include="src\skse_string.h" />
     <ClInclude Include="src\typedefs.h" />
     <ClInclude Include="src\util\istring.h" />
     <ClInclude Include="src\util\spinlock.h" />

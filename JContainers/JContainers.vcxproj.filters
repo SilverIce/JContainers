@@ -226,6 +226,12 @@
     <ClInclude Include="src\collection_types.h">
       <Filter>collections_module</Filter>
     </ClInclude>
+    <ClInclude Include="src\skse_string.h">
+      <Filter>skse</Filter>
+    </ClInclude>
+    <ClInclude Include="src\skse_papyrus_args.hpp">
+      <Filter>skse</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="JContainers.rc" />

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include "skse/Utilities.h"
 
 namespace skse {
@@ -46,7 +47,16 @@ namespace skse {
         }
 
         string_ref(const string_ref& ref) { CALL_MEMBER_FN(this, ctor)(ref.data); }
+
         string_ref& operator = (const string_ref& ref) { assign(ref.data); return *this; }
+
+        string_ref& operator = (const char* ref) { assign(ref); return *this; }
+
+        template<class Tr, class Alloc>
+        string_ref& operator = (const std::basic_string<char, Tr, Alloc>& string) {
+            assign(string.c_str());
+            return *this;
+        }
 
         string_ref(string_ref&& ref) {
             std::swap(data, ref.data);

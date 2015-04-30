@@ -3,9 +3,10 @@
 #include <boost/variant.hpp>
 #include <string>
 
+#include "common/ITypes.h"
 #include "object/object_base.h"
 #include "skse.h"
-#include "common/ITypes.h"
+#include "skse_string.h"
 
 #include "collections.h"
 #include "collection_types.h"
@@ -121,8 +122,8 @@ namespace collections {
         explicit Item(const char * val) {
             *this = val;
         }
-        explicit Item(const BSFixedString& val) {
-            *this = val.data;
+        explicit Item(const skse::string_ref& val) {
+            *this = val.c_str();
         }
         explicit Item(object_base *val) {
             *this = val;
@@ -353,9 +354,9 @@ namespace collections {
         return str ? *str : std::string();
     }
 
-    template<> inline BSFixedString Item::readAs<BSFixedString>() {
+    template<> inline skse::string_ref Item::readAs<skse::string_ref>() {
         const char *chr = strValue();
-        return chr ? BSFixedString(chr) : BSFixedString();
+        return chr ? skse::string_ref(chr) : skse::string_ref();
     }
 
     template<> inline Handle Item::readAs<Handle>() {

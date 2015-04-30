@@ -22,14 +22,14 @@ namespace reflection { namespace binding {
     };
 
     struct StringConverter {
-        typedef BSFixedString tes_type;
+        typedef skse::string_ref tes_type;
 
-        static const char* convert2J(const BSFixedString& str) {
-            return str.data;
+        static const char* convert2J(const skse::string_ref& str) {
+            return str.c_str();
         }
 
-        static BSFixedString convert2Tes(const char * str) {
-            return BSFixedString(str);
+        static skse::string_ref convert2Tes(const char * str) {
+            return skse::string_ref(str);
         }
     };
 
@@ -46,7 +46,7 @@ namespace reflection { namespace binding {
         static function_parameter typeInfo() { return function_parameter_make(typeid(T).name(), nullptr); }
     };
 
-    template<> struct j2Str < BSFixedString > {
+    template<> struct j2Str < skse::string_ref > {
         static function_parameter typeInfo() { return function_parameter_make("string", nullptr); }
     };
     template<> struct j2Str < const char* > {
