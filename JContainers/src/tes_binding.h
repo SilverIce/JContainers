@@ -2,6 +2,7 @@
 
 #include "skse/PapyrusNativeFunctions.h"
 #include "reflection.h"
+#include "skse_string.h"
 
 class BGSListForm;
 
@@ -77,14 +78,7 @@ namespace reflection { namespace binding {
         }
     };
 
-    template<class T> struct j2Str < VMResultArray<T> > {
-        static function_parameter typeInfo() {
-            std::string str(j2Str<T>::typeInfo().tes_type_name);
-            str += "[]";
-            function_parameter info = { str, "values" };
-            return info;
-        }
-    };
+    template<class T> struct j2Str < VMResultArray<T> > : j2Str < VMArray<T> > {};
 
     //////////////////////////////////////////////////////////////////////////
 
@@ -277,9 +271,9 @@ namespace reflection { namespace binding {
              metaF.registrator = &binder::bind;\
              metaF.param_list_func = &binder::type_strings;\
              \
-             metaF.argument_names = (_args);\
+             metaF.argument_names = (_args) ? (_args) : ""; \
              metaF.setComment(_comment);\
-             metaF.name = (_funcname);\
+             metaF.name = (_funcname) ? (_funcname) : ""; \
              metaF.tes_func = &binder::tes_func;\
              auto addr = &(func);\
              metaF.c_func = addr;\

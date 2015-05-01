@@ -1,10 +1,13 @@
 ﻿
 #include <boost/algorithm/string.hpp>
+#include <boost/filesystem/path.hpp>
 #include <assert.h>
 #include <vector>
 
 #include "gtest.h"
 #include "reflection.h"
+
+#include "tes_binding.h"
 
 namespace reflection {
 
@@ -101,8 +104,13 @@ namespace reflection {
         }
 
         void produceClassToFile(const class_info& self, const std::string& directoryPath) {
-            auto path = (!directoryPath.empty() ? (directoryPath + "\\") : "") + self.className().c_str() + ".psc";
-            auto file = fopen(path.c_str(), "w");
+
+            boost::filesystem::path p(directoryPath);
+
+            p /= self.className().c_str();
+            p += ".psc";
+
+            auto file = fopen(p.generic_string().c_str(), "w");
             assert(file);
             if (file) {
                 auto code = produceClassCode(self);

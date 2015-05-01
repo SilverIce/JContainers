@@ -114,6 +114,9 @@ return function()
   local function readWriteJSONTest( o )
     assert(o)
 
+    print('WARNING - readWriteJSONTest disabled')
+    do return end
+
     local path = os.tmpname()
 	do
       JValue.writeToFile(o, path)
