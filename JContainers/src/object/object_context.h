@@ -21,7 +21,7 @@ namespace collections {
 
     class dependent_context {
     public:
-        //virtual ~dependent_context() {}
+        virtual ~dependent_context() {}
         virtual void clear_state() = 0;
     };
 

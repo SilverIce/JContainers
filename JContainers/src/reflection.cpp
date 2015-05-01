@@ -2,7 +2,8 @@
 
 #include <map>
 #include "gtest.h"
-#include "skse\PapyrusVM.h"
+#include "util/spinlock.h"
+#include "skse/PapyrusVM.h"
 
 #include "code_producer.hpp"
 
