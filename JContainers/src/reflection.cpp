@@ -31,16 +31,19 @@ namespace reflection {
         return classDB;
     };
 
-    const std::map<istring, class_info>& class_database() {
-        static std::map<istring, class_info> classDB = makeDB();
-        return classDB;
+    static std::once_flag class_registry_once_flag;
+    static std::map<istring, class_info> class_registry_map;
+
+    const std::map<istring, class_info>& class_registry() {
+        std::call_once(class_registry_once_flag, []() { class_registry_map = makeDB(); });
+        return class_registry_map;
     }
 
     const function_info* find_function_of_class(const char * functionName, const char *className) {
 
         const function_info * fInfo = nullptr;
 
-        auto& db = class_database();
+        auto& db = class_registry();
         auto itr = db.find(className);
         if (itr != db.end()) {
             auto& cls = itr->second;

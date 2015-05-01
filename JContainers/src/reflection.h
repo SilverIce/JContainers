@@ -168,13 +168,13 @@ namespace reflection {
 
     typedef class_info (*class_info_creator)();
 
-    const std::map<istring, class_info>& class_database();
+    const std::map<istring, class_info>& class_registry();
     const function_info* find_function_of_class(const char * functionName, const char *className);
 
     template<class T>
     inline void foreach_metaInfo_do(T& func) {
 
-        for (auto & pair : class_database()) {
+        for (auto & pair : class_registry()) {
             func(pair.second);
         }
     }
