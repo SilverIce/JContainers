@@ -20,8 +20,8 @@ namespace collections
         namespace bs = boost;
         namespace ss = std;
 
-        typedef ss::function<Item* (object_base*)> NodeFunc;
-        typedef ss::function<void (const Item& , Item&)> ElementFunc;
+        typedef ss::function<item* (object_base*)> NodeFunc;
+        typedef ss::function<void (const item& , item&)> ElementFunc;
         typedef boost::iterator_range<const char*> path_type;
 
         struct state {
@@ -71,7 +71,7 @@ namespace collections
 
             if (isKeyVisit) {
                 for (auto &pair : copy) {
-                    Item itm(pair.first);
+                    item itm(pair.first);
                     resolve(context, itm, rightPath, func);
                 }
             } else { // is value visit
@@ -83,20 +83,20 @@ namespace collections
             return true;
         }
 
-        void resolve(tes_context& context, Item& item, const char *cpath, std::function<void(Item *)>  itemFunction, bool createMissingKeys) {
+        void resolve(tes_context& context, item& target, const char *cpath, std::function<void(item *)>  itemFunction, bool createMissingKeys) {
             if (!cpath) {
                 return;
             }
 
-            if (item.object()) {
-                resolve(context, item.object(), cpath, itemFunction, createMissingKeys);
+            if (target.object()) {
+                resolve(context, target.object(), cpath, itemFunction, createMissingKeys);
             }
             else if (!*cpath) {
-                itemFunction(&item);
+                itemFunction(&target);
             }
         }
 
-        void resolve(tes_context& context, object_base *collection, const char *cpath, std::function<void(Item *)>  itemFunction, bool createMissingKeys) {
+        void resolve(tes_context& context, object_base *collection, const char *cpath, std::function<void(item *)>  itemFunction, bool createMissingKeys) {
 
             if (!collection || !cpath) {
                 return;
@@ -104,7 +104,7 @@ namespace collections
 
             // path is empty -> just visit collection
             if (!*cpath) {
-                Item itm(collection);
+                item itm(collection);
                 itemFunction(&itm);
                 return ;
             }
@@ -143,9 +143,9 @@ namespace collections
                     return state(false, st);
                 }
 
-                Item sharedItem;
+                item sharedItem;
 
-                auto itemVisitFunc = [&](Item *item) {
+                auto itemVisitFunc = [&](item *item) {
                     if (item) {
                         opr->func(*item, sharedItem);
                     }
@@ -179,7 +179,7 @@ namespace collections
                 perform_on_object(*collection, helper);
 
                 return state(true,
-                    [=](object_base *) mutable -> Item* { return &sharedItem;},
+                    [=](object_base *) mutable -> item* { return &sharedItem;},
                     nullptr,
                     path_type());
             };
@@ -214,14 +214,14 @@ namespace collections
 
                 return state(   true,
                                     [=](object_base *container) {
-                                        Item *itemPtr = nullptr;
+                                        item *itemPtr = nullptr;
 
                                         if (auto obj = container->as<map>()) {
                                             ss::string key(begin, end);
                                             itemPtr = obj->u_find(key);
 
                                             if (!itemPtr && createMissingKeys) {
-                                                obj->u_setValueForKey(key, Item());
+                                                obj->u_setValueForKey(key, item());
                                                 itemPtr = obj->u_find(key);
                                             }
                                         }
@@ -289,7 +289,7 @@ namespace collections
                                         return container->as<integer_map>()->u_find(indexOrFormId);
                                     }
                                     else {
-                                        return (Item *)nullptr;
+                                        return (item *)nullptr;
                                     } 
                                 },
                                 container,
@@ -298,7 +298,7 @@ namespace collections
 
             const ss::function<state (const state &st) > rules[] = {operatorRule, mapRule, arrayRule};
 
-            Item root(collection);
+            item root(collection);
             state st(true, [&](object_base*) { return &root;}, collection, path);
 
             while (true) {

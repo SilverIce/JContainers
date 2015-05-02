@@ -11,7 +11,7 @@ namespace collections {
     namespace collection_operators
     {
         using istring = util::istring;
-        typedef void (*operator_func)(const Item& item, Item& state);
+        typedef void (*operator_func)(const item& val, item& state);
 
         struct coll_operator {
             operator_func func;
@@ -51,55 +51,55 @@ namespace collections {
             return op_map;
         }
 
-        void maxNum(const Item& item, Item& state) {
-            if (item.isNumber()) {
-                state = state.isNull() ? item : Item(
-                    (std::max)(item.fltValue(), state.fltValue())
+        void maxNum(const item& val, item& state) {
+            if (val.isNumber()) {
+                state = state.isNull() ? val : item(
+                    (std::max)(val.fltValue(), state.fltValue())
                     );
             }
         }
         COLLECTION_OPERATOR(maxNum, "returns maximum number (int or float) in collection");
 
-        void minNum(const Item& item, Item& state) {
-            if (item.isNumber()) {
-                state = state.isNull() ? item : Item(
-                    (std::min)(item.fltValue(), state.fltValue())
+        void minNum(const item& val, item& state) {
+            if (val.isNumber()) {
+                state = state.isNull() ? val : item(
+                    (std::min)(val.fltValue(), state.fltValue())
                     );
             }
         }
         COLLECTION_OPERATOR(minNum, "returns minimum number (int or float) in collection");
 
-        void maxFlt(const Item& item, Item& state) {
-            if (item.is_type<Item::Real>()) {
-                state = state.isNull() ? item : Item(
-                    (std::max)(item.fltValue(), state.fltValue())
+        void maxFlt(const item& val, item& state) {
+            if (val.is_type<item::Real>()) {
+                state = state.isNull() ? val : item(
+                    (std::max)(val.fltValue(), state.fltValue())
                     );
             }
         }
         COLLECTION_OPERATOR(maxFlt, "returns maximum float number in collection");
 
-        void minFlt(const Item& item, Item& state) {
-            if (item.is_type<Item::Real>()) {
-                state = state.isNull() ? item : Item(
-                    (std::min)(item.fltValue(), state.fltValue())
+        void minFlt(const item& val, item& state) {
+            if (val.is_type<item::Real>()) {
+                state = state.isNull() ? val : item(
+                    (std::min)(val.fltValue(), state.fltValue())
                     );
             }
         }
         COLLECTION_OPERATOR(minFlt, "returns minimum float number collection");
 
-        void maxInt(const Item& item, Item& state) {
-            if (item.is_type<SInt32>()) {
-                state = state.isNull() ? item : Item(
-                    (std::max)(item.intValue(), state.intValue())
+        void maxInt(const item& val, item& state) {
+            if (val.is_type<SInt32>()) {
+                state = state.isNull() ? val : item(
+                    (std::max)(val.intValue(), state.intValue())
                     );
             }
         }
         COLLECTION_OPERATOR(maxInt, "returns maximum int number in collection");
 
-        void minInt(const Item& item, Item& state) {
-            if (item.is_type<SInt32>()) {
-                state = state.isNull() ? item : Item(
-                    (std::min)(item.intValue(), state.intValue())
+        void minInt(const item& val, item& state) {
+            if (val.is_type<SInt32>()) {
+                state = state.isNull() ? val : item(
+                    (std::min)(val.intValue(), state.intValue())
                     );
             }
         }

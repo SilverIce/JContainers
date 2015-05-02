@@ -66,7 +66,7 @@ namespace lua { namespace api {
         return CString_copy(origin.c_str(), origin.size());
     }
 
-    JCToLuaValue JCToLuaValue_fromItem(const Item& itm) {
+    JCToLuaValue JCToLuaValue_fromItem(const item& itm) {
         struct t : public boost::static_visitor < > {
             JCToLuaValue value;
 
@@ -75,7 +75,7 @@ namespace lua { namespace api {
                 value.stringLength = str.size();
             }
 
-            void operator ()(const Item::Real& val) {
+            void operator ()(const item::Real& val) {
                 value.real = val;
             }
 
@@ -100,11 +100,11 @@ namespace lua { namespace api {
         return converter.value;
     }
     
-    JCToLuaValue JCToLuaValue_fromItem(const Item* itm) {
+    JCToLuaValue JCToLuaValue_fromItem(const item* itm) {
         return itm ? JCToLuaValue_fromItem(*itm) : JCToLuaValue_None();
     }
 
-    void JCValue_fillItem(const JCValue *v, Item& itm) {
+    void JCValue_fillItem(const JCValue *v, item& itm) {
         switch (v ? v->type : item_type::no_item) {
         case item_type::form:
             itm = (FormId)v->form.___id;
@@ -178,7 +178,7 @@ namespace lua { namespace api {
         assert(context && "context is null");
         auto value = JCToLuaValue_None();
         if (obj) {
-            collections::path_resolving::resolve(*context, obj, path, [&value](Item *itm) {
+            collections::path_resolving::resolve(*context, obj, path, [&value](item *itm) {
                 value = JCToLuaValue_fromItem(itm);
             });
         }
@@ -204,7 +204,7 @@ namespace lua { namespace api {
     cexport void JArray_insert(array* obj, const JCValue* val, index key) {
         array_functions::doWriteOp(obj, key, [=](index idx) {
             auto& cnt = obj->u_container();
-            JCValue_fillItem(val, *cnt.insert(cnt.begin() + idx, Item()));
+            JCValue_fillItem(val, *cnt.insert(cnt.begin() + idx, item()));
         });
         //std::cout << "value assigned: " << JCValue_toString(val) << std::endl;
     }
@@ -217,11 +217,11 @@ namespace lua { namespace api {
     }
 
     cexport void JMap_setValue(map *obj, cstring key, const JCValue* val) {
-        map_functions::doWriteOp(obj, key, [val](Item& itm) { JCValue_fillItem(val, itm); });
+        map_functions::doWriteOp(obj, key, [val](item& itm) { JCValue_fillItem(val, itm); });
     }
 
     cexport JCToLuaValue JMap_getValue(map *obj, cstring key) {
-        return map_functions::doReadOpR(obj, key, JCToLuaValue_None(), [](Item& itm) { return JCToLuaValue_fromItem(itm); });
+        return map_functions::doReadOpR(obj, key, JCToLuaValue_None(), [](item& itm) { return JCToLuaValue_fromItem(itm); });
     }
     //////////////////////////////////////////////////////////////////////////
 
@@ -234,11 +234,11 @@ namespace lua { namespace api {
     }
 
     cexport void JFormMap_setValue(form_map *obj, FormId key, const JCValue* val) {
-        formmap_functions::doWriteOp(obj, key, [val](Item& itm) { JCValue_fillItem(val, itm); });
+        formmap_functions::doWriteOp(obj, key, [val](item& itm) { JCValue_fillItem(val, itm); });
     }
 
     cexport JCToLuaValue JFormMap_getValue(form_map *obj, FormId key) {
-        return formmap_functions::doReadOpR(obj, key, JCToLuaValue_None(), [](Item& itm) { return JCToLuaValue_fromItem(itm); });
+        return formmap_functions::doReadOpR(obj, key, JCToLuaValue_None(), [](item& itm) { return JCToLuaValue_fromItem(itm); });
     }
 
     cexport handle JDB_instance(tes_context *jc_context) {

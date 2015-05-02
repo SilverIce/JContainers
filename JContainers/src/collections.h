@@ -138,7 +138,7 @@ namespace collections {
 
         typedef SInt32 Index;
 
-        typedef std::vector<Item> container_type;
+        typedef std::vector<item> container_type;
         typedef container_type::iterator iterator;
         typedef container_type::reverse_iterator reverse_iterator;
 
@@ -192,12 +192,12 @@ namespace collections {
             return{ index >= 0 && index < count, index };
         }
 
-        Item* u_getItem(int32_t index) {
+        item* u_getItem(int32_t index) {
             auto idx = u_convertIndex(index);
             return idx ? &_array[*idx] : nullptr;
         }
 
-        void setItem(int32_t index, const Item& itm) {
+        void setItem(int32_t index, const item& itm) {
             object_lock g(this);
             auto idx = u_convertIndex(index);
             if (idx) {
@@ -205,17 +205,17 @@ namespace collections {
             }
         }
 
-        Item& operator [] (int32_t index) { return const_cast<Item&>(const_cast<const array*>(this)->operator[](index)); }
-        const Item& operator [] (int32_t index) const {
+        item& operator [] (int32_t index) { return const_cast<item&>(const_cast<const array*>(this)->operator[](index)); }
+        const item& operator [] (int32_t index) const {
             auto idx = u_convertIndex(index);
             assert(idx);
             return _array[*idx];
         }
 
-        Item getItem(int32_t index) {
+        item getItem(int32_t index) {
             object_lock lock(this);
             auto itm = u_getItem(index);
-            return itm ? *itm : Item();
+            return itm ? *itm : item();
         }
 
         iterator begin() { return _array.begin();}
@@ -254,18 +254,18 @@ namespace collections {
             return cnt;
         }
 
-        Item findOrDef(const key_type& key) {
+        item findOrDef(const key_type& key) {
             object_lock g(this);
             auto result = u_find(key);
-            return result ? *result : Item();
+            return result ? *result : item();
         }
 
-        const Item* u_find(const key_type& key) const {
+        const item* u_find(const key_type& key) const {
             auto itr = cnt.find(key);
             return itr != cnt.end() ? &(itr->second) : nullptr;
         }
 
-        Item* u_find(const key_type& key) { return const_cast<Item*>( const_cast<const basic_map_collection*>(this)->u_find(key) ); }
+        item* u_find(const key_type& key) { return const_cast<item*>( const_cast<const basic_map_collection*>(this)->u_find(key) ); }
 
         bool erase(const key_type& key) {
             object_lock g(this);
@@ -294,11 +294,11 @@ namespace collections {
             return cnt.size();
         }
 
-        Item& operator [] (const key_type& key) {
-            return const_cast<Item&>(const_cast<const basic_map_collection&>(*this)[key]);
+        item& operator [] (const key_type& key) {
+            return const_cast<item&>(const_cast<const basic_map_collection&>(*this)[key]);
         }
 
-        const Item& operator [] (const key_type& key) const {
+        const item& operator [] (const key_type& key) const {
             auto itm = u_find(key);
             assert(itm);
             return *itm;
@@ -326,7 +326,7 @@ namespace collections {
     };
 
 
-    class map : public basic_map_collection< map, std::map<std::string, Item, map_case_insensitive_comp > >
+    class map : public basic_map_collection< map, std::map<std::string, item, map_case_insensitive_comp > >
     {
     public:
         enum  {
@@ -340,7 +340,7 @@ namespace collections {
     };
 
 
-    class form_map : public basic_map_collection< form_map, std::map<FormId, Item> >
+    class form_map : public basic_map_collection< form_map, std::map<FormId, item> >
     {
     public:
         enum  {
@@ -355,7 +355,7 @@ namespace collections {
         void serialize(Archive & ar, const unsigned int version);
     };
 
-    class integer_map : public basic_map_collection < integer_map, std::map<int32_t, Item> >
+    class integer_map : public basic_map_collection < integer_map, std::map<int32_t, item> >
     {
     public:
         enum  {

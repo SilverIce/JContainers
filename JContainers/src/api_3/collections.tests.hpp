@@ -108,13 +108,13 @@ namespace tes_api_3 {
     TEST(path_resolving, collection_operators)
     {
         auto shouldReturnNumber = [&](object_base *obj, const char *path, float value) {
-            path_resolving::resolve(tes_context::instance(), obj, path, [&](Item * item) {
+            path_resolving::resolve(tes_context::instance(), obj, path, [&](item * item) {
                 EXPECT_TRUE(item && item->fltValue() == value);
             });
         };
 
         auto shouldReturnInt = [&](object_base *obj, const char *path, int value) {
-            path_resolving::resolve(tes_context::instance(), obj, path, [&](Item * item) {
+            path_resolving::resolve(tes_context::instance(), obj, path, [&](item * item) {
                 EXPECT_TRUE(item && item->intValue() == value);
             });
         };
@@ -173,20 +173,20 @@ namespace tes_api_3 {
         EXPECT_NOT_NIL(obj);
 
         auto shouldSucceed = [&](const char * path, bool succeed) {
-            path_resolving::resolve(tes_context::instance(), obj, path, [&](Item * item) {
+            path_resolving::resolve(tes_context::instance(), obj, path, [&](item * item) {
                 EXPECT_TRUE(succeed == (item != nullptr));
             });
         };
 
-        path_resolving::resolve(tes_context::instance(), obj, ".glossary.GlossDiv", [&](Item * item) {
+        path_resolving::resolve(tes_context::instance(), obj, ".glossary.GlossDiv", [&](item * item) {
             EXPECT_TRUE(item && item->strValue() && *item->stringValue() == "S");
         });
 
-        path_resolving::resolve(tes_context::instance(), obj, ".array[0][0]", [&](Item * item) {
+        path_resolving::resolve(tes_context::instance(), obj, ".array[0][0]", [&](item * item) {
             EXPECT_TRUE(item && *item->stringValue() == "NPC Head [Head]");
         });
 
-        path_resolving::resolve(tes_context::instance(), obj, ".fmap[__formData|S|0x20]", [&](Item * item) {
+        path_resolving::resolve(tes_context::instance(), obj, ".fmap[__formData|S|0x20]", [&](item * item) {
             EXPECT_TRUE(item && *item == 8.f);
         });
 
@@ -217,11 +217,11 @@ namespace tes_api_3 {
 
         EXPECT_TRUE(obj != nullptr);
 
-        path_resolving::resolve(tes_context::instance(), obj, ".timesTrained", [&](Item * item) {
+        path_resolving::resolve(tes_context::instance(), obj, ".timesTrained", [&](item * item) {
             EXPECT_TRUE(item && item->intValue() == 10);
         });
 
-        path_resolving::resolve(tes_context::instance(), obj, ".trainers", [&](Item * item) {
+        path_resolving::resolve(tes_context::instance(), obj, ".trainers", [&](item * item) {
             EXPECT_TRUE(item && item->object()->as<array>());
         });
     }

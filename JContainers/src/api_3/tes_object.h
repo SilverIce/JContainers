@@ -103,7 +103,7 @@ By using this function a user helps JC to get rid of no-more-needed to the user 
 
                 array::ref location;
 
-                path_resolving::resolve(tes_context::instance(), tes_context::instance().database(), path.c_str(), [&](Item* itmPtr) {
+                path_resolving::resolve(tes_context::instance(), tes_context::instance().database(), path.c_str(), [&](item* itmPtr) {
                     if (itmPtr) {
                         if (auto loc = itmPtr->object()->as<array>()) {
                             location = loc;
@@ -117,7 +117,7 @@ By using this function a user helps JC to get rid of no-more-needed to the user 
                     true);
 
                 if (location) {
-                    location->push(Item(obj));
+                    location->push(item(obj));
                 }
             }
 
@@ -213,7 +213,7 @@ JValue.cleanTempLocation(\"uniqueLocationName\")"
                     auto jsonObject = tes_object::readFromFile(asniString.c_str());
 
                     if (jsonObject) {
-                        files.setValueForKey(itr->path().filename().generic_string(), Item(jsonObject));
+                        files.setValueForKey(itr->path().filename().generic_string(), item(jsonObject));
                     }  
                 }
             }
@@ -254,7 +254,7 @@ JValue.cleanTempLocation(\"uniqueLocationName\")"
             SInt32 type = item_type::no_item;
 
             if (obj && path) {
-                path_resolving::resolve(tes_context::instance(), obj, path, [&](Item* itmPtr) {
+                path_resolving::resolve(tes_context::instance(), obj, path, [&](item* itmPtr) {
                     if (itmPtr) {
                         type = itmPtr->type();
                     }
@@ -280,7 +280,7 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
             if (!obj || !path)
                 return val;
 
-            path_resolving::resolve(tes_context::instance(), obj, path, [&](Item* itmPtr) {
+            path_resolving::resolve(tes_context::instance(), obj, path, [&](item* itmPtr) {
                 if (itmPtr) {
                     val = itmPtr->readAs<T>();
                 }
@@ -300,9 +300,9 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
                 return false;
 
             bool succeed = false;
-            path_resolving::resolve(tes_context::instance(), obj, path, [&](Item* itmPtr) {
+            path_resolving::resolve(tes_context::instance(), obj, path, [&](item* itmPtr) {
                 if (itmPtr) {
-                    *itmPtr = Item((T)value);
+                    *itmPtr = item((T)value);
                     succeed = true;
                 }
             },

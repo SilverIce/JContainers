@@ -85,7 +85,7 @@ namespace collections {
                     copy_child(pair.second);
                 }
             }
-            void copy_child(Item& itm) {
+            void copy_child(item& itm) {
                 auto origin_child = itm.object();
                 if (origin_child) {
                     itm = &self->unique_copy(*origin_child);

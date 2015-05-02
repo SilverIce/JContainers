@@ -41,9 +41,9 @@ namespace collections { namespace {
     }
 
 
-    JC_TEST(Item, nulls)
+    JC_TEST(item, nulls)
     {
-        Item i1;
+        item i1;
 
         EXPECT_TRUE(i1.isNull());
 
@@ -60,9 +60,9 @@ namespace collections { namespace {
         EXPECT_TRUE(i1.isNull());
     }
 
-    JC_TEST(Item, equality)
+    JC_TEST(item, equality)
     {
-        Item i1, i2;
+        item i1, i2;
 
         EXPECT_TRUE(i1.isNull());
         EXPECT_TRUE(i2.isNull());
@@ -90,13 +90,13 @@ namespace collections { namespace {
         EXPECT_TRUE(i1 == i2);
     }
 
-    JC_TEST(Item, less_than)
+    JC_TEST(item, less_than)
     {
-        EXPECT_TRUE(Item(100) < Item(2.0));
-        EXPECT_TRUE(Item(1.0) < Item(2.0));
-        EXPECT_TRUE(Item(10) < Item(FormZero));
-        EXPECT_TRUE(Item("aa") < Item("text"));
-        EXPECT_TRUE(Item("A") < Item("b"));
+        EXPECT_TRUE(item(100) < item(2.0));
+        EXPECT_TRUE(item(1.0) < item(2.0));
+        EXPECT_TRUE(item(10) < item(FormZero));
+        EXPECT_TRUE(item("aa") < item("text"));
+        EXPECT_TRUE(item("A") < item("b"));
 
         //EXPECT_TRUE(Item(1.0) < Item(FormZero));
     }
@@ -260,7 +260,7 @@ namespace collections { namespace {
     {
         {
             map& cnt = map::object(context);
-            cnt.u_setValueForKey("cycle", Item(cnt));
+            cnt.u_setValueForKey("cycle", item(cnt));
 
             json_serializer::create_json_data(cnt);
         }
@@ -268,8 +268,8 @@ namespace collections { namespace {
             map &cnt1 = map::object(context);
             map &cnt2 = map::object(context);
 
-            cnt1.u_setValueForKey("cnt2", Item(cnt2));
-            cnt2.u_setValueForKey("cnt1", Item(cnt1));
+            cnt1.u_setValueForKey("cnt2", item(cnt2));
+            cnt2.u_setValueForKey("cnt1", item(cnt1));
 
             json_serializer::create_json_data(cnt1);
         }
@@ -424,7 +424,7 @@ namespace collections { namespace {
             for (int j = 0; j < 10; ++j) {
                 auto rnd = rand() % 10;
 
-                cont->push(Item(arrays[rnd]));
+                cont->push(item(arrays[rnd]));
             }
         }
 
@@ -443,7 +443,7 @@ namespace collections { namespace {
         map &cnt = map::object(context);
 
         std::string name = "back in black";
-        cnt.u_setValueForKey("ACDC", Item(name));
+        cnt.u_setValueForKey("ACDC", item(name));
 
         EXPECT_TRUE(*cnt.u_find("acdc")->stringValue() == name);
     }
@@ -553,7 +553,7 @@ namespace collections { namespace {
     {
         auto& obj = map::object(context);
         object_lock lock(obj);
-        obj.u_setValueForKey("lol", Item(obj));
+        obj.u_setValueForKey("lol", item(obj));
     }
 
 }

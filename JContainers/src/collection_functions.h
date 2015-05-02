@@ -108,7 +108,7 @@ namespace collections {
         static R doReadOpR(T * obj, const key_type& key, R default, Op& operation) {
             if (obj && key_checker::check(key)) {
                 object_lock g(obj);
-                Item *itm = obj->u_find(key);
+                item *itm = obj->u_find(key);
                 return itm ? operation(*itm) : default;
             }
             else {
@@ -120,7 +120,7 @@ namespace collections {
         static void doReadOp(T * obj, const key_type& key, Op& operation) {
             if (obj && key_checker::check(key)) {
                 object_lock g(obj);
-                Item *itm = obj->u_find(key);
+                item *itm = obj->u_find(key);
                 if (itm) {
                     operation(*itm);
                 }
@@ -132,7 +132,7 @@ namespace collections {
         static void doWriteOp(T * obj, const key_type& key, Op& operation) {
             if (obj && key_checker::check(key)) {
                 object_lock g(obj);
-                Item &itm = obj->u_container()[key];
+                item &itm = obj->u_container()[key];
                 operation(itm);
             }
         }

@@ -23,7 +23,7 @@ namespace collections {
         string,
     };
 
-    class Item {
+    class item {
     public:
         typedef boost::blank blank;
         typedef Float32 Real;
@@ -53,16 +53,16 @@ namespace collections {
             }
         }
 
-        Item() {}
-        Item(Item&& other) : _var(std::move(other._var)) {}
-        Item(const Item& other) : _var(other._var) {}
+        item() {}
+        item(item&& other) : _var(std::move(other._var)) {}
+        item(const item& other) : _var(other._var) {}
 
-        Item& operator = (Item&& other) {
+        item& operator = (item&& other) {
             _var = std::move(other._var);
             return *this;
         }
 
-        Item& operator = (const Item& other) {
+        item& operator = (const item& other) {
             _var = other._var;
             return *this;
         }
@@ -104,31 +104,31 @@ namespace collections {
         //////////////////////////////////////////////////////////////////////////
 
 
-        explicit Item(Real val) : _var(val) {}
-        explicit Item(double val) : _var((Real)val) {}
-        explicit Item(SInt32 val) : _var(val) {}
-        explicit Item(int val) : _var((SInt32)val) {}
-        explicit Item(bool val) : _var((SInt32)val) {}
-        explicit Item(FormId id) : _var(id) {}
-        explicit Item(object_base& o) : _var(o) {}
+        explicit item(Real val) : _var(val) {}
+        explicit item(double val) : _var((Real)val) {}
+        explicit item(SInt32 val) : _var(val) {}
+        explicit item(int val) : _var((SInt32)val) {}
+        explicit item(bool val) : _var((SInt32)val) {}
+        explicit item(FormId id) : _var(id) {}
+        explicit item(object_base& o) : _var(o) {}
 
-        explicit Item(const std::string& val) : _var(val) {}
-        explicit Item(std::string&& val) : _var(val) {}
+        explicit item(const std::string& val) : _var(val) {}
+        explicit item(std::string&& val) : _var(val) {}
 
         // the Item is none if the pointers below are zero:
-        explicit Item(const TESForm *val) {
+        explicit item(const TESForm *val) {
             *this = val;
         }
-        explicit Item(const char * val) {
+        explicit item(const char * val) {
             *this = val;
         }
-        explicit Item(const skse::string_ref& val) {
+        explicit item(const skse::string_ref& val) {
             *this = val.c_str();
         }
-        explicit Item(object_base *val) {
+        explicit item(object_base *val) {
             *this = val;
         }
-        explicit Item(const object_stack_ref &val) {
+        explicit item(const object_stack_ref &val) {
             *this = val.get();
         }
         /*
@@ -136,20 +136,20 @@ namespace collections {
         *this = val.data;
         }*/
 
-        Item& operator = (unsigned int val) { _var = (SInt32)val; return *this; }
-        Item& operator = (int val) { _var = (SInt32)val; return *this; }
-        Item& operator = (bool val) { _var = (SInt32)val; return *this; }
-        Item& operator = (SInt32 val) { _var = val; return *this; }
-        Item& operator = (Real val) { _var = val; return *this; }
-        Item& operator = (double val) { _var = (Real)val; return *this; }
-        Item& operator = (const std::string& val) { _var = val; return *this; }
-        Item& operator = (std::string&& val) { _var = val; return *this; }
-        Item& operator = (boost::blank) { _var = boost::blank(); return *this; }
-        Item& operator = (boost::none_t) { _var = boost::blank(); return *this; }
-        Item& operator = (object_base& v) { _var = &v; return *this; }
+        item& operator = (unsigned int val) { _var = (SInt32)val; return *this; }
+        item& operator = (int val) { _var = (SInt32)val; return *this; }
+        item& operator = (bool val) { _var = (SInt32)val; return *this; }
+        item& operator = (SInt32 val) { _var = val; return *this; }
+        item& operator = (Real val) { _var = val; return *this; }
+        item& operator = (double val) { _var = (Real)val; return *this; }
+        item& operator = (const std::string& val) { _var = val; return *this; }
+        item& operator = (std::string&& val) { _var = val; return *this; }
+        item& operator = (boost::blank) { _var = boost::blank(); return *this; }
+        item& operator = (boost::none_t) { _var = boost::blank(); return *this; }
+        item& operator = (object_base& v) { _var = &v; return *this; }
 
 
-        Item& operator = (FormId formId) {
+        item& operator = (FormId formId) {
             // prevent zero FormId from being saved
             if (formId) {
                 _var = formId;
@@ -161,7 +161,7 @@ namespace collections {
         }
 
         template<class T>
-        Item& _assignPtr(T *ptr) {
+        item& _assignPtr(T *ptr) {
             if (ptr) {
                 _var = ptr;
             }
@@ -171,15 +171,15 @@ namespace collections {
             return *this;
         }
 
-        Item& operator = (const char *val) {
+        item& operator = (const char *val) {
             return _assignPtr(val);
         }
 
-        Item& operator = (object_base *val) {
+        item& operator = (object_base *val) {
             return _assignPtr(val);
         }
 
-        Item& operator = (const TESForm *val) {
+        item& operator = (const TESForm *val) {
             if (val) {
                 _var = (FormId)val->formID;
             }
@@ -197,7 +197,7 @@ namespace collections {
         }
 
         Real fltValue() const {
-            if (auto val = boost::get<Item::Real>(&_var)) {
+            if (auto val = boost::get<item::Real>(&_var)) {
                 return *val;
             }
             else if (auto val = boost::get<SInt32>(&_var)) {
@@ -210,7 +210,7 @@ namespace collections {
             if (auto val = boost::get<SInt32>(&_var)) {
                 return *val;
             }
-            else if (auto val = boost::get<Item::Real>(&_var)) {
+            else if (auto val = boost::get<item::Real>(&_var)) {
                 return *val;
             }
             return 0;
@@ -257,7 +257,7 @@ namespace collections {
             }
         };
 
-        bool isEqual(const Item& other) const {
+        bool isEqual(const item& other) const {
             return boost::apply_visitor(are_strict_equals(), _var, other._var);
         }
 
@@ -295,8 +295,8 @@ namespace collections {
 
     public:
 
-        bool operator == (const Item& other) const { return isEqual(other); }
-        bool operator != (const Item& other) const { return !isEqual(other); }
+        bool operator == (const item& other) const { return isEqual(other); }
+        bool operator != (const item& other) const { return !isEqual(other); }
 
         bool operator == (const object_base &obj) const { return *this == &obj; }
 
@@ -311,7 +311,7 @@ namespace collections {
 
         //////////////////////////////////////////////////////////////////////////
 
-        bool operator < (const Item& other) const {
+        bool operator < (const item& other) const {
             const auto l = type(), r = other.type();
             return l == r ? boost::apply_visitor(lesser_comparison(), _var, other._var) : (l < r);
         }
@@ -337,38 +337,38 @@ namespace collections {
 
     };
 
-    template<> inline Item::Real Item::readAs<Item::Real>() {
+    template<> inline item::Real item::readAs<item::Real>() {
         return fltValue();
     }
 
-    template<> inline SInt32 Item::readAs<SInt32>() {
+    template<> inline SInt32 item::readAs<SInt32>() {
         return intValue();
     }
 
-    template<> inline const char * Item::readAs<const char *>() {
+    template<> inline const char * item::readAs<const char *>() {
         return strValue();
     }
 
-    template<> inline std::string Item::readAs<std::string>() {
+    template<> inline std::string item::readAs<std::string>() {
         auto str = stringValue();
         return str ? *str : std::string();
     }
 
-    template<> inline skse::string_ref Item::readAs<skse::string_ref>() {
+    template<> inline skse::string_ref item::readAs<skse::string_ref>() {
         const char *chr = strValue();
         return chr ? skse::string_ref(chr) : skse::string_ref();
     }
 
-    template<> inline Handle Item::readAs<Handle>() {
+    template<> inline Handle item::readAs<Handle>() {
         auto obj = object();
         return obj ? obj->uid() : HandleNull;
     }
 
-    template<> inline TESForm * Item::readAs<TESForm*>() {
+    template<> inline TESForm * item::readAs<TESForm*>() {
         return form();
     }
 
-    template<> inline object_base * Item::readAs<object_base*>() {
+    template<> inline object_base * item::readAs<object_base*>() {
         return object();
     }
 }

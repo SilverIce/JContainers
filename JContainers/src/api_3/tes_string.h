@@ -25,7 +25,7 @@ namespace collections {
             return &array::objectWithInitializer([&](array &obj) {
 
                 for (auto& str : *strings) {
-                    obj._array.push_back(Item(str));
+                    obj._array.push_back(item(str));
                 }
             },
                 tes_context::instance());

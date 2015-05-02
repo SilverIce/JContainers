@@ -38,7 +38,7 @@ BOOST_CLASS_EXPORT_GUID(collections::map, "kJMap");
 BOOST_CLASS_EXPORT_GUID(collections::form_map, "kJFormMap");
 BOOST_CLASS_EXPORT_GUID(collections::integer_map, "kJIntegerMap");
 
-BOOST_CLASS_VERSION(collections::Item, 2)
+BOOST_CLASS_VERSION(collections::item, 2)
 
 BOOST_CLASS_IMPLEMENTATION(boost::blank, boost::serialization::primitive_type);
 
@@ -62,9 +62,9 @@ namespace collections {
         };
 
         struct item_converter : boost::static_visitor < > {
-            Item::variant& varNew;
+            item::variant& varNew;
         
-            explicit item_converter(Item::variant& var) : varNew(var) {}
+            explicit item_converter(item::variant& var) : varNew(var) {}
 
             template<class T> void operator() (T& val) {
                 varNew = std::move(val);
@@ -77,7 +77,7 @@ namespace collections {
             }
         };
 
-        template<class A> void do_conversion(A& ar, Item::variant& varNew) {
+        template<class A> void do_conversion(A& ar, item::variant& varNew) {
             typedef boost::variant<old_blank, SInt32, Float32, FormId, object_ref_old, std::string> variant_old;
             variant_old varOld;
             ar >> varOld;
@@ -99,7 +99,7 @@ namespace collections {
         };
 
         template<class Archive>
-        void read(Archive & ar, Item& itm) {
+        void read(Archive & ar, item& itm) {
             ItemType type = ItemTypeNone;
             ar & type;
 
@@ -141,7 +141,7 @@ namespace collections {
     }
 
     template<class Archive>
-    void Item::load(Archive & ar, const unsigned int version)
+    void item::load(Archive & ar, const unsigned int version)
     {
         switch (version)
         {
@@ -166,7 +166,7 @@ namespace collections {
     }
 
     template<class Archive>
-    void Item::save(Archive & ar, const unsigned int version) const {
+    void item::save(Archive & ar, const unsigned int version) const {
         ar & _var;
     }
 

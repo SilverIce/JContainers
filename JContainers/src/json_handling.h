@@ -141,7 +141,7 @@ namespace collections {
                 auto& path = pair.first;
                 object_base *resolvedObject = nullptr;
 
-                path_resolving::resolve(_context, &root, path.c_str(), [&resolvedObject](Item *itm) {
+                path_resolving::resolve(_context, &root, path.c_str(), [&resolvedObject](item *itm) {
                     if (itm) {
                         resolvedObject = itm->object();
                     }
@@ -161,22 +161,22 @@ namespace collections {
 
                         void operator()(array& cnt) const {
                             if (auto k = bs::get<int32_t>(key)) {
-                                cnt.setItem(*k, Item(val));
+                                cnt.setItem(*k, item(val));
                             }
                         }
                         void operator()(map& cnt) const {
                             if (auto k = bs::get<std::string>(key)) {
-                                cnt.setValueForKey(*k, Item(val));
+                                cnt.setValueForKey(*k, item(val));
                             }
                         }
                         void operator()(form_map& cnt) const {
                             if (auto k = bs::get<FormId>(key)) {
-                                cnt.setValueForKey(*k, Item(val));
+                                cnt.setValueForKey(*k, item(val));
                             }
                         }
                         void operator()(integer_map& cnt) const {
                             if (auto k = bs::get<int32_t>(key)) {
-                                cnt.setValueForKey(*k, Item(val));
+                                cnt.setValueForKey(*k, item(val));
                             }
                         }
                     };
@@ -293,8 +293,8 @@ namespace collections {
         }
 
         template<class K>
-        Item make_item(json_ref val, object_base& container, const K& item_key) {
-            Item item;
+        item make_item(json_ref val, object_base& container, const K& item_key) {
+            item item;
 
             switch (json_typeof(val))
             {
@@ -463,7 +463,7 @@ namespace collections {
         }
 
         template<class Key>
-        void fill_key_info(const Item& itm, const object_base& in_object, const Key& key) {
+        void fill_key_info(const item& itm, const object_base& in_object, const Key& key) {
             if (auto obj = itm.object()) {
                 if (_keyInfo.find(obj) == _keyInfo.end()) {
                     _keyInfo.insert(key_info_map::value_type(obj, std::make_pair(&in_object, key)));
@@ -471,7 +471,7 @@ namespace collections {
             }
         }
 
-        json_ref create_value(const Item& item) {
+        json_ref create_value(const item& item) {
 
             struct item_visitor : boost::static_visitor<json_ref> {
 
@@ -495,7 +495,7 @@ namespace collections {
                     return json_integer(val);
                 }
 
-                json_ref operator()(const Item::Real & val) const {
+                json_ref operator()(const item::Real & val) const {
                     return json_real(val);
                 }
 

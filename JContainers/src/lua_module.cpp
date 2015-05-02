@@ -39,7 +39,7 @@ namespace lua {
 
     using object_base = collections::object_base;
 
-    using Item = collections::Item;
+    using item = collections::item;
     using item_type = collections::item_type;
     using FormId = collections::FormId;
 }
@@ -75,7 +75,7 @@ namespace lua { namespace aux_wip {
             _DMESSAGE("Lua context destructed");
         }
 
-        boost::optional<Item> eval_lua_function(object_base *object, const char *lua_string) {
+        boost::optional<item> eval_lua_function(object_base *object, const char *lua_string) {
 
             assert(lua_string);
 
@@ -91,7 +91,7 @@ namespace lua { namespace aux_wip {
                 return boost::none;
             }
             else {
-                Item result;
+                item result;
                 JCValue *val = (JCValue *)lua_topointer(l, -1);
                 JCValue_fillItem(val, result);
                 return result;
@@ -333,7 +333,7 @@ namespace lua { namespace aux_wip {
 
 namespace lua {
 
-    boost::optional<Item> eval_lua_function(tes_context& ctx, object_base *object, const char *lua_string) {
+    boost::optional<item> eval_lua_function(tes_context& ctx, object_base *object, const char *lua_string) {
         auto pool = static_cast<aux_wip::context_pool*>(*ctx.lua_context);
         return aux_wip::autofreed_context(*pool)->eval_lua_function(object, lua_string);
     }

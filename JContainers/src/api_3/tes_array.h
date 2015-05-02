@@ -56,7 +56,7 @@ namespace tes_api_3 {
                 for (UInt32 i = 0; i < arr.Length(); ++i) {
                     T val;
                     arr.Get(&val, i);
-                    me._array.push_back(Item(val));
+                    me._array.push_back(item(val));
                 }
             },
                 tes_context::instance());
@@ -113,7 +113,7 @@ NEGATIVE_IDX_COMMENT);
             struct inserter : BGSListForm::Visitor {
 
                 virtual bool Accept(TESForm * form) override {
-                    arr->u_container().insert(arr->u_container().begin() + insertIdx, Item(form));
+                    arr->u_container().insert(arr->u_container().begin() + insertIdx, item(form));
                     return false;
                 }
 
@@ -151,10 +151,10 @@ NEGATIVE_IDX_COMMENT);
 
             doReadOp(obj, pySearchStartIndex, [=, &result](uint32_t idx) {
                 if (pySearchStartIndex >= 0) {
-                    auto itr = std::find(obj->begin() + idx, obj->end(), Item(value));
+                    auto itr = std::find(obj->begin() + idx, obj->end(), item(value));
                     result = itr != obj->end() ? (itr - obj->begin()) : -1;
                 } else {
-                    auto itr = std::find(obj->rbegin() + (-pySearchStartIndex - 1), obj->rend(), Item(value));
+                    auto itr = std::find(obj->rbegin() + (-pySearchStartIndex - 1), obj->rend(), item(value));
                     result = itr != obj->rend() ? (obj->rend() - itr) : -1;
                 }
             });
@@ -172,9 +172,9 @@ NEGATIVE_IDX_COMMENT);
         REGISTERF(findVal<TESForm*>, "findForm", "* value searchStartIndex=0", "");
 
         template<class T>
-        static void replaceItemAtIndex(ref obj, Index index, T item) {
+        static void replaceItemAtIndex(ref obj, Index index, T val) {
             doReadOp(obj, index, [=](uint32_t idx) {
-                obj->_array[idx] = Item(item);
+                obj->_array[idx] = item(val);
             });
         }
         REGISTERF(replaceItemAtIndex<SInt32>, "setInt", "* index value", "replaces existing value/container at index with new value.\n"
@@ -185,9 +185,9 @@ NEGATIVE_IDX_COMMENT);
         REGISTERF(replaceItemAtIndex<TESForm*>, "setForm", "* index value", "");
 
         template<class T>
-        static void addItemAt(ref obj, T item, SInt32 addToIndex = -1) {
+        static void addItemAt(ref obj, T val, SInt32 addToIndex = -1) {
             doWriteOp(obj, addToIndex, [&](uint32_t idx) {
-                obj->_array.insert(obj->begin() + idx, Item(item));
+                obj->_array.insert(obj->begin() + idx, item(val));
             });
         }
         REGISTERF(addItemAt<SInt32>, "addInt", "* value addToIndex=-1", "appends value/container to the end of array.\n\
