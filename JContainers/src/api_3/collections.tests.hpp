@@ -179,11 +179,11 @@ namespace tes_api_3 {
         };
 
         path_resolving::resolve(tes_context::instance(), obj, ".glossary.GlossDiv", [&](Item * item) {
-            EXPECT_TRUE(item && item->strValue() && strcmp(item->strValue(), "S") == 0);
+            EXPECT_TRUE(item && item->strValue() && *item->stringValue() == "S");
         });
 
         path_resolving::resolve(tes_context::instance(), obj, ".array[0][0]", [&](Item * item) {
-            EXPECT_TRUE(item && strcmp(item->strValue(), "NPC Head [Head]") == 0);
+            EXPECT_TRUE(item && *item->stringValue() == "NPC Head [Head]");
         });
 
         path_resolving::resolve(tes_context::instance(), obj, ".fmap[__formData|S|0x20]", [&](Item * item) {

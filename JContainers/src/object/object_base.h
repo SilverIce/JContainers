@@ -38,10 +38,10 @@ namespace collections {
 	using object_stack_ref = object_stack_ref_template<object_base>;
 	using spinlock = util::spinlock;
 
-    class object_base// : boost::noncopyable
+    class object_base : public boost::noncopyable
     {
-        object_base(const object_base&);
-        object_base& operator=(const object_base&);
+        //object_base(const object_base&);
+        //object_base& operator=(const object_base&);
 
         friend class object_context;
     public:

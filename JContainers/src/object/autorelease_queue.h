@@ -218,7 +218,6 @@ namespace collections {
         };
 
         enum {
-            tick_duration_millis = 1000 * tick_duration, // same as tick_duration, in milliseconds
             obj_lifeInTicks = obj_lifetime / tick_duration, // object's lifetime described in amount-of-ticks
         };
 
@@ -231,7 +230,7 @@ namespace collections {
 
         void u_startTimer() {
             boost::system::error_code code;
-            _timer.expires_from_now(boost::posix_time::milliseconds(tick_duration_millis), code);
+            _timer.expires_from_now(boost::posix_time::seconds(tick_duration), code);
             assert(!code);
 
             _timer.async_wait([&](const boost::system::error_code& e) {

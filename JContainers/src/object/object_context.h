@@ -33,6 +33,7 @@ namespace collections {
         current = 5,
     };
 
+    /*
     struct object_context_delegate
     {
         virtual void u_loadAdditional(boost::archive::binary_iarchive & arch) = 0;
@@ -40,6 +41,7 @@ namespace collections {
         virtual void u_cleanup() = 0;
         virtual void u_applyUpdates(const serialization_version saveVersion) {}
     };
+    */
 
     class object_context {
 
