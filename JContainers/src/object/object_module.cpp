@@ -29,6 +29,7 @@
 #include <boost/archive/binary_iarchive.hpp>
 
 #include "intrusive_ptr_serialization.hpp"
+#include "util/istring_serialization.h"
 
 #include "rw_mutex.h"
 #include "gtest.h"

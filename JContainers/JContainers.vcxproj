@@ -192,6 +192,7 @@
     <ClInclude Include="src\skse_string.h" />
     <ClInclude Include="src\typedefs.h" />
     <ClInclude Include="src\util\istring.h" />
+    <ClInclude Include="src\util\istring_serialization.h" />
     <ClInclude Include="src\util\spinlock.h" />
     <ClInclude Include="src\util\util.h" />
   </ItemGroup>

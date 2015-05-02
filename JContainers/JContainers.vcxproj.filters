@@ -232,6 +232,9 @@
     <ClInclude Include="src\skse_papyrus_args.hpp">
       <Filter>skse</Filter>
     </ClInclude>
+    <ClInclude Include="src\util\istring_serialization.h">
+      <Filter>util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="JContainers.rc" />

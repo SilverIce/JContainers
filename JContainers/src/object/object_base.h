@@ -8,6 +8,7 @@
 
 #include "intrusive_ptr.hpp"
 #include "util/spinlock.h"
+#include "util/istring.h"
 
 namespace collections {
 
@@ -56,8 +57,8 @@ namespace collections {
         std::atomic_int32_t _aqueue_refCount    = 0;
         time_point _aqueue_push_time            = 0;
 
-        CollectionType _type;
-        boost::optional<std::string> _tag;
+        CollectionType                          _type;
+        boost::optional<util::istring>          _tag;
     private:
         object_context *_context                = nullptr;
 
@@ -178,10 +179,9 @@ namespace collections {
             u_clear();
         }
 
-        // empty string is also null tag
         void set_tag(const char *tag) {
             lock g(_mutex);
-            if (tag && *tag) {
+            if (tag && *tag) {  // empty string is also null tag
                 _tag = tag;
             } else {
                 _tag = boost::none;
@@ -190,7 +190,7 @@ namespace collections {
 
         bool has_equal_tag(const char *tag) const {
             lock l(_mutex);
-            return _tag && tag ? _strcmpi(_tag.get().c_str(), tag) == 0 : false;
+            return _tag && tag ? *_tag == tag : false;
         }
 
         virtual void u_visit_referenced_objects(const std::function<void(object_base&)>& visitor) {}

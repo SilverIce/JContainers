@@ -15,19 +15,21 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 
-#include "intrusive_ptr.hpp"
-#include "intrusive_ptr_serialization.hpp"
-
 #include <fstream>
 #include <sstream>
 #include <set>
 
 #include "gtest.h"
 
+#include "intrusive_ptr.hpp"
+#include "intrusive_ptr_serialization.hpp"
+#include "util/istring_serialization.h"
+
+#include "object/object_base_serialization.h"
+
 #include "collections.h"
 #include "tes_context.h"
 #include "form_handling.h"
-#include "object/object_base_serialization.h"
 
 #include "tes_context.hpp"
 
