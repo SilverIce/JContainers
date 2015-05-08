@@ -34,7 +34,7 @@ namespace collections {
             auto count = ar->u_count();
 
             if (count == 0) {
-                return false;
+                return boost::none;
             }
 
             std::array<uint32_t, N> indexes;
@@ -42,7 +42,7 @@ namespace collections {
                 indexes[i] = (pyIndexes[i] >= 0 ? pyIndexes[i] : (count + pyIndexes[i]));
 
                 if (indexes[i] >= count) {
-                    return false;
+                    return boost::none;
                 }
             }
 

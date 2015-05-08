@@ -7,6 +7,7 @@ namespace tes_api_3 {
 
     using namespace collections;
 
+/*
     struct JCFixture : testing::Fixture {
         tes_context context;
     };
@@ -14,6 +15,7 @@ namespace tes_api_3 {
 #   define JC_TEST(name, name2) TEST_F(JCFixture, name, name2)
 #   define JC_TEST_DISABLED(name, name2) TEST_F(JCFixture, name, DISABLED_##name2)
 
+*/
 }
 
 #ifndef TEST_COMPILATION_DISABLED

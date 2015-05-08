@@ -185,7 +185,7 @@ namespace tes_api_3 {
         }
         REGISTERF(nextKey<skse::string_ref>, "nextKey", STR(* previousKey="" endKey=""), tes_map_nextKey_comment);
 
-        static const char * getNthKey_comment() { return "Retrieves N-th key. "NEGATIVE_IDX_COMMENT "\nWorst complexity is O(n/2)"; }
+        static const char * getNthKey_comment() { return "Retrieves N-th key. " NEGATIVE_IDX_COMMENT "\nWorst complexity is O(n/2)"; }
 
         template<class Key>
         static Key getNthKey(map* obj, SInt32 keyIndex) {
