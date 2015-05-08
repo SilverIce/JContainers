@@ -1,0 +1,6 @@
+**/doc
+**/test
+**/tests
+
+/garbage
+/boost_lib
