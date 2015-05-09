@@ -25,4 +25,10 @@ namespace collections
             return def;
         }
     }
+
+    namespace path_resolving_new {
+
+        void resolve_(tes_context& ctx, item& target, const char *cpath, std::function<void(item *)>& itemFunction);
+        void resolve(tes_context& ctx, object_base& target, const char *cpath, std::function<void(item *)>& itemFunction);
+    }
 }

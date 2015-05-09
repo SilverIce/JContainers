@@ -46,7 +46,7 @@ namespace collections
         };
 
         template<class T, class V>
-        static bool _map_visit_helper(tes_context& context, T& container, path_type path, const V& func)
+        static bool _map_visit_helper(tes_context& context, T& container, path_type path, V& func)
         {
             if (path.empty()) {
                 return false;
@@ -68,15 +68,17 @@ namespace collections
             }
 
             auto copy = container.container_copy();
+            std::function<void(item *)> function(func);
 
             if (isKeyVisit) {
+                item itm;
                 for (auto &pair : copy) {
-                    item itm(pair.first);
-                    resolve(context, itm, rightPath, func);
+                    itm = pair.first;
+                    path_resolving_new::resolve_(context, itm, rightPath, function);
                 }
             } else { // is value visit
                 for (auto &pair : copy) {
-                    resolve(context, pair.second, rightPath, func);
+                    path_resolving_new::resolve_(context, pair.second, rightPath, function);
                 }
             }
 
@@ -330,5 +332,226 @@ namespace collections
                 }
             }
         }
+    }
+
+    namespace path_resolving_new {
+
+        namespace bs = boost;
+        namespace ss = std;
+
+        using cstring = bs::iterator_range<const char*>;
+        using key_variant = bs::variant<int32_t, cstring>;
+        using keys = std::vector<key_variant>;
+
+        struct key_and_rest {
+            key_variant key;
+            cstring rest_of_path;
+        };
+
+
+        template<class R, class Arg, class F1, class ... F>
+        boost::optional<R> parse_path_helper(Arg&& a, F1&& f1, F&& ... funcs) {
+            auto result = f1(a);
+            if (result) {
+                return result;
+            }
+            else {
+                return parse_path_helper<R>(a, funcs...);
+            }
+        };
+
+        template<class R, class Arg>
+        boost::none_t parse_path_helper(Arg&&) {
+            return boost::none;
+        }
+
+        bs::optional<key_and_rest> parse_path(const cstring& path) {
+
+            if (path.empty()) {
+                return bs::none;
+            }
+
+            typedef bs::optional<key_and_rest>(*rule)(const cstring &);
+
+            auto mapRule = [](const cstring &path)-> bs::optional < key_and_rest > {
+
+                if (!bs::starts_with(path, ".") || path.size() < 2) {
+                    return bs::none;
+                }
+
+                auto begin = path.begin() + 1;
+                auto end = bs::find_if(cstring(begin, path.end()), bs::is_any_of(".["));
+
+                if (begin == end) {
+                    return bs::none;
+                }
+
+                return key_and_rest{ cstring(begin, end), cstring(end, path.end()) };
+            };
+
+            auto arrayRule = [](const cstring &path)-> bs::optional < key_and_rest > {
+
+                if (!bs::starts_with(path, "[") || path.size() < 3) {
+                    return bs::none;
+                }
+
+                auto begin = path.begin() + 1;
+                auto end = bs::find_if(cstring(begin, path.end()), bs::is_any_of("]"));
+                auto indexRange = cstring(begin, end);
+
+                if (indexRange.empty()) {
+                    return bs::none;
+                }
+
+                if (!form_handling::is_form_string(indexRange.begin())) {
+                    int32_t index = 0;
+                    try {
+                        index = std::stoul(ss::string(indexRange.begin(), indexRange.end()), nullptr, 0);
+                    }
+                    catch (const std::invalid_argument&) {
+                        return bs::none;
+                    }
+                    catch (const std::out_of_range&) {
+                        return bs::none;
+                    }
+
+                    return key_and_rest{ index, cstring(end + 1, path.end()) };
+                }
+                else {
+                    auto fId = form_handling::from_string(indexRange);
+                    if (!fId) {
+                        return bs::none;
+                    }
+
+                    return key_and_rest{ (int32_t)*fId, cstring(end + 1, path.end()) };
+                }
+            };
+
+            return parse_path_helper<key_and_rest>(path, arrayRule, mapRule);
+        }
+
+        struct accesss_info {
+            object_base& collection;
+            key_variant key;
+        };
+
+
+        auto u_access_value = [](object_base& collection, const key_variant& key) -> item* {
+            struct retrieve_value_tr {
+                item* operator() ( array &obj, const key_variant& key) {
+                    if (auto idx = bs::get<int32_t>(&key)) {
+                        return obj.u_getItem(*idx);
+                    }
+                    return nullptr;
+                }
+                item* operator() ( map &obj, const key_variant& key) {
+                    if (auto idx = bs::get<cstring>(&key)) {
+                        return obj.u_find(idx->begin());
+                    }
+                    return nullptr;
+                }
+                item* operator() ( form_map &obj, const key_variant& key) {
+                    if (auto idx = bs::get<int32_t>(&key)) {
+                        return obj.u_find((FormId)*idx);
+                    }
+                    return nullptr;
+                }
+                item* operator() ( integer_map &obj, const key_variant& key) {
+                    if (auto idx = bs::get<int32_t>(&key)) {
+                        return obj.u_find(*idx);
+                    }
+                    return nullptr;
+                }
+            };
+            return perform_on_object_and_return<item* >(collection, retrieve_value_tr(), key);
+        };
+        // 
+
+        struct last_kv_pair_retriever {
+
+            /* Propotype:
+
+            retrieve obj -> str -> (obj, key)
+            retrieve obj str = recurs obj[key] (key, rest) obj
+                                where
+                                   (key, rest) = parse str
+
+            recurs v        (key, rest)     src = recurs v[key] (parse rest) v
+            recurs V        (key, Nothing)  src = (src, key)
+            recurs _        _               _   = Nothing
+            
+            */
+
+            static bs::optional<accesss_info> retrieve(object_base& collection, const cstring& path) {
+                auto key_opt = parse_path(path);
+                return key_opt ? recurs(access_value(collection, key_opt->key), key_opt, collection) : bs::none;
+            }
+
+            static bs::optional<accesss_info> recurs(bs::optional<object_base*>& value, bs::optional<key_and_rest>& k, object_base& source) {
+                if (!k || !value) {
+                    return bs::none;
+                }
+
+                auto as_object = *value;
+
+                if (k->rest_of_path.empty()) {
+                    return accesss_info{ source, k->key };
+                }
+                else if (as_object && !k->rest_of_path.empty()) {
+                    return recurs(access_value(*as_object, k->key), parse_path(k->rest_of_path), *as_object);
+                }
+                else {
+                    return bs::none;
+                }
+            }
+
+            static bs::optional<object_base*> access_value(object_base& collection, const key_variant& key) {
+                object_lock lock(collection);
+                auto itemPtr = u_access_value(collection, key);
+                return itemPtr ? bs::make_optional(itemPtr->object()) : bs::none;
+            }
+        };
+
+
+        void resolve(tes_context& context, object_base& collection, const char* cpath, std::function<void(item *)>& itemFunction) {
+
+            assert(cpath);
+
+            // path is empty -> just visit collection
+            if (!*cpath) {
+                item itm(collection);
+                itemFunction(&itm);
+                return;
+            }
+
+            auto all_path = bs::make_iterator_range(cpath, cpath + strnlen_s(cpath, 1024));
+            auto access_inf = last_kv_pair_retriever::retrieve(collection, all_path);
+
+            if (access_inf) {
+                object_lock g(access_inf->collection);
+                auto itemPtr = u_access_value(collection, access_inf->key);
+                itemFunction(itemPtr);
+            }
+            else {
+                itemFunction(nullptr);
+            }
+        }
+
+        void resolve_(tes_context& ctx, item& target, const char *cpath, std::function<void(item *)>& itemFunction) {
+            assert(cpath);
+
+            if (auto collection = target.object()) {
+                resolve(ctx, *collection, cpath, itemFunction);
+            }
+            else {
+                if (!*cpath) {
+                    itemFunction(&target);
+                }
+                else {
+                    itemFunction(nullptr);
+                }
+            }
+        }
+
     }
 }
