@@ -220,11 +220,11 @@ namespace collections
 
                                         if (auto obj = container->as<map>()) {
                                             ss::string key(begin, end);
-                                            itemPtr = obj->u_find(key);
+                                            itemPtr = obj->u_get(key);
 
                                             if (!itemPtr && createMissingKeys) {
                                                 obj->u_setValueForKey(key, item());
-                                                itemPtr = obj->u_find(key);
+                                                itemPtr = obj->u_get(key);
                                             }
                                         }
 
@@ -282,13 +282,13 @@ namespace collections
                 return state(   true,
                                 [=](object_base* container) {
                                     if (container->as<array>()) {
-                                        return container->as<array>()->u_getItem(indexOrFormId);
+                                        return container->as<array>()->u_get(indexOrFormId);
                                     }
                                     else if (container->as<form_map>()) {
-                                        return container->as<form_map>()->u_find((FormId)indexOrFormId);
+                                        return container->as<form_map>()->u_get((FormId)indexOrFormId);
                                     }
                                     else if (container->as<integer_map>()) {
-                                        return container->as<integer_map>()->u_find(indexOrFormId);
+                                        return container->as<integer_map>()->u_get(indexOrFormId);
                                     }
                                     else {
                                         return (item *)nullptr;
@@ -339,9 +339,10 @@ namespace collections
         namespace bs = boost;
         namespace ss = std;
 
+        using string = std::string;
         using cstring = bs::iterator_range<const char*>;
-        using key_variant = bs::variant<int32_t, cstring>;
-        using keys = std::vector<key_variant>;
+        using key_variant = bs::variant<int32_t, string>;
+        //using keys = std::vector<key_variant>;
 
         struct key_and_rest {
             key_variant key;
@@ -386,7 +387,7 @@ namespace collections
                     return bs::none;
                 }
 
-                return key_and_rest{ cstring(begin, end), cstring(end, path.end()) };
+                return key_and_rest{ string(begin, end), cstring(end, path.end()) };
             };
 
             auto arrayRule = [](const cstring &path)-> bs::optional < key_and_rest > {
@@ -435,37 +436,69 @@ namespace collections
             key_variant key;
         };
 
-
         auto u_access_value = [](object_base& collection, const key_variant& key) -> item* {
-            struct retrieve_value_tr {
+            struct {
                 item* operator() ( array &obj, const key_variant& key) {
                     if (auto idx = bs::get<int32_t>(&key)) {
-                        return obj.u_getItem(*idx);
+                        return obj.u_get(*idx);
                     }
                     return nullptr;
                 }
                 item* operator() ( map &obj, const key_variant& key) {
-                    if (auto idx = bs::get<cstring>(&key)) {
-                        return obj.u_find(idx->begin());
+                    if (auto idx = bs::get<string>(&key)) {
+                        return obj.u_get(*idx);
                     }
                     return nullptr;
                 }
                 item* operator() ( form_map &obj, const key_variant& key) {
                     if (auto idx = bs::get<int32_t>(&key)) {
-                        return obj.u_find((FormId)*idx);
+                        return obj.u_get((FormId)*idx);
                     }
                     return nullptr;
                 }
                 item* operator() ( integer_map &obj, const key_variant& key) {
                     if (auto idx = bs::get<int32_t>(&key)) {
-                        return obj.u_find(*idx);
+                        return obj.u_get(*idx);
                     }
                     return nullptr;
                 }
-            };
-            return perform_on_object_and_return<item* >(collection, retrieve_value_tr(), key);
+            } ac;
+            return perform_on_object_and_return<item* >(collection, ac, key);
         };
         // 
+
+        template<class T, class K>
+        item* u_access_value_creative_helper(T& obj, K* key) {
+            if (!key) {
+                return nullptr;
+            }
+            auto itm = obj.u_get(*key);
+            if (!itm) {
+                return &(obj.u_container()[*key] = item());
+            }
+            return itm;
+        }
+
+/*
+        item* u_access_value_creative(object_base& collection, const key_variant& key) {
+            struct {
+                item* operator() (array &obj, const key_variant& key) {
+                    return u_access_value_creative_helper(obj, bs::get<int32_t>(&key));
+                }
+                item* operator() (map &obj, const key_variant& key) {
+                    return u_access_value_creative_helper(obj, bs::get<string>(&key));
+                }
+                item* operator() (form_map &obj, const key_variant& key) {
+                    return u_access_value_creative_helper( obj, static_cast<FormId*>(bs::get<int32_t>(&key)) );
+                }
+                item* operator() (integer_map &obj, const key_variant& key) {
+                    return u_access_value_creative_helper(obj, bs::get<int32_t>(&key));
+                }
+            } ac;
+            return perform_on_object_and_return<item* >(collection, ac, key);
+        }
+*/
+
 
         struct last_kv_pair_retriever {
 
@@ -476,9 +509,9 @@ namespace collections
                                 where
                                    (key, rest) = parse str
 
-            recurs v        (key, rest)     src = recurs v[key] (parse rest) v
-            recurs V        (key, Nothing)  src = (src, key)
-            recurs _        _               _   = Nothing
+            recurs v    (key, rest)     src = recurs v[key] (parse rest) v
+            recurs V    (key, Nothing)  src = (src, key)
+            recurs _    _               _   = Nothing
             
             */
 
@@ -487,15 +520,14 @@ namespace collections
                 return key_opt ? recurs(access_value(collection, key_opt->key), key_opt, collection) : bs::none;
             }
 
-            static bs::optional<accesss_info> recurs(bs::optional<object_base*>& value, bs::optional<key_and_rest>& k, object_base& source) {
+            static bs::optional<accesss_info> recurs(bs::optional<object_base*>&& value, bs::optional<key_and_rest>& k, object_base& source) {
                 if (!k || !value) {
                     return bs::none;
                 }
 
                 auto as_object = *value;
-
                 if (k->rest_of_path.empty()) {
-                    return accesss_info{ source, k->key };
+                    return accesss_info{ source, std::move(k->key) };
                 }
                 else if (as_object && !k->rest_of_path.empty()) {
                     return recurs(access_value(*as_object, k->key), parse_path(k->rest_of_path), *as_object);

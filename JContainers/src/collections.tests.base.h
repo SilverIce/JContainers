@@ -445,7 +445,7 @@ namespace collections { namespace {
         std::string name = "back in black";
         cnt.u_setValueForKey("ACDC", item(name));
 
-        EXPECT_TRUE(*cnt.u_find("acdc")->stringValue() == name);
+        EXPECT_TRUE(*cnt.u_get("acdc")->stringValue() == name);
     }
 
     JC_TEST(tes_context, database)

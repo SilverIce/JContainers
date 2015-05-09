@@ -122,7 +122,7 @@ namespace tes_api_3 {
         };
 
         {
-            object_base *obj = tes_object::objectFromPrototype(STR([1, 2, 3, 4, 5, 6]));
+            object_stack_ref obj = tes_object::objectFromPrototype(STR([1, 2, 3, 4, 5, 6]));
 
             shouldReturnNumber(obj, "@maxNum", 6);
             shouldReturnNumber(obj, "@minNum", 1);

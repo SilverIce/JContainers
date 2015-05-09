@@ -70,17 +70,17 @@ namespace collections {
     };
 
     
-    template<class R, class F, class ... Args>
-    inline R perform_on_object_and_return(object_base & container, F& func, Args&&... args) {
+    template<class R, class Collection, class F, class ...Args>
+    inline R perform_on_object_and_return(Collection& container, F func, Args&&... args) {
         switch (container.type()) {
         case array::TypeId:
-            return func(container.as_link<array>(), args...);
+            return func(container.as_link<array>(), std::forward<Args>(args)...);
         case map::TypeId:
-            return func(container.as_link<map>(), args...);
+            return func(container.as_link<map>(), std::forward<Args>(args)...);
         case form_map::TypeId:
-            return func(container.as_link<form_map>(), args...);
+            return func(container.as_link<form_map>(), std::forward<Args>(args)...);
         case integer_map::TypeId:
-            return func(container.as_link<integer_map>(), args...);
+            return func(container.as_link<integer_map>(), std::forward<Args>(args)...);
         default:
             assert(false);
             noreturn_func();
@@ -88,35 +88,25 @@ namespace collections {
         }
     }
 
-    template<class R, class F, class ... Args>
-    inline R perform_on_object_and_return(const object_base & container, F& func, Args&&... args) {
-        return perform_on_object_and_return<R>(const_cast<object_base&>(container), func, args...);
-    }
-
-    template<class F, class ... Args>
-    inline void perform_on_object(object_base & container, F& func, Args&&... args) {
+    template<class F, class Collection, class ...Args>
+    inline void perform_on_object(Collection& container, F func, Args&&... args) {
         switch (container.type()) {
         case array::TypeId:
-            func(container.as_link<array>(), args...);
+            func(container.as_link<array>(), std::forward<Args>(args)...);
             break;
         case map::TypeId:
-            func(container.as_link<map>(), args...);
+            func(container.as_link<map>(), std::forward<Args>(args)...);
             break;
         case form_map::TypeId:
-            func(container.as_link<form_map>(), args...);
+            func(container.as_link<form_map>(), std::forward<Args>(args)...);
             break;
         case integer_map::TypeId:
-            func(container.as_link<integer_map>(), args...);
+            func(container.as_link<integer_map>(), std::forward<Args>(args)...);
             break;
         default:
             assert(false);
             break;
         }
-    }
-
-    template<class F, class ... Args>
-    inline void perform_on_object(const object_base & container, F& func, Args&&... args) {
-        perform_on_object(const_cast<object_base&>(container), func, args...);
     }
 
     class array;
@@ -192,9 +182,13 @@ namespace collections {
             return{ index >= 0 && index < count, index };
         }
 
-        item* u_getItem(int32_t index) {
+        const item* u_get(int32_t index) const {
             auto idx = u_convertIndex(index);
             return idx ? &_array[*idx] : nullptr;
+        }
+
+        item* u_get(int32_t index) {
+            return const_cast<item*>( const_cast<const array*>(this)->u_get(index) );
         }
 
         void setItem(int32_t index, const item& itm) {
@@ -256,23 +250,23 @@ namespace collections {
 
         item findOrDef(const key_type& key) const {
             object_lock g(this);
-            auto result = u_find(key);
+            auto result = u_get(key);
             return result ? *result : item();
         }
 
         boost::optional<item> get_item(const key_type& key) const {
             object_lock g(this);
-            auto result = u_find(key);
+            auto result = u_get(key);
             return result ? *result : boost::optional<item>();
         }
 
-        const item* u_find(const key_type& key) const {
+        const item* u_get(const key_type& key) const {
             auto itr = cnt.find(key);
             return itr != cnt.end() ? &(itr->second) : nullptr;
         }
 
-        item* u_find(const key_type& key) {
-            return const_cast<item*>( const_cast<const basic_map_collection*>(this)->u_find(key) );
+        item* u_get(const key_type& key) {
+            return const_cast<item*>( const_cast<const basic_map_collection*>(this)->u_get(key) );
         }
 
         bool erase(const key_type& key) {
@@ -307,7 +301,7 @@ namespace collections {
         }
 
         const item& operator [] (const key_type& key) const {
-            auto itm = u_find(key);
+            auto itm = u_get(key);
             assert(itm);
             return *itm;
         }
