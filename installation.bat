@@ -1,4 +1,4 @@
-cd JContainers\lib\boost\
+cd dep\boost\
 
 
 call bootstrap.bat
@@ -7,4 +7,4 @@ call bootstrap.bat
 call build_libraries.bat
 
 
-cd ..\..\..\
+cd ..\..\
