@@ -43,7 +43,7 @@ namespace collections {
         typedef typename object_stack_ref_template<T> ref;
         typedef typename object_stack_ref_template<const T> cref;
 
-        static T& make(tes_context& context /*= tes_context::instance()*/) {
+        static T& make(object_context& context /*= tes_context::instance()*/) {
             auto& obj = *new T();
             obj.set_context(context);
             obj._registerSelf();
@@ -51,7 +51,7 @@ namespace collections {
         }
 
         template<class Init>
-        static T& _makeWithInitializer(Init& init, tes_context& context /*= tes_context::instance()*/) {
+        static T& _makeWithInitializer(Init& init, object_context& context /*= tes_context::instance()*/) {
             auto& obj = *new T();
             obj.set_context(context);
             init(obj);
@@ -59,12 +59,12 @@ namespace collections {
             return obj;
         }
 
-        static T& object(tes_context& context /*= tes_context::instance()*/) {
+        static T& object(object_context& context /*= tes_context::instance()*/) {
             return make(context);
         }
 
         template<class Init>
-        static T& objectWithInitializer(Init& init, tes_context& context /*= tes_context::instance()*/) {
+        static T& objectWithInitializer(Init& init, object_context& context /*= tes_context::instance()*/) {
             return _makeWithInitializer(init, context);
         }
     };
@@ -129,6 +129,7 @@ namespace collections {
         typedef SInt32 Index;
 
         typedef std::vector<item> container_type;
+        typedef int32_t key_type;
         typedef container_type::iterator iterator;
         typedef container_type::reverse_iterator reverse_iterator;
 
@@ -189,6 +190,14 @@ namespace collections {
 
         item* u_get(int32_t index) {
             return const_cast<item*>( const_cast<const array*>(this)->u_get(index) );
+        }
+
+        item* u_set(int32_t index, const item& itm) {
+            auto idx = u_convertIndex(index);
+            if (idx) {
+                return &(_array[*idx] = itm);
+            }
+            return nullptr;
         }
 
         void setItem(int32_t index, const item& itm) {
@@ -283,13 +292,13 @@ namespace collections {
             cnt.clear();
         }
 
-        template<class T> void u_setValueForKey(const key_type& key, T&& value) {
-            cnt[key] = std::forward<T>(value);
+        template<class T> item* u_set(const key_type& key, T&& value) {
+            return &(cnt[key] = std::forward<T>(value));
         }
 
-        template<class T>void setValueForKey(const key_type& key, T&& value) {
+        template<class T> void setValueForKey(const key_type& key, T&& value) {
             object_lock g(this);
-            u_setValueForKey(key, value);
+            u_set(key, value);
         }
 
         SInt32 u_count() const override {

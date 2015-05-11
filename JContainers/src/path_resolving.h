@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <boost/optional.hpp>
 
 namespace collections
 {
@@ -28,7 +29,13 @@ namespace collections
 
     namespace path_resolving_new {
 
-        void resolve_(tes_context& ctx, item& target, const char *cpath, std::function<void(item *)>& itemFunction);
-        void resolve(tes_context& ctx, object_base& target, const char *cpath, std::function<void(item *)>& itemFunction);
+        void resolve_(tes_context& ctx, item& target, const char *cpath, std::function<void(item *)> itemFunction, bool create_missing_keys = false);
+        void resolve(tes_context& ctx, object_base& target, const char *cpath, std::function<void(item *)> itemFunction, bool create_missing_keys = false);
+        boost::optional<item> resolve(tes_context& ctx, object_base& target, const char *cpath);
+
+        template<class T>
+        bool assign(tes_context& ctx, object_base& target, const char *cpath, T&& value) {
+
+        }
     }
 }

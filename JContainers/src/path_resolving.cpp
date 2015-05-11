@@ -45,8 +45,8 @@ namespace collections
             }
         };
 
-        template<class T, class V>
-        static bool _map_visit_helper(tes_context& context, T& container, path_type path, V& func)
+        template<class T>
+        static bool _map_visit_helper(tes_context& context, T& container, path_type path, std::function<void(item *)> function)
         {
             if (path.empty()) {
                 return false;
@@ -68,7 +68,6 @@ namespace collections
             }
 
             auto copy = container.container_copy();
-            std::function<void(item *)> function(func);
 
             if (isKeyVisit) {
                 item itm;
@@ -223,7 +222,7 @@ namespace collections
                                             itemPtr = obj->u_get(key);
 
                                             if (!itemPtr && createMissingKeys) {
-                                                obj->u_setValueForKey(key, item());
+                                                obj->u_set(key, item());
                                                 itemPtr = obj->u_get(key);
                                             }
                                         }
@@ -341,14 +340,8 @@ namespace collections
 
         using string = std::string;
         using cstring = bs::iterator_range<const char*>;
-        using key_variant = bs::variant<int32_t, string>;
+        using key_variant = bs::variant<int32_t, string, FormId>;
         //using keys = std::vector<key_variant>;
-
-        struct key_and_rest {
-            key_variant key;
-            cstring rest_of_path;
-        };
-
 
         template<class R, class Arg, class F1, class ... F>
         boost::optional<R> parse_path_helper(Arg&& a, F1&& f1, F&& ... funcs) {
@@ -365,6 +358,11 @@ namespace collections
         boost::none_t parse_path_helper(Arg&&) {
             return boost::none;
         }
+
+        struct key_and_rest {
+            key_variant key;
+            cstring rest_of_path;
+        };
 
         bs::optional<key_and_rest> parse_path(const cstring& path) {
 
@@ -387,7 +385,8 @@ namespace collections
                     return bs::none;
                 }
 
-                return key_and_rest{ string(begin, end), cstring(end, path.end()) };
+                string str(begin, end);
+                return key_and_rest{ std::move(str), cstring(end, path.end()) };
             };
 
             auto arrayRule = [](const cstring &path)-> bs::optional < key_and_rest > {
@@ -407,7 +406,7 @@ namespace collections
                 if (!form_handling::is_form_string(indexRange.begin())) {
                     int32_t index = 0;
                     try {
-                        index = std::stoul(ss::string(indexRange.begin(), indexRange.end()), nullptr, 0);
+                        index = std::stoi(string(indexRange.begin(), indexRange.end()), nullptr, 0);
                     }
                     catch (const std::invalid_argument&) {
                         return bs::none;
@@ -424,7 +423,7 @@ namespace collections
                         return bs::none;
                     }
 
-                    return key_and_rest{ (int32_t)*fId, cstring(end + 1, path.end()) };
+                    return key_and_rest{ *fId, cstring(end + 1, path.end()) };
                 }
             };
 
@@ -436,80 +435,93 @@ namespace collections
             key_variant key;
         };
 
+        struct u_access_value_helper {
+            template<class Collection>
+            item* operator () (Collection& collection, const key_variant& key) {
+                if (auto idx = bs::get<typename Collection::key_type>(&key)) {
+                    return collection.u_get(*idx);
+                }
+                return nullptr;
+            }
+        };
+
         auto u_access_value = [](object_base& collection, const key_variant& key) -> item* {
-            struct {
-                item* operator() ( array &obj, const key_variant& key) {
-                    if (auto idx = bs::get<int32_t>(&key)) {
-                        return obj.u_get(*idx);
-                    }
-                    return nullptr;
-                }
-                item* operator() ( map &obj, const key_variant& key) {
-                    if (auto idx = bs::get<string>(&key)) {
-                        return obj.u_get(*idx);
-                    }
-                    return nullptr;
-                }
-                item* operator() ( form_map &obj, const key_variant& key) {
-                    if (auto idx = bs::get<int32_t>(&key)) {
-                        return obj.u_get((FormId)*idx);
-                    }
-                    return nullptr;
-                }
-                item* operator() ( integer_map &obj, const key_variant& key) {
-                    if (auto idx = bs::get<int32_t>(&key)) {
-                        return obj.u_get(*idx);
-                    }
-                    return nullptr;
-                }
-            } ac;
-            return perform_on_object_and_return<item* >(collection, ac, key);
+            return perform_on_object_and_return<item* >(collection, u_access_value_helper(), key);
         };
         // 
 
-        template<class T, class K>
-        item* u_access_value_creative_helper(T& obj, K* key) {
-            if (!key) {
+
+        struct u_assign_value_helper {
+            template<class T>
+            item* operator()(T& obj, const key_variant& key, const item& value) {
+                if (auto idx = bs::get<typename T::key_type>(&key)) {
+                    return obj.u_set(*idx, value);
+                }
                 return nullptr;
             }
-            auto itm = obj.u_get(*key);
-            if (!itm) {
-                return &(obj.u_container()[*key] = item());
+        };
+
+
+        item* u_assign_value(object_base& collection, const key_variant& key, const item& value) {
+            return perform_on_object_and_return<item* >(collection, u_assign_value_helper(), key, value);
+        }
+
+
+        struct constant_accessor {
+            static bs::optional<object_base*> access_value(object_base& collection, const bs::optional<key_and_rest>& key) {
+                if (!key) {
+                    return bs::none;
+                }
+                object_lock lock(collection);
+                auto itemPtr = u_access_value(collection, key->key);
+                return itemPtr ? bs::make_optional(itemPtr->object()) : bs::none;
             }
-            return itm;
-        }
+        };
 
-/*
-        item* u_access_value_creative(object_base& collection, const key_variant& key) {
-            struct {
-                item* operator() (array &obj, const key_variant& key) {
-                    return u_access_value_creative_helper(obj, bs::get<int32_t>(&key));
+        struct creative_accessor {
+            static bs::optional<object_base*> access_value(object_base& collection, const bs::optional<key_and_rest>& key) {
+                if (!key) {
+                    return bs::none;
                 }
-                item* operator() (map &obj, const key_variant& key) {
-                    return u_access_value_creative_helper(obj, bs::get<string>(&key));
-                }
-                item* operator() (form_map &obj, const key_variant& key) {
-                    return u_access_value_creative_helper( obj, static_cast<FormId*>(bs::get<int32_t>(&key)) );
-                }
-                item* operator() (integer_map &obj, const key_variant& key) {
-                    return u_access_value_creative_helper(obj, bs::get<int32_t>(&key));
-                }
-            } ac;
-            return perform_on_object_and_return<item* >(collection, ac, key);
-        }
-*/
+                object_lock lock(collection);
+                auto itemPtr = u_access_value(collection, key->key);
+                /*  is int-map and key is int
+                is form-map
+                is map and key is string
+                failure
+                */
+                if (!itemPtr) {
+                    itemPtr = u_assign_value(collection, key->key, item());
+                    auto next_key = parse_path(key->rest_of_path);
+                    if (itemPtr && next_key) {
+                        struct creator : public bs::static_visitor<object_base*> {
+                            object_context* ctx;
+                            explicit creator(object_context* c) : ctx(c) {}
 
+                            object_base* operator ()(const int32_t& k) const { return &integer_map::object(*ctx); }
+                            object_base* operator ()(const string& k) const { return &map::object(*ctx); }
+                            object_base* operator ()(const FormId& k) const { return &form_map::object(*ctx); }
+                        };
+                        *itemPtr = bs::apply_visitor(creator(&collection.context()), next_key->key);
+                    }
+                }
 
+                return itemPtr ? bs::make_optional(itemPtr->object()) : bs::none;
+            }
+
+        };
+
+        template<class access_value>
         struct last_kv_pair_retriever {
 
             /* Propotype:
 
             retrieve obj -> str -> (obj, key)
-            retrieve obj str = recurs obj[key] (key, rest) obj
+            retrieve obj str = recurs obj[(key, rest)] (key, rest) obj
                                 where
                                    (key, rest) = parse str
 
-            recurs v    (key, rest)     src = recurs v[key] (parse rest) v
+            recurs v    (key, rest)     src = recurs v[(nkey, nrest)] (nkey, nrest) v where (nkey, nrest) = parse rest
             recurs V    (key, Nothing)  src = (src, key)
             recurs _    _               _   = Nothing
             
@@ -517,10 +529,10 @@ namespace collections
 
             static bs::optional<accesss_info> retrieve(object_base& collection, const cstring& path) {
                 auto key_opt = parse_path(path);
-                return key_opt ? recurs(access_value(collection, key_opt->key), key_opt, collection) : bs::none;
+                return recurs(access_value::access_value(collection, key_opt), key_opt, collection);
             }
 
-            static bs::optional<accesss_info> recurs(bs::optional<object_base*>&& value, bs::optional<key_and_rest>& k, object_base& source) {
+            static bs::optional<accesss_info> recurs(bs::optional<object_base*>&& value, const bs::optional<key_and_rest>& k, object_base& source) {
                 if (!k || !value) {
                     return bs::none;
                 }
@@ -530,22 +542,17 @@ namespace collections
                     return accesss_info{ source, std::move(k->key) };
                 }
                 else if (as_object && !k->rest_of_path.empty()) {
-                    return recurs(access_value(*as_object, k->key), parse_path(k->rest_of_path), *as_object);
+                    auto next_key = parse_path(k->rest_of_path);
+                    return recurs(access_value::access_value(*as_object, next_key), next_key, *as_object);
                 }
                 else {
                     return bs::none;
                 }
             }
-
-            static bs::optional<object_base*> access_value(object_base& collection, const key_variant& key) {
-                object_lock lock(collection);
-                auto itemPtr = u_access_value(collection, key);
-                return itemPtr ? bs::make_optional(itemPtr->object()) : bs::none;
-            }
         };
 
-
-        void resolve(tes_context& context, object_base& collection, const char* cpath, std::function<void(item *)>& itemFunction) {
+        template<class Visitor>
+        void resolve_templ(tes_context& context, object_base& collection, const char* cpath, Visitor& itemFunction, bool create_missing_keys = false) {
 
             assert(cpath);
 
@@ -557,11 +564,13 @@ namespace collections
             }
 
             auto all_path = bs::make_iterator_range(cpath, cpath + strnlen_s(cpath, 1024));
-            auto access_inf = last_kv_pair_retriever::retrieve(collection, all_path);
+            auto access_inf = create_missing_keys
+                ? last_kv_pair_retriever<creative_accessor>::retrieve(collection, all_path)
+                : last_kv_pair_retriever<constant_accessor>::retrieve(collection, all_path);
 
             if (access_inf) {
                 object_lock g(access_inf->collection);
-                auto itemPtr = u_access_value(collection, access_inf->key);
+                auto itemPtr = u_access_value(access_inf->collection, access_inf->key);
                 itemFunction(itemPtr);
             }
             else {
@@ -569,11 +578,15 @@ namespace collections
             }
         }
 
-        void resolve_(tes_context& ctx, item& target, const char *cpath, std::function<void(item *)>& itemFunction) {
+        void resolve(tes_context& context, object_base& collection, const char* cpath, std::function<void(item *)> itemFunction, bool create_missing_keys) {
+            resolve_templ(context, collection, cpath, itemFunction, create_missing_keys);
+        }
+
+        void resolve_(tes_context& ctx, item& target, const char *cpath, std::function<void(item *)> itemFunction, bool create_missing_keys) {
             assert(cpath);
 
             if (auto collection = target.object()) {
-                resolve(ctx, *collection, cpath, itemFunction);
+                resolve(ctx, *collection, cpath, itemFunction, create_missing_keys);
             }
             else {
                 if (!*cpath) {
@@ -583,6 +596,12 @@ namespace collections
                     itemFunction(nullptr);
                 }
             }
+        }
+
+        boost::optional<item> resolve(tes_context& ctx, object_base& target, const char *cpath) {
+            boost::optional<item> result;
+            resolve_templ(ctx, target, cpath, [&result](item *value) { if (value) result = *value; });
+            return result;
         }
 
     }

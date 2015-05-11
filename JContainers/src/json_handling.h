@@ -10,6 +10,7 @@
 #include "form_handling.h"
 #include "boost_extras.h"
 #include "path_resolving.h"
+#include "boost/filesystem/path.hpp"
 
 namespace collections {
 
@@ -86,6 +87,9 @@ namespace collections {
         static json_unique_ref json_from_file(const char *path) {
             json_error_t error; //  TODO: output error
             json_ref ref = json_load_file(path, 0, &error);
+            if (!ref) {
+                jc_debug("json_deserializer: %s source: %s line: %d", error.text, error.source, error.line);
+            }
             return make_unique_ptr(ref, json_decref);
         }
 
@@ -107,6 +111,10 @@ namespace collections {
         static object_base* object_from_file(tes_context& context, const char *path) {
             auto json = json_from_file(path);
             return json_deserializer(context)._object_from_json( json.get() );
+        }
+
+        static object_base* object_from_file(tes_context& context, const boost::filesystem::path& path) {
+            return object_from_file(context, path.generic_string().c_str());
         }
 
     private:
@@ -203,7 +211,7 @@ namespace collections {
                     const char *key;
                     json_t *value;
                     json_object_foreach(val, key, value) {
-                        cnt.u_setValueForKey(key, self->make_item(value, cnt, key));
+                        cnt.u_set(key, self->make_item(value, cnt, key));
                     }
                 }
                 void operator()(form_map& cnt) {
@@ -212,7 +220,7 @@ namespace collections {
                     json_object_foreach(val, key, value) {
                         auto fkey = form_handling::from_string(key);
                         if (fkey) {
-                            cnt.u_setValueForKey(*fkey, self->make_item(value, cnt, *fkey));
+                            cnt.u_set(*fkey, self->make_item(value, cnt, *fkey));
                         }
                     }
                 }

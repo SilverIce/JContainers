@@ -176,6 +176,44 @@ namespace collections { namespace {
         }
     }
 
+    JC_TEST(path_resolving_new, _) {
+
+        array::ref tests = json_deserializer::object_from_file(context,
+            util::relative_to_dll_path("test_data/path_resolving/path_resolving.json"))->as_link<array>();
+
+        EXPECT_TRUE(tests->s_count() > 0);
+
+        auto testNewResolving = [&](object_base& tree, const char* path, const item* expectedVal) {
+            EXPECT_NOT_NIL(path);
+            auto optional = path_resolving_new::resolve(context, tree, path);
+            EXPECT_TRUE((!expectedVal && !optional) || (optional && *expectedVal == *optional));
+        };
+        auto testOldResolving = [&](object_base& tree, const char* path, const item* expectedVal) {
+            EXPECT_NOT_NIL(path);
+            path_resolving::resolve(context, &tree, path, [&](item *optional) {
+                EXPECT_TRUE((!expectedVal && !optional) || (optional && *expectedVal == *optional));
+            });
+        };
+
+        for (auto& test : tests->u_container()) {
+            map& testO = test.object()->as_link<map>();
+            object_base& tree = *testO["tree"].object();
+
+            array& path2value = testO["path2value"].object()->as_link<array>();
+            for (auto& value : path2value.u_container()) {
+                auto& pair = value.object()->as_link<map>();
+                testNewResolving(tree, pair["path"].strValue(), pair.u_get("value"));
+                testOldResolving(tree, pair["path"].strValue(), pair.u_get("value"));
+            }
+        }
+
+        auto& m = map::object(context);
+        path_resolving_new::resolve(context, m, ".keyA.B", [&](item *itm){
+            *itm = 10;
+        }, true);
+        EXPECT_TRUE(*path_resolving_new::resolve(context, m, ".keyA.B") == 10);
+    }
+
     JC_TEST(json_deserializer, test)
     {
         EXPECT_NIL(json_deserializer::object_from_file(context, ""));
@@ -260,7 +298,7 @@ namespace collections { namespace {
     {
         {
             map& cnt = map::object(context);
-            cnt.u_setValueForKey("cycle", item(cnt));
+            cnt.u_set("cycle", item(cnt));
 
             json_serializer::create_json_data(cnt);
         }
@@ -268,8 +306,8 @@ namespace collections { namespace {
             map &cnt1 = map::object(context);
             map &cnt2 = map::object(context);
 
-            cnt1.u_setValueForKey("cnt2", item(cnt2));
-            cnt2.u_setValueForKey("cnt1", item(cnt1));
+            cnt1.u_set("cnt2", item(cnt2));
+            cnt2.u_set("cnt1", item(cnt1));
 
             json_serializer::create_json_data(cnt1);
         }
@@ -355,6 +393,8 @@ namespace collections { namespace {
             array& root = json_deserializer::object_from_json_data(context, STR(
                 ["__reference|"]
             ))->as_link<array>();
+
+            EXPECT_TRUE(root[0] == root.base());
             //EXPECT_NOT_NIL(root);
 
             array& copy = deep_copying::deep_copy(context, root).as_link<array>();
@@ -443,7 +483,7 @@ namespace collections { namespace {
         map &cnt = map::object(context);
 
         std::string name = "back in black";
-        cnt.u_setValueForKey("ACDC", item(name));
+        cnt.u_set("ACDC", item(name));
 
         EXPECT_TRUE(*cnt.u_get("acdc")->stringValue() == name);
     }
@@ -553,7 +593,7 @@ namespace collections { namespace {
     {
         auto& obj = map::object(context);
         object_lock lock(obj);
-        obj.u_setValueForKey("lol", item(obj));
+        obj.u_set("lol", item(obj));
     }
 
 }

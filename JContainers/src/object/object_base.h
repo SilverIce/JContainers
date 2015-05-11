@@ -103,9 +103,9 @@ namespace collections {
         }
 
         template<class T> const T& as_link() const {
-            auto obj = this->as<T>();
-            assert(obj);
-            return *obj;
+            const T* casted_object = this->as<T>();
+            assert(casted_object != nullptr && "can't cast the object");
+            return *casted_object;
         }
 
         object_base * retain() {

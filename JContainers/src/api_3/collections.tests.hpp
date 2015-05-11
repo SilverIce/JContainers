@@ -156,52 +156,6 @@ namespace tes_api_3 {
         }
     }
 
-    TEST(path_resolving, path_resolving)
-    {
-
-        object_base *obj = tes_object::objectFromPrototype(STR(
-        {
-            "glossary": {
-                "GlossDiv": "S"
-            },
-            "array" : [["NPC Head [Head]", 0, -0.330000]],
-            "fmap" : {
-                    "__formData": null,
-                    "__formData|S|0x20": 8.0
-                }
-        }
-        ));
-
-        EXPECT_NOT_NIL(obj);
-
-        auto shouldSucceed = [&](const char * path, bool succeed) {
-            path_resolving::resolve(tes_context::instance(), obj, path, [&](item * item) {
-                EXPECT_TRUE(succeed == (item != nullptr));
-            });
-        };
-
-        path_resolving::resolve(tes_context::instance(), obj, ".glossary.GlossDiv", [&](item * item) {
-            EXPECT_TRUE(item && item->strValue() && *item->stringValue() == "S");
-        });
-
-        path_resolving::resolve(tes_context::instance(), obj, ".array[0][0]", [&](item * item) {
-            EXPECT_TRUE(item && *item->stringValue() == "NPC Head [Head]");
-        });
-
-        path_resolving::resolve(tes_context::instance(), obj, ".fmap[__formData|S|0x20]", [&](item * item) {
-            EXPECT_TRUE(item && *item == 8.f);
-        });
-
-        shouldSucceed(".nonExistingKey", false);
-        shouldSucceed(".array[[]", false);
-        shouldSucceed(".array[", false);
-        shouldSucceed("..array[", false);
-        shouldSucceed(".array.[", false);
-
-        shouldSucceed(".array.key", false);
-        shouldSucceed("[0].key", false);
-    }
-
     TEST(path_resolving, explicit_key_construction)
     {
         object_base* obj = tes_object::object<map>();
@@ -211,21 +165,6 @@ namespace tes_api_3 {
         EXPECT_TRUE( tes_object::solveSetter<SInt32>(obj, path, 14, true) );
         EXPECT_TRUE( tes_object::hasPath(obj, path) );
         EXPECT_TRUE(tes_object::resolveGetter<SInt32>(obj, path) == 14);
-    }
-
-    TEST(json_handling, objectFromPrototype)
-    {
-        auto obj = tes_object::objectFromPrototype("{ \"timesTrained\" : 10, \"trainers\" : [] }")->as<map>();
-
-        EXPECT_TRUE(obj != nullptr);
-
-        path_resolving::resolve(tes_context::instance(), obj, ".timesTrained", [&](item * item) {
-            EXPECT_TRUE(item && item->intValue() == 10);
-        });
-
-        path_resolving::resolve(tes_context::instance(), obj, ".trainers", [&](item * item) {
-            EXPECT_TRUE(item && item->object()->as<array>());
-        });
     }
 
     TEST(tes_object, tag)
@@ -262,7 +201,7 @@ namespace tes_api_3 {
         EXPECT_TRUE(itr == m->u_container().end())
     }
 
-    TEST(tes_object, temp_location)
+    TEST(tes_object, pool)
     {
         tes_context::instance().clearState();
 
@@ -281,10 +220,6 @@ namespace tes_api_3 {
         auto foundObj = tes_context::instance().getObject(id);
         EXPECT_TRUE(!foundObj/* || !foundObj->has_equal_tag("temp_location_test")*/);
     }
-}
-
-namespace tes_api_3 {
-
 }
 
 #endif

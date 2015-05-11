@@ -288,21 +288,21 @@ namespace collections {
 
         template<> struct _user2variant<double> : _variant_type<Real>{};
 
-        template<> struct _user2variant<const char*> : _variant_type<std::string>{};
+        template<> struct _user2variant<char*> : _variant_type<std::string>{};
+        template<size_t N> struct _user2variant<char[N]> : _variant_type<std::string>{};
+        template<> struct _user2variant<char[]> : _variant_type<std::string>{};
 
-        //template<> struct _user2variant<object_base> : _variant_type<internal_object_ref>{};
         template<> struct _user2variant<const object_base*> : _variant_type<internal_object_ref>{};
 
     public:
 
         bool operator == (const item& other) const { return isEqual(other); }
-        bool operator != (const item& other) const { return !isEqual(other); }
 
         bool operator == (const object_base &obj) const { return *this == &obj; }
 
         template<class T>
         bool operator == (const T& v) const {
-            auto thisV = boost::get<typename _user2variant<T>::variant_type >(&_var);
+            auto thisV = boost::get<typename _user2variant<std::remove_const<T>::type>::variant_type>(&_var);
             return thisV && *thisV == v;
         }
 

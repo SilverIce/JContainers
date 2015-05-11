@@ -1,0 +1,29 @@
+[
+ {
+  "tree": [0, {"key": ["value"]}],
+  "path2value": [
+    {"path": "[1].key[0]", "value": "value"},
+    {"path": "[-1].key[-1]", "value": "value"},
+    {"path": "[-1].key[-10]"},
+    {"path": "key"}
+  ]
+ },
+
+ {
+  "tree": [0, {"k.ey":10}],
+  "path2value": [
+    {"path": "[0].k.ey"}
+  ]
+ },
+
+ {
+  "tree": {
+    "__metaInfo": { "typeName": "JFormMap" },
+    "__formData|A|0x10": 9
+   },
+  "path2value": [
+    {"path": "[__formData|A|0x10]", "value": 9}
+  ]
+ }
+
+]
