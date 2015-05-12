@@ -192,10 +192,11 @@ namespace collections {
             return const_cast<item*>( const_cast<const array*>(this)->u_get(index) );
         }
 
-        item* u_set(int32_t index, const item& itm) {
+        template<class T>
+        item* u_set(int32_t index, T&& itm) {
             auto idx = u_convertIndex(index);
             if (idx) {
-                return &(_array[*idx] = itm);
+                return &(_array[*idx] = std::forward<T>(itm));
             }
             return nullptr;
         }
@@ -298,7 +299,7 @@ namespace collections {
 
         template<class T> void setValueForKey(const key_type& key, T&& value) {
             object_lock g(this);
-            u_set(key, value);
+            u_set(key, std::forward<T>(value));
         }
 
         SInt32 u_count() const override {

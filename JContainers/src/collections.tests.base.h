@@ -185,8 +185,8 @@ namespace collections { namespace {
 
         auto testNewResolving = [&](object_base& tree, const char* path, const item* expectedVal) {
             EXPECT_NOT_NIL(path);
-            auto optional = path_resolving_new::resolve(context, tree, path);
-            EXPECT_TRUE((!expectedVal && !optional) || (optional && *expectedVal == *optional));
+            auto value = ca::get(tree, path);
+            EXPECT_TRUE((!expectedVal && !value) || (value && *expectedVal == *value));
         };
         auto testOldResolving = [&](object_base& tree, const char* path, const item* expectedVal) {
             EXPECT_NOT_NIL(path);
@@ -208,10 +208,8 @@ namespace collections { namespace {
         }
 
         auto& m = map::object(context);
-        path_resolving_new::resolve(context, m, ".keyA.B", [&](item *itm){
-            *itm = 10;
-        }, true);
-        EXPECT_TRUE(*path_resolving_new::resolve(context, m, ".keyA.B") == 10);
+        ca::assign(m, ".keyA", 10);
+        EXPECT_TRUE(*ca::get(m, ".keyA") == 10);
     }
 
     JC_TEST(json_deserializer, test)
@@ -318,19 +316,19 @@ namespace collections { namespace {
         object_base* root = json_deserializer::object_from_json_data(context, STR(
         {
             "parentArray": [
-            {
-                "objChildArrayOfChildJMap1": [],
-                    "rootRef" : "__reference|"
-            },
-            {
-                "objChildArrayOfChildJMap2": [],
-                "referenceToChildJMap1" : "__reference|.parentArray[0]",
-                "referenceToFormMapValue" : "__reference|.parentArray[2][__formData|D|0x4]"
-            },
-            {
-                "__formData": null,
-                "__formData|D|0x4" : []
-            }
+                {
+                    "objChildArrayOfChildJMap1": [],
+                        "rootRef" : "__reference|"
+                },
+                {
+                    "objChildArrayOfChildJMap2": [],
+                    "referenceToChildJMap1" : "__reference|.parentArray[0]",
+                    "referenceToFormMapValue" : "__reference|.parentArray[2][__formData|D|0x4]"
+                },
+                {
+                    "__formData": null,
+                    "__formData|D|0x4" : []
+                }
             ]
         }
         ));

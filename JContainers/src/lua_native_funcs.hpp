@@ -175,11 +175,12 @@ namespace lua { namespace api {
     cexport collections::CollectionType JValue_typeId(object_base* obj) { return (obj ? obj->_type : CollectionType::None); }
 
     cexport JCToLuaValue JValue_solvePath(tes_context *context, object_base *obj, cstring path) {
+        namespace ca = collections::ca;
         assert(context && "context is null");
         auto value = JCToLuaValue_None();
         if (obj) {
-            collections::path_resolving::resolve(*context, obj, path, [&value](item *itm) {
-                value = JCToLuaValue_fromItem(itm);
+            ca::visit_value(*obj, path, ca::constant, [&value](const item &itm) {
+                value = JCToLuaValue_fromItem(&itm);
             });
         }
         return value;

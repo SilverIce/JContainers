@@ -73,11 +73,11 @@ namespace collections
                 item itm;
                 for (auto &pair : copy) {
                     itm = pair.first;
-                    path_resolving_new::resolve_(context, itm, rightPath, function);
+                    resolve(context, itm, rightPath, function);
                 }
             } else { // is value visit
                 for (auto &pair : copy) {
-                    path_resolving_new::resolve_(context, pair.second, rightPath, function);
+                    resolve(context, pair.second, rightPath, function);
                 }
             }
 
@@ -333,14 +333,12 @@ namespace collections
         }
     }
 
-    namespace path_resolving_new {
+    namespace ca {
 
         namespace bs = boost;
-        namespace ss = std;
 
         using string = std::string;
         using cstring = bs::iterator_range<const char*>;
-        using key_variant = bs::variant<int32_t, string, FormId>;
         //using keys = std::vector<key_variant>;
 
         template<class R, class Arg, class F1, class ... F>
@@ -430,41 +428,6 @@ namespace collections
             return parse_path_helper<key_and_rest>(path, arrayRule, mapRule);
         }
 
-        struct accesss_info {
-            object_base& collection;
-            key_variant key;
-        };
-
-        struct u_access_value_helper {
-            template<class Collection>
-            item* operator () (Collection& collection, const key_variant& key) {
-                if (auto idx = bs::get<typename Collection::key_type>(&key)) {
-                    return collection.u_get(*idx);
-                }
-                return nullptr;
-            }
-        };
-
-        auto u_access_value = [](object_base& collection, const key_variant& key) -> item* {
-            return perform_on_object_and_return<item* >(collection, u_access_value_helper(), key);
-        };
-        // 
-
-
-        struct u_assign_value_helper {
-            template<class T>
-            item* operator()(T& obj, const key_variant& key, const item& value) {
-                if (auto idx = bs::get<typename T::key_type>(&key)) {
-                    return obj.u_set(*idx, value);
-                }
-                return nullptr;
-            }
-        };
-
-
-        item* u_assign_value(object_base& collection, const key_variant& key, const item& value) {
-            return perform_on_object_and_return<item* >(collection, u_assign_value_helper(), key, value);
-        }
 
 
         struct constant_accessor {
@@ -523,6 +486,7 @@ namespace collections
 
             recurs v    (key, rest)     src = recurs v[(nkey, nrest)] (nkey, nrest) v where (nkey, nrest) = parse rest
             recurs V    (key, Nothing)  src = (src, key)
+            recurs None (key, Nothing)  src = (src, key) ????
             recurs _    _               _   = Nothing
             
             */
@@ -533,11 +497,12 @@ namespace collections
             }
 
             static bs::optional<accesss_info> recurs(bs::optional<object_base*>&& value, const bs::optional<key_and_rest>& k, object_base& source) {
-                if (!k || !value) {
+                if (!k) {
                     return bs::none;
                 }
 
-                auto as_object = *value;
+                object_base* as_object = value.get_value_or(nullptr);
+
                 if (k->rest_of_path.empty()) {
                     return accesss_info{ source, std::move(k->key) };
                 }
@@ -578,31 +543,14 @@ namespace collections
             }
         }
 
-        void resolve(tes_context& context, object_base& collection, const char* cpath, std::function<void(item *)> itemFunction, bool create_missing_keys) {
-            resolve_templ(context, collection, cpath, itemFunction, create_missing_keys);
+        bs::optional<accesss_info> access_constant(object_base& collection, const char* cpath) {
+            auto all_path = bs::make_iterator_range(cpath, cpath + strnlen_s(cpath, 1024));
+            return last_kv_pair_retriever<constant_accessor>::retrieve(collection, all_path);
         }
 
-        void resolve_(tes_context& ctx, item& target, const char *cpath, std::function<void(item *)> itemFunction, bool create_missing_keys) {
-            assert(cpath);
-
-            if (auto collection = target.object()) {
-                resolve(ctx, *collection, cpath, itemFunction, create_missing_keys);
-            }
-            else {
-                if (!*cpath) {
-                    itemFunction(&target);
-                }
-                else {
-                    itemFunction(nullptr);
-                }
-            }
+        bs::optional<accesss_info> access_creative(object_base& collection, const char* cpath) {
+            auto all_path = bs::make_iterator_range(cpath, cpath + strnlen_s(cpath, 1024));
+            return last_kv_pair_retriever<creative_accessor>::retrieve(collection, all_path);
         }
-
-        boost::optional<item> resolve(tes_context& ctx, object_base& target, const char *cpath) {
-            boost::optional<item> result;
-            resolve_templ(ctx, target, cpath, [&result](item *value) { if (value) result = *value; });
-            return result;
-        }
-
     }
 }

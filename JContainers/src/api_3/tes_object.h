@@ -103,6 +103,17 @@ By using this function a user helps JC to get rid of no-more-needed to the user 
 
                 array::ref location;
 
+                ca::visit_value(*tes_context::instance().database(), path.c_str(), ca::creative, [&](item& value) {
+                    if (auto loc = value.object()->as<array>()) {
+                        location = loc;
+                    }
+                    else {
+                        location = &array::object(tes_context::instance());
+                        value = location.get();
+                    }
+                });
+
+/*
                 path_resolving::resolve(tes_context::instance(), tes_context::instance().database(), path.c_str(), [&](item* itmPtr) {
                     if (itmPtr) {
                         if (auto loc = itmPtr->object()->as<array>()) {
@@ -114,7 +125,7 @@ By using this function a user helps JC to get rid of no-more-needed to the user 
                         }
                     }
                 },
-                    true);
+                    true);*/
 
                 if (location) {
                     location->push(item(obj));
@@ -128,7 +139,7 @@ By using this function a user helps JC to get rid of no-more-needed to the user 
 Do not forget to clean location later! Typical use:\n\
 int tempMap = JValue.addToPool(JMap.object(), \"uniquePoolName\")\n\
 anywhere later:\n\
-JValue.cleanTempLocation(\"uniqueLocationName\")"
+JValue.cleanPool(\"uniquePoolName\")"
 );
 
         static void cleanPool(const char *poolName) {
@@ -254,10 +265,8 @@ JValue.cleanTempLocation(\"uniqueLocationName\")"
             SInt32 type = item_type::no_item;
 
             if (obj && path) {
-                path_resolving::resolve(tes_context::instance(), obj, path, [&](item* itmPtr) {
-                    if (itmPtr) {
-                        type = itmPtr->type();
-                    }
+                ca::visit_value(*obj, path, ca::constant, [&](const item& value) {
+                    type = value.type();
                 });
             }
 
@@ -299,7 +308,8 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
             if (!obj || !path)
                 return false;
 
-            bool succeed = false;
+            bool succeed = ca::assign(*obj, path, value, createMissingKeys ? ca::creative : ca::constant);
+/*
             path_resolving::resolve(tes_context::instance(), obj, path, [&](item* itmPtr) {
                 if (itmPtr) {
                     *itmPtr = item((T)value);
@@ -307,6 +317,7 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
                 }
             },
                 createMissingKeys);
+*/
 
             return succeed;
         }
