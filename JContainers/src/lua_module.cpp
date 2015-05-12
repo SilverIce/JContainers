@@ -310,7 +310,7 @@ namespace lua { namespace aux_wip {
         auto& db = *tc.database();
         EXPECT_TRUE(*testTransporting("return JDB") == db.base());
 
-        db.setValueForKey("test", 10);
+        db.set("test", 10);
         EXPECT_TRUE(db["test"] == 10);
 
         auto result = lc->eval_lua_function(nullptr,

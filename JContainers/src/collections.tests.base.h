@@ -296,7 +296,7 @@ namespace collections { namespace {
     {
         {
             map& cnt = map::object(context);
-            cnt.u_set("cycle", item(cnt));
+            cnt.u_set("cycle", cnt);
 
             json_serializer::create_json_data(cnt);
         }
@@ -304,8 +304,8 @@ namespace collections { namespace {
             map &cnt1 = map::object(context);
             map &cnt2 = map::object(context);
 
-            cnt1.u_set("cnt2", item(cnt2));
-            cnt2.u_set("cnt1", item(cnt1));
+            cnt1.u_set("cnt2", cnt2);
+            cnt2.u_set("cnt1", cnt1);
 
             json_serializer::create_json_data(cnt1);
         }
@@ -481,7 +481,7 @@ namespace collections { namespace {
         map &cnt = map::object(context);
 
         std::string name = "back in black";
-        cnt.u_set("ACDC", item(name));
+        cnt.u_set("ACDC", name);
 
         EXPECT_TRUE(*cnt.u_get("acdc")->stringValue() == name);
     }
@@ -591,7 +591,7 @@ namespace collections { namespace {
     {
         auto& obj = map::object(context);
         object_lock lock(obj);
-        obj.u_set("lol", item(obj));
+        obj.u_set("lol", obj);
     }
 
 }

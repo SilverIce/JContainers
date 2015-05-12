@@ -72,7 +72,7 @@ namespace collections {
     class json_deserializer {
         typedef std::vector<std::pair<object_base*, json_ref> > objects_to_fill;
 
-        typedef boost::variant<int32_t, std::string, FormId> key_variant;
+        typedef ca::key_variant key_variant;
         // path - <container, key> pairs relationship
         typedef std::map<std::string, std::vector<std::pair<object_base*, key_variant > > > key_info_map;
 
@@ -160,36 +160,8 @@ namespace collections {
                 }
 
                 for (auto& obj2Key : pair.second) {
-
-                    namespace bs = boost;
-
-                    struct value_setter {
-                        object_base* val;
-                        const key_variant* key;
-
-                        void operator()(array& cnt) const {
-                            if (auto k = bs::get<int32_t>(key)) {
-                                cnt.setItem(*k, item(val));
-                            }
-                        }
-                        void operator()(map& cnt) const {
-                            if (auto k = bs::get<std::string>(key)) {
-                                cnt.setValueForKey(*k, item(val));
-                            }
-                        }
-                        void operator()(form_map& cnt) const {
-                            if (auto k = bs::get<FormId>(key)) {
-                                cnt.setValueForKey(*k, item(val));
-                            }
-                        }
-                        void operator()(integer_map& cnt) const {
-                            if (auto k = bs::get<int32_t>(key)) {
-                                cnt.setValueForKey(*k, item(val));
-                            }
-                        }
-                    };
-
-                    perform_on_object(*obj2Key.first, value_setter{ resolvedObject, &obj2Key.second });
+                    object_lock l(obj2Key.first);
+                    ca::u_assign_value(*obj2Key.first, obj2Key.second, resolvedObject);
                 }
             }
 

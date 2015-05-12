@@ -224,7 +224,7 @@ JValue.cleanPool(\"uniquePoolName\")"
                     auto jsonObject = tes_object::readFromFile(asniString.c_str());
 
                     if (jsonObject) {
-                        files.setValueForKey(itr->path().filename().generic_string(), item(jsonObject));
+                        files.set(itr->path().filename().generic_string(), item(jsonObject));
                     }  
                 }
             }

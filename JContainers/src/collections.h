@@ -201,12 +201,10 @@ namespace collections {
             return nullptr;
         }
 
-        void setItem(int32_t index, const item& itm) {
+        template<class T>
+        void set(int32_t index, T&& itm) {
             object_lock g(this);
-            auto idx = u_convertIndex(index);
-            if (idx) {
-                _array[*idx] = itm;
-            }
+            u_set(index, std::forward<T>(itm));
         }
 
         item& operator [] (int32_t index) { return const_cast<item&>(const_cast<const array*>(this)->operator[](index)); }
@@ -297,7 +295,7 @@ namespace collections {
             return &(cnt[key] = std::forward<T>(value));
         }
 
-        template<class T> void setValueForKey(const key_type& key, T&& value) {
+        template<class T> void set(const key_type& key, T&& value) {
             object_lock g(this);
             u_set(key, std::forward<T>(value));
         }
