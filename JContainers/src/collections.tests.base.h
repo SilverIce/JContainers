@@ -278,7 +278,7 @@ namespace collections { namespace {
                 auto state = ctx.write_to_string();
                 ctx.clearState();
 
-                ctx.read_from_string(state, serialization_version::current);
+                ctx.read_from_string(state);
 
                 jsonOut = json_serializer::create_json_value(*ctx.getObject(rootId));
             }
@@ -376,8 +376,7 @@ namespace collections { namespace {
                 atLeastOneTested = true;
 
                 std::ifstream file(itr->path().generic_string(), std::ios::in | std::ios::binary);
-                // had to pass kJSerializationNoHeaderVersion - 0.67 has no header :(
-                context.read_from_stream(file, serialization_version::no_header);
+                context.read_from_stream(file);
             }
         }
 

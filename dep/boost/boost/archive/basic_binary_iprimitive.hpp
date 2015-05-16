@@ -109,6 +109,21 @@ public:
     BOOST_ARCHIVE_OR_WARCHIVE_DECL(void)
     load(wchar_t * t);
 
+    template<class SE, class ST, class SA>
+    BOOST_ARCHIVE_OR_WARCHIVE_DECL(void)
+    load(std::basic_string<SE, ST, SA> &s) {
+        std::size_t l;
+        this->This()->load(l);
+        // borland de-allocator fixup
+#if BOOST_WORKAROUND(_RWSTD_VER, BOOST_TESTED_AT(20101))
+        if (NULL != s.data())
+#endif
+            s.resize(l);
+        // note breaking a rule here - could be a problem on some platform
+        if (0 < l)
+            load_binary(const_cast<SE *>(s.data()), l * sizeof(SE) / sizeof(char));
+    }
+
     BOOST_ARCHIVE_OR_WARCHIVE_DECL(void)
     init();
     BOOST_ARCHIVE_OR_WARCHIVE_DECL(BOOST_PP_EMPTY()) 

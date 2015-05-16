@@ -27,7 +27,8 @@ namespace util {
         try {
             func();
         }
-        catch (const std::exception&) {
+        catch (const std::exception& ex) {
+            (void)ex;
             jc_assert(false);
         }
         catch (...) {

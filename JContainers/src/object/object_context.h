@@ -28,7 +28,7 @@ namespace collections {
 
     enum class serialization_version {
         pre_aqueue_fix = 2,
-        no_header = 3,
+        no_header = 3, // no JSON header in the beginning of a stream
         pre_gc = 4, // next version adds GC 
         current = 5,
     };
@@ -81,8 +81,8 @@ namespace collections {
         // complete shutdown, this context shouldn't be used for now
         void shutdown();
 
-        void read_from_string(const std::string & data, const serialization_version version);
-        void read_from_stream(std::istream & data, const serialization_version version);
+        void read_from_string(const std::string & data);
+        void read_from_stream(std::istream & data);
 
         std::string write_to_string();
         void write_to_stream(std::ostream& stream);

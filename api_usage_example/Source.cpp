@@ -51,7 +51,7 @@ namespace {
 
         obtain_func(refl, "count", "JArray", JArray_size);
         obtain_func(refl, "getForm", "JArray", JArray_getForm);
-        obtain_func(refl, "swap", "JArray", JArray_swap);
+        obtain_func(refl, "swapItems", "JArray", JArray_swap);
     }
 
     void sortByName(StaticFunctionTag*, SInt32 obj) {

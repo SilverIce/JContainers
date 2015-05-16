@@ -1,4 +1,5 @@
 #include "util/util.h"
+#include <fstream>
 
 namespace collections
 {
@@ -98,10 +99,10 @@ namespace collections
 
     //////////////////////////////////////////////////////////////////////////
 
-    void object_context::read_from_string(const std::string & data, const serialization_version version) {
+    void object_context::read_from_string(const std::string & data) {
         namespace io = boost::iostreams;
         io::stream<io::array_source> stream( io::array_source(data.c_str(), data.size()) );
-        read_from_stream(stream, version);
+        read_from_stream(stream);
     }
 
     struct header {
@@ -122,10 +123,14 @@ namespace collections
 
             uint32_t hdrSize = 0;
             stream >> hdrSize;
-            std::string hdrString(hdrSize, '\0');
-            stream.read((char*)hdrString.c_str(), hdrSize);
 
-            auto js = make_unique_ptr(json_loads(hdrString.c_str(), 0, nullptr), &json_decref);
+            std::vector<char> buffer(hdrSize);
+            stream.read(&buffer.front(), buffer.size());
+
+            auto js = make_unique_ptr(json_loadb(&buffer.front(), buffer.size(), 0, nullptr), &json_decref);
+            if (!js) { // parsing failed
+                return imitate_old_header();
+            }
 
             return{ (serialization_version)json_integer_value(json_object_get(js.get(), common_version_key())) };
         }
@@ -148,9 +153,19 @@ namespace collections
         }
     };
 
-    void object_context::read_from_stream(std::istream & stream, const serialization_version version) {
+    void object_context::read_from_stream(std::istream & stream) {
 
         stream.flags(stream.flags() | std::ios::binary);
+
+#       if 0
+        std::ofstream file("dump", std::ios::binary | std::ios::out);
+        std::copy(
+            std::istreambuf_iterator<char>(stream),
+            std::istreambuf_iterator<char>(),
+            std::ostreambuf_iterator<char>(file)
+            );
+        file.close();
+#       endif
 
         aqueue->stop();
         {
@@ -159,30 +174,38 @@ namespace collections
 
             u_clearState();
 
-            auto hdr = header::make();
-
-            bool isNotSupported = serialization_version::current < version || version < serialization_version::pre_aqueue_fix;
-
-            if (isNotSupported) {
-                _FATALERROR("Unable load serialized data of version %u. Current serialization version is %u", version, serialization_version::current);
-                jc_assert(false);
-            }
-
-            if (stream.peek() != std::istream::traits_type::eof() && !isNotSupported) {
-
-                if (version <= serialization_version::no_header) {
-                    hdr = header::imitate_old_header();
-                }
-                else {
-                    hdr = header::read_from_stream(stream);
-                }
-
-                boost::archive::binary_iarchive archive(stream);
+            if (stream.peek() != std::istream::traits_type::eof()) {
 
                 try {
-                    archive >> *registry;
-                    archive >> *aqueue;
-                    boost::serialization::load_atomic(archive, _root_object_id);
+
+                    auto hdr = header::read_from_stream(stream);
+                    bool isNotSupported = serialization_version::current < hdr.updateVersion || hdr.updateVersion <= serialization_version::no_header;
+
+                    if (isNotSupported) {
+                        std::ostringstream error;
+                        error << "Unable to load serialized data of version " << (int)hdr.updateVersion
+                            << ". Current serialization version is " << (int)serialization_version::current;
+                        throw std::logic_error(error.str());
+                    }
+
+                    {
+                        boost::archive::binary_iarchive archive(stream);
+                        archive >> *registry;
+                        archive >> *aqueue;
+                        boost::serialization::load_atomic(archive, _root_object_id);
+                    }
+
+                    {
+                        for (auto& obj : registry->u_all_objects()) {
+                            obj->set_context(*this);
+                        }
+                        for (auto& obj : registry->u_all_objects()) {
+                            obj->u_onLoaded();
+                        }
+                    }
+
+                    u_applyUpdates(hdr.updateVersion);
+                    u_postLoadMaintenance(hdr.updateVersion);
                 }
                 catch (const std::exception& exc) {
                     _FATALERROR("caught exception (%s) during archive load - '%s'",
@@ -201,18 +224,6 @@ namespace collections
                 }
             }
 
-            {
-                for (auto& obj : registry->u_all_objects()) {
-                    obj->set_context(*this);
-                }
-                for (auto& obj : registry->u_all_objects()) {
-                    obj->u_onLoaded();
-                }
-            }
-
-            u_applyUpdates(hdr.updateVersion);
-            u_postLoadMaintenance(hdr.updateVersion);
-
             u_print_stats();
         }
         aqueue->start();
@@ -222,6 +233,23 @@ namespace collections
         std::ostringstream stream;
         write_to_stream(stream);
         return stream.str();
+    }
+
+
+    template<class T>
+    std::string serialize_g(const char* str) {
+        std::stringstream stream;
+        boost::archive::binary_oarchive arch(stream);
+        arch << T(str);
+        return stream.str();
+    }
+
+    TEST(idiioti,_)
+    {
+        
+        auto toto = "kill me!";
+        auto s1 = serialize_g<std::string>(toto);
+        auto s2 = serialize_g<util::istring>(toto);
     }
 
     void object_context::write_to_stream(std::ostream& stream) {

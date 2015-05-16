@@ -100,7 +100,7 @@ namespace {
             }
 
             io::stream<skse_data_source> stream(skse_data_source(static_cast<consts>(type) == consts::storage_chunk ? intfc : nullptr));
-            collections::tes_context::instance().read_from_stream(stream, (serialization_version)version);
+            collections::tes_context::instance().read_from_stream(stream);
         });
     }
 
