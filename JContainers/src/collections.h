@@ -150,7 +150,7 @@ namespace collections {
 
         template<class T> void push(T&& item) {
             object_lock g(this);
-            u_push(item);
+            u_push(std::forward<T>(item));
         }
 
         template<class T> void u_push(T&& item) {

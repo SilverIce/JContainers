@@ -337,18 +337,20 @@ namespace collections
 
         namespace bs = boost;
 
-        using string = std::string;
+        using std::forward;
+        using std::string;
+
         using cstring = bs::iterator_range<const char*>;
         //using keys = std::vector<key_variant>;
 
         template<class R, class Arg, class F1, class ... F>
         boost::optional<R> parse_path_helper(Arg&& a, F1&& f1, F&& ... funcs) {
-            auto result = f1(a);
+            auto result = f1(forward<Arg>(a));
             if (result) {
                 return result;
             }
             else {
-                return parse_path_helper<R>(a, funcs...);
+                return parse_path_helper<R>(forward<Arg>(a), forward<F>(funcs)...);
             }
         };
 
@@ -427,8 +429,6 @@ namespace collections
 
             return parse_path_helper<key_and_rest>(path, arrayRule, mapRule);
         }
-
-
 
         struct constant_accessor {
             static bs::optional<object_base*> access_value(object_base& collection, const bs::optional<key_and_rest>& key) {
@@ -516,40 +516,17 @@ namespace collections
             }
         };
 
-        template<class Visitor>
-        void resolve_templ(tes_context& context, object_base& collection, const char* cpath, Visitor& itemFunction, bool create_missing_keys = false) {
-
-            assert(cpath);
-
-            // path is empty -> just visit collection
-            if (!*cpath) {
-                item itm(collection);
-                itemFunction(&itm);
-                return;
-            }
-
-            auto all_path = bs::make_iterator_range(cpath, cpath + strnlen_s(cpath, 1024));
-            auto access_inf = create_missing_keys
-                ? last_kv_pair_retriever<creative_accessor>::retrieve(collection, all_path)
-                : last_kv_pair_retriever<constant_accessor>::retrieve(collection, all_path);
-
-            if (access_inf) {
-                object_lock g(access_inf->collection);
-                auto itemPtr = u_access_value(access_inf->collection, access_inf->key);
-                itemFunction(itemPtr);
-            }
-            else {
-                itemFunction(nullptr);
-            }
-        }
+        enum {
+            collection_path_limit = 1024,
+        };
 
         bs::optional<accesss_info> access_constant(object_base& collection, const char* cpath) {
-            auto all_path = bs::make_iterator_range(cpath, cpath + strnlen_s(cpath, 1024));
+            auto all_path = bs::make_iterator_range(cpath, cpath + strnlen_s(cpath, collection_path_limit));
             return last_kv_pair_retriever<constant_accessor>::retrieve(collection, all_path);
         }
 
         bs::optional<accesss_info> access_creative(object_base& collection, const char* cpath) {
-            auto all_path = bs::make_iterator_range(cpath, cpath + strnlen_s(cpath, 1024));
+            auto all_path = bs::make_iterator_range(cpath, cpath + strnlen_s(cpath, collection_path_limit));
             return last_kv_pair_retriever<creative_accessor>::retrieve(collection, all_path);
         }
     }
