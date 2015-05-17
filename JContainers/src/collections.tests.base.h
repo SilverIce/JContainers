@@ -208,8 +208,13 @@ namespace collections { namespace {
         }
 
         auto& m = map::object(context);
-        ca::assign(m, ".keyA", 10);
+        ca::assign_creative(m, ".keyA", 10);
         EXPECT_TRUE(*ca::get(m, ".keyA") == 10);
+
+        EXPECT_TRUE(ca::assign_creative(m, ".f.f.t", 12));
+        EXPECT_TRUE(*ca::get(m, ".f.f.t") == 12);
+
+        EXPECT_FALSE(ca::assign(m, ".h.f.t", 1));
     }
 
     JC_TEST(json_deserializer, test)

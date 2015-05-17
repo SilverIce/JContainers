@@ -132,7 +132,15 @@ namespace collections
             auto ac_info = (way == constant ? access_constant(target, cpath) : access_creative(target, cpath));
             if (ac_info) {
                 object_lock g(ac_info->collection);
-                return u_assign_value(ac_info->collection, ac_info->key, std::forward<Value>(value)) != nullptr;
+                if (way == constant) {
+                    auto itmPtr = u_access_value(ac_info->collection, ac_info->key);
+                    if (itmPtr) {
+                        *itmPtr = std::forward<Value>(value);
+                    }
+                    return itmPtr != nullptr;
+                } else {
+                    return u_assign_value(ac_info->collection, ac_info->key, std::forward<Value>(value)) != nullptr;
+                }
             }
             else {
                 return false;
