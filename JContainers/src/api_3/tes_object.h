@@ -103,7 +103,18 @@ By using this function a user helps JC to get rid of no-more-needed to the user 
 
                 array::ref location;
 
-                path_resolving::resolve(tes_context::instance(), tes_context::instance().database(), path.c_str(), [&](Item* itmPtr) {
+                ca::visit_value(*tes_context::instance().database(), path.c_str(), ca::creative, [&](item& value) {
+                    if (auto loc = value.object()->as<array>()) {
+                        location = loc;
+                    }
+                    else {
+                        location = &array::object(tes_context::instance());
+                        value = location.get();
+                    }
+                });
+
+/*
+                path_resolving::resolve(tes_context::instance(), tes_context::instance().database(), path.c_str(), [&](item* itmPtr) {
                     if (itmPtr) {
                         if (auto loc = itmPtr->object()->as<array>()) {
                             location = loc;
@@ -114,10 +125,10 @@ By using this function a user helps JC to get rid of no-more-needed to the user 
                         }
                     }
                 },
-                    true);
+                    true);*/
 
                 if (location) {
-                    location->push(Item(obj));
+                    location->push(item(obj));
                 }
             }
 
@@ -128,12 +139,12 @@ By using this function a user helps JC to get rid of no-more-needed to the user 
 Do not forget to clean location later! Typical use:\n\
 int tempMap = JValue.addToPool(JMap.object(), \"uniquePoolName\")\n\
 anywhere later:\n\
-JValue.cleanTempLocation(\"uniqueLocationName\")"
+JValue.cleanPool(\"uniquePoolName\")"
 );
 
         static void cleanPool(const char *poolName) {
             if (poolName) {
-                auto locationsMap = tes_context::instance().database()->find(JC_OBJECT_POOL_KEY).object()->as<map>();
+                auto locationsMap = tes_context::instance().database()->findOrDef(JC_OBJECT_POOL_KEY).object()->as<map>();
                 if (locationsMap) {
                     locationsMap->erase(poolName);
                 }
@@ -213,7 +224,7 @@ JValue.cleanTempLocation(\"uniqueLocationName\")"
                     auto jsonObject = tes_object::readFromFile(asniString.c_str());
 
                     if (jsonObject) {
-                        files.setValueForKey(itr->path().filename().generic_string(), Item(jsonObject));
+                        files.set(itr->path().filename().generic_string(), item(jsonObject));
                     }  
                 }
             }
@@ -254,10 +265,8 @@ JValue.cleanTempLocation(\"uniqueLocationName\")"
             SInt32 type = item_type::no_item;
 
             if (obj && path) {
-                path_resolving::resolve(tes_context::instance(), obj, path, [&](Item* itmPtr) {
-                    if (itmPtr) {
-                        type = itmPtr->type();
-                    }
+                ca::visit_value(*obj, path, ca::constant, [&](const item& value) {
+                    type = value.type();
                 });
             }
 
@@ -280,7 +289,7 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
             if (!obj || !path)
                 return val;
 
-            path_resolving::resolve(tes_context::instance(), obj, path, [&](Item* itmPtr) {
+            path_resolving::resolve(tes_context::instance(), obj, path, [&](item* itmPtr) {
                 if (itmPtr) {
                     val = itmPtr->readAs<T>();
                 }
@@ -290,7 +299,7 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
         }
         REGISTERF(resolveGetter<Float32>, "solveFlt", "* path default=0.0", "attempts to get value at given path.\nJValue.solveInt(container, \".player.mood\") will return player's mood");
         REGISTERF(resolveGetter<SInt32>, "solveInt", "* path default=0", nullptr);
-        REGISTERF(resolveGetter<BSFixedString>, "solveStr", "* path default=\"\"", nullptr);
+        REGISTERF(resolveGetter<skse::string_ref>, "solveStr", "* path default=\"\"", nullptr);
         REGISTERF(resolveGetter<Handle>, "solveObj", "* path default=0", nullptr);
         REGISTERF(resolveGetter<TESForm*>, "solveForm", "* path default=None", nullptr);
 
@@ -299,14 +308,16 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
             if (!obj || !path)
                 return false;
 
-            bool succeed = false;
-            path_resolving::resolve(tes_context::instance(), obj, path, [&](Item* itmPtr) {
+            bool succeed = ca::assign(*obj, path, value, createMissingKeys ? ca::creative : ca::constant);
+/*
+            path_resolving::resolve(tes_context::instance(), obj, path, [&](item* itmPtr) {
                 if (itmPtr) {
-                    *itmPtr = Item((T)value);
+                    *itmPtr = item((T)value);
                     succeed = true;
                 }
             },
                 createMissingKeys);
+*/
 
             return succeed;
         }
@@ -321,12 +332,12 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
 
         template<class T>
         static T evalLua(ref obj, const char* luaCode, T def = T(0)) {
-            auto result = lua::eval_lua_function(obj, luaCode);
+            auto result = lua::eval_lua_function(tes_context::instance(), obj, luaCode);
             return result ? result->readAs<T>() : def;
         }
         REGISTERF(evalLua<Float32>, "evalLuaFlt", "* luaCode default=0.0", "Evaluates piece of lua code. Lua support is experimental");
         REGISTERF(evalLua<SInt32>, "evalLuaInt", "* luaCode default=0", nullptr);
-        REGISTERF(evalLua<BSFixedString>, "evalLuaStr", "* luaCode default=\"\"", nullptr);
+        REGISTERF(evalLua<skse::string_ref>, "evalLuaStr", "* luaCode default=\"\"", nullptr);
         REGISTERF(evalLua<Handle>, "evalLuaObj", "* luaCode default=0", nullptr);
         REGISTERF(evalLua<TESForm*>, "evalLuaForm", "* luaCode default=None", nullptr);
 

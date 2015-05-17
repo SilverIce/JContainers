@@ -112,6 +112,11 @@
       <Project>{caa7d417-1b58-48ab-a226-c7e69141772c}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="install_Distrib.py" />
+    <None Include="install_Local.py" />
+    <None Include="jc_install.py" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

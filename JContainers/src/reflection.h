@@ -7,10 +7,13 @@
 #include <stdint.h>
 
 #include "meta.h"
+#include "util/istring.h"
 
 class VMClassRegistry;
 
 namespace reflection {
+
+    using istring = util::istring;
 
     struct function_parameter {
         std::string tes_type_name;
@@ -33,10 +36,10 @@ namespace reflection {
 
         tes_function_binder registrator = nullptr;
         parameter_list_creator param_list_func = nullptr;
-        tes_api_function tes_func = nullptr;
-        c_function c_func = nullptr;
-        const char *argument_names = nullptr;
-        const char *name = nullptr;
+        tes_api_function tes_func = nullptr; // the function which gets exported into Papyrus (+1 argument, papyrus args only)
+        c_function c_func = nullptr; // original function
+        istring argument_names;
+        istring name;
 
         comment_generator _comment_func = nullptr;
         const char *_comment_str = nullptr;
@@ -65,20 +68,6 @@ namespace reflection {
         void bind(VMClassRegistry *registry, const char *className) const;
     };
 
-    struct string_icomparison {
-        bool operator () (const std::string& left, const std::string& right) const {
-            return _strcmpi(left.c_str(), right.c_str()) < 0;
-        }
-    };
-
-    inline bool string_iequal(const std::string& str, const std::string& other) {
-        return _strcmpi(str.c_str(), other.c_str()) == 0;
-    }
-
-    inline bool string_iequal(const std::string& str, const char* other) {
-        return other && _strcmpi(str.c_str(), other) == 0;
-    }
-
     struct papyrus_text_block {
         typedef std::string(*text_generator)();
 
@@ -92,8 +81,8 @@ namespace reflection {
     struct class_info {
         std::vector<function_info > methods;
         std::vector<papyrus_text_block > text_blocks;
-        std::string _className;
-        std::string extendsClass;
+        istring _className;
+        istring extendsClass;
         std::string comment;
         uint32_t version = 0;
 
@@ -105,7 +94,7 @@ namespace reflection {
             return !_className.empty();
         }
 
-        std::string className() const {
+        istring className() const {
 #   if 0
             return _className + '_' + (char)((uint32_t)'0' + version);
 #   else
@@ -118,12 +107,12 @@ namespace reflection {
         }
 
         const function_info * find_function(const char* func_name) const {
-            auto itr = std::find_if(methods.begin(), methods.end(), [&](const function_info& fi) { return string_iequal(func_name, fi.name); });
+            auto itr = std::find_if(methods.begin(), methods.end(), [&](const function_info& fi) { return func_name == fi.name; });
             return itr != methods.end() ? &*itr : nullptr;
         }
 
         void addFunction(const function_info& info) {
-            assert(find_function(info.name) == nullptr);
+            assert(find_function(info.name.c_str()) == nullptr);
             methods.push_back(info);
         }
 
@@ -179,13 +168,13 @@ namespace reflection {
 
     typedef class_info (*class_info_creator)();
 
-    const std::map<std::string, class_info, string_icomparison>& class_database();
-    void* find_tes_function_of_class(const char * functionName, const char *className);
+    const std::map<istring, class_info>& class_registry();
+    const function_info* find_function_of_class(const char * functionName, const char *className);
 
     template<class T>
     inline void foreach_metaInfo_do(T& func) {
 
-        for (auto & pair : class_database()) {
+        for (auto & pair : class_registry()) {
             func(pair.second);
         }
     }

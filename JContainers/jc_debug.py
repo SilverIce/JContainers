@@ -13,7 +13,23 @@ class JCLib(object):
 
 
 if __name__ == '__main__':
-    print sys.argv
-    location = sys.argv[1]
-    lib = JCLib(location)
-    lib.runTests()
+
+    # print sys.argv
+    # location = sys.argv[1]
+    # lib = JCLib(location)
+    # lib.runTests()
+
+    try:
+        print sys.argv
+        location = sys.argv[1]
+        lib = JCLib(location)
+        lib.runTests()
+    except BaseException as e:
+        print 'Error:', e
+        #raise
+    except:
+        print "Unexpected error:", sys.exc_info()[0]
+        #raise
+
+    input("Press Enter to continue...")
+

@@ -44,6 +44,7 @@ class JCLib(object):
 
 	def produceCode(self, into):
 		print 'generating papyrus scripts into:', into
+		makepath(into)
 		self.lib.JC_produceCode(into)
 
 	def versionString(self):

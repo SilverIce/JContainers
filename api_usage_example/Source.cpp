@@ -32,7 +32,7 @@ namespace {
     // function pointers which will be obtained:
     SInt32(*JArray_size)(void*, SInt32 obj) = nullptr;
     TESForm* (*JArray_getForm)(void*, SInt32 obj, SInt32 idx, TESForm* def) = nullptr;
-    TESForm* (*JArray_setForm)(void*, SInt32 obj, SInt32 idx, TESForm* value) = nullptr;
+    void (*JArray_swap)(void*, SInt32 obj, SInt32 idx, SInt32 idx2) = nullptr;
 
     template<class T>
     void obtain_func(const jc::reflection_interface *refl, const char *funcName, const char *className, T& func) {
@@ -51,7 +51,7 @@ namespace {
 
         obtain_func(refl, "count", "JArray", JArray_size);
         obtain_func(refl, "getForm", "JArray", JArray_getForm);
-        obtain_func(refl, "setForm", "JArray", JArray_setForm);
+        obtain_func(refl, "swapItems", "JArray", JArray_swap);
     }
 
     void sortByName(StaticFunctionTag*, SInt32 obj) {
@@ -67,14 +67,10 @@ namespace {
         };
 
         //Bubble Sorting begins
-        for (int passes = 0; passes < array_size - 1; passes++)
-        {
-            for (int j = 0; j < array_size - passes - 1; j++)
-            {
+        for (int passes = 0; passes < array_size - 1; passes++) {
+            for (int j = 0; j < array_size - passes - 1; j++) {
                 if (compare(j, j + 1)) {
-                    auto temp = JArray_getForm(nullptr, obj, j, nullptr);
-                    JArray_setForm(nullptr, obj, j, JArray_getForm(nullptr, obj, j + 1, nullptr));
-                    JArray_setForm(nullptr, obj, j + 1, temp);
+                    JArray_swap(nullptr, obj, j, j + 1);
                 }
             }
         }  //Bubble Sorting finished

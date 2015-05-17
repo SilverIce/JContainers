@@ -10,6 +10,7 @@
 #include "form_handling.h"
 #include "boost_extras.h"
 #include "path_resolving.h"
+#include "boost/filesystem/path.hpp"
 
 namespace collections {
 
@@ -71,7 +72,7 @@ namespace collections {
     class json_deserializer {
         typedef std::vector<std::pair<object_base*, json_ref> > objects_to_fill;
 
-        typedef boost::variant<int32_t, std::string, FormId> key_variant;
+        typedef ca::key_variant key_variant;
         // path - <container, key> pairs relationship
         typedef std::map<std::string, std::vector<std::pair<object_base*, key_variant > > > key_info_map;
 
@@ -109,6 +110,10 @@ namespace collections {
             return json_deserializer(context)._object_from_json( json.get() );
         }
 
+        static object_base* object_from_file(tes_context& context, const boost::filesystem::path& path) {
+            return object_from_file(context, path.generic_string().c_str());
+        }
+
     private:
 
         object_base* _object_from_json(json_ref ref) {
@@ -141,7 +146,7 @@ namespace collections {
                 auto& path = pair.first;
                 object_base *resolvedObject = nullptr;
 
-                path_resolving::resolve(_context, &root, path.c_str(), [&resolvedObject](Item *itm) {
+                path_resolving::resolve(_context, &root, path.c_str(), [&resolvedObject](item *itm) {
                     if (itm) {
                         resolvedObject = itm->object();
                     }
@@ -152,36 +157,8 @@ namespace collections {
                 }
 
                 for (auto& obj2Key : pair.second) {
-
-                    namespace bs = boost;
-
-                    struct value_setter {
-                        object_base* val;
-                        const key_variant* key;
-
-                        void operator()(array& cnt) const {
-                            if (auto k = bs::get<int32_t>(key)) {
-                                cnt.setItem(*k, Item(val));
-                            }
-                        }
-                        void operator()(map& cnt) const {
-                            if (auto k = bs::get<std::string>(key)) {
-                                cnt.setValueForKey(*k, Item(val));
-                            }
-                        }
-                        void operator()(form_map& cnt) const {
-                            if (auto k = bs::get<FormId>(key)) {
-                                cnt.setValueForKey(*k, Item(val));
-                            }
-                        }
-                        void operator()(integer_map& cnt) const {
-                            if (auto k = bs::get<int32_t>(key)) {
-                                cnt.setValueForKey(*k, Item(val));
-                            }
-                        }
-                    };
-
-                    perform_on_object(*obj2Key.first, value_setter{ resolvedObject, &obj2Key.second });
+                    object_lock l(obj2Key.first);
+                    ca::u_assign_value(*obj2Key.first, obj2Key.second, resolvedObject);
                 }
             }
 
@@ -203,7 +180,7 @@ namespace collections {
                     const char *key;
                     json_t *value;
                     json_object_foreach(val, key, value) {
-                        cnt.u_setValueForKey(key, self->make_item(value, cnt, key));
+                        cnt.u_set(key, self->make_item(value, cnt, key));
                     }
                 }
                 void operator()(form_map& cnt) {
@@ -212,7 +189,7 @@ namespace collections {
                     json_object_foreach(val, key, value) {
                         auto fkey = form_handling::from_string(key);
                         if (fkey) {
-                            cnt.u_setValueForKey(*fkey, self->make_item(value, cnt, *fkey));
+                            cnt.u_set(*fkey, self->make_item(value, cnt, *fkey));
                         }
                     }
                 }
@@ -293,8 +270,8 @@ namespace collections {
         }
 
         template<class K>
-        Item make_item(json_ref val, object_base& container, const K& item_key) {
-            Item item;
+        item make_item(json_ref val, object_base& container, const K& item_key) {
+            item item;
 
             switch (json_typeof(val))
             {
@@ -463,7 +440,7 @@ namespace collections {
         }
 
         template<class Key>
-        void fill_key_info(const Item& itm, const object_base& in_object, const Key& key) {
+        void fill_key_info(const item& itm, const object_base& in_object, const Key& key) {
             if (auto obj = itm.object()) {
                 if (_keyInfo.find(obj) == _keyInfo.end()) {
                     _keyInfo.insert(key_info_map::value_type(obj, std::make_pair(&in_object, key)));
@@ -471,7 +448,7 @@ namespace collections {
             }
         }
 
-        json_ref create_value(const Item& item) {
+        json_ref create_value(const item& item) {
 
             struct item_visitor : boost::static_visitor<json_ref> {
 
@@ -495,7 +472,7 @@ namespace collections {
                     return json_integer(val);
                 }
 
-                json_ref operator()(const Item::Real & val) const {
+                json_ref operator()(const item::Real & val) const {
                     return json_real(val);
                 }
 

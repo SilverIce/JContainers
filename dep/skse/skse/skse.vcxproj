@@ -76,10 +76,10 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>$(SolutionDir)\dep\;$(SolutionDir)\dep\skse\</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_PPAPI;_DEBUG;_WINDOWS;_USRDLL;RUNTIME;RUNTIME_VERSION=0x09200000;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>RUNTIME;RUNTIME_VERSION=0x09200000;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
-      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader />
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -108,7 +108,7 @@
       <Optimization>Full</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <AdditionalIncludeDirectories>$(SolutionDir)\dep\;$(SolutionDir)\dep\skse\</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_PPAPI;NDEBUG;_WINDOWS;_USRDLL;RUNTIME;RUNTIME_VERSION=0x09200000;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;RUNTIME;RUNTIME_VERSION=0x09200000;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader />
       <WarningLevel>Level3</WarningLevel>
@@ -137,7 +137,7 @@
       <Optimization>Full</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <AdditionalIncludeDirectories>$(SolutionDir)\dep\;$(SolutionDir)\dep\skse\</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_PPAPI;NDEBUG;_WINDOWS;_USRDLL;RUNTIME;RUNTIME_VERSION=0x09200000;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;RUNTIME;RUNTIME_VERSION=0x09200000;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>
       </PrecompiledHeader>

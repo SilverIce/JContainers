@@ -41,9 +41,9 @@ namespace collections { namespace {
     }
 
 
-    JC_TEST(Item, nulls)
+    JC_TEST(item, nulls)
     {
-        Item i1;
+        item i1;
 
         EXPECT_TRUE(i1.isNull());
 
@@ -60,42 +60,44 @@ namespace collections { namespace {
         EXPECT_TRUE(i1.isNull());
     }
 
-    JC_TEST(Item, equality)
+    JC_TEST(item, equality)
     {
-        Item i1, i2;
+        item i1, i2;
 
         EXPECT_TRUE(i1.isNull());
         EXPECT_TRUE(i2.isNull());
 
-        EXPECT_TRUE(i1.isEqual(i1));
-        EXPECT_TRUE(i1.isEqual(i2));
+        EXPECT_TRUE(i1 == i1);
+        EXPECT_TRUE(i1 == i2);
 
         i1 = "me";
         i2 = "Me";
-        EXPECT_TRUE(i1.isEqual(i2));
+        EXPECT_TRUE(i1 == i2);
 
         i2 = "not me";
-        EXPECT_FALSE(i1.isEqual(i2));
+        EXPECT_FALSE(i1 == i2);
 
         i1 = 1u;
         i2 = 1u;
-        EXPECT_TRUE(i1.isEqual(i2));
+        EXPECT_TRUE(i1 == i2);
 
         i2 = 1.5f;
-        EXPECT_FALSE(i1.isEqual(i2));
+        EXPECT_FALSE(i1 == i2);
 
         auto& obj = array::object(context);
         i1 = obj;
         i2 = obj;
-        EXPECT_TRUE(i1.isEqual(i2));
+        EXPECT_TRUE(i1 == i2);
     }
 
-    JC_TEST(Item, less_than)
+    JC_TEST(item, less_than)
     {
-        EXPECT_TRUE(Item(100) < Item(2.0));
-        EXPECT_TRUE(Item(1.0) < Item(2.0));
-        EXPECT_TRUE(Item(10) < Item(FormZero));
-        EXPECT_TRUE(Item("aa") < Item("text"));
+        EXPECT_TRUE(item(100) < item(2.0));
+        EXPECT_TRUE(item(1.0) < item(2.0));
+        EXPECT_TRUE(item(10) < item(FormZero));
+        EXPECT_TRUE(item("aa") < item("text"));
+        EXPECT_TRUE(item("A") < item("b"));
+
         //EXPECT_TRUE(Item(1.0) < Item(FormZero));
     }
 
@@ -174,6 +176,42 @@ namespace collections { namespace {
         }
     }
 
+    JC_TEST(path_resolving_new, _) {
+
+        array::ref tests = json_deserializer::object_from_file(context,
+            util::relative_to_dll_path("test_data/path_resolving/path_resolving.json"))->as_link<array>();
+
+        EXPECT_TRUE(tests->s_count() > 0);
+
+        auto testNewResolving = [&](object_base& tree, const char* path, const item* expectedVal) {
+            EXPECT_NOT_NIL(path);
+            auto value = ca::get(tree, path);
+            EXPECT_TRUE((!expectedVal && !value) || (value && *expectedVal == *value));
+        };
+        auto testOldResolving = [&](object_base& tree, const char* path, const item* expectedVal) {
+            EXPECT_NOT_NIL(path);
+            path_resolving::resolve(context, &tree, path, [&](item *optional) {
+                EXPECT_TRUE((!expectedVal && !optional) || (optional && *expectedVal == *optional));
+            });
+        };
+
+        for (auto& test : tests->u_container()) {
+            map& testO = test.object()->as_link<map>();
+            object_base& tree = *testO["tree"].object();
+
+            array& path2value = testO["path2value"].object()->as_link<array>();
+            for (auto& value : path2value.u_container()) {
+                auto& pair = value.object()->as_link<map>();
+                testNewResolving(tree, pair["path"].strValue(), pair.u_get("value"));
+                testOldResolving(tree, pair["path"].strValue(), pair.u_get("value"));
+            }
+        }
+
+        auto& m = map::object(context);
+        ca::assign(m, ".keyA", 10);
+        EXPECT_TRUE(*ca::get(m, ".keyA") == 10);
+    }
+
     JC_TEST(json_deserializer, test)
     {
         EXPECT_NIL(json_deserializer::object_from_file(context, ""));
@@ -240,7 +278,7 @@ namespace collections { namespace {
                 auto state = ctx.write_to_string();
                 ctx.clearState();
 
-                ctx.read_from_string(state, serialization_version::current);
+                ctx.read_from_string(state);
 
                 jsonOut = json_serializer::create_json_value(*ctx.getObject(rootId));
             }
@@ -258,7 +296,7 @@ namespace collections { namespace {
     {
         {
             map& cnt = map::object(context);
-            cnt.u_setValueForKey("cycle", Item(cnt));
+            cnt.u_set("cycle", cnt);
 
             json_serializer::create_json_data(cnt);
         }
@@ -266,8 +304,8 @@ namespace collections { namespace {
             map &cnt1 = map::object(context);
             map &cnt2 = map::object(context);
 
-            cnt1.u_setValueForKey("cnt2", Item(cnt2));
-            cnt2.u_setValueForKey("cnt1", Item(cnt1));
+            cnt1.u_set("cnt2", cnt2);
+            cnt2.u_set("cnt1", cnt1);
 
             json_serializer::create_json_data(cnt1);
         }
@@ -278,19 +316,19 @@ namespace collections { namespace {
         object_base* root = json_deserializer::object_from_json_data(context, STR(
         {
             "parentArray": [
-            {
-                "objChildArrayOfChildJMap1": [],
-                    "rootRef" : "__reference|"
-            },
-            {
-                "objChildArrayOfChildJMap2": [],
-                "referenceToChildJMap1" : "__reference|.parentArray[0]",
-                "referenceToFormMapValue" : "__reference|.parentArray[2][__formData|D|0x4]"
-            },
-            {
-                "__formData": null,
-                "__formData|D|0x4" : []
-            }
+                {
+                    "objChildArrayOfChildJMap1": [],
+                        "rootRef" : "__reference|"
+                },
+                {
+                    "objChildArrayOfChildJMap2": [],
+                    "referenceToChildJMap1" : "__reference|.parentArray[0]",
+                    "referenceToFormMapValue" : "__reference|.parentArray[2][__formData|D|0x4]"
+                },
+                {
+                    "__formData": null,
+                    "__formData|D|0x4" : []
+                }
             ]
         }
         ));
@@ -338,8 +376,7 @@ namespace collections { namespace {
                 atLeastOneTested = true;
 
                 std::ifstream file(itr->path().generic_string(), std::ios::in | std::ios::binary);
-                // had to pass kJSerializationNoHeaderVersion - 0.67 has no header :(
-                context.read_from_stream(file, serialization_version::no_header);
+                context.read_from_stream(file);
             }
         }
 
@@ -353,13 +390,15 @@ namespace collections { namespace {
             array& root = json_deserializer::object_from_json_data(context, STR(
                 ["__reference|"]
             ))->as_link<array>();
+
+            EXPECT_TRUE(root[0] == root.base());
             //EXPECT_NOT_NIL(root);
 
             array& copy = deep_copying::deep_copy(context, root).as_link<array>();
             EXPECT_TRUE(&copy != &root);
 
-            EXPECT_TRUE(copy[0] == copy);
-            EXPECT_TRUE(root[0] == root);
+            EXPECT_TRUE(copy[0] == copy.base());
+            EXPECT_TRUE(root[0] == root.base());
 
             EXPECT_TRUE(root.s_count() == 1);
         }
@@ -379,6 +418,19 @@ namespace collections { namespace {
             EXPECT_TRUE(root["c"] != copy["c"]);
             EXPECT_TRUE(root["b"] != copy["b"]);
         }
+		{
+			auto& orig = json_deserializer::object_from_json_data(context, STR(
+				{ "c": 8.0, "obj" : [] }
+			))->as_link<map>();
+
+			auto& copy = deep_copying::shallow_copy(context, orig).as_link<map>();
+            EXPECT_TRUE(&copy != &orig);
+            EXPECT_TRUE(orig.s_count() == 2);
+			EXPECT_TRUE(copy.s_count() == 2);
+
+			EXPECT_TRUE(orig["c"] == copy["c"]);
+			EXPECT_TRUE(orig["obj"] == copy["obj"]);
+		}
     }
 
     JC_TEST(garbage_collection, no_deadlopp_proof)
@@ -409,7 +461,7 @@ namespace collections { namespace {
             for (int j = 0; j < 10; ++j) {
                 auto rnd = rand() % 10;
 
-                cont->push(Item(arrays[rnd]));
+                cont->push(item(arrays[rnd]));
             }
         }
 
@@ -428,9 +480,9 @@ namespace collections { namespace {
         map &cnt = map::object(context);
 
         std::string name = "back in black";
-        cnt.u_setValueForKey("ACDC", Item(name));
+        cnt.u_set("ACDC", name);
 
-        EXPECT_TRUE(*cnt.u_find("acdc")->stringValue() == name);
+        EXPECT_TRUE(*cnt.u_get("acdc")->stringValue() == name);
     }
 
     JC_TEST(tes_context, database)
@@ -538,7 +590,7 @@ namespace collections { namespace {
     {
         auto& obj = map::object(context);
         object_lock lock(obj);
-        obj.u_setValueForKey("lol", Item(obj));
+        obj.u_set("lol", obj);
     }
 
 }

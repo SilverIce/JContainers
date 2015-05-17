@@ -20,5 +20,5 @@
 #include "common/IDynamicCreate.h"
 #include "common/IDebugLog.h"
 #include "common/ISingleton.h"
-#include <winsock2.h>
+//#include <winsock2.h>
 #include <Windows.h>

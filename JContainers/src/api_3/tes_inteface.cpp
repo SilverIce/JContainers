@@ -15,12 +15,13 @@
 #include <shlobj.h>
 
 #include "gtest.h"
-#include "util.h"
+#include "util/util.h"
 #include "jcontainers_constants.h"
 
-
-#include "object_context.h"
-#include "object_base.h"
+#include "skse_string.h"
+#include "skse_papyrus_args.hpp"
+#include "object/object_context.h"
+#include "object/object_base.h"
 
 #include "tes_error_code.h"
 #include "tes_context.h"

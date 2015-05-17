@@ -19,18 +19,18 @@ namespace tes_api_3 {
 
         template<class T>
         static T getItem(Cnt *obj, Key key, T def = T(0)) {
-            map_functions::doReadOp(obj, key, [&](Item& itm) { def = itm.readAs<T>(); });
+            map_functions::doReadOp(obj, key, [&](item& itm) { def = itm.readAs<T>(); });
             return def;
         }
         REGISTERF(getItem<SInt32>, "getInt", "object key default=0", "returns value associated with key");
         REGISTERF(getItem<Float32>, "getFlt", "object key default=0.0", "");
-        REGISTERF(getItem<BSFixedString>, "getStr", "object key default=\"\"", "");
+        REGISTERF(getItem<skse::string_ref>, "getStr", "object key default=\"\"", "");
         REGISTERF(getItem<object_base*>, "getObj", "object key default=0", "");
         REGISTERF(getItem<TESForm*>, "getForm", "object key default=None", "");
 
         template<class T>
-        static void setItem(Cnt *obj, Key key, T item) {
-            map_functions::doWriteOp(obj, key, [&](Item& itm) { itm = item; });
+        static void setItem(Cnt *obj, Key key, T val) {
+            map_functions::doWriteOp(obj, key, [&](item& itm) { itm = val; });
         }
         REGISTERF(setItem<SInt32>, "setInt", "* key value", "creates key-value association. replaces existing value if any");
         REGISTERF(setItem<Float32>, "setFlt", "* key value", "");
@@ -45,7 +45,7 @@ namespace tes_api_3 {
 
         static SInt32 valueType(ref obj, Key key) {
             auto type = item_type::no_item;
-            map_functions::doReadOp(obj, key, [&](Item& itm) { type = itm.type(); });
+            map_functions::doReadOp(obj, key, [&](item& itm) { type = itm.type(); });
             return (SInt32)type;
         }
         REGISTERF2(valueType, "* key", "returns type of the value associated with key.\n"VALUE_TYPE_COMMENT);
@@ -60,7 +60,7 @@ namespace tes_api_3 {
 
                 arr._array.reserve(obj->u_count());
                 for each(auto& pair in obj->u_container()) {
-                    arr.u_container().push_back(Item(pair.first));
+                    arr.u_container().push_back(item(pair.first));
                 }
             },
                 tes_context::instance());
@@ -183,9 +183,9 @@ namespace tes_api_3 {
             map_functions::nextKey(obj, previousKey, [&](const std::string& key) { str = key.c_str(); });
             return str;
         }
-        REGISTERF(nextKey<BSFixedString>, "nextKey", STR(* previousKey="" endKey=""), tes_map_nextKey_comment);
+        REGISTERF(nextKey<skse::string_ref>, "nextKey", STR(* previousKey="" endKey=""), tes_map_nextKey_comment);
 
-        static const char * getNthKey_comment() { return "Retrieves N-th key. "NEGATIVE_IDX_COMMENT "\nWorst complexity is O(n/2)"; }
+        static const char * getNthKey_comment() { return "Retrieves N-th key. " NEGATIVE_IDX_COMMENT "\nWorst complexity is O(n/2)"; }
 
         template<class Key>
         static Key getNthKey(map* obj, SInt32 keyIndex) {
@@ -193,7 +193,7 @@ namespace tes_api_3 {
             map_functions::getNthKey(obj, keyIndex, [&](const std::string& key) { ith = key.c_str(); });
             return ith;
         }
-        REGISTERF(getNthKey<BSFixedString>, "getNthKey", "* keyIndex", getNthKey_comment());
+        REGISTERF(getNthKey<skse::string_ref>, "getNthKey", "* keyIndex", getNthKey_comment());
     };
 
     struct tes_form_map_ext : class_meta < tes_form_map_ext > {

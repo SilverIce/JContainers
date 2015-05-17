@@ -166,7 +166,8 @@ end
 
 -------------------------------------------------------------
 
--- creates evalLua* entry point, the function
+-- creates evalLua* entry point
+-- the function accepts (luaString, handle), compiles (caches) and evaluates luaString
 local function makeEvalLuaFunction()
 
   local jc = require 'jc'
@@ -220,7 +221,6 @@ local function mainRoutine()
 
 
   JC_compileAndRun = makeEvalLuaFunction()
-
 end
 
 mainRoutine()

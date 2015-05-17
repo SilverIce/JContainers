@@ -7,9 +7,6 @@
     <Filter Include="object_module">
       <UniqueIdentifier>{36211b98-169e-46fc-961c-48122146285c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="object_module\impl">
-      <UniqueIdentifier>{69bd386b-435b-4941-9700-8f1c25f8f6dc}</UniqueIdentifier>
-    </Filter>
     <Filter Include="collections_module">
       <UniqueIdentifier>{2c083f8d-8546-477b-851e-5eb515359766}</UniqueIdentifier>
     </Filter>
@@ -34,6 +31,9 @@
     <Filter Include="util">
       <UniqueIdentifier>{b2bd77e9-b73b-4846-b0e6-6ae153b3c7f1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="object_module\impl">
+      <UniqueIdentifier>{eb23fa71-0ac8-43dc-8357-dd4915bbcfd6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\gtest.cpp">
@@ -49,9 +49,6 @@
     <ClCompile Include="src\reflection.cpp">
       <Filter>reflection</Filter>
     </ClCompile>
-    <ClCompile Include="src\object_module.cpp">
-      <Filter>object_module\impl</Filter>
-    </ClCompile>
     <ClCompile Include="src\jc_interface.cpp">
       <Filter>plugin_interface</Filter>
     </ClCompile>
@@ -61,17 +58,23 @@
     <ClCompile Include="src\api_3\tes_inteface.cpp">
       <Filter>collections_module</Filter>
     </ClCompile>
-    <ClCompile Include="src\dll_api.cpp">
-      <Filter>plugin_interface</Filter>
-    </ClCompile>
-    <ClCompile Include="src\util.cpp">
-      <Filter>util</Filter>
-    </ClCompile>
     <ClCompile Include="src\lua_module.cpp">
       <Filter>collections_module\lua</Filter>
     </ClCompile>
     <ClCompile Include="src\collections.cpp">
       <Filter>collections_module</Filter>
+    </ClCompile>
+    <ClCompile Include="src\testing_api.cpp">
+      <Filter>plugin_interface</Filter>
+    </ClCompile>
+    <ClCompile Include="src\util\util.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="src\object\object_module.cpp">
+      <Filter>object_module\impl</Filter>
+    </ClCompile>
+    <ClCompile Include="src\skse_api.cpp">
+      <Filter>plugin_interface</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -95,27 +98,6 @@
     </ClInclude>
     <ClInclude Include="src\meta.h">
       <Filter>gtest</Filter>
-    </ClInclude>
-    <ClInclude Include="src\autorelease_queue.h">
-      <Filter>object_module\impl</Filter>
-    </ClInclude>
-    <ClInclude Include="src\id_generator.h">
-      <Filter>object_module\impl</Filter>
-    </ClInclude>
-    <ClInclude Include="src\object_base.hpp">
-      <Filter>object_module\impl</Filter>
-    </ClInclude>
-    <ClInclude Include="src\object_registry.h">
-      <Filter>object_module\impl</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rw_mutex.h">
-      <Filter>object_module\impl</Filter>
-    </ClInclude>
-    <ClInclude Include="src\object_base.h">
-      <Filter>object_module</Filter>
-    </ClInclude>
-    <ClInclude Include="src\spinlock.h">
-      <Filter>object_module</Filter>
     </ClInclude>
     <ClInclude Include="src\typedefs.h" />
     <ClInclude Include="src\form_handling.h">
@@ -142,12 +124,6 @@
     </ClInclude>
     <ClInclude Include="src\collection_bind_traits.h">
       <Filter>collections_module</Filter>
-    </ClInclude>
-    <ClInclude Include="src\boost_serialization_intrusive_ptr_jc.h">
-      <Filter>collections_module</Filter>
-    </ClInclude>
-    <ClInclude Include="src\object_base_serialization.h">
-      <Filter>object_module</Filter>
     </ClInclude>
     <ClInclude Include="src\jcontainers_pch.h" />
     <ClInclude Include="src\code_producer.hpp">
@@ -187,18 +163,6 @@
     <ClInclude Include="src\api_3\master.h">
       <Filter>collections_module\tes_api_3</Filter>
     </ClInclude>
-    <ClInclude Include="src\object_context.h">
-      <Filter>object_module</Filter>
-    </ClInclude>
-    <ClInclude Include="src\object_context.hpp">
-      <Filter>object_module</Filter>
-    </ClInclude>
-    <ClInclude Include="src\util.h">
-      <Filter>util</Filter>
-    </ClInclude>
-    <ClInclude Include="src\garbage_collector.h">
-      <Filter>object_module\impl</Filter>
-    </ClInclude>
     <ClInclude Include="src\collection_functions.h">
       <Filter>collections_module</Filter>
     </ClInclude>
@@ -216,6 +180,60 @@
     </ClInclude>
     <ClInclude Include="src\collection_copying.h">
       <Filter>collections_module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\intrusive_ptr.hpp">
+      <Filter>collections_module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\util\spinlock.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="src\util\util.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="src\util\istring.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="src\object\object_context.h">
+      <Filter>object_module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\object\object_base.h">
+      <Filter>object_module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\object\object_base_serialization.h">
+      <Filter>object_module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\object\object_base.hpp">
+      <Filter>object_module\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="src\object\object_context.hpp">
+      <Filter>object_module\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="src\object\object_registry.h">
+      <Filter>object_module\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="src\object\autorelease_queue.h">
+      <Filter>object_module\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="src\object\garbage_collector.h">
+      <Filter>object_module\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="src\object\id_generator.h">
+      <Filter>object_module\impl</Filter>
+    </ClInclude>
+    <ClInclude Include="src\collection_item.h">
+      <Filter>collections_module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\collection_types.h">
+      <Filter>collections_module</Filter>
+    </ClInclude>
+    <ClInclude Include="src\skse_string.h">
+      <Filter>skse</Filter>
+    </ClInclude>
+    <ClInclude Include="src\skse_papyrus_args.hpp">
+      <Filter>skse</Filter>
+    </ClInclude>
+    <ClInclude Include="src\util\istring_serialization.h">
+      <Filter>util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

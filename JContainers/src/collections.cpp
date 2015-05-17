@@ -15,19 +15,21 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 
-#include "boost/smart_ptr/intrusive_ptr.hpp"
-#include "boost_serialization_intrusive_ptr_jc.h"
-
 #include <fstream>
 #include <sstream>
 #include <set>
 
 #include "gtest.h"
 
+#include "intrusive_ptr.hpp"
+#include "intrusive_ptr_serialization.hpp"
+#include "util/istring_serialization.h"
+
+#include "object/object_base_serialization.h"
+
 #include "collections.h"
 #include "tes_context.h"
 #include "form_handling.h"
-#include "object_base_serialization.h"
 
 #include "tes_context.hpp"
 
@@ -36,7 +38,7 @@ BOOST_CLASS_EXPORT_GUID(collections::map, "kJMap");
 BOOST_CLASS_EXPORT_GUID(collections::form_map, "kJFormMap");
 BOOST_CLASS_EXPORT_GUID(collections::integer_map, "kJIntegerMap");
 
-BOOST_CLASS_VERSION(collections::Item, 2)
+BOOST_CLASS_VERSION(collections::item, 2)
 
 BOOST_CLASS_IMPLEMENTATION(boost::blank, boost::serialization::primitive_type);
 
@@ -60,9 +62,9 @@ namespace collections {
         };
 
         struct item_converter : boost::static_visitor < > {
-            Item::variant& varNew;
+            item::variant& varNew;
         
-            explicit item_converter(Item::variant& var) : varNew(var) {}
+            explicit item_converter(item::variant& var) : varNew(var) {}
 
             template<class T> void operator() (T& val) {
                 varNew = std::move(val);
@@ -75,7 +77,7 @@ namespace collections {
             }
         };
 
-        template<class A> void do_conversion(A& ar, Item::variant& varNew) {
+        template<class A> void do_conversion(A& ar, item::variant& varNew) {
             typedef boost::variant<old_blank, SInt32, Float32, FormId, object_ref_old, std::string> variant_old;
             variant_old varOld;
             ar >> varOld;
@@ -97,7 +99,7 @@ namespace collections {
         };
 
         template<class Archive>
-        void read(Archive & ar, Item& itm) {
+        void read(Archive & ar, item& itm) {
             ItemType type = ItemTypeNone;
             ar & type;
 
@@ -139,7 +141,7 @@ namespace collections {
     }
 
     template<class Archive>
-    void Item::load(Archive & ar, const unsigned int version)
+    void item::load(Archive & ar, const unsigned int version)
     {
         switch (version)
         {
@@ -164,7 +166,7 @@ namespace collections {
     }
 
     template<class Archive>
-    void Item::save(Archive & ar, const unsigned int version) const {
+    void item::save(Archive & ar, const unsigned int version) const {
         ar & _var;
     }
 
@@ -215,7 +217,7 @@ namespace collections {
                 // .... A ... B..
                 // both plugins gets swapped
                 // and two form Id's swapped too: 0xaa001 swapped with 0xbb001
-                // form from the A replaces form from the B
+                // the form-id from the A replaces the form-id from the B
 
                 auto anotherOldKeyItr = cnt.find(newKey);
                 if (anotherOldKeyItr != cnt.end()) { // exactly that rare case, newKey equals to some other oldKey

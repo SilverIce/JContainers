@@ -5,7 +5,10 @@ namespace jc { namespace {
 
     const reflection_interface refl = {
         reflection_interface::version,
-        reflection::find_tes_function_of_class,
+        [](const char * functionName, const char *className) -> void* {
+            auto fi = reflection::find_function_of_class(functionName, className);
+            return fi ? fi->tes_func : nullptr;
+        }
     };
 
     const void * query_interface(uint32_t id) {

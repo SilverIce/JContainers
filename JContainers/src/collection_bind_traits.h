@@ -13,7 +13,7 @@ namespace reflection { namespace binding {
         typedef HandleT tes_type;
 
         static HandleT convert2Tes(object_base* obj) {
-            return obj ? obj->tes_uid() : 0;
+            return obj ? obj->uid() : 0;
         }
 
         static object_stack_ref convert2J(HandleT hdl) {
@@ -34,7 +34,7 @@ namespace reflection { namespace binding {
         typedef HandleT tes_type;
 
         static HandleT convert2Tes(object_base* obj) {
-            return obj ? obj->tes_uid() : 0;
+            return obj ? obj->uid() : 0;
         }
 
         static typename T::ref convert2J(HandleT hdl) {
