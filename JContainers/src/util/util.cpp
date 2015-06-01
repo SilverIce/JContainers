@@ -5,7 +5,7 @@ namespace util {
 
     boost::filesystem::path dll_path() {
         HMODULE hm = nullptr;
-        bool result = GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+        auto result = GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
             GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
             (LPCSTR)&dll_path,
             &hm);
