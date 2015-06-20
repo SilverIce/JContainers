@@ -134,6 +134,7 @@
   <ItemGroup>
     <ClCompile Include="src\api_3\tes_inteface.cpp" />
     <ClCompile Include="src\object\object_module.cpp" />
+    <ClCompile Include="src\reflection\detail\reflection.cpp" />
     <ClCompile Include="src\skse_api.cpp" />
     <ClCompile Include="src\testing_api.cpp" />
     <ClCompile Include="src\jc_interface.cpp" />
@@ -144,7 +145,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\path_resolving.cpp" />
-    <ClCompile Include="src\reflection.cpp" />
     <ClCompile Include="src\collections.cpp" />
     <ClCompile Include="src\skse.cpp" />
     <ClCompile Include="src\string_wrapper.cpp" />
@@ -162,7 +162,6 @@
     <ClInclude Include="src\api_3\tes_object.h" />
     <ClInclude Include="src\api_3\tes_string.h" />
     <ClInclude Include="src\boost_extras.h" />
-    <ClInclude Include="src\code_producer.hpp" />
     <ClInclude Include="src\collections.tests.base.h" />
     <ClInclude Include="src\collection_bind_traits.h" />
     <ClInclude Include="src\collection_copying.h" />
@@ -186,8 +185,10 @@
     <ClInclude Include="src\object\object_registry.h" />
     <ClInclude Include="src\path_resolving.h" />
     <ClInclude Include="src\jcontainers_constants.h" />
+    <ClInclude Include="src\reflection\detail\code_producer.hpp" />
+    <ClInclude Include="src\reflection\reflection.h" />
+    <ClInclude Include="src\reflection\tes_binding.h" />
     <ClInclude Include="src\skse.h" />
-    <ClInclude Include="src\reflection.h" />
     <ClInclude Include="src\skse_papyrus_args.hpp" />
     <ClInclude Include="src\skse_string.h" />
     <ClInclude Include="src\typedefs.h" />
@@ -202,7 +203,6 @@
     <ClInclude Include="src\jcontainers_pch.h" />
     <ClInclude Include="src\json_handling.h" />
     <ClInclude Include="src\meta.h" />
-    <ClInclude Include="src\tes_binding.h" />
     <ClInclude Include="src\tes_context.h" />
     <ClInclude Include="src\tes_context.hpp" />
     <ClInclude Include="src\tes_error_code.h" />

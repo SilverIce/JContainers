@@ -5,9 +5,9 @@
 #include <vector>
 
 #include "gtest.h"
-#include "reflection.h"
+#include "reflection/reflection.h"
 
-#include "tes_binding.h"
+#include "reflection/tes_binding.h"
 
 namespace reflection {
 

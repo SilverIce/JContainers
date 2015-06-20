@@ -34,6 +34,9 @@
     <Filter Include="object_module\impl">
       <UniqueIdentifier>{eb23fa71-0ac8-43dc-8357-dd4915bbcfd6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="reflection\detail">
+      <UniqueIdentifier>{bd7824e4-2e9a-4491-903f-a8f7d679474f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\gtest.cpp">
@@ -45,9 +48,6 @@
     </ClCompile>
     <ClCompile Include="src\skse.cpp">
       <Filter>skse</Filter>
-    </ClCompile>
-    <ClCompile Include="src\reflection.cpp">
-      <Filter>reflection</Filter>
     </ClCompile>
     <ClCompile Include="src\jc_interface.cpp">
       <Filter>plugin_interface</Filter>
@@ -75,6 +75,9 @@
     </ClCompile>
     <ClCompile Include="src\skse_api.cpp">
       <Filter>plugin_interface</Filter>
+    </ClCompile>
+    <ClCompile Include="src\reflection\detail\reflection.cpp">
+      <Filter>reflection\detail</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -116,19 +119,10 @@
       <Filter>skse</Filter>
     </ClInclude>
     <ClInclude Include="src\jcontainers_constants.h" />
-    <ClInclude Include="src\tes_binding.h">
-      <Filter>reflection</Filter>
-    </ClInclude>
-    <ClInclude Include="src\reflection.h">
-      <Filter>reflection</Filter>
-    </ClInclude>
     <ClInclude Include="src\collection_bind_traits.h">
       <Filter>collections_module</Filter>
     </ClInclude>
     <ClInclude Include="src\jcontainers_pch.h" />
-    <ClInclude Include="src\code_producer.hpp">
-      <Filter>reflection</Filter>
-    </ClInclude>
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\jc_interface.h">
       <Filter>plugin_interface</Filter>
@@ -234,6 +228,15 @@
     </ClInclude>
     <ClInclude Include="src\util\istring_serialization.h">
       <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="src\reflection\reflection.h">
+      <Filter>reflection</Filter>
+    </ClInclude>
+    <ClInclude Include="src\reflection\tes_binding.h">
+      <Filter>reflection</Filter>
+    </ClInclude>
+    <ClInclude Include="src\reflection\detail\code_producer.hpp">
+      <Filter>reflection\detail</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

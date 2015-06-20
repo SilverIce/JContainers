@@ -1,7 +1,7 @@
 #pragma once
 
 #include "skse/PapyrusNativeFunctions.h"
-#include "reflection.h"
+#include "reflection/reflection.h"
 #include "skse_string.h"
 
 class BGSListForm;
@@ -89,12 +89,11 @@ namespace reflection { namespace binding {
     {
         typedef R return_type;
         static std::vector<type_info_func> type_strings() {
-            type_info_func types[] = {
+            return {
                 &j2Str<R>::typeInfo,
                 &j2Str<Arg0>::typeInfo,
                 &j2Str<Arg1>::typeInfo,
             };
-            return std::vector<type_info_func>(&types[0], &types[0] + sizeof(types)/sizeof(type_info_func));
         }
 
         static typename GetConv<R>::tes_type tes_func(
@@ -125,12 +124,11 @@ namespace reflection { namespace binding {
     {
         typedef void return_type;
         static std::vector<type_info_func> type_strings() {
-            type_info_func types[] = {
+            return {
                 &j2Str<void>::typeInfo,
                 &j2Str<Arg0>::typeInfo,
                 &j2Str<Arg1>::typeInfo,
             };
-            return std::vector<type_info_func>(&types[0], &types[0] + sizeof(types)/sizeof(type_info_func));
         }
 
         static void tes_func(
@@ -172,11 +170,10 @@ namespace reflection { namespace binding {
             {     \
             typedef R return_type; \
             static std::vector<type_info_func> type_strings() {\
-                type_info_func types[] = {\
+                return {\
                     &j2Str<R>::typeInfo,\
                     DO_##N(TYPESTRING_NTH, NOTHING, COMA, NOTHING)\
                 };\
-                return std::vector<type_info_func>(&types[0], &types[0] + sizeof(types)/sizeof(type_info_func));\
             }\
             \
             static typename GetConv<R>::tes_type tes_func(     \
@@ -245,53 +242,54 @@ namespace reflection { namespace binding {
     // MSVC2012 bug workaround
     template <typename T> T msvc_identity(T);
 
-    // retrieves class_info pointer from member address
-    // specially for hack made in REGISTERF macro
-    inline class_info& metaInfoFromFieldAndOffset(void * fieldAddress, int offset) {
-        auto mixin = (_detail::class_meta_mixin *)((char *)fieldAddress - offset);
-        return mixin->metaInfo;
-    }
+    struct name_setter {
+        explicit name_setter(class_info& info, const char* className) {
+            info._className = className;
+        }
+    };
 
-#define REGISTER_TES_NAME(ScriptTesName)\
-    struct CONCAT(_struct_, __LINE__) {\
-        CONCAT(_struct_, __LINE__)() {\
-            using namespace reflection;\
-            auto& mInfo = binding::metaInfoFromFieldAndOffset( this, offsetof(__Type, CONCAT(_mem_, __LINE__)) );\
-            mInfo._className = (ScriptTesName);\
-            }\
-        } CONCAT(_mem_, __LINE__);
+#define REGISTER_TES_NAME(ScriptTesName)  \
+    ::reflection::binding::name_setter _name_setter{ metaInfo, ScriptTesName };
+
+    struct function_registree {
+
+        template<class F, class String2, F f>
+        inline function_registree(class_info& info, proxy<F, f>, const char* funcname, const char* argument_names, const String2& comment) {
+            using namespace ::reflection;
+
+             using Binder = proxy<F, f>;
+             static_assert( false == std::is_same<Binder::return_type, const char *>::value, "a trap for 'const char *' return types" );
+
+             function_info metaF;
+             metaF.registrator = &Binder::bind;
+             metaF.param_list_func = &Binder::type_strings;
+             
+             metaF.argument_names = (argument_names) ? (argument_names) : "";
+             metaF.setComment(comment);
+             metaF.name = funcname;
+             metaF.tes_func = &Binder::tes_func;
+             metaF.c_func = static_cast<c_function>(f);
+
+             info.addFunction(metaF);
+        }
+    };
 
 #define REGISTERF(func, _funcname, _args, _comment)\
-    struct CONCAT(_struct_, __LINE__) {\
-         CONCAT(_struct_, __LINE__)() {\
-             using namespace reflection;\
-             function_info metaF;\
-             typedef binding::proxy<decltype(binding::msvc_identity(&(func))), &(func)> binder;\
-             static_assert( false == std::is_same<binder::return_type, const char *>::value, "a trap for const char * return types" ); \
-             metaF.registrator = &binder::bind;\
-             metaF.param_list_func = &binder::type_strings;\
-             \
-             metaF.argument_names = (_args) ? (_args) : ""; \
-             metaF.setComment(_comment);\
-             metaF.name = (_funcname) ? (_funcname) : ""; \
-             metaF.tes_func = &binder::tes_func;\
-             auto addr = &(func);\
-             metaF.c_func = addr;\
-             binding::metaInfoFromFieldAndOffset(this, offsetof(__Type, CONCAT(_mem_, __LINE__))).addFunction(metaF);\
-         }\
-    } CONCAT(_mem_, __LINE__);
-
-#define REGISTER_TEXT(text)\
-    struct CONCAT(_struct_, __LINE__) {\
-         CONCAT(_struct_, __LINE__)() {\
-             using namespace reflection;\
-             papyrus_text_block tb;\
-             tb.set_text(text);\
-             binding::metaInfoFromFieldAndOffset(this, offsetof(__Type, CONCAT(_mem_, __LINE__))).add_text_block(tb); \
-        }\
-    } CONCAT(_mem_, __LINE__);
+    ::reflection::binding::function_registree CONCAT(_func_registree_, __LINE__){ metaInfo,\
+        ::reflection::binding::proxy<decltype(::reflection::binding::msvc_identity(&func)), &func>(), \
+        _funcname, _args, _comment };
 
 #define REGISTERF2(func, args, comment)     REGISTERF(func, #func, args, comment)
+
+    struct papyrus_textblock_setter {
+        explicit papyrus_textblock_setter(class_info& info, const papyrus_text_block& text) {
+            info.add_text_block(text);
+        }
+    };
+
+#define REGISTER_TEXT(text) \
+    ::reflection::binding::papyrus_textblock_setter CONCAT(_textblock_setter_, __LINE__){ metaInfo, ::reflection::papyrus_text_block(text) };
+
 
 }
 }

@@ -1,11 +1,11 @@
-#include "reflection.h"
+#include "reflection/reflection.h"
 
 #include <map>
 #include "gtest.h"
 #include "util/spinlock.h"
 #include "skse/PapyrusVM.h"
 
-#include "code_producer.hpp"
+#include "reflection/detail/code_producer.hpp"
 
 namespace reflection {
 

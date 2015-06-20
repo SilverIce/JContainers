@@ -25,7 +25,7 @@ extern "C" {
 #include "gtest.h"
 #include "util/spinlock.h"
 
-#include "reflection.h"
+#include "reflection/reflection.h"
 #include "jcontainers_constants.h"
 #include "collections.h"
 #include "tes_context.h"

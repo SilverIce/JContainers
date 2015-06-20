@@ -71,8 +71,8 @@ namespace reflection {
     struct papyrus_text_block {
         typedef std::string(*text_generator)();
 
-        void set_text(const char * t) { _text = t; }
-        void set_text(text_generator t) { _text_generator_func = t; }
+        papyrus_text_block(const char * t) : _text(t) {}
+        papyrus_text_block(text_generator t) : _text_generator_func(t) {}
 
         const char * _text = nullptr;
         text_generator _text_generator_func = nullptr;
@@ -159,8 +159,6 @@ namespace reflection {
                 t.additionalSetup();
                 return t.metaInfo;
             }
-            // special support for hack inside REGISTERF macro
-            typedef T __Type;
         };
     }
     template <class T>

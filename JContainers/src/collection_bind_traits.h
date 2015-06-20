@@ -1,6 +1,6 @@
 #pragma once
 
-#include "tes_binding.h"
+#include "reflection/tes_binding.h"
 #include "collections.h"
 #include "tes_context.h"
 

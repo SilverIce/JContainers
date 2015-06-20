@@ -1,5 +1,5 @@
 #include "jc_interface.h"
-#include "reflection.h"
+#include "reflection/reflection.h"
 
 namespace jc { namespace {
 
