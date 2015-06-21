@@ -192,6 +192,16 @@ namespace collections {
             return const_cast<item*>( const_cast<const array*>(this)->u_get(index) );
         }
 
+        boost::optional<item> u_erase_and_return(int32_t index) {
+            auto idx = u_convertIndex(index);
+            if (idx) {
+                boost::optional<item> var(std::move(_array[*idx]));
+                _array.erase(_array.begin() + *idx);
+                return var;
+            }
+            return boost::none;
+        }
+
         template<class T>
         item* u_set(int32_t index, T&& itm) {
             auto idx = u_convertIndex(index);
@@ -207,6 +217,11 @@ namespace collections {
             u_set(index, std::forward<T>(itm));
         }
 
+        template<class T>
+        static boost::optional<T> _opt_from_pointer(const T* t) {
+            return t ? boost::optional<T>(*t) : boost::none;
+        }
+
         item& operator [] (int32_t index) { return const_cast<item&>(const_cast<const array*>(this)->operator[](index)); }
         const item& operator [] (int32_t index) const {
             auto idx = u_convertIndex(index);
@@ -216,8 +231,7 @@ namespace collections {
 
         boost::optional<item> get_item(int32_t index) const {
             object_lock lock(this);
-            auto idx = u_convertIndex(index);
-            return idx ? boost::optional<item>(_array[*idx]) : boost::none;
+            return _opt_from_pointer(u_get(index));
         }
 
         iterator begin() { return _array.begin();}

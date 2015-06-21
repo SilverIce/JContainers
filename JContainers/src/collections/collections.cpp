@@ -43,103 +43,7 @@ BOOST_CLASS_VERSION(collections::item, 2)
 BOOST_CLASS_IMPLEMENTATION(boost::blank, boost::serialization::primitive_type);
 
 namespace collections {
-
-    // 0.67 to 0.68:
-    namespace conv_067_to_3 {
-
-        struct old_blank {
-            template<class Archive>
-            void serialize(Archive & ar, const unsigned int version) {}
-        };
-
-        struct object_ref_old {
-            object_base *px = nullptr;
-
-            template<class Archive>
-            void serialize(Archive & ar, const unsigned int version) {
-                ar & px;
-            }
-        };
-
-        struct item_converter : boost::static_visitor < > {
-            item::variant& varNew;
-        
-            explicit item_converter(item::variant& var) : varNew(var) {}
-
-            template<class T> void operator() (T& val) {
-                varNew = std::move(val);
-            }
-
-            void operator()(old_blank& val) {}
-
-            void operator()(object_ref_old& val) {
-                varNew = internal_object_ref(val.px);
-            }
-        };
-
-        template<class A> void do_conversion(A& ar, item::variant& varNew) {
-            typedef boost::variant<old_blank, SInt32, Float32, FormId, object_ref_old, std::string> variant_old;
-            variant_old varOld;
-            ar >> varOld;
-
-            item_converter converter(varNew);
-            boost::apply_visitor(converter, varOld);
-        }
-    }
     
-    namespace conv_066 {
-        // deprecate in 0.67:
-        enum ItemType : unsigned char {
-            ItemTypeNone = 0,
-            ItemTypeInt32 = 1,
-            ItemTypeFloat32 = 2,
-            ItemTypeCString = 3,
-            ItemTypeObject = 4,
-            ItemTypeForm = 5,
-        };
-
-        template<class Archive>
-        void read(Archive & ar, item& itm) {
-            ItemType type = ItemTypeNone;
-            ar & type;
-
-            switch (type) {
-            case ItemTypeInt32: {
-                SInt32 val = 0;
-                ar & val;
-                itm = val;
-                break;
-            }
-            case ItemTypeFloat32: {
-                Float32 val = 0;
-                ar & val;
-                itm = val;
-                break;
-            }
-            case ItemTypeCString: {
-                std::string string;
-                ar & string;
-                itm = string;
-                break;
-            }
-            case ItemTypeObject: {
-                object_base *object = nullptr;
-                ar & object;
-                itm.var() = internal_object_ref(object, false);
-                break;
-            }
-            case ItemTypeForm: {
-                UInt32 oldId = 0;
-                ar & oldId;
-                itm.var() = (FormId)oldId;
-                break;
-            }
-            default:
-                break;
-            }
-        }
-    }
-
     template<class Archive>
     void item::load(Archive & ar, const unsigned int version)
     {
@@ -150,13 +54,6 @@ namespace collections {
             break;
         case 2:
             ar & _var;
-            break;
-        case 1: {
-            conv_067_to_3::do_conversion(ar, _var);
-            break;
-        }
-        case 0:
-            conv_066::read(ar, *this);
             break;
         }
 
