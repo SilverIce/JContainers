@@ -1,4 +1,4 @@
-#include "path_resolving.h"
+#include "collections/access.h"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/range/iterator_range.hpp>
@@ -7,11 +7,11 @@
 
 #include <functional>
 
-#include "collections.h"
-#include "form_handling.h"
-#include "tes_context.h"
+#include "collections/collections.h"
+#include "collections/form_handling.h"
+#include "collections/context.h"
 
-#include "collection_operators.h"
+#include "collections/operators.h"
 
 namespace collections
 {
@@ -138,7 +138,7 @@ namespace collections
                     return state(false, st);
                 }
 
-                auto opr = collection_operators::get_operator(operationStr.c_str());
+                auto opr = operators::get_operator(operationStr.c_str());
 
                 if (!opr) {
                     return state(false, st);

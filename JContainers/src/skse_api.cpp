@@ -9,12 +9,12 @@
 #include "skse/GameData.h"
 
 //#include "gtest.h"
-#include "skse.h"
+#include "skse/skse.h"
 #include "util/util.h"
 #include "jc_interface.h"
 #include "reflection/reflection.h"
 #include "jcontainers_constants.h"
-#include "tes_context.h"
+#include "collections/context.h"
 
 class VMClassRegistry;
 

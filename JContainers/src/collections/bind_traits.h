@@ -1,8 +1,8 @@
 #pragma once
 
 #include "reflection/tes_binding.h"
-#include "collections.h"
-#include "tes_context.h"
+#include "collections/collections.h"
+#include "collections/context.h"
 
 namespace reflection { namespace binding {
 

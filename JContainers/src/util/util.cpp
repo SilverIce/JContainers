@@ -3,6 +3,8 @@
 
 namespace util {
 
+#define countof(array) sizeof(array)/(sizeof(array[0]))
+
     boost::filesystem::path dll_path() {
         HMODULE hm = nullptr;
         auto result = GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
@@ -11,7 +13,7 @@ namespace util {
             &hm);
         assert(result && "GetModuleHandleExA failed");
         wchar_t path[MAX_PATH] = { '\0' };
-        GetModuleFileNameW(hm, path, sizeof path);
+        GetModuleFileNameW(hm, path, countof(path));
         return boost::filesystem::path(path);
     }
 

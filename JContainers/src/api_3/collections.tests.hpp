@@ -107,7 +107,7 @@ namespace tes_api_3 {
         EXPECT_TRUE(!tes_jcontainers::fileExistsAtPath("abracadabra"));
     }
 
-    TEST(path_resolving, collection_operators)
+    TEST(path_resolving, collections_operators)
     {
         auto shouldReturnNumber = [&](object_base *obj, const char *path, float value) {
             path_resolving::resolve(tes_context::instance(), obj, path, [&](item * item) {

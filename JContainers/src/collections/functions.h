@@ -3,7 +3,7 @@
 #include <array>
 #include <boost/optional.hpp>
 
-#include "collections.h"
+#include "collections/collections.h"
 
 namespace collections {
 

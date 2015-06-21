@@ -11,12 +11,12 @@
 #include "common/IDebugLog.h"
 #include "skse/GameForms.h"
 
-//#include "tes_context.h"
+//#include "collections/tes_context.h"
 #include "object/object_base.h"
-#include "skse.h"
+#include "skse/skse.h"
 
-#include "collection_item.h"
-#include "collection_types.h"
+#include "collections/item.h"
+#include "collections/types.h"
 
 namespace collections {
 

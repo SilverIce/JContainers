@@ -6,7 +6,7 @@
 #include <boost/optional.hpp>
 #include "boost_extras.h"
 
-#include "skse.h"
+#include "skse/skse.h"
 
 namespace collections {
 

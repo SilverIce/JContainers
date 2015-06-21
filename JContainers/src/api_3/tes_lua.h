@@ -7,11 +7,12 @@ namespace collections {
             metaInfo.comment = "executes lua code";
         }
 
-        REGISTER_TES_NAME("JLua");
+        REGISTER_TES_NAME("JCLua");
 
-
+        evalLuaInt("return a[1] + a[2]", pushInt(1, pushInt(2, LuaTransport())))
     };
 
     TES_META_INFO(tes_lua);
 #endif
 }
+ 

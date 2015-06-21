@@ -6,10 +6,10 @@
 #include <jansson.h>
 #include <memory>
 
-#include "collections.h"
-#include "form_handling.h"
+#include "collections/collections.h"
+#include "collections/form_handling.h"
 #include "boost_extras.h"
-#include "path_resolving.h"
+#include "collections/access.h"
 #include "boost/filesystem/path.hpp"
 
 namespace collections {

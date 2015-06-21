@@ -2,7 +2,7 @@
 
 #include "skse/PapyrusNativeFunctions.h"
 #include "reflection/reflection.h"
-#include "skse_string.h"
+#include "skse/string.h"
 
 class BGSListForm;
 
@@ -13,11 +13,11 @@ namespace reflection { namespace binding {
     struct ValueConverter {
         typedef TesType tes_type;
 
-        static TesType convert2J(const TesType& val) {
+        static const TesType& convert2J(const TesType& val) {
             return val;
         }
 
-        static TesType convert2Tes(const TesType& val) {
+        static const TesType& convert2Tes(const TesType& val) {
             return val;
         }
     };
@@ -198,11 +198,10 @@ namespace reflection { namespace binding {
         {     \
             typedef void return_type; \
             static std::vector<type_info_func> type_strings() {\
-                type_info_func types[] = {\
+                return {\
                     &j2Str<void>::typeInfo,\
                     DO_##N(TYPESTRING_NTH, NOTHING, COMA, NOTHING)\
                 };\
-                return std::vector<type_info_func>(&types[0], &types[0] + sizeof(types)/sizeof(type_info_func));\
             }\
             \
             static void tes_func(     \

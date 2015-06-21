@@ -27,11 +27,11 @@
 
 #include "object/object_base_serialization.h"
 
-#include "collections.h"
-#include "tes_context.h"
-#include "form_handling.h"
+#include "collections/collections.h"
+#include "collections/context.h"
+#include "collections/form_handling.h"
 
-#include "tes_context.hpp"
+#include "collections/context.hpp"
 
 BOOST_CLASS_EXPORT_GUID(collections::array, "kJArray");
 BOOST_CLASS_EXPORT_GUID(collections::map, "kJMap");
@@ -213,7 +213,7 @@ namespace collections {
             }
             else if (oldKey != newKey) { // and what if newKey will replace another oldKey???
 
-                // There is one issue. Given two plugins
+                // There is one issue. Given a load order with two plugins like:
                 // .... A ... B..
                 // both plugins gets swapped
                 // and two form Id's swapped too: 0xaa001 swapped with 0xbb001

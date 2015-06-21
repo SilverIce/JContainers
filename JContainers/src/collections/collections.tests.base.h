@@ -26,7 +26,7 @@ namespace collections { namespace {
         obj->tes_retain();
         EXPECT_TRUE(obj->refCount() == 1 + 3);
 
-        // ensure that over-release does not affects internal ref count:
+        // ensure that over-release does not affect internal ref count:
         for (int i = 0; i < 20; i++) {
             obj->tes_release();
         }

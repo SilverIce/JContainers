@@ -1,4 +1,4 @@
-#include "skse.h"
+#include "skse/skse.h"
 
 
 //#include <boost/iostreams/stream.hpp>
@@ -17,7 +17,7 @@
 //#include "jc_interface.h"
 //#include "reflection/reflection.h"
 //#include "jcontainers_constants.h"
-//#include "tes_context.h"
+//#include "collections/tes_context.h"
 
 namespace skse {
 

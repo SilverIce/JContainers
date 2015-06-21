@@ -5,7 +5,7 @@
 #include <boost/optional.hpp>
 #include <boost/variant/variant.hpp>
 
-#include "collections.h"
+#include "collections/collections.h"
 
 namespace collections
 {
@@ -63,6 +63,11 @@ namespace collections
             }
         };
 
+        template<class Value>
+        inline auto u_assign_value(object_base& collection, const key_variant& key, Value&& value) -> item* {
+            return perform_on_object_and_return<item* >(collection, u_assign_value_helper<Value>(), key, std::forward<Value>(value));
+        }
+
         struct accesss_info {
             object_base& collection;
             key_variant key;
@@ -81,10 +86,6 @@ namespace collections
         bs::optional<accesss_info> access_constant(object_base& tree, const char* path);
         bs::optional<accesss_info> access_creative(object_base& tree, const char* path);
 
-        template<class Value>
-        inline auto u_assign_value(object_base& collection, const key_variant& key, Value&& value) -> item* {
-            return perform_on_object_and_return<item* >(collection, u_assign_value_helper<Value>(), key, std::forward<Value>(value));
-        }
 
         inline bs::optional<item> get(object_base& target, const char *cpath) {
             auto ac_info = access_constant(target, cpath);

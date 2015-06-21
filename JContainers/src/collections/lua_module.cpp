@@ -27,10 +27,10 @@ extern "C" {
 
 #include "reflection/reflection.h"
 #include "jcontainers_constants.h"
-#include "collections.h"
-#include "tes_context.h"
-#include "collection_functions.h"
-#include "path_resolving.h"
+#include "collections/collections.h"
+#include "collections/context.h"
+#include "collections/functions.h"
+#include "collections/access.h"
 
 // Module imports:
 

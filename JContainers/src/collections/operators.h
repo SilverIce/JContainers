@@ -1,6 +1,6 @@
 #pragma once
 
-#include "collections.h"
+#include "collections/collections.h"
 
 #include <thread>
 #include "meta.h"
@@ -8,7 +8,7 @@
 
 namespace collections {
 
-    namespace collection_operators
+    namespace operators
     {
         using istring = util::istring;
         typedef void (*operator_func)(const item& val, item& state);

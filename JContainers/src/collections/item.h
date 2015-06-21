@@ -5,11 +5,11 @@
 
 #include "common/ITypes.h"
 #include "object/object_base.h"
-#include "skse.h"
-#include "skse_string.h"
+#include "skse/skse.h"
+#include "skse/string.h"
 
-#include "collections.h"
-#include "collection_types.h"
+#include "collections/collections.h"
+#include "collections/types.h"
 
 namespace collections {
 

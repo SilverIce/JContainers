@@ -18,8 +18,8 @@
 #include "util/util.h"
 #include "jcontainers_constants.h"
 
-#include "skse_string.h"
-#include "skse_papyrus_args.hpp"
+#include "skse/string.h"
+#include "skse/papyrus_args.hpp"
 #include "object/object_context.h"
 #include "object/object_base.h"
 
