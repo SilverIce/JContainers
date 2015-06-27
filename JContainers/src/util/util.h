@@ -28,10 +28,11 @@ namespace util {
             func();
         }
         catch (const std::exception& ex) {
-            (void)ex;
+            _ERROR("'%s' throws '%s' of type '%s'", operation_name, ex.what(), typeid(ex).name());
             jc_assert(false);
         }
         catch (...) {
+            _ERROR("'%s' throws unk. exception", operation_name);
             jc_assert(false);
         }
 
