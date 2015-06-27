@@ -4,3 +4,6 @@
 [submodule "dep/luajit/luajit-2.0"]
 	path = dep/luajit/luajit-2.0
 	url = http://luajit.org/git/luajit-2.0.git
+[submodule "doc/wiki"]
+	path = doc/wiki
+	url = https://github.com/SilverIce/JContainers.wiki.git
