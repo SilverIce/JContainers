@@ -53,10 +53,11 @@ namespace tes_api_3 {
         template<class T>
         static object_base* fromArray(VMArray<T> arr) {
             auto obj = &array::objectWithInitializer([&](array &me) {
+                me.u_container().reserve(arr.Length());
                 for (UInt32 i = 0; i < arr.Length(); ++i) {
                     T val;
                     arr.Get(&val, i);
-                    me._array.push_back(item(val));
+                    me.u_container().emplace_back(val);
                 }
             },
                 tes_context::instance());
@@ -69,6 +70,7 @@ objectWithBooleans converts booleans into integers");
         REGISTERF(fromArray<skse::string_ref>, "objectWithStrings",  "values", nullptr);
         REGISTERF(fromArray<Float32>, "objectWithFloats",  "values", nullptr);
         REGISTERF(fromArray<bool>, "objectWithBooleans",  "values", nullptr);
+        REGISTERF(fromArray<TESForm*>, "objectWithForms", "values", nullptr);
 
         static object_base* subArray(ref source, SInt32 startIndex, SInt32 endIndex) {
             if (!source) {
@@ -214,6 +216,22 @@ if addToIndex >= 0 it inserts value at given index. "NEGATIVE_IDX_COMMENT);
         }
         REGISTERF2(eraseIndex, "* index", "erases item at index. "NEGATIVE_IDX_COMMENT);
 
+        static void eraseRange(ref obj, SInt32 first, SInt32 last) {
+
+            // 0,1,2,3,4
+            // b        e
+            // -1 is 4th index
+            // begin + 4 is last, valid iterator
+            SInt32 pyIndexes[] { first, last };
+            doReadOp(obj, pyIndexes, [=](const std::array<uint32_t, 2>& indices) {
+                if (indices[0] <= indices[1]) {
+                    obj->_array.erase(obj->begin() + indices[0], obj->begin() + indices[1] + 1);
+                }
+            });
+        }
+        REGISTERF2(eraseRange, "* first last", "erases [first, last] range of items. "NEGATIVE_IDX_COMMENT
+            "\nFor ex. with [1,-1] range it will erase everything except the first item");
+
         static SInt32 valueType(ref obj, SInt32 index) {
             SInt32 type = item_type::no_item;
             doReadOp(obj, index, [=, &type](uint32_t idx) {
@@ -243,7 +261,7 @@ if addToIndex >= 0 it inserts value at given index. "NEGATIVE_IDX_COMMENT);
             }
             return obj;
         }
-        REGISTERF2(sort, "*", "Sorts the items into ascending order (none < int < float < object < form < string). Returns array itself");
+        REGISTERF2(sort, "*", "Sorts the items into ascending order (none < int < float < form < object < string). Returns the array itself");
 
         static ref unique(ref obj) {
             if (obj) {
