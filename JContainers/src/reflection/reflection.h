@@ -170,7 +170,7 @@ namespace reflection {
     const function_info* find_function_of_class(const char * functionName, const char *className);
 
     template<class T>
-    inline void foreach_metaInfo_do(T& func) {
+    inline void foreach_metaInfo_do(T&& func) {
 
         for (auto & pair : class_registry()) {
             func(pair.second);

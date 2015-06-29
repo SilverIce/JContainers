@@ -132,10 +132,11 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\api_3\string_wrapper.cpp" />
+    <ClCompile Include="src\api_3\tes_inteface.cpp" />
     <ClCompile Include="src\collections\collections.cpp" />
     <ClCompile Include="src\collections\lua_module.cpp" />
     <ClCompile Include="src\collections\access.cpp" />
-    <ClCompile Include="src\collections\string_wrapper.cpp" />
     <ClCompile Include="src\object\object_module.cpp" />
     <ClCompile Include="src\reflection\detail\reflection.cpp" />
     <ClCompile Include="src\skse\skse.cpp" />
@@ -149,7 +150,6 @@
     </ClCompile>
     <ClCompile Include="src\util\util.cpp" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="src\api_3\collections.tests.hpp" />
     <ClInclude Include="src\api_3\master.h" />
     <ClInclude Include="src\api_3\tes_array.h" />
     <ClInclude Include="src\api_3\tes_db.h" />
@@ -160,7 +160,7 @@
     <ClInclude Include="src\api_3\tes_object.h" />
     <ClInclude Include="src\api_3\tes_string.h" />
     <ClInclude Include="src\collections\collections.h" />
-    <ClInclude Include="src\collections\collections.tests.base.h" />
+    <ClInclude Include="src\collections\tests.h" />
     <ClInclude Include="src\collections\bind_traits.h" />
     <ClInclude Include="src\collections\copying.h" />
     <ClInclude Include="src\collections\functions.h" />
@@ -168,7 +168,7 @@
     <ClInclude Include="src\collections\operators.h" />
     <ClInclude Include="src\collections\types.h" />
     <ClInclude Include="src\collections\form_handling.h" />
-    <ClInclude Include="src\collections\json_handling.h" />
+    <ClInclude Include="src\collections\json_serialization.h" />
     <ClInclude Include="src\collections\lua_module.h" />
     <ClInclude Include="src\collections\lua_native_funcs.hpp" />
     <ClInclude Include="src\collections\access.h" />

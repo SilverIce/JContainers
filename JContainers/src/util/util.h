@@ -17,7 +17,7 @@ namespace util {
     boost::filesystem::path relative_to_dll_path(const char *relative_path);
 
     template<class T>
-    void do_with_timing(const char *operation_name, T& func) {
+    void do_with_timing(const char *operation_name, T&& func) {
         assert(operation_name);
         _DMESSAGE("%s started", operation_name);
 

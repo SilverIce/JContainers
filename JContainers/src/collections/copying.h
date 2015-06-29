@@ -5,7 +5,7 @@
 
 namespace collections {
 
-    class deep_copying {
+    class copying {
         // original - copy
         typedef std::map<const object_base *, object_base *> copyed_objects;
 
@@ -15,7 +15,7 @@ namespace collections {
         copyed_objects _copyed;
         object_to_traverse _to_traverse;
 
-        deep_copying(tes_context& context) : _context(context) {}
+        copying(tes_context& context) : _context(context) {}
 
         struct shallow_copy_helper {
             tes_context* _context;
@@ -32,7 +32,7 @@ namespace collections {
     public:
 
         static object_base& deep_copy(tes_context& context, const object_base & origin) {
-            return deep_copying(context)._deep_copy(origin);
+            return copying(context)._deep_copy(origin);
         }
 
         static object_base& shallow_copy(tes_context& context, const object_base& parent) {
@@ -72,7 +72,7 @@ namespace collections {
         }
 
         struct copy_child_objects {
-            deep_copying *const self;
+            copying *const self;
             void operator () (array& ar) {
                 object_lock lock(ar);
                 for (auto& itm : ar.u_container()) {

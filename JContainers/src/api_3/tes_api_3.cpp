@@ -23,17 +23,17 @@
 #include "object/object_context.h"
 #include "object/object_base.h"
 
-#include "tes_error_code.h"
-#include "tes_context.h"
-#include "collections.h"
+#include "collections/error_code.h"
+#include "collections/context.h"
+#include "collections/collections.h"
 
-#include "json_handling.h"
-#include "collection_copying.h"
-#include "path_resolving.h"
+#include "collections/json_serialization.h"
+#include "collections/copying.h"
+#include "collections/access.h"
 
-#include "collection_bind_traits.h"
+#include "collections/bind_traits.h"
+#include "collections/tests.h"
 
-#include "collections.tests.base.h"
 #include "api_3/master.h"
 
 namespace collections {

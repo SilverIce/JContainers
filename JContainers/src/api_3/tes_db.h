@@ -89,7 +89,7 @@ for ex. JDB.setObj(\"frostfall\", frostFallInformation) will associate 'frostall
         static void readFromFile(const char *path) {
         }
         REGISTERF2(readFromFile, "path",
-"DEPRECATE. Reads information from a file at given path and fills storage with it's JSON content");
+"DEPRECATED. Reads information from a JSON file at given path and replaces JDB content with the file content");
 
     };
 

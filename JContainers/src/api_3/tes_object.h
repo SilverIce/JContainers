@@ -1,5 +1,5 @@
 
-#include "lua_module.h"
+#include "collections/lua_module.h"
 
 namespace tes_api_3 {
 
@@ -113,20 +113,6 @@ By using this function a user helps JC to get rid of no-more-needed to the user 
                     }
                 });
 
-/*
-                path_resolving::resolve(tes_context::instance(), tes_context::instance().database(), path.c_str(), [&](item* itmPtr) {
-                    if (itmPtr) {
-                        if (auto loc = itmPtr->object()->as<array>()) {
-                            location = loc;
-                        }
-                        else {
-                            location = &array::object(tes_context::instance());
-                            *itmPtr = location.get();
-                        }
-                    }
-                },
-                    true);*/
-
                 if (location) {
                     location->push(item(obj));
                 }
@@ -153,19 +139,19 @@ JValue.cleanPool(\"uniquePoolName\")"
         REGISTERF2(cleanPool, "poolName", nullptr);
 
         static ref shallowCopy(ref obj) {
-            return obj ? &deep_copying::shallow_copy(tes_context::instance(), *obj) : nullptr;
+            return obj ? &copying::shallow_copy(tes_context::instance(), *obj) : nullptr;
         }
         REGISTERF2(shallowCopy, "*", "--- Mics. functionality\n\nReturns shallow copy (doesn't copy child objects)");
 
         static ref deepCopy(ref obj) {
-            return obj ? &deep_copying::deep_copy(tes_context::instance(), *obj) : nullptr;
+            return obj ? &copying::deep_copy(tes_context::instance(), *obj) : nullptr;
         }
         REGISTERF2(deepCopy, "*", "Returns deep copy");
 
         static bool isExists(ref obj) {
             return obj != nullptr;
         }
-        REGISTERF2(isExists, "*", "ntests whether given object identifier points to existing object");
+        REGISTERF2(isExists, "*", "tests whether given object identifier points to existing object");
 
         template<class T> static bool isCast(ref obj) {
             return obj->as<T>() != nullptr;
@@ -309,16 +295,6 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
                 return false;
 
             bool succeed = ca::assign(*obj, path, value, createMissingKeys ? ca::creative : ca::constant);
-/*
-            path_resolving::resolve(tes_context::instance(), obj, path, [&](item* itmPtr) {
-                if (itmPtr) {
-                    *itmPtr = item((T)value);
-                    succeed = true;
-                }
-            },
-                createMissingKeys);
-*/
-
             return succeed;
         }
         REGISTERF(solveSetter<Float32>, "solveFltSetter", "* path value createMissingKeys=false",

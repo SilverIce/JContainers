@@ -388,7 +388,7 @@ namespace collections { namespace {
         EXPECT_TRUE(atLeastOneTested);
     }
 
-    JC_TEST(deep_copying, _)
+    JC_TEST(copying, _)
     {
         {
             // array containing himself
@@ -399,7 +399,7 @@ namespace collections { namespace {
             EXPECT_TRUE(root[0] == root.base());
             //EXPECT_NOT_NIL(root);
 
-            array& copy = deep_copying::deep_copy(context, root).as_link<array>();
+            array& copy = copying::deep_copy(context, root).as_link<array>();
             EXPECT_TRUE(&copy != &root);
 
             EXPECT_TRUE(copy[0] == copy.base());
@@ -412,7 +412,7 @@ namespace collections { namespace {
                 { "c": "__reference|.b", "b": [] }
             ))->as_link<map>();
 
-            auto& copy = deep_copying::deep_copy(context, root).as_link<map>();
+            auto& copy = copying::deep_copy(context, root).as_link<map>();
             EXPECT_TRUE(&copy != &root);
             EXPECT_TRUE(root.s_count() == 2);
             EXPECT_TRUE(copy.s_count() == 2);
@@ -428,7 +428,7 @@ namespace collections { namespace {
 				{ "c": 8.0, "obj" : [] }
 			))->as_link<map>();
 
-			auto& copy = deep_copying::shallow_copy(context, orig).as_link<map>();
+			auto& copy = copying::shallow_copy(context, orig).as_link<map>();
             EXPECT_TRUE(&copy != &orig);
             EXPECT_TRUE(orig.s_count() == 2);
 			EXPECT_TRUE(copy.s_count() == 2);

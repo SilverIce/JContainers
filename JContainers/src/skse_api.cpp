@@ -161,12 +161,11 @@ namespace {
 
         bool registerAllFunctions(VMClassRegistry *registry) {
 
-            _MESSAGE("registering functions");
-
-            reflection::foreach_metaInfo_do([=](const reflection::class_info& info) {
-                info.bind(registry);
+            util::do_with_timing("Registering functions", [=]() {
+                reflection::foreach_metaInfo_do([=](const reflection::class_info& info) {
+                    info.bind(registry);
+                });
             });
-
             return true;
         }
 

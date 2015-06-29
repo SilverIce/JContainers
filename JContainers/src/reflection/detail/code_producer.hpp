@@ -3,6 +3,7 @@
 #include <boost/filesystem/path.hpp>
 #include <assert.h>
 #include <vector>
+#include <fstream>
 
 #include "gtest.h"
 #include "reflection/reflection.h"
@@ -110,13 +111,8 @@ namespace reflection {
             p /= self.className().c_str();
             p += ".psc";
 
-            auto file = fopen(p.generic_string().c_str(), "w");
-            assert(file);
-            if (file) {
-                auto code = produceClassCode(self);
-                fwrite(code.c_str(), 1, code.length(), file);
-                fclose(file);
-            }
+            std::ofstream file(p.generic_string());
+            file << produceClassCode(self);
         }
 
     }

@@ -28,7 +28,7 @@
     <Filter Include="collections">
       <UniqueIdentifier>{2c083f8d-8546-477b-851e-5eb515359766}</UniqueIdentifier>
     </Filter>
-    <Filter Include="collections\tes_api_3">
+    <Filter Include="tes_api_3">
       <UniqueIdentifier>{a481ff76-9ab2-4bb4-91f6-f5d5e21c603c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -61,14 +61,17 @@
     <ClCompile Include="src\collections\lua_module.cpp">
       <Filter>collections</Filter>
     </ClCompile>
-    <ClCompile Include="src\collections\string_wrapper.cpp">
-      <Filter>collections</Filter>
-    </ClCompile>
     <ClCompile Include="src\collections\access.cpp">
       <Filter>collections</Filter>
     </ClCompile>
     <ClCompile Include="src\skse_api.cpp">
       <Filter>plugin_interface</Filter>
+    </ClCompile>
+    <ClCompile Include="src\api_3\tes_inteface.cpp">
+      <Filter>tes_api_3</Filter>
+    </ClCompile>
+    <ClCompile Include="src\api_3\string_wrapper.cpp">
+      <Filter>tes_api_3</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -84,36 +87,6 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\jc_interface.h">
       <Filter>plugin_interface</Filter>
-    </ClInclude>
-    <ClInclude Include="src\api_3\tes_array.h">
-      <Filter>collections\tes_api_3</Filter>
-    </ClInclude>
-    <ClInclude Include="src\api_3\tes_db.h">
-      <Filter>collections\tes_api_3</Filter>
-    </ClInclude>
-    <ClInclude Include="src\api_3\tes_form_db.h">
-      <Filter>collections\tes_api_3</Filter>
-    </ClInclude>
-    <ClInclude Include="src\api_3\tes_jcontainers.h">
-      <Filter>collections\tes_api_3</Filter>
-    </ClInclude>
-    <ClInclude Include="src\api_3\tes_lua.h">
-      <Filter>collections\tes_api_3</Filter>
-    </ClInclude>
-    <ClInclude Include="src\api_3\tes_map.h">
-      <Filter>collections\tes_api_3</Filter>
-    </ClInclude>
-    <ClInclude Include="src\api_3\tes_object.h">
-      <Filter>collections\tes_api_3</Filter>
-    </ClInclude>
-    <ClInclude Include="src\api_3\tes_string.h">
-      <Filter>collections\tes_api_3</Filter>
-    </ClInclude>
-    <ClInclude Include="src\api_3\collections.tests.hpp">
-      <Filter>collections\tes_api_3</Filter>
-    </ClInclude>
-    <ClInclude Include="src\api_3\master.h">
-      <Filter>collections\tes_api_3</Filter>
     </ClInclude>
     <ClInclude Include="src\util\spinlock.h">
       <Filter>util</Filter>
@@ -175,13 +148,7 @@
     <ClInclude Include="src\collections\collections.h">
       <Filter>collections</Filter>
     </ClInclude>
-    <ClInclude Include="src\collections\collections.tests.base.h">
-      <Filter>collections</Filter>
-    </ClInclude>
     <ClInclude Include="src\collections\form_handling.h">
-      <Filter>collections</Filter>
-    </ClInclude>
-    <ClInclude Include="src\collections\json_handling.h">
       <Filter>collections</Filter>
     </ClInclude>
     <ClInclude Include="src\collections\lua_module.h">
@@ -218,6 +185,39 @@
       <Filter>collections</Filter>
     </ClInclude>
     <ClInclude Include="src\collections\item.h">
+      <Filter>collections</Filter>
+    </ClInclude>
+    <ClInclude Include="src\collections\json_serialization.h">
+      <Filter>collections</Filter>
+    </ClInclude>
+    <ClInclude Include="src\api_3\master.h">
+      <Filter>tes_api_3</Filter>
+    </ClInclude>
+    <ClInclude Include="src\api_3\tes_array.h">
+      <Filter>tes_api_3</Filter>
+    </ClInclude>
+    <ClInclude Include="src\api_3\tes_db.h">
+      <Filter>tes_api_3</Filter>
+    </ClInclude>
+    <ClInclude Include="src\api_3\tes_form_db.h">
+      <Filter>tes_api_3</Filter>
+    </ClInclude>
+    <ClInclude Include="src\api_3\tes_jcontainers.h">
+      <Filter>tes_api_3</Filter>
+    </ClInclude>
+    <ClInclude Include="src\api_3\tes_lua.h">
+      <Filter>tes_api_3</Filter>
+    </ClInclude>
+    <ClInclude Include="src\api_3\tes_map.h">
+      <Filter>tes_api_3</Filter>
+    </ClInclude>
+    <ClInclude Include="src\api_3\tes_object.h">
+      <Filter>tes_api_3</Filter>
+    </ClInclude>
+    <ClInclude Include="src\api_3\tes_string.h">
+      <Filter>tes_api_3</Filter>
+    </ClInclude>
+    <ClInclude Include="src\collections\tests.h">
       <Filter>collections</Filter>
     </ClInclude>
   </ItemGroup>
