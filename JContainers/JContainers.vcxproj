@@ -133,7 +133,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\api_3\string_wrapper.cpp" />
-    <ClCompile Include="src\api_3\tes_inteface.cpp" />
+    <ClCompile Include="src\api_3\tes_api_3.cpp" />
     <ClCompile Include="src\collections\collections.cpp" />
     <ClCompile Include="src\collections\lua_module.cpp" />
     <ClCompile Include="src\collections\access.cpp" />
@@ -187,6 +187,7 @@
     <ClInclude Include="src\object\object_registry.h" />
     <ClInclude Include="src\jcontainers_constants.h" />
     <ClInclude Include="src\reflection\detail\code_producer.hpp" />
+    <ClInclude Include="src\reflection\detail\type_traits.hpp" />
     <ClInclude Include="src\reflection\reflection.h" />
     <ClInclude Include="src\reflection\tes_binding.h" />
     <ClInclude Include="src\skse\skse.h" />

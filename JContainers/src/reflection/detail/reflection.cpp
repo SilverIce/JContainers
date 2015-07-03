@@ -6,12 +6,13 @@
 #include "skse/PapyrusVM.h"
 
 #include "reflection/detail/code_producer.hpp"
+#include "reflection/detail/type_traits.hpp"
 
 namespace reflection {
 
-    void function_info::bind(VMClassRegistry *registry, const char *className) const {
-        registrator(registry, className, name.c_str());
-        registry->SetFunctionFlags(className, name.c_str(), VMClassRegistry::kFunctionFlag_NoWait);
+    void function_info::bind(VMClassRegistry& registry, const istring& className) const {
+        registrator(bind_args{ registry, className.c_str(), name.c_str() });
+        registry.SetFunctionFlags(className.c_str(), name.c_str(), VMClassRegistry::kFunctionFlag_NoWait);
     }
 
     static auto makeDB = []() {

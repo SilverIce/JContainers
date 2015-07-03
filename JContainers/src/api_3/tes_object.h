@@ -18,7 +18,7 @@ namespace tes_api_3 {
         REGISTER_TES_NAME("JValue");
 
         void additionalSetup() {
-            metaInfo.comment = "Each container (JArray, JMap & JFormMap) inherits JValue functionality";
+            metaInfo.comment = "Each instanceable container (JArray, JMap, JFormMap, JIntMap) inherits JValue functionality";
         }
 
         static object_base* retain(ref obj, const char* tag = nullptr) {

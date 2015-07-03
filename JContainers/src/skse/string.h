@@ -69,7 +69,6 @@ namespace skse {
         }
 
         bool operator==(const string_ref& lhs) const { return data == lhs.data; }
-        //bool operator<(const sting_ref& lhs) const { return data < lhs.data; }
 
         const char* c_str() const {
             return data;

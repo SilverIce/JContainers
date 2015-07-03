@@ -29,9 +29,15 @@ namespace reflection {
     typedef void* tes_api_function;
     typedef void* c_function;
 
+    struct bind_args {
+        VMClassRegistry& registry;
+        const char* className;
+        const char* functionName;
+    };
+
     struct function_info {
         typedef std::string (*comment_generator)();
-        typedef  void (*tes_function_binder)(VMClassRegistry* registry, const char* className, const char* funcName);
+        typedef  void(*tes_function_binder)(const bind_args& args);
         typedef  std::vector<type_info_func> (*parameter_list_creator)();
 
         tes_function_binder registrator = nullptr;
@@ -65,7 +71,7 @@ namespace reflection {
             _comment_str = comment;
         }
 
-        void bind(VMClassRegistry *registry, const char *className) const;
+        void bind(VMClassRegistry& registry, const istring& className) const;
     };
 
     struct papyrus_text_block {
@@ -116,12 +122,12 @@ namespace reflection {
             methods.push_back(info);
         }
 
-        void bind(VMClassRegistry* registry) const {
+        void bind(VMClassRegistry& registry) const {
             assert(initialized());
 
             auto clsName = className();
             for (const auto& itm : methods) {
-                itm.bind(registry, clsName.c_str());
+                itm.bind(registry, clsName);
             }
         }
 

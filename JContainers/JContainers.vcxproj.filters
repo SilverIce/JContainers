@@ -67,10 +67,10 @@
     <ClCompile Include="src\skse_api.cpp">
       <Filter>plugin_interface</Filter>
     </ClCompile>
-    <ClCompile Include="src\api_3\tes_inteface.cpp">
+    <ClCompile Include="src\api_3\string_wrapper.cpp">
       <Filter>tes_api_3</Filter>
     </ClCompile>
-    <ClCompile Include="src\api_3\string_wrapper.cpp">
+    <ClCompile Include="src\api_3\tes_api_3.cpp">
       <Filter>tes_api_3</Filter>
     </ClCompile>
   </ItemGroup>
@@ -219,6 +219,9 @@
     </ClInclude>
     <ClInclude Include="src\collections\tests.h">
       <Filter>collections</Filter>
+    </ClInclude>
+    <ClInclude Include="src\reflection\detail\type_traits.hpp">
+      <Filter>reflection\detail</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

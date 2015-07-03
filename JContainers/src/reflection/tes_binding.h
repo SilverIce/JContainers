@@ -22,6 +22,12 @@ namespace reflection { namespace binding {
         }
     };
 
+    template<> struct ValueConverter<void> {
+        typedef void tes_type;
+        template<class T> static void convert2J(T) {}
+        template<class T> static void convert2Tes(T) {}
+    };
+
     struct StringConverter {
         typedef skse::string_ref tes_type;
 
@@ -43,30 +49,13 @@ namespace reflection { namespace binding {
 
     //////////////////////////////////////////////////////////////////////////
 
-    template<class T> struct j2Str {
-        static function_parameter typeInfo() { return function_parameter_make(typeid(T).name(), nullptr); }
-    };
+    template<class T>
+    function_parameter typeInfo();
 
-    template<> struct j2Str < skse::string_ref > {
-        static function_parameter typeInfo() { return function_parameter_make("string", nullptr); }
-    };
-    template<> struct j2Str < const char* > {
-        static function_parameter typeInfo() { return function_parameter_make("string", nullptr); }
-    };
-    template<> struct j2Str < Float32 > {
-        static function_parameter typeInfo() { return function_parameter_make("float", nullptr); }
-    };
-    template<> struct j2Str < SInt32 > {
-        static function_parameter typeInfo() { return function_parameter_make("int", nullptr); }
-    };
-    template<> struct j2Str < UInt32 > {
-        static function_parameter typeInfo() { return function_parameter_make("int", nullptr); }
-    };
-    template<> struct j2Str < TESForm * > {
-        static function_parameter typeInfo() { return function_parameter_make("form", nullptr); }
-    };
-    template<> struct j2Str < BGSListForm * > {
-        static function_parameter typeInfo() { return function_parameter_make("FormList", nullptr); }
+    template<class T> struct j2Str {
+        static function_parameter typeInfo() {
+            return reflection::binding::typeInfo<T>();
+        }
     };
 
     template<class T> struct j2Str < VMArray<T> > {
@@ -88,7 +77,7 @@ namespace reflection { namespace binding {
     struct proxy<R (*)(Arg0, Arg1), func>
     {
         typedef R return_type;
-        static std::vector<type_info_func> type_strings() {
+        static std::vector<type_info_func> parameter_info() {
             return {
                 &j2Str<R>::typeInfo,
                 &j2Str<Arg0>::typeInfo,
@@ -96,59 +85,46 @@ namespace reflection { namespace binding {
             };
         }
 
-        static typename GetConv<R>::tes_type tes_func(
-            StaticFunctionTag* tag,
-            typename GetConv<Arg0>::tes_type a0,
-            typename GetConv<Arg1>::tes_type a1)
-        {
-            return GetConv<R>::convert2Tes(
+
+        struct non_void_ret {
+            static typename GetConv<R>::tes_type tes_func(
+                StaticFunctionTag* tag,
+                typename GetConv<Arg0>::tes_type a0,
+                typename GetConv<Arg1>::tes_type a1)
+            {
+                return GetConv<R>::convert2Tes(
+                    func(
+                        GetConv<Arg0>::convert2J(a0),
+                        GetConv<Arg1>::convert2J(a1))
+                    );
+            }
+        };
+
+        struct void_ret {
+            static void tes_func(
+                StaticFunctionTag* tag,
+                typename GetConv<Arg0>::tes_type a0,
+                typename GetConv<Arg1>::tes_type a1)
+            {
                 func(
                     GetConv<Arg0>::convert2J(a0),
-                    GetConv<Arg1>::convert2J(a1))
-            );
-        }
+                    GetConv<Arg1>::convert2J(a1));
+            }
+        };
 
-        static void bind(VMClassRegistry *registry, const char *className, const char *name) {
-            registry->RegisterFunction(
+        using tes_func_holder = typename std::conditional<
+            std::is_void<R>::value,
+            void_ret,
+            non_void_ret>::type;
+
+        static void bind(const bind_args& args) {
+            args.registry.RegisterFunction(
                 new NativeFunction2 <
                         StaticFunctionTag,
                         typename GetConv<R>::tes_type,
                         typename GetConv<Arg0>::tes_type,
-                        typename GetConv<Arg1>::tes_type >(name, className, &tes_func, registry)
+                        typename GetConv<Arg1>::tes_type >(args.functionName, args.className, &tes_func_holder::tes_func, &args.registry)
             );
-        }
-    };
-
-    template <class Arg0, class Arg1, void (*func)( Arg0, Arg1 ) >
-    struct proxy<void (*)(Arg0, Arg1), func>
-    {
-        typedef void return_type;
-        static std::vector<type_info_func> type_strings() {
-            return {
-                &j2Str<void>::typeInfo,
-                &j2Str<Arg0>::typeInfo,
-                &j2Str<Arg1>::typeInfo,
-            };
-        }
-
-        static void tes_func(
-            StaticFunctionTag* tag,
-            typename GetConv<Arg0>::tes_type a0,
-            typename GetConv<Arg1>::tes_type a1)
-        {
-            func(GetConv<Arg0>::convert2J(a0),
-                    GetConv<Arg1>::convert2J(a1));
-        }
-
-        static void bind(VMClassRegistry *registry, const char *className, const char *name) {
-
-            registry->RegisterFunction(
-                new NativeFunction2 <
-                StaticFunctionTag,
-                void,
-                typename GetConv<Arg0>::tes_type,
-                typename GetConv<Arg1>::tes_type >(name, className, &tes_func, registry)
-                );
         }
     };
 
@@ -169,52 +145,43 @@ namespace reflection { namespace binding {
         struct proxy<R (*)(DO_##N(PARAM_NAMELESS_NTH, NOTHING, COMA, NOTHING)), func>     \
             {     \
             typedef R return_type; \
-            static std::vector<type_info_func> type_strings() {\
+            static std::vector<type_info_func> parameter_info() {\
                 return {\
                     &j2Str<R>::typeInfo,\
                     DO_##N(TYPESTRING_NTH, NOTHING, COMA, NOTHING)\
                 };\
             }\
             \
-            static typename GetConv<R>::tes_type tes_func(     \
-                StaticFunctionTag* tag     \
-                DO_##N(TESPARAM_NTH, COMA, COMA, NOTHING))     \
-            {     \
-                return GetConv<R>::convert2Tes(func(\
-                    DO_##N(TESPARAM_CONV_NTH, NOTHING, COMA, NOTHING)   \
-                ));     \
-            }     \
+            struct non_void_ret {\
+                static typename GetConv<R>::tes_type tes_func(\
+                    StaticFunctionTag* tag\
+                    DO_##N(TESPARAM_NTH, COMA, COMA, NOTHING))\
+                {\
+                    return GetConv<R>::convert2Tes(\
+                        func(\
+                            DO_##N(TESPARAM_CONV_NTH, NOTHING, COMA, NOTHING)\
+                            )\
+                    ); \
+                }\
+            };\
+            struct void_ret {\
+                static void tes_func(\
+                    StaticFunctionTag* tag\
+                    DO_##N(TESPARAM_NTH, COMA, COMA, NOTHING))\
+                {\
+                    func( DO_##N(TESPARAM_CONV_NTH, NOTHING, COMA, NOTHING) );\
+                }\
+            };\
+            \
+            using tes_func_holder = typename std::conditional<\
+                std::is_void<R>::value,\
+                void_ret,\
+                non_void_ret>::type;\
                  \
-            static void bind(VMClassRegistry *registry, const char *className, const char *name) {     \
-                registry->RegisterFunction(     \
+            static void bind(const bind_args& args) { \
+                args.registry.RegisterFunction(\
                     new NativeFunction##N <StaticFunctionTag, typename GetConv<R>::tes_type   \
-                        DO_##N(TESTYPE_NTH, COMA, COMA, NOTHING)  > (name, className, &tes_func, registry)   \
-                );     \
-            }     \
-        };  \
-            \
-        template <DO_##N(TARGS_NTH, NOTHING, COMA, COMA) void (*func)( DO_##N(PARAM_NAMELESS_NTH, NOTHING, COMA, NOTHING) ) >     \
-        struct proxy<void (*)(DO_##N(PARAM_NAMELESS_NTH, NOTHING, COMA, NOTHING)), func>     \
-        {     \
-            typedef void return_type; \
-            static std::vector<type_info_func> type_strings() {\
-                return {\
-                    &j2Str<void>::typeInfo,\
-                    DO_##N(TYPESTRING_NTH, NOTHING, COMA, NOTHING)\
-                };\
-            }\
-            \
-            static void tes_func(     \
-                StaticFunctionTag* tag     \
-                DO_##N(TESPARAM_NTH, COMA, COMA, NOTHING))     \
-            {     \
-                func(DO_##N(TESPARAM_CONV_NTH, NOTHING, COMA, NOTHING));     \
-            }     \
-                 \
-            static void bind(VMClassRegistry *registry, const char *className, const char *name) {     \
-                registry->RegisterFunction(     \
-                    new NativeFunction##N <StaticFunctionTag, void   \
-                        DO_##N(TESTYPE_NTH, COMA, COMA, NOTHING)  > (name, className, tes_func, registry)   \
+                    DO_##N(TESTYPE_NTH, COMA, COMA, NOTHING)  >(args.functionName, args.className, &tes_func_holder::tes_func, &args.registry)   \
                 );     \
             }     \
         };
@@ -261,12 +228,12 @@ namespace reflection { namespace binding {
 
              function_info metaF;
              metaF.registrator = &Binder::bind;
-             metaF.param_list_func = &Binder::type_strings;
+             metaF.param_list_func = &Binder::parameter_info;
              
              metaF.argument_names = (argument_names) ? (argument_names) : "";
              metaF.setComment(comment);
              metaF.name = funcname;
-             metaF.tes_func = &Binder::tes_func;
+             metaF.tes_func = &Binder::tes_func_holder::tes_func;
              metaF.c_func = static_cast<c_function>(f);
 
              info.addFunction(metaF);

@@ -163,7 +163,7 @@ namespace {
 
             util::do_with_timing("Registering functions", [=]() {
                 reflection::foreach_metaInfo_do([=](const reflection::class_info& info) {
-                    info.bind(registry);
+                    info.bind(*registry);
                 });
             });
             return true;
