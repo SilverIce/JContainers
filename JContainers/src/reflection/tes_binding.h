@@ -1,8 +1,8 @@
 #pragma once
 
 #include "skse/PapyrusNativeFunctions.h"
-#include "reflection/reflection.h"
 #include "skse/string.h"
+#include "reflection/reflection.h"
 
 class BGSListForm;
 
@@ -24,8 +24,6 @@ namespace reflection { namespace binding {
 
     template<> struct ValueConverter<void> {
         typedef void tes_type;
-        template<class T> static void convert2J(T) {}
-        template<class T> static void convert2Tes(T) {}
     };
 
     struct StringConverter {
@@ -50,11 +48,11 @@ namespace reflection { namespace binding {
     //////////////////////////////////////////////////////////////////////////
 
     template<class T>
-    function_parameter typeInfo();
+    function_parameter type_info();
 
     template<class T> struct j2Str {
         static function_parameter typeInfo() {
-            return reflection::binding::typeInfo<T>();
+            return reflection::binding::type_info<T>();
         }
     };
 
@@ -71,136 +69,92 @@ namespace reflection { namespace binding {
 
     //////////////////////////////////////////////////////////////////////////
 
-    template <typename T, T func> struct proxy;
+    template <typename T> struct proxy;
 
-    template <class R, class Arg0, class Arg1, R (*func)( Arg0, Arg1 ) >
-    struct proxy<R (*)(Arg0, Arg1), func>
+
+    template<size_t ParamCnt>
+    struct native_function_selector;
+
+#define MAKE_ME_HAPPY(N)\
+    template<> struct native_function_selector<N> {\
+        template<class... Params> using function = ::NativeFunction ## N <::StaticFunctionTag, Params...>;\
+    };
+
+    MAKE_ME_HAPPY(0);
+    MAKE_ME_HAPPY(1);
+    MAKE_ME_HAPPY(2);
+    MAKE_ME_HAPPY(3);
+    MAKE_ME_HAPPY(4);
+    MAKE_ME_HAPPY(5);
+    MAKE_ME_HAPPY(6);
+
+#undef  MAKE_ME_HAPPY
+
+    template <class R, class... Params>
+    struct proxy<R (*)(Params ...)>
     {
-        typedef R return_type;
         static std::vector<type_info_func> parameter_info() {
             return {
                 &j2Str<R>::typeInfo,
-                &j2Str<Arg0>::typeInfo,
-                &j2Str<Arg1>::typeInfo,
+                &j2Str<Params>::typeInfo ...
             };
         }
 
+        using return_type = R;
 
-        struct non_void_ret {
-            static typename GetConv<R>::tes_type tes_func(
-                StaticFunctionTag* tag,
-                typename GetConv<Arg0>::tes_type a0,
-                typename GetConv<Arg1>::tes_type a1)
-            {
-                return GetConv<R>::convert2Tes(
-                    func(
-                        GetConv<Arg0>::convert2J(a0),
-                        GetConv<Arg1>::convert2J(a1))
+        template< R(*func)(Params ...) >
+        struct magick {
+
+            using base = proxy;
+
+            static auto func_ptr() -> decltype(func) {
+                return func;
+            }
+
+            struct non_void_ret {
+                static typename GetConv<R>::tes_type tes_func(
+                    StaticFunctionTag* tag,
+                    typename GetConv<Params>::tes_type ... params)
+                {
+                    return GetConv<R>::convert2Tes(
+                        func(
+                            GetConv<Params>::convert2J(params) ...
+                        )
                     );
+                }
+            };
+
+            struct void_ret {
+                static void tes_func(
+                    StaticFunctionTag* tag,
+                    typename GetConv<Params>::tes_type ... params)
+                {
+                    func(GetConv<Params>::convert2J(params) ...);
+                }
+            };
+
+            using tes_func_holder = typename std::conditional<
+                std::is_void<R>::value,
+                typename void_ret,
+                typename non_void_ret>::type;
+
+            static void bind(const bind_args& args) {
+                args.registry.RegisterFunction
+                (
+                    new typename native_function_selector<sizeof...(Params)>::function<
+                        typename GetConv<R>::tes_type, typename GetConv<Params>::tes_type ...>
+                        (
+                            args.functionName,
+                            args.className,
+                            &tes_func_holder::tes_func,
+                            &args.registry
+                        )
+                );
             }
         };
 
-        struct void_ret {
-            static void tes_func(
-                StaticFunctionTag* tag,
-                typename GetConv<Arg0>::tes_type a0,
-                typename GetConv<Arg1>::tes_type a1)
-            {
-                func(
-                    GetConv<Arg0>::convert2J(a0),
-                    GetConv<Arg1>::convert2J(a1));
-            }
-        };
 
-        using tes_func_holder = typename std::conditional<
-            std::is_void<R>::value,
-            void_ret,
-            non_void_ret>::type;
-
-        static void bind(const bind_args& args) {
-            args.registry.RegisterFunction(
-                new NativeFunction2 <
-                        StaticFunctionTag,
-                        typename GetConv<R>::tes_type,
-                        typename GetConv<Arg0>::tes_type,
-                        typename GetConv<Arg1>::tes_type >(args.functionName, args.className, &tes_func_holder::tes_func, &args.registry)
-            );
-        }
     };
-
-    #define TARGS_NTH(n)            class Arg ## n
-    #define PARAM_NTH(n)            Arg##n arg##n
-    #define PARAM_NAMELESS_NTH(n)    Arg##n
-    #define ARG_NTH(n)              a##n
-    #define COMA                    ,
-
-    #define TESTYPE_NTH(n)          typename GetConv<Arg##n>::tes_type
-    #define TESPARAM_NTH(n)     TESTYPE_NTH(n) a##n
-    #define TESPARAM_CONV_NTH(n)     GetConv<Arg##n>::convert2J(a##n)
-    #define TYPESTRING_NTH(n)     &j2Str<Arg##n>::typeInfo
-
-
-    #define MAKE_PROXY_NTH(N) \
-        template <class R DO_##N(TARGS_NTH, COMA, COMA, NOTHING), R (*func)( DO_##N(PARAM_NAMELESS_NTH, NOTHING, COMA, NOTHING) ) >     \
-        struct proxy<R (*)(DO_##N(PARAM_NAMELESS_NTH, NOTHING, COMA, NOTHING)), func>     \
-            {     \
-            typedef R return_type; \
-            static std::vector<type_info_func> parameter_info() {\
-                return {\
-                    &j2Str<R>::typeInfo,\
-                    DO_##N(TYPESTRING_NTH, NOTHING, COMA, NOTHING)\
-                };\
-            }\
-            \
-            struct non_void_ret {\
-                static typename GetConv<R>::tes_type tes_func(\
-                    StaticFunctionTag* tag\
-                    DO_##N(TESPARAM_NTH, COMA, COMA, NOTHING))\
-                {\
-                    return GetConv<R>::convert2Tes(\
-                        func(\
-                            DO_##N(TESPARAM_CONV_NTH, NOTHING, COMA, NOTHING)\
-                            )\
-                    ); \
-                }\
-            };\
-            struct void_ret {\
-                static void tes_func(\
-                    StaticFunctionTag* tag\
-                    DO_##N(TESPARAM_NTH, COMA, COMA, NOTHING))\
-                {\
-                    func( DO_##N(TESPARAM_CONV_NTH, NOTHING, COMA, NOTHING) );\
-                }\
-            };\
-            \
-            using tes_func_holder = typename std::conditional<\
-                std::is_void<R>::value,\
-                void_ret,\
-                non_void_ret>::type;\
-                 \
-            static void bind(const bind_args& args) { \
-                args.registry.RegisterFunction(\
-                    new NativeFunction##N <StaticFunctionTag, typename GetConv<R>::tes_type   \
-                    DO_##N(TESTYPE_NTH, COMA, COMA, NOTHING)  >(args.functionName, args.className, &tes_func_holder::tes_func, &args.registry)   \
-                );     \
-            }     \
-        };
-
-#define NOTHING 
-
-#define DO_0(rep, f, m, l)
-#define DO_1(rep, f, m_, l)   f rep(1) l
-#define DO_2(rep, f, m, l)   DO_1(rep, f, m, NOTHING) m  rep(2) l
-#define DO_3(rep, f, m, l)   DO_2(rep, f, m, NOTHING) m  rep(3) l
-#define DO_4(rep, f, m, l)   DO_3(rep, f, m, NOTHING) m  rep(4) l
-#define DO_5(rep, f, m, l)   DO_4(rep, f, m, NOTHING) m  rep(5) l
-
-
-    MAKE_PROXY_NTH(0);
-    MAKE_PROXY_NTH(1);
-    //MAKE_PROXY_NTH(2);
-    MAKE_PROXY_NTH(3);
-    MAKE_PROXY_NTH(4);
 
 #define CONCAT(x, y) CONCAT1 (x, y)
 #define CONCAT1(x, y) x##y
@@ -219,30 +173,32 @@ namespace reflection { namespace binding {
 
     struct function_registree {
 
-        template<class F, class String2, F f>
-        inline function_registree(class_info& info, proxy<F, f>, const char* funcname, const char* argument_names, const String2& comment) {
+        template<class Binder, class String2>
+        inline function_registree(class_info& info,
+            Binder,
+            const char* funcname, const char* argument_names, const String2& comment)
+        {
             using namespace ::reflection;
 
-             using Binder = proxy<F, f>;
-             static_assert( false == std::is_same<Binder::return_type, const char *>::value, "a trap for 'const char *' return types" );
+            static_assert( false == std::is_same<Binder::base::return_type, const char *>::value, "a trap for 'const char *' return types" );
 
-             function_info metaF;
-             metaF.registrator = &Binder::bind;
-             metaF.param_list_func = &Binder::parameter_info;
+            function_info metaF;
+            metaF.registrator = &Binder::bind;
+            metaF.param_list_func = &Binder::base::parameter_info;
              
-             metaF.argument_names = (argument_names) ? (argument_names) : "";
-             metaF.setComment(comment);
-             metaF.name = funcname;
-             metaF.tes_func = &Binder::tes_func_holder::tes_func;
-             metaF.c_func = static_cast<c_function>(f);
+            metaF.argument_names = (argument_names) ? (argument_names) : "";
+            metaF.setComment(comment);
+            metaF.name = funcname;
+            metaF.tes_func = &Binder::tes_func_holder::tes_func;
+            metaF.c_func = static_cast<c_function>(Binder::func_ptr());
 
-             info.addFunction(metaF);
+            info.addFunction(metaF);
         }
     };
 
 #define REGISTERF(func, _funcname, _args, _comment)\
     ::reflection::binding::function_registree CONCAT(_func_registree_, __LINE__){ metaInfo,\
-        ::reflection::binding::proxy<decltype(::reflection::binding::msvc_identity(&func)), &func>(), \
+        ::reflection::binding::proxy<decltype(::reflection::binding::msvc_identity(&func))>::magick<&func>(), \
         _funcname, _args, _comment };
 
 #define REGISTERF2(func, args, comment)     REGISTERF(func, #func, args, comment)
