@@ -5,6 +5,8 @@ import shutil
 def makepath(*args):
     path = os.path.join(*args)
 
+    print 'makepath:', path
+
     if not os.path.exists(path):
         os.makedirs(path)
 
@@ -102,10 +104,12 @@ def makeScripts(lib, sourceDir, compiledDir):
     ]
 
     print 'compiling scripts:', ' '.join(args)
+    failed = os.system(' '.join(args)) != 0
 
-    #os.system(' '.join(args))
-    import subprocess
-    subprocess.check_call(args)
+    if failed:
+        raise Exception('makeScripts', 'subprocess returns non-zero error code')
+    #import subprocess
+    #subprocess.check_call(args)
 
 
 # def moveTree(root_src_dir, root_dst_dir):
