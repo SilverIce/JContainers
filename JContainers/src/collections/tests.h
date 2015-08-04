@@ -53,7 +53,7 @@ namespace collections { namespace {
         i1 = (TESForm*)nullptr;
         EXPECT_TRUE(i1.isNull());
 
-        i1 = FormZero;
+        i1 = FormId::Zero;
         EXPECT_TRUE(i1.isNull());
 
         i1 = (object_base *)nullptr;
@@ -94,7 +94,7 @@ namespace collections { namespace {
     {
         EXPECT_TRUE(item(100) < item(2.0));
         EXPECT_TRUE(item(1.0) < item(2.0));
-        EXPECT_TRUE(item(10) < item(FormZero));
+        EXPECT_TRUE(item(10) < item(FormId::Zero));
         EXPECT_TRUE(item("aa") < item("text"));
         EXPECT_TRUE(item("A") < item("b"));
 
@@ -156,7 +156,7 @@ namespace collections { namespace {
     TEST(reference_serialization, test) {
 
         const char* testData[][2] = {
-            "__reference|", nullptr,
+            "__reference|", "",
             "__reference|anyString", "anyString",
             "__reference||anyString", "|anyString",
 
@@ -335,7 +335,8 @@ namespace collections { namespace {
         {
             "parentArray": [
                 {
-                    "objChildArrayOfChildJMap1": []
+                    "objChildArrayOfChildJMap1": [],
+                        "rootRef" : "__reference|"
                 },
                 {
                     "objChildArrayOfChildJMap2": [],
@@ -375,6 +376,7 @@ namespace collections { namespace {
         validateGraph(root);
 
         auto jvalue = json_serializer::create_json_value(*root);
+        auto json_text = json_serializer::create_json_data(*root);
         auto root2 = json_deserializer::object_from_json(context, jvalue.get());
         validateGraph(root2);
     }
@@ -393,6 +395,8 @@ namespace collections { namespace {
 
                 std::ifstream file(itr->path().generic_string(), std::ios::in | std::ios::binary);
                 context.read_from_stream(file);
+
+                EXPECT_TRUE(context.object_count() > 100); // dumb assumption
             }
         }
 
@@ -403,7 +407,9 @@ namespace collections { namespace {
     {
         {
             // array containing himself
-            auto& root = array::objectWithInitializer([](array& me) { me.u_push(me); }, context);
+            array& root = json_deserializer::object_from_json_data(context, STR(
+                ["__reference|"]
+            ))->as_link<array>();
 
             EXPECT_TRUE(root[0] == root.base());
             //EXPECT_NOT_NIL(root);

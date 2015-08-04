@@ -54,8 +54,8 @@ namespace collections {
         void u_print_stats() const;
 
     public:
-        object_registry* registry = nullptr;
-        autorelease_queue* aqueue = nullptr;
+        std::unique_ptr<object_registry> registry;
+        std::unique_ptr<autorelease_queue> aqueue;
 
     public:
 
@@ -74,7 +74,8 @@ namespace collections {
             return getObjectRef(hdl)->as<T>();
         }
 
-        size_t aqueueSize();
+        size_t aqueueSize() const;
+        size_t object_count() const;
         object_base * getObject(Handle hdl);
         object_stack_ref getObjectRef(Handle hdl);
         object_base * u_getObject(Handle hdl);
@@ -99,6 +100,8 @@ namespace collections {
         void load(Archive & ar, unsigned int version);
         template<class Archive>
         void save(Archive & ar, unsigned int version) const;
+
+        template<class Archive> void load_data_in_old_way(Archive& ar);
 
         friend class boost::serialization::access;
         BOOST_SERIALIZATION_SPLIT_MEMBER();

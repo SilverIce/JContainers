@@ -11,6 +11,8 @@ namespace lua {
     using CollectionType = collections::CollectionType;
 
     using collections::weak_form_id;
+    using collections::FormId;
+    using collections::FormIdUnredlying;
 }
 
 namespace lua { namespace api {
@@ -92,7 +94,7 @@ namespace lua { namespace api {
             }
 
             void operator ()(const weak_form_id& val) {
-                value.form = { val.get() };
+                value.form = { (FormIdUnredlying)val.get() };
             }
 
         } converter;

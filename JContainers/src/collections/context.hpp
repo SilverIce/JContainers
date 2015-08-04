@@ -84,7 +84,7 @@ namespace collections {
                 try {
 
                     auto hdr = header::read_from_stream(stream);
-                    bool isNotSupported = serialization_version::current != hdr.commonVersion || hdr.commonVersion <= serialization_version::no_header;
+                    bool isNotSupported = serialization_version::current < hdr.commonVersion || hdr.commonVersion <= serialization_version::no_header;
 
                     if (isNotSupported) {
                         std::ostringstream error;
@@ -95,7 +95,12 @@ namespace collections {
 
                     {
                         boost::archive::binary_iarchive archive{ stream };
-                        archive >> *this;
+
+                        if (hdr.commonVersion <= serialization_version::pre_dyn_form_watcher) {
+                            load_data_in_old_way(archive);
+                        } else {
+                            archive >> *this;
+                        }
                     }
 
                     u_postLoadInitializations();

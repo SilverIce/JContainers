@@ -5,6 +5,7 @@
 #include <boost\serialization\version.hpp>
 #include <boost\asio\io_service.hpp>
 #include <boost\asio\deadline_timer.hpp>
+#include "common\IThread.h"
 
 namespace collections {
 
@@ -43,7 +44,7 @@ namespace collections {
         boost::asio::io_service _io;
         boost::asio::io_service::work _work;
         boost::asio::deadline_timer _timer;
-        std::thread _thread;
+        IThread _thread;
 
         // reusable array for temp objects
         std::vector<queue_object_ref> _toRelease;
@@ -117,9 +118,9 @@ namespace collections {
             , _timer(_io)
         {
             _stopped.store(true, std::memory_order_relaxed);
-            _thread = std::thread([&]() { _io.run(); });
+            _thread.Start([](void *io_ptr) { reinterpret_cast<decltype(_io)*>(io_ptr)->run(); }, &_io);
             start();
-            jc_debug("aqueue created")
+            //jc_debug("aqueue created")
         }
 
         // prolongs object lifetime for ~10 seconds
@@ -135,7 +136,7 @@ namespace collections {
 
         void not_prolong_lifetime(object_base& object) {
             if (object.is_in_aqueue()) {
-                jc_debug("aqueue: removed id - %u", object._uid());
+                //jc_debug("aqueue: removed id - %u", object._uid());
                 spinlock::guard g(_queue_mutex);
                 object._aqueue_push_time = time_subtract(_tickCounter, obj_lifeInTicks);
             }
@@ -187,10 +188,11 @@ namespace collections {
 
             stop();
             _io.stop();
-            if (_thread.joinable()) {
-                _thread.join();
-            }
-            jc_debug("aqueue destroyed")
+
+            _thread.Stop();
+            WaitForSingleObject(_thread.GetHandle(), INFINITE);
+
+            //jc_debug("aqueue destroyed")
         }
 
     public:
@@ -250,7 +252,7 @@ namespace collections {
                     this->u_startTimer();
 				}
 				else {
-					jc_debug("aqueue timer was cancelled");
+					//jc_debug("aqueue timer was cancelled");
 				}
             });
         }

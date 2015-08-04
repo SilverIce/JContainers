@@ -250,6 +250,7 @@ namespace collections
                 }
 
                 int32_t indexOrFormId = 0;
+                FormId frmId = FormId::Zero;
 
                 if (!form_handling::is_form_string(indexRange.begin())) {
                     try {
@@ -268,7 +269,7 @@ namespace collections
                         return state(false, st);
                     }
 
-                    indexOrFormId = *fId;
+                    frmId = *fId;
                 }
 
                 object_lock lock(st.object);
@@ -284,7 +285,7 @@ namespace collections
                                         return container->as<array>()->u_get(indexOrFormId);
                                     }
                                     else if (container->as<form_map>()) {
-                                        return container->as<form_map>()->u_get(make_weak_form_id((FormId)indexOrFormId, context));
+                                        return container->as<form_map>()->u_get(make_weak_form_id(frmId, context));
                                     }
                                     else if (container->as<integer_map>()) {
                                         return container->as<integer_map>()->u_get(indexOrFormId);

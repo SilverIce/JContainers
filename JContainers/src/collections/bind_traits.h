@@ -39,10 +39,10 @@ namespace reflection { namespace binding {
     template<> struct GetConv < FormId > {
         typedef TESForm* tes_type;
         static TESForm* convert2Tes(FormId id) {
-            return LookupFormByID(id);
+            return LookupFormByID((uint32_t)id);
         }
         static FormId convert2J(const TESForm* form) {
-            return form ? (FormId)form->formID : FormZero;
+            return form ? (FormId)form->formID : FormId::Zero;
         }
     };
 
@@ -51,7 +51,7 @@ namespace reflection { namespace binding {
     template<> struct GetConv < form_watching::weak_form_id > {
         typedef TESForm* tes_type;
         static TESForm* convert2Tes(const weak_form_id& id) {
-            return LookupFormByID(id.get());
+            return LookupFormByID((uint32_t)id.get());
         }
         static form_watching::weak_form_id convert2J(const TESForm* form) {
             return make_weak_form_id(form, tes_context::instance());

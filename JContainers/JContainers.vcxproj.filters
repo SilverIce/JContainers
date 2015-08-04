@@ -157,9 +157,6 @@
     <ClInclude Include="src\collections\lua_native_funcs.hpp">
       <Filter>collections</Filter>
     </ClInclude>
-    <ClInclude Include="src\collections\types.h">
-      <Filter>collections</Filter>
-    </ClInclude>
     <ClInclude Include="src\collections\access.h">
       <Filter>collections</Filter>
     </ClInclude>
@@ -226,10 +223,14 @@
     <ClInclude Include="src\collections\dyn_form_watcher.h">
       <Filter>collections</Filter>
     </ClInclude>
-    <ClInclude Include="src\collections\dyn_form_watcher_serialization.hpp">
+    <ClInclude Include="src\util\atomic_serialization.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="src\form_id.h" />
+    <ClInclude Include="src\collections\dyn_form_watcher.hpp">
       <Filter>collections</Filter>
     </ClInclude>
-    <ClInclude Include="src\util\atomic_serialization.h">
+    <ClInclude Include="src\util\singleton.h">
       <Filter>util</Filter>
     </ClInclude>
   </ItemGroup>

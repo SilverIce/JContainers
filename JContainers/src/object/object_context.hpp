@@ -4,13 +4,11 @@ namespace collections
 {
     object_context::object_context()
     {
-        registry = new object_registry();
-        aqueue = new autorelease_queue(*registry);
+        registry.reset(new object_registry{});
+        aqueue.reset(new autorelease_queue{ *registry });
     }
 
     object_context::~object_context() {
-        delete registry;
-        delete aqueue;
     }
 
     object_context::activity_stopper::activity_stopper(object_context& c)
@@ -78,14 +76,17 @@ namespace collections
         return registry->u_getObject(hdl);
     }
 
-    size_t object_context::aqueueSize() {
+    size_t object_context::aqueueSize() const {
         return aqueue->count();
+    }
+
+    size_t object_context::object_count() const {
+        return registry->object_count();
     }
 
     size_t object_context::collect_garbage() {
         activity_stopper s{ *this };
         auto res = garbage_collector::u_collect(*registry, *aqueue);
-        aqueue->start();
         return res.garbage_total;
     }
 
@@ -101,6 +102,12 @@ namespace collections
     void object_context::save(boost::archive::binary_oarchive & ar, unsigned int version) const {
         ar << *registry << *aqueue;
         boost::serialization::save_atomic(ar, _root_object_id);
+    }
+
+    template<>
+    void object_context::load_data_in_old_way(boost::archive::binary_iarchive& ar) {
+        ar >> *registry >> *aqueue;
+        boost::serialization::load_atomic(ar, _root_object_id);
     }
 
     void object_context::u_print_stats() const {

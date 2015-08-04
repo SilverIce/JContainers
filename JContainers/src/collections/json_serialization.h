@@ -43,7 +43,7 @@ namespace collections {
         }
 
         inline bool is_reference(const char *str) {
-            return str && strncmp(str, prefix, sizeof prefix - 1) == 0 && str[sizeof prefix] != '\0';
+            return str && strncmp(str, prefix, sizeof prefix - 1) == 0;
         }
 
         inline const char* extract_path(const char *str) {
@@ -146,9 +146,14 @@ namespace collections {
                 auto& path = pair.first;
                 object_base *resolvedObject = nullptr;
 
-                ca::visit_value(root, path.c_str(), ca::constant, [&resolvedObject](item& itm) {
-                    resolvedObject = itm.object();
-                });
+                if (path.empty() == false) {
+                    ca::visit_value(root, path.c_str(), ca::constant, [&resolvedObject](item& itm) {
+                        resolvedObject = itm.object();
+                    });
+                }
+                else { // special case "__reference|"
+                    resolvedObject = &root;
+                }
 
                 if (!resolvedObject) {
                     continue;
@@ -187,7 +192,8 @@ namespace collections {
                     json_object_foreach(val, key, value) {
                         auto fkey = form_handling::from_string(key);
                         if (fkey) {
-                            cnt.u_set(make_weak_form_id(*fkey, self->_context), self->make_item(value, cnt, *fkey));
+                            weak_form_id weak_key = make_weak_form_id(*fkey, self->_context);
+                            cnt.u_set(weak_key, self->make_item(value, cnt, weak_key));
                         }
                     }
                 }
@@ -289,7 +295,7 @@ namespace collections {
                             a. lost info and convert it to FormZero
                             b. save info and convert it to string
                         */
-                        item = form_handling::from_string(string).get_value_or(FormZero);
+                        item = form_handling::from_string(string).get_value_or(FormId::Zero);
                     }
                     else if (schedule_ref_resolving(string, container, item_key)) { // otherwise it's reference string?
                         ;
@@ -511,7 +517,7 @@ namespace collections {
 
         std::string path_to_object(const object_base& obj) const {
 
-            std::string path;
+            std::string path{ reference_serialization::prefix };
 
             struct path_appender : boost::static_visitor<> {
                 std::string& p;
@@ -553,8 +559,6 @@ namespace collections {
                     break;
                 }
             }
-
-            path.append(reference_serialization::prefix);
 
             for (auto& key_var : keys) {
                 boost::apply_visitor(path_appender, *key_var);

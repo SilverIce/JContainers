@@ -121,6 +121,11 @@ namespace collections
             return _map.size();
         }
 
+        size_t object_count() const {
+            read_lock guard(_mutex);
+            return _all_objects.size();
+        }
+
         friend class boost::serialization::access;
         BOOST_SERIALIZATION_SPLIT_MEMBER();
 

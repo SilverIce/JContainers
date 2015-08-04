@@ -76,16 +76,16 @@ namespace skse {
         }
     }
 
-    uint32_t resolve_handle(uint32_t handle) {
+    FormId resolve_handle(FormId handle) {
         if (!is_fake()) {
-            UInt8 modID = handle >> 24;
+            UInt8 modID = (FormIdUnredlying)handle >> 24;
 
             if (modID == 0xFF) { // dynamic form - return untouched
                 return handle;
             }
 
             UInt64  handleOut = 0;
-            return g_serialization->ResolveHandle(handle, &handleOut) ? (uint32_t)handleOut : 0;
+            return g_serialization->ResolveHandle((UInt64)handle, &handleOut) ? (FormId)handleOut : FormId::Zero;
         }
 
         return handle;
@@ -109,8 +109,8 @@ namespace skse {
     // A fake form. Made for imitating SKSE during synthetic tests
     static char fakeTesForm[sizeof TESForm];
 
-    TESForm* lookup_form(uint32_t handle) {
-        return !is_fake() ? LookupFormByID(handle) : reinterpret_cast<TESForm*>(&fakeTesForm);
+    TESForm* lookup_form(FormId handle) {
+        return !is_fake() ? LookupFormByID((FormIdUnredlying)handle) : reinterpret_cast<TESForm*>(&fakeTesForm);
     }
 
     bool is_fake() {

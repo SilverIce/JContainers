@@ -34,18 +34,32 @@
 #include "collections/form_handling.h"
 
 #include "collections/context.hpp"
-#include "collections/dyn_form_watcher_serialization.hpp"
+#include "collections/dyn_form_watcher.hpp"
 
 BOOST_CLASS_EXPORT_GUID(collections::array, "kJArray");
 BOOST_CLASS_EXPORT_GUID(collections::map, "kJMap");
 BOOST_CLASS_EXPORT_GUID(collections::form_map, "kJFormMap");
 BOOST_CLASS_EXPORT_GUID(collections::integer_map, "kJIntegerMap");
 
-BOOST_CLASS_VERSION(collections::item, 2)
+BOOST_CLASS_VERSION(collections::form_map, 1)
+BOOST_CLASS_VERSION(collections::item, 3)
 
 BOOST_CLASS_IMPLEMENTATION(boost::blank, boost::serialization::primitive_type);
 
 namespace collections {
+
+    struct converter_324_to_330 : public boost::static_visitor < > {
+        template<class T> void operator () ( T& v) {
+            var = std::move(v);
+        }
+        void operator () ( FormId& v) {
+            var = weak_form_id{ v, weak_form_id::load_old_id };
+        }
+        item::variant& var;
+
+        explicit converter_324_to_330(item::variant& var_) : var(var_) {}
+    };
+    
     
     template<class Archive>
     void item::load(Archive & ar, const unsigned int version)
@@ -55,7 +69,14 @@ namespace collections {
         default:
             BOOST_ASSERT(false);
             break;
-        case 2:
+        case 2: { // v 3.2.4 and below
+            using variant_old = boost::variant<boost::blank, SInt32, Real, FormId, internal_object_ref, std::string>;
+            variant_old var;
+            ar >> var;
+            var.apply_visitor(converter_324_to_330{ _var });
+        }
+            break;
+        case 3:
             ar & _var;
             break;
         }
@@ -81,9 +102,31 @@ namespace collections {
     }
 
     template<class Archive>
-    void form_map::serialize(Archive & ar, const unsigned int version) {
+    void form_map::save(Archive & ar, const unsigned int version) const {
         ar & boost::serialization::base_object<object_base>(*this);
         ar & cnt;
+    }
+
+    template<class Archive>
+    void form_map::load(Archive & ar, const unsigned int version) {
+        ar & boost::serialization::base_object<object_base>(*this);
+
+        switch (version) {
+        default:
+            BOOST_ASSERT_MSG(false, "invalid form_map version");
+            break;
+        case 0: {
+            std::map<FormId, item> oldMap;
+            ar >> oldMap;
+            for (auto& pair : oldMap) {
+                cnt.emplace(value_type{ weak_form_id{ pair.first, weak_form_id::load_old_id }, std::move(pair.second) });
+            }
+        }
+            break;
+        case 1:
+            ar & cnt;
+            break;
+        }
     }
 
     template<class Archive>

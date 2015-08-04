@@ -16,7 +16,6 @@
 #include "skse/skse.h"
 
 #include "collections/item.h"
-#include "collections/types.h"
 
 namespace collections {
 
@@ -376,8 +375,13 @@ namespace collections {
 
         //////////////////////////////////////////////////////////////////////////
 
+        friend class boost::serialization::access;
+        BOOST_SERIALIZATION_SPLIT_MEMBER();
+
         template<class Archive>
-        void serialize(Archive & ar, const unsigned int version);
+        void load(Archive & ar, const unsigned int version);
+        template<class Archive>
+        void save(Archive & ar, const unsigned int version) const;
     };
 
     class integer_map : public basic_map_collection < integer_map, std::map<int32_t, item> >

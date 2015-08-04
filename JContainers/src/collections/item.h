@@ -2,14 +2,15 @@
 
 #include <boost/variant.hpp>
 #include <string>
+#include <xutility>
 
 #include "common/ITypes.h"
 #include "object/object_base.h"
 #include "skse/skse.h"
 #include "skse/string.h"
 
+#include "form_id.h"
 #include "collections/collections.h"
-#include "collections/types.h"
 #include "collections/dyn_form_watcher.h"
 
 
@@ -113,12 +114,12 @@ namespace collections {
         explicit item(bool val) : _var((SInt32)val) {}
         explicit item(FormId id) : _var(weak_form_id(id)) {}
         explicit item(const weak_form_id& id) : _var(id) {}
-        explicit item(weak_form_id&& id) : _var(id) {}
+        explicit item(weak_form_id&& id) : _var(std::move(id)) {}
 
         explicit item(object_base& o) : _var(o) {}
 
         explicit item(const std::string& val) : _var(val) {}
-        explicit item(std::string&& val) : _var(val) {}
+        explicit item(std::string&& val) : _var(std::move(val)) {}
 
         // the Item is none if the pointers below are zero:
         explicit item(const TESForm *val) {
@@ -155,7 +156,7 @@ namespace collections {
 
         item& operator = (FormId formId) {
             // prevent zero FormId from being saved
-            if (formId) {
+            if (formId != FormId::Zero) {
                 _var = weak_form_id{ formId };
             }
             else {
@@ -238,14 +239,14 @@ namespace collections {
 
         TESForm * form() const {
             auto frmId = formId();
-            return frmId != FormZero ? skse::lookup_form(frmId) : nullptr;
+            return frmId != FormId::Zero ? skse::lookup_form(frmId) : nullptr;
         }
 
         FormId formId() const {
             if (auto val = boost::get<weak_form_id>(&_var)) {
                 return val->get();
             }
-            return FormZero;
+            return FormId::Zero;
         }
 
         class are_strict_equals : public boost::static_visitor<bool> {

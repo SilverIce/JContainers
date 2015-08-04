@@ -7,6 +7,6 @@ if __name__ == '__main__':
 		raise Exception('argc less than 1')
 
 	mode = sys.argv[1]
-	doLocalInstall(mode, "../../")
+	doLocalInstall(mode, "\\\\VBOXSVR\\vilya\\PlayOnLinux's virtual drives\\Skyrim\\drive_c\\Program Files\\Mod Organizer\\mods\\JContainers.3.2.4 - WINE")
 	print 'post-install finished'
 	
