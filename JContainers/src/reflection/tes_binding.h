@@ -9,21 +9,30 @@ class BGSListForm;
 namespace reflection { namespace binding {
 
     // traits placeholders
-    template<class TesType>
-    struct ValueConverter {
-        typedef TesType tes_type;
+    template<class JType>
+    struct IdentityConverter {
+        typedef JType tes_type;
 
-        static const TesType& convert2J(const TesType& val) {
+        static const tes_type& convert2J(const tes_type& val) {
             return val;
         }
 
-        static const TesType& convert2Tes(const TesType& val) {
+        static const tes_type& convert2Tes(const tes_type& val) {
             return val;
         }
     };
 
-    template<> struct ValueConverter<void> {
-        typedef void tes_type;
+    template<class JType, class TesType>
+    struct StaticCastValueConverter {
+        typedef TesType tes_type;
+
+        static JType convert2J(const TesType& val) {
+            return static_cast<JType>(val);
+        }
+
+        static TesType convert2Tes(const JType& val) {
+            return static_cast<TesType>(val);
+        }
     };
 
     struct StringConverter {
@@ -33,17 +42,24 @@ namespace reflection { namespace binding {
             return str.c_str();
         }
 
-        static skse::string_ref convert2Tes(const char * str) {
+        template<class AnyString>
+        static skse::string_ref convert2Tes(const AnyString& str) {
             return skse::string_ref(str);
         }
     };
 
-    template<class JType> struct GetConv : ValueConverter < JType > {
+    template<class JType> struct GetConv : IdentityConverter < JType > {
         //typedef ValueConverter<TesType> Conv;
     };
 
+    template<> struct GetConv<void> {
+        using tes_type = void;
+    };
 
     template<> struct GetConv<const char*> : StringConverter{};
+    template<> struct GetConv<std::string> : StringConverter{};
+
+    template<> struct GetConv<int32_t> : StaticCastValueConverter<int32_t, SInt32>{};
 
     //////////////////////////////////////////////////////////////////////////
 

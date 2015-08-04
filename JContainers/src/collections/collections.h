@@ -251,6 +251,7 @@ namespace collections {
     class basic_map_collection : public collection_base< RealType > {
     public:
         typedef ContainerType container_type;
+        typedef typename container_type::value_type value_type;
         typedef typename ContainerType::key_type key_type;
     protected:
         ContainerType cnt;

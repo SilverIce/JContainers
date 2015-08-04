@@ -98,6 +98,10 @@ namespace collections {
             return (this && T::TypeId == _type) ? static_cast<const T*>(this) : nullptr;
         }
 
+        template<> const object_base* as<object_base>() const {
+            return this;
+        }
+
         template<class T> T& as_link() {
             return const_cast<T&>(const_cast<const object_base*>(this)->as_link<T>());
         }

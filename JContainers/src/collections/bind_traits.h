@@ -8,6 +8,7 @@ namespace reflection { namespace binding {
 
     using namespace collections;
 
+    template<class T = object_base>
     struct ObjectConverter {
 
         typedef HandleT tes_type;
@@ -16,53 +17,22 @@ namespace reflection { namespace binding {
             return obj ? obj->uid() : 0;
         }
 
-        static object_stack_ref convert2J(HandleT hdl) {
-            return tes_context::instance().getObjectRef((Handle)hdl);
-        }
-
-    };
-
-    template<class T, class P> struct GetConv < boost::intrusive_ptr_jc<T, P>& > : ObjectConverter{
-        static boost::intrusive_ptr_jc<T, P> convert2J(HandleT hdl) {
+        static object_stack_ref_template<T> convert2J(HandleT hdl) {
             return tes_context::instance().getObjectRefOfType<T>((Handle)hdl);
         }
     };
 
-    template<class T>
-    struct ObjectConverterT {
+    template<> struct GetConv < object_stack_ref& > : ObjectConverter<>{};
 
-        typedef HandleT tes_type;
-
-        static HandleT convert2Tes(object_base* obj) {
-            return obj ? obj->uid() : 0;
-        }
-
-        static typename T::ref convert2J(HandleT hdl) {
-            return tes_context::instance().getObjectRefOfType<T>((Handle)hdl);
-        }
-    };
-
-    template<> struct GetConv < object_stack_ref& > : ObjectConverter{};
-    //template<> struct GetConv < object_stack_ref > : ObjectConverter{};
-
-    template<> struct GetConv < object_base* > : ObjectConverter{};
-    template<> struct GetConv < array* > : ObjectConverterT< array >{};
-    template<> struct GetConv < map* > : ObjectConverterT< map >{};
-    template<> struct GetConv < form_map* > : ObjectConverterT< form_map >{};
-    template<> struct GetConv < integer_map* > : ObjectConverterT < integer_map >{};
+    template<> struct GetConv < object_base* > : ObjectConverter<>{};
+    template<> struct GetConv < array* > : ObjectConverter< array >{};
+    template<> struct GetConv < map* > : ObjectConverter< map >{};
+    template<> struct GetConv < form_map* > : ObjectConverter< form_map >{};
+    template<> struct GetConv < integer_map* > : ObjectConverter < integer_map >{};
 
     //////////////////////////////////////////////////////////////////////////
 
-    template<> struct GetConv < Handle > {
-        typedef HandleT tes_type;
-
-        static HandleT convert2Tes(Handle obj) {
-            return obj;
-        }
-        static Handle convert2J(HandleT hdl) {
-            return static_cast<Handle>(hdl);
-        }
-    };
+    template<> struct GetConv < Handle > : StaticCastValueConverter<Handle, HandleT> {};
 
     //////////////////////////////////////////////////////////////////////////
 

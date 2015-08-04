@@ -8,6 +8,9 @@ namespace tes_api_3 {
     public:
 
         using map_functions = map_functions_templ < Cnt >;
+        using map_type = Cnt;
+        using tes_key = typename reflection::binding::GetConv<typename map_type::key_type>::tes_type;
+
         typedef typename Cnt* ref;
 
         tes_map_t() {
@@ -66,6 +69,25 @@ namespace tes_api_3 {
                 tes_context::instance());
         }
         REGISTERF(allKeys, "allKeys", "*", "returns new array containing all keys");
+
+        static VMResultArray<tes_key> allKeysPArray(Cnt* obj) {
+            if (!obj) {
+                return VMResultArray<tes_key>();
+            }
+
+            VMResultArray<tes_key> keys;
+            object_lock l(obj);
+            keys.reserve(obj->u_count());
+            std::transform(obj->u_container().begin(), obj->u_container().end(),
+                std::back_inserter(keys),
+                [](const typename map_type::value_type& p) {
+                    return reflection::binding::GetConv<typename map_type::key_type>::convert2Tes(p.first);
+                }
+            );
+
+            return keys;
+        }
+        REGISTERF2(allKeysPArray, "*", "");
 
         static object_base* allValues(Cnt *obj) {
             if (!obj) {
