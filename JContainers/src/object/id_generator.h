@@ -2,42 +2,6 @@
 
 namespace collections {
 
-
-    template<class ID>
-    struct id_generator_0 {
-        std::vector<ID> m_freeNums;
-        ID m_highest; // i.e. [m_highest + 1, max(ID)] is free range
-
-        id_generator_0() : m_highest(0) {}
-        /*
-        ID newId() {
-            if (!m_freeNums.empty()) {
-                int num = m_freeNums.back();
-                m_freeNums.pop_back();
-                return num;
-            }
-
-            ++m_highest;
-            return m_highest;
-        }
-
-        void reuseId(ID num) {
-            m_freeNums.push_back(num);
-        }
-
-        void u_clear() {
-            m_highest = 0;
-            m_freeNums.clear();
-        }
-        */
-        template<class Archive>
-        void load(Archive & ar) {
-            ar & m_freeNums;
-            ar & m_highest;
-        }
-    };
-
-
     template<
         class id,
         id min_identifier,
@@ -204,34 +168,7 @@ namespace collections {
                 _current_range = _empty_ranges.begin() + currIdx;
             }
                 break;
-            case 0:
-                load_0(ar);
-                break;
             }
-        }
-
-        template <class Archive> void load_0(Archive& ar) {
-            _empty_ranges.clear();
-            _current_range = _empty_ranges.end();
-
-            id_generator_0<id> old;
-            old.load(ar);
-
-            std::sort(old.m_freeNums.begin(), old.m_freeNums.end());
-            old.m_freeNums.erase(std::unique(old.m_freeNums.begin(), old.m_freeNums.end()), old.m_freeNums.end());
-
-            for (const auto& num : old.m_freeNums) {
-
-                if (!_empty_ranges.empty() && num - _empty_ranges.back().last == 1) {
-                    _empty_ranges.back().last = num;
-                }
-                else {
-                    _empty_ranges.push_back(range::with_first_last(num, num));
-                }
-            }
-
-            _empty_ranges.push_back(range::with_first_last(old.m_highest + 1, max_identifier));
-            _current_range = _empty_ranges.end() - 1;
         }
     };
 
