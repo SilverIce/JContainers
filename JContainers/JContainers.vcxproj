@@ -140,7 +140,7 @@
     <ClCompile Include="src\object\object_module.cpp" />
     <ClCompile Include="src\reflection\detail\reflection.cpp" />
     <ClCompile Include="src\skse\skse.cpp" />
-    <ClCompile Include="src\skse_api.cpp" />
+    <ClCompile Include="src\skse_callbacksi.cpp" />
     <ClCompile Include="src\testing_api.cpp" />
     <ClCompile Include="src\jc_interface.cpp" />
     <ClCompile Include="src\gtest.cpp" />
@@ -160,6 +160,7 @@
     <ClInclude Include="src\api_3\tes_object.h" />
     <ClInclude Include="src\api_3\tes_string.h" />
     <ClInclude Include="src\collections\collections.h" />
+    <ClInclude Include="src\collections\dyn_form_watcher.h" />
     <ClInclude Include="src\collections\tests.h" />
     <ClInclude Include="src\collections\bind_traits.h" />
     <ClInclude Include="src\collections\copying.h" />

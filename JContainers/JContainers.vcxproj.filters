@@ -64,14 +64,14 @@
     <ClCompile Include="src\collections\access.cpp">
       <Filter>collections</Filter>
     </ClCompile>
-    <ClCompile Include="src\skse_api.cpp">
-      <Filter>plugin_interface</Filter>
-    </ClCompile>
     <ClCompile Include="src\api_3\string_wrapper.cpp">
       <Filter>tes_api_3</Filter>
     </ClCompile>
     <ClCompile Include="src\api_3\tes_api_3.cpp">
       <Filter>tes_api_3</Filter>
+    </ClCompile>
+    <ClCompile Include="src\skse_callbacksi.cpp">
+      <Filter>plugin_interface</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -222,6 +222,9 @@
     </ClInclude>
     <ClInclude Include="src\reflection\detail\type_traits.hpp">
       <Filter>reflection\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="src\collections\dyn_form_watcher.h">
+      <Filter>collections</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

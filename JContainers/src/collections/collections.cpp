@@ -110,7 +110,7 @@ namespace collections {
             }
             else if (oldKey != newKey) { // and what if newKey will replace another oldKey???
 
-                // There is one issue. Given a load order with two plugins like:
+                // This case fixes an issue. Given a load order with two plugins like:
                 // .... A ... B..
                 // both plugins gets swapped
                 // and two form Id's swapped too: 0xaa001 swapped with 0xbb001

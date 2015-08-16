@@ -10,6 +10,8 @@
 
 #include "collections/collections.h"
 #include "collections/types.h"
+#include "collections/dyn_form_watcher.h"
+
 
 namespace collections {
 
@@ -24,10 +26,11 @@ namespace collections {
     };
 
     class item {
+        using weak_form_id = form_watching::weak_form_id;
     public:
         typedef boost::blank blank;
         typedef Float32 Real;
-        typedef boost::variant<boost::blank, SInt32, Real, FormId, internal_object_ref, std::string> variant;
+        typedef boost::variant<boost::blank, SInt32, Real, weak_form_id, internal_object_ref, std::string> variant;
 
     private:
         variant _var;
@@ -39,7 +42,7 @@ namespace collections {
         template<> struct type2index < boost::blank >  { static const item_type index = none; };
         template<> struct type2index < SInt32 >  { static const item_type index = integer; };
         template<> struct type2index < Real >  { static const item_type index = real; };
-        template<> struct type2index < FormId >  { static const item_type index = form; };
+        template<> struct type2index < weak_form_id >  { static const item_type index = form; };
         template<> struct type2index < internal_object_ref >  { static const item_type index = object; };
         template<> struct type2index < std::string >  { static const item_type index = string; };
 
@@ -149,6 +152,7 @@ namespace collections {
         item& operator = (object_base& v) { _var = &v; return *this; }
 
 
+/*
         item& operator = (FormId formId) {
             // prevent zero FormId from being saved
             if (formId) {
@@ -158,7 +162,7 @@ namespace collections {
                 _var = blank();
             }
             return *this;
-        }
+        }*/
 
         template<class T>
         item& _assignPtr(T *ptr) {
@@ -233,8 +237,8 @@ namespace collections {
         }
 
         FormId formId() const {
-            if (auto val = boost::get<FormId>(&_var)) {
-                return *val;
+            if (auto val = boost::get<weak_form_id>(&_var)) {
+                return val->get();
             }
             return FormZero;
         }
@@ -274,7 +278,7 @@ namespace collections {
         //////////////////////////////////////////////////////////////////////////
     private:
         static_assert(std::is_same<
-            boost::variant<boost::blank, SInt32, Real, FormId, internal_object_ref, std::string>,
+            boost::variant<boost::blank, SInt32, Real, weak_form_id, internal_object_ref, std::string>,
             variant
         >::value, "update _user2variant code below");
 

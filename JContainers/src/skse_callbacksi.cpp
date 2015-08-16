@@ -177,6 +177,11 @@ namespace {
             g_serialization->SetSaveCallback(g_pluginHandle, save);
             g_serialization->SetLoadCallback(g_pluginHandle, load);
 
+            // test
+            g_serialization->SetFormDeleteCallback(g_pluginHandle, [](UInt64 handle) {
+                skse::console_print("deleted %u", (UInt32)handle);
+            });
+
             g_papyrus->Register(registerAllFunctions);
 
             if (g_messaging) {
