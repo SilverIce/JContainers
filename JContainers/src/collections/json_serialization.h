@@ -189,7 +189,7 @@ namespace collections {
                     json_object_foreach(val, key, value) {
                         auto fkey = form_handling::from_string(key);
                         if (fkey) {
-                            cnt.u_set(*fkey, self->make_item(value, cnt, *fkey));
+                            cnt.u_set(make_weak_form_id(*fkey, self->_context), self->make_item(value, cnt, *fkey));
                         }
                     }
                 }
@@ -414,7 +414,7 @@ namespace collections {
                     json_object_serialization_consts::put_metainfo<form_map>(object);
 
                     for (auto& pair : cnt.u_container()) {
-                        auto key = form_handling::to_string(pair.first);
+                        auto key = form_handling::to_string(pair.first.get());
                         if (key) {
                             self->fill_key_info(pair.second, cnt, pair.first);
                             json_object_set_new(object, (*key).c_str(), self->create_value(pair.second));

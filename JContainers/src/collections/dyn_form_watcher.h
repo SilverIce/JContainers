@@ -86,10 +86,14 @@ namespace collections { namespace form_watching {
         FormId _id = FormZero;
         mutable std::shared_ptr<watched_form> _watched_form;
 
-        explicit weak_form_id(FormId id, dyn_form_watcher* watcher = nullptr)
-            : _id(id)
-        {
+        weak_form_id() {}
 
+        explicit weak_form_id(FormId id, dyn_form_watcher& watcher) {
+            set(id, watcher);
+        }
+
+        bool expired() const {
+            return !_form_exists();
         }
 
         bool _form_exists() const {
@@ -120,7 +124,37 @@ namespace collections { namespace form_watching {
                 _watched_form = watcher.watch_form(id);
             }
         }
+
+        bool operator == (const weak_form_id& o) const {
+            return _id == o._id;
+        }
+        bool operator != (const weak_form_id& o) const {
+            return !(*this == o);
+        }
+        bool operator < (const weak_form_id& o) const {
+            return _id < o._id;
+        }
+
+        template<class Archive>
+        void serialize(Archive & ar, const unsigned int version) {
+            ar & _id;
+            assert(false);
+        }
+
     };
 
 }
+
+    using form_watching::weak_form_id;
+
+    template<class Context>
+    inline weak_form_id make_weak_form_id(FormId id, Context& context) {
+        return weak_form_id(id, context.form_watcher);
+    }
+
+    template<class Context>
+    inline weak_form_id make_weak_form_id(TESForm* id, Context& context) {
+        return weak_form_id(id ? FormId(id->formID) : FormZero, context.form_watcher);
+    }
+
 }

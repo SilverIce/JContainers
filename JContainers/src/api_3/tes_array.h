@@ -115,7 +115,9 @@ NEGATIVE_IDX_COMMENT);
             struct inserter : BGSListForm::Visitor {
 
                 virtual bool Accept(TESForm * form) override {
-                    arr->u_container().insert(arr->u_container().begin() + insertIdx, item(form));
+                    arr->u_container().insert(  arr->u_container().begin() + insertIdx,
+                                                item(make_weak_form_id(form, tes_context::instance()))
+                                );
                     return false;
                 }
 

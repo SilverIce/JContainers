@@ -8,6 +8,7 @@ namespace tes_api_3 {
     const char *kCommentObject = "creates new container object. returns container identifier (integer number).\n"
         "identifier is the thing you will have to pass to the most of container's functions as a first argument";
 
+
 #define VALUE_TYPE_COMMENT "0 - no value, 1 - none, 2 - int, 3 - float, 4 - form, 5 - object, 6 - string"
 
     class tes_object : public class_meta< tes_object > {

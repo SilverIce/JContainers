@@ -26,7 +26,6 @@ namespace collections {
     };
 
     class item {
-        using weak_form_id = form_watching::weak_form_id;
     public:
         typedef boost::blank blank;
         typedef Float32 Real;
@@ -112,16 +111,13 @@ namespace collections {
         explicit item(SInt32 val) : _var(val) {}
         explicit item(int val) : _var((SInt32)val) {}
         explicit item(bool val) : _var((SInt32)val) {}
-        explicit item(FormId id) : _var(id) {}
+        explicit item(const weak_form_id& id) : _var(id) {}
         explicit item(object_base& o) : _var(o) {}
 
         explicit item(const std::string& val) : _var(val) {}
         explicit item(std::string&& val) : _var(val) {}
 
         // the Item is none if the pointers below are zero:
-        explicit item(const TESForm *val) {
-            *this = val;
-        }
         explicit item(const char * val) {
             *this = val;
         }
@@ -181,16 +177,6 @@ namespace collections {
 
         item& operator = (object_base *val) {
             return _assignPtr(val);
-        }
-
-        item& operator = (const TESForm *val) {
-            if (val) {
-                _var = (FormId)val->formID;
-            }
-            else {
-                _var = blank();
-            }
-            return *this;
         }
 
         object_base *object() const {
