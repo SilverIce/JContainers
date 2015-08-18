@@ -99,13 +99,10 @@ namespace collections {
 
         for (auto itr = cnt.begin(); itr != cnt.end(); ) {
 
-            const FormId oldKey = itr->first.get();
+            const FormId& oldKey = itr->first;
             FormId newKey = form_handling::resolve_handle(oldKey);
 
-            if (form_handling::is_static(oldKey)) {
-
-            }
-            else if(oldKey == newKey) {
+            if (oldKey == newKey) {
                 ++itr; // fine
             }
             else if (newKey == FormZero) {

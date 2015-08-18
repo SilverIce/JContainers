@@ -365,7 +365,7 @@ namespace collections {
     };
 
 
-    class form_map : public basic_map_collection< form_map, std::map<weak_form_id, item> >
+    class form_map : public basic_map_collection< form_map, std::map<FormId, item> >
     {
     public:
         enum  {
