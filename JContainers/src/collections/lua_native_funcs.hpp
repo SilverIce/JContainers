@@ -9,6 +9,8 @@ namespace lua {
     using formmap_functions = collections::formmap_functions;
     using array_functions = collections::array_functions;
     using CollectionType = collections::CollectionType;
+
+    using collections::weak_form_id;
 }
 
 namespace lua { namespace api {
@@ -89,8 +91,8 @@ namespace lua { namespace api {
                 value.object = { val.get() };
             }
 
-            void operator ()(const FormId& val) {
-                value.form = { val };
+            void operator ()(const weak_form_id& val) {
+                value.form = { val.get() };
             }
 
         } converter;

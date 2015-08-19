@@ -9,9 +9,6 @@
 
 #include <jansson.h>
 
-#include <boost/iostreams/stream.hpp>
-#include <boost/iostreams/device/array.hpp>
-
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/export.hpp>
 

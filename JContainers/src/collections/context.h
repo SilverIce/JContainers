@@ -7,7 +7,7 @@
 #include "object/object_base.h"
 #include "object/object_context.h"
 
-#include "collections/error_code.h"
+//#include "collections/error_code.h"
 #include "collections/collections.h"
 #include "collections/dyn_form_watcher.h"
 
@@ -17,6 +17,7 @@ namespace collections
 
     class tes_context : public object_context
     {
+        using base = object_context;
     public:
 
         using post_init = ::meta<void(*)(tes_context&)>;
@@ -72,6 +73,32 @@ namespace collections
         std::unique_ptr<dependent_context*>     lua_context;
 
         form_watching::dyn_form_watcher form_watcher;
+
+        //////
+    public:
+
+        void read_from_stream(std::istream & stream);
+        void write_to_stream(std::ostream& stream);
+
+        void read_from_string(const std::string & data);
+        std::string write_to_string();
+
+        template<class Archive> void serialize(Archive & ar, const unsigned int version) {
+            ar & static_cast<base&>(*this);
+            ar & form_watcher;
+        }
+
+        void clearState();
+        // complete shutdown, this context shouldn't be used for now
+        void shutdown();
+
+    protected:
+
+        void u_clearState() {
+            base::u_clearState();
+
+            form_watcher.u_remove_unwatched_forms();
+        }
 
     };
 

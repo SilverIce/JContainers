@@ -111,7 +111,7 @@ namespace collections {
         explicit item(SInt32 val) : _var(val) {}
         explicit item(int val) : _var((SInt32)val) {}
         explicit item(bool val) : _var((SInt32)val) {}
-        explicit item(FormId id) : _var(id) {}
+        explicit item(FormId id) : _var(weak_form_id(id)) {}
         explicit item(object_base& o) : _var(o) {}
 
         explicit item(const std::string& val) : _var(val) {}
@@ -150,18 +150,16 @@ namespace collections {
         item& operator = (boost::none_t) { _var = boost::blank(); return *this; }
         item& operator = (object_base& v) { _var = &v; return *this; }
 
-
-/*
         item& operator = (FormId formId) {
             // prevent zero FormId from being saved
             if (formId) {
-                _var = formId;
+                _var = weak_form_id{ formId };
             }
             else {
                 _var = blank();
             }
             return *this;
-        }*/
+        }
 
         template<class T>
         item& _assignPtr(T *ptr) {
@@ -184,7 +182,7 @@ namespace collections {
 
         item& operator = (const TESForm *val) {
             if (val) {
-                _var = (FormId)val->formID;
+                _var = weak_form_id{ (FormId)val->formID };
             }
             else {
                 _var = blank();

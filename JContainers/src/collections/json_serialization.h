@@ -476,8 +476,8 @@ namespace collections {
                     return json_real(val);
                 }
 
-                json_ref operator()(const FormId&  val) const {
-                    auto formStr = form_handling::to_string(val);
+                json_ref operator()(const weak_form_id& val) const {
+                    auto formStr = form_handling::to_string(val.get());
                     if (formStr) {
                         return (*this)(*formStr);
                     }

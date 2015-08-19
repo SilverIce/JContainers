@@ -3,6 +3,7 @@
 #include <atomic>
 #include <functional>
 #include <deque>
+#include <boost/serialization/split_member.hpp>
 
 #include "object_base.h"
 
@@ -29,8 +30,9 @@ namespace collections {
     enum class serialization_version {
         pre_aqueue_fix = 2,
         no_header = 3, // no JSON header in the beginning of a stream
-        pre_gc = 4, // next version adds GC 
-        current = 5,
+        pre_gc = 4, // next version implements GC
+        pre_dyn_form_watcher = 5, // next version implements dynamic-form-watcher
+        current = 6,
     };
 
     /*
@@ -45,14 +47,15 @@ namespace collections {
 
     class object_context {
 
+    protected:
+        void u_postLoadInitializations();
         void u_applyUpdates(const serialization_version saveVersion);
         void u_postLoadMaintenance(const serialization_version saveVersion);
-
         void u_print_stats() const;
 
     public:
-        object_registry* registry;
-        autorelease_queue* aqueue;
+        object_registry* registry = nullptr;
+        autorelease_queue* aqueue = nullptr;
 
     public:
 
@@ -76,22 +79,32 @@ namespace collections {
         object_stack_ref getObjectRef(Handle hdl);
         object_base * u_getObject(Handle hdl);
 
-        void clearState();
-        void u_clearState();
-        // complete shutdown, this context shouldn't be used for now
-        void shutdown();
-
-        void read_from_string(const std::string & data);
-        void read_from_stream(std::istream & data);
-
-        std::string write_to_string();
-        void write_to_stream(std::ostream& stream);
-
         // exposed for testing purposes only
         size_t collect_garbage();
+    public:
+
+        // stops object_context's activity, until destroyed and then restarts it 
+        struct activity_stopper {
+            object_context& context;
+            activity_stopper(object_context& context);
+            ~activity_stopper();
+        };
+
+        void stop_activity();
+        void u_clearState();
+
+    public:
+
+        template<class Archive>
+        void load(Archive & ar, unsigned int version);
+        template<class Archive>
+        void save(Archive & ar, unsigned int version) const;
+
+        friend class boost::serialization::access;
+        BOOST_SERIALIZATION_SPLIT_MEMBER();
 
     protected:
-        std::atomic<Handle> _root_object_id;
+        std::atomic<Handle> _root_object_id{ HandleNull };
         spinlock _lazyDBLock;
 
     public:

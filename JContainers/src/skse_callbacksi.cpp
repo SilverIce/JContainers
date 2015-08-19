@@ -14,7 +14,9 @@
 #include "jc_interface.h"
 #include "reflection/reflection.h"
 #include "jcontainers_constants.h"
+
 #include "collections/context.h"
+#include "collections/dyn_form_watcher.h"
 
 class VMClassRegistry;
 
@@ -179,7 +181,13 @@ namespace {
 
             // test
             g_serialization->SetFormDeleteCallback(g_pluginHandle, [](UInt64 handle) {
-                skse::console_print("deleted %u", (UInt32)handle);
+
+                auto id = (FormId)handle;
+
+                if (!form_handling::is_static(id)) {
+                    skse::console_print("deleted 0x%x", id);
+                    collections::form_watching::dyn_form_watcher::instance().on_form_deleted(id);
+                }
             });
 
             g_papyrus->Register(registerAllFunctions);
