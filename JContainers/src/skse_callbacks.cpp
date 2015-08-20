@@ -181,11 +181,8 @@ namespace {
 
             // test
             g_serialization->SetFormDeleteCallback(g_pluginHandle, [](UInt64 handle) {
-
                 auto id = (FormId)handle;
-
                 if (!form_handling::is_static(id)) {
-                    skse::console_print("deleted 0x%x", id);
                     collections::form_watching::dyn_form_watcher::instance().on_form_deleted(id);
                 }
             });

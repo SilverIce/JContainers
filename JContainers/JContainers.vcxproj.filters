@@ -226,6 +226,12 @@
     <ClInclude Include="src\collections\dyn_form_watcher.h">
       <Filter>collections</Filter>
     </ClInclude>
+    <ClInclude Include="src\collections\dyn_form_watcher_serialization.hpp">
+      <Filter>collections</Filter>
+    </ClInclude>
+    <ClInclude Include="src\util\atomic_serialization.h">
+      <Filter>util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="JContainers.rc" />

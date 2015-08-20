@@ -1,40 +1,48 @@
 #pragma once
 
 #include <hash_map>
-#include <memory>
+//#include <memory>
+#include <atomic>
 #include "boost/shared_ptr.hpp"
 
 #include "types.h"
 #include "rw_mutex.h"
-#include "collections/form_handling.h"
 #include "skse/skse.h"
+#include "collections/form_handling.h"
 //#include "intrusive_ptr.hpp"
 
-namespace collections { namespace form_watching {
+namespace collections {
+    
+namespace form_watching {
 
     class dyn_form_watcher;
 
     class watched_form {
     public:
 
-        bool _deleted = false;
+        std::atomic<bool> _deleted;
 
-        void set_deleted() {
-            _deleted = true;
+        watched_form() {
+            _deleted._My_val = false; // hack
         }
 
-        template<class Archive> void serialize(Archive & ar, const unsigned int version) {
-            ar & _deleted;
+        bool is_deleted() const {
+            return _deleted.load(std::memory_order_relaxed);
+        }
+
+        void set_deleted() {
+            _deleted.store(true, std::memory_order_relaxed);
         }
     };
 
     // - remove FormID if none watches it
     // - 
 
-    // Had to be single instance as single Skyrim instance only?
+    // Had to be single instance as there is single Skyrim instance only?
     class dyn_form_watcher {
 
         using watched_forms_t = std::hash_map<FormId, boost::shared_ptr<watched_form> >;
+    public:
 
         bshared_mutex _mutex;
         watched_forms_t _watched_forms;
@@ -46,14 +54,38 @@ namespace collections { namespace form_watching {
             return _inst;
         }
 
-        void on_form_deleted(FormId fId) {
-            write_lock l(_mutex);
-            auto itr = _watched_forms.find(fId);
-            if (itr != _watched_forms.end()) {
-                skse::console_print("dyn_form_watcher:on_form_deleted form %x", fId);
-                itr->second->set_deleted();
-                _watched_forms.erase(itr);
+        template<class ReadCondition, class WriteAction, class Target>
+        static bool if_condition_then_perform(ReadCondition& condition, WriteAction& action, Target& target) {
+            bool condition_met = false;
+            {
+                read_lock r(target._mutex);
+                condition_met = condition(const_cast<const T&>(target));
             }
+
+            if (condition_met) {
+                write_lock w(target._mutex);
+                action(target);
+            }
+
+            return condition_met;
+        }
+
+        void on_form_deleted(FormId fId) {
+
+            if_condition_then_perform(
+                [fId](const dyn_form_watcher& w) {
+                    return w._watched_forms.find(fId) != w._watched_forms.end();
+                },
+                [fId](dyn_form_watcher& w) {
+                    auto itr = w._watched_forms.find(fId);
+                    if (itr != w._watched_forms.end()) {
+                        //skse::console_print("dyn_form_watcher:on_form_deleted form %x", fId);
+                        itr->second->set_deleted();
+                        w._watched_forms.erase(itr);
+                    }
+                },
+                *this
+            );
         }
 
         void u_clearState() {
@@ -72,27 +104,25 @@ namespace collections { namespace form_watching {
         }
 
         boost::shared_ptr<watched_form> watch_form(FormId fId) {
-            write_lock l(_mutex);
+            write_lock l{ _mutex };
             return u_watch_form(fId);
         }
 
         boost::shared_ptr<watched_form> u_watch_form(FormId fId) {
-            skse::console_print("dyn_form_watcher:watch_form form %x", fId);
+            //skse::console_print("dyn_form_watcher:watch_form form %x", fId);
 
             auto itr = _watched_forms.find(fId);
             if (itr != _watched_forms.end()) {
                 return itr->second;
             }
             else {
-                boost::shared_ptr<watched_form> wForm{
-                    new watched_form()/*,
-                    [this, fId](watched_form* p) {
-                        this->unwatch_form(fId);
-                    }*/
-                };
 
-                _watched_forms.emplace(watched_forms_t::value_type(fId, wForm));
-                return wForm;
+                return _watched_forms.emplace(
+                    watched_forms_t::value_type{
+                        fId,
+                        boost::shared_ptr < watched_form > {new watched_form{}}
+                    }
+                ).first->second;
             }
         }
 
@@ -103,7 +133,7 @@ namespace collections { namespace form_watching {
     private:
 
         void unwatch_form(FormId fId) {
-            write_lock l(this->_mutex);
+            write_lock l{ this->_mutex };
             this->_watched_forms.erase(fId);
         }
     };
@@ -117,24 +147,25 @@ namespace collections { namespace form_watching {
 
         weak_form_id() {}
 
-        // move constructors:
-
-        explicit weak_form_id(FormId id) {
-            set(id);
+        explicit weak_form_id(FormId id)
+            : _id(id)
+        {
+            if (!form_handling::is_static(id)) {
+                _watched_form = dyn_form_watcher::instance().watch_form(id);
+            }
         }
 
-        bool expired() const {
-            return !_form_exists();
-        }
+        bool is_static_or_not_expired() const {
+            if (form_handling::is_static(_id)) {
+                return true;
+            }
 
-        bool _form_exists() const {
             if (_watched_form) {
-                if (!_watched_form->_deleted) {
+                if (!_watched_form->is_deleted()) {
                     return true;
                 }
                 else {
                     _watched_form = nullptr;
-                    skse::console_print("weak_form_id:_form_exists form %x died", _id);
                 }
             }
 
@@ -142,11 +173,7 @@ namespace collections { namespace form_watching {
         }
 
         FormId get() const {
-            if (form_handling::is_static(_id)) {
-                return _id;
-            }
-
-            return _form_exists() ? _id : FormZero;
+            return is_static_or_not_expired() ? _id : FormZero;
         }
 
         void set(FormId id) {
@@ -154,6 +181,8 @@ namespace collections { namespace form_watching {
 
             if (!form_handling::is_static(_id)) {
                 _watched_form = dyn_form_watcher::instance().watch_form(id);
+            } else {
+                _watched_form = nullptr;
             }
         }
 
@@ -174,12 +203,6 @@ namespace collections { namespace form_watching {
 
         template<class Archive> void serialize(Archive & ar, const unsigned int version) {
             ar & _id;
-
-/*
-            if (!form_handling::is_static(_id)) {
-                _watched_form = 
-            }*/
-
             ar & _watched_form;
         }
     };

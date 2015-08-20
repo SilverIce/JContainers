@@ -4,24 +4,12 @@
 #include "boost\serialization\version.hpp"
 #include "boost\serialization\optional.hpp"
 
+#include "util/atomic_serialization.h"
 #include "object_base.h"
 
 namespace boost { namespace serialization {
 
     namespace cl = collections;
-
-    template<class Archive, class T>
-    void save_atomic(Archive& ar, const std::atomic<T>& v) {
-        T refCnt = v.load(std::memory_order_relaxed);
-        ar & refCnt;
-    }
-
-    template<class Archive, class T>
-    void load_atomic (Archive& ar, std::atomic<T> & v) {
-        T refCnt = (T)0;
-        ar & refCnt;
-        v.store(refCnt, std::memory_order_relaxed);
-    }
 
     template<class Archive>
     void save(Archive & ar, const cl::object_base & t, unsigned int version) {

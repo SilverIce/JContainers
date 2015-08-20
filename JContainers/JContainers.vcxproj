@@ -161,6 +161,7 @@
     <ClInclude Include="src\api_3\tes_string.h" />
     <ClInclude Include="src\collections\collections.h" />
     <ClInclude Include="src\collections\dyn_form_watcher.h" />
+    <ClInclude Include="src\collections\dyn_form_watcher_serialization.hpp" />
     <ClInclude Include="src\collections\tests.h" />
     <ClInclude Include="src\collections\bind_traits.h" />
     <ClInclude Include="src\collections\copying.h" />
@@ -195,6 +196,7 @@
     <ClInclude Include="src\skse\papyrus_args.hpp" />
     <ClInclude Include="src\skse\string.h" />
     <ClInclude Include="src\typedefs.h" />
+    <ClInclude Include="src\util\atomic_serialization.h" />
     <ClInclude Include="src\util\istring.h" />
     <ClInclude Include="src\util\istring_serialization.h" />
     <ClInclude Include="src\util\spinlock.h" />

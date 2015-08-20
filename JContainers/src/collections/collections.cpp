@@ -34,6 +34,7 @@
 #include "collections/form_handling.h"
 
 #include "collections/context.hpp"
+#include "collections/dyn_form_watcher_serialization.hpp"
 
 BOOST_CLASS_EXPORT_GUID(collections::array, "kJArray");
 BOOST_CLASS_EXPORT_GUID(collections::map, "kJMap");
