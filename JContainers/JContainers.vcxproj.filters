@@ -70,7 +70,7 @@
     <ClCompile Include="src\api_3\tes_api_3.cpp">
       <Filter>tes_api_3</Filter>
     </ClCompile>
-    <ClCompile Include="src\skse_callbacksi.cpp">
+    <ClCompile Include="src\skse_callbacks.cpp">
       <Filter>plugin_interface</Filter>
     </ClCompile>
   </ItemGroup>

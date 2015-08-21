@@ -8,12 +8,16 @@
 #include "types.h"
 #include "rw_mutex.h"
 #include "skse/skse.h"
-#include "collections/form_handling.h"
+#include "skse/PapyrusVM.h"
+#include "boost/serialization/split_member.hpp"
 //#include "intrusive_ptr.hpp"
+#include "collections/form_handling.h"
 
 namespace collections {
     
 namespace form_watching {
+
+    namespace fh = form_handling;
 
     class dyn_form_watcher;
 
@@ -59,7 +63,7 @@ namespace form_watching {
             bool condition_met = false;
             {
                 read_lock r(target._mutex);
-                condition_met = condition(const_cast<const T&>(target));
+                condition_met = condition(const_cast<const Target&>(target));
             }
 
             if (condition_met) {
@@ -71,6 +75,7 @@ namespace form_watching {
         }
 
         void on_form_deleted(FormId fId) {
+            _DMESSAGE("dyn_form_watcher: flag form 0x%x as deleted", fId);
 
             if_condition_then_perform(
                 [fId](const dyn_form_watcher& w) {
@@ -80,6 +85,7 @@ namespace form_watching {
                     auto itr = w._watched_forms.find(fId);
                     if (itr != w._watched_forms.end()) {
                         //skse::console_print("dyn_form_watcher:on_form_deleted form %x", fId);
+
                         itr->second->set_deleted();
                         w._watched_forms.erase(itr);
                     }
@@ -92,7 +98,7 @@ namespace form_watching {
             _watched_forms.clear();
         }
 
-        void u_remove_unwatched_forms() {
+        /*void u_remove_unwatched_forms() {
             for (auto itr = _watched_forms.begin(); itr != _watched_forms.end(); ) {
                 if (itr->second.use_count() == 1) {
                     itr = _watched_forms.erase(itr);
@@ -101,7 +107,7 @@ namespace form_watching {
                     ++itr;
                 }
             }
-        }
+        }*/
 
         boost::shared_ptr<watched_form> watch_form(FormId fId) {
             write_lock l{ _mutex };
@@ -110,6 +116,7 @@ namespace form_watching {
 
         boost::shared_ptr<watched_form> u_watch_form(FormId fId) {
             //skse::console_print("dyn_form_watcher:watch_form form %x", fId);
+            _DMESSAGE("dyn_form_watcher: form 0x%x being watched", fId);
 
             auto itr = _watched_forms.find(fId);
             if (itr != _watched_forms.end()) {
@@ -126,9 +133,11 @@ namespace form_watching {
             }
         }
 
+/*
         template<class Archive> void serialize(Archive & ar, const unsigned int version) {
             ar & _watched_forms;
         }
+*/
 
     private:
 
@@ -142,6 +151,7 @@ namespace form_watching {
 
         FormId _id = FormZero;
         mutable boost::shared_ptr<watched_form> _watched_form;
+        mutable bool _expired = true;
 
     public:
 
@@ -149,15 +159,25 @@ namespace form_watching {
 
         explicit weak_form_id(FormId id)
             : _id(id)
+            , _expired(skse::lookup_form(id) == nullptr)
         {
-            if (!form_handling::is_static(id)) {
+            if (!fh::is_static(id) && !_expired) {
                 _watched_form = dyn_form_watcher::instance().watch_form(id);
             }
         }
 
-        bool is_static_or_not_expired() const {
-            if (form_handling::is_static(_id)) {
-                return true;
+        explicit weak_form_id(const TESForm& form)
+            : _id(static_cast<FormId>(form.formID))
+            , _expired(false)
+        {
+            if (!fh::is_static(_id)) {
+                _watched_form = dyn_form_watcher::instance().watch_form(_id);
+            }
+        }
+
+        bool is_not_expired() const {
+            if (fh::is_static(_id)) {
+                return !_expired;
             }
 
             if (_watched_form) {
@@ -165,7 +185,9 @@ namespace form_watching {
                     return true;
                 }
                 else {
+                    _DMESSAGE("weak_form_id: form 0x%x lazily zeroed out", _id);
                     _watched_form = nullptr;
+                    _expired = true;
                 }
             }
 
@@ -173,23 +195,26 @@ namespace form_watching {
         }
 
         FormId get() const {
-            return is_static_or_not_expired() ? _id : FormZero;
+            return is_not_expired() ? _id : FormZero;
         }
 
+/*
         void set(FormId id) {
             _id = id;
 
-            if (!form_handling::is_static(_id)) {
+            if (!fh::is_static(_id)) {
                 _watched_form = dyn_form_watcher::instance().watch_form(id);
             } else {
                 _watched_form = nullptr;
             }
         }
 
+*/
+/*
         weak_form_id& operator = (FormId id) {
             set(id);
             return *this;
-        }
+        }*/
 
         bool operator == (const weak_form_id& o) const {
             return _id == o._id;
@@ -201,10 +226,37 @@ namespace form_watching {
             return _id < o._id;
         }
 
-        template<class Archive> void serialize(Archive & ar, const unsigned int version) {
+        friend class boost::serialization::access;
+        BOOST_SERIALIZATION_SPLIT_MEMBER();
+
+        template<class Archive> void save(Archive & ar, const unsigned int version) const {
+            bool expired = !is_not_expired();
+
             ar & _id;
-            ar & _watched_form;
+            ar & expired;
         }
+
+        template<class Archive> void load(Archive & ar, const unsigned int version) {
+            ar & const_cast<FormId&>(_id);
+            ar & _expired;
+
+            if (!_expired) {
+                if (form_handling::is_static(_id)) {
+                    _id = (FormId)skse::resolve_handle((uint32_t)_id);
+                    _expired = (_id == FormZero);
+                }
+                else { // otherwise it is dynamic form
+
+                    if (skse::lookup_form((uint32_t)_id)) {
+                        _watched_form = dyn_form_watcher::instance().u_watch_form(_id);
+                    }
+                    else {
+                        _expired = true;
+                    }
+                }
+            }
+        }
+
     };
 
 }

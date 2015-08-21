@@ -24,16 +24,15 @@ namespace jc {
     extern root_interface root;
 }
 
+SKSESerializationInterface	* g_serialization = nullptr;
+static SKSEPapyrusInterface			* g_papyrus = nullptr;
+static SKSEMessagingInterface       * g_messaging = nullptr;
+
 namespace {
 
     using namespace collections;
 
     static PluginHandle					g_pluginHandle = kPluginHandle_Invalid;
-
-    static SKSESerializationInterface	* g_serialization = nullptr;
-    static SKSEPapyrusInterface			* g_papyrus = nullptr;
-    static SKSEMessagingInterface       * g_messaging = nullptr;
-
 
     void revert(SKSESerializationInterface * intfc) {
         util::do_with_timing("Revert", []() {
@@ -173,17 +172,24 @@ namespace {
 
         __declspec(dllexport) bool SKSEPlugin_Load(const SKSEInterface * skse) {
 
+            assert(skse::is_fake() == false);
+
             g_serialization->SetUniqueID(g_pluginHandle, (UInt32)consts::storage_chunk);
 
             g_serialization->SetRevertCallback(g_pluginHandle, revert);
             g_serialization->SetSaveCallback(g_pluginHandle, save);
             g_serialization->SetLoadCallback(g_pluginHandle, load);
 
+
+            /*
+            Critical bug, reported by Anthitesis (yet he didn't knew that). Had to be found several months ago,
+            ruins experience as any load order change may turn form pointer into nothing, .
+            
+            */
             // test
             g_serialization->SetFormDeleteCallback(g_pluginHandle, [](UInt64 handle) {
-                auto id = (FormId)handle;
-                if (!form_handling::is_static(id)) {
-                    collections::form_watching::dyn_form_watcher::instance().on_form_deleted(id);
+                if ((uint32_t)(handle >> 32) == 0) { // skip identifiers with high level bits
+                    collections::form_watching::dyn_form_watcher::instance().on_form_deleted((FormId)handle);
                 }
             });
 

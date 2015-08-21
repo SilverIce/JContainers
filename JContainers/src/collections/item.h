@@ -182,7 +182,7 @@ namespace collections {
 
         item& operator = (const TESForm *val) {
             if (val) {
-                _var = weak_form_id{ (FormId)val->formID };
+                _var = weak_form_id{ *val };
             }
             else {
                 _var = blank();

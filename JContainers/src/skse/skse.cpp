@@ -11,6 +11,7 @@
 #include "skse/GameForms.h"
 #include "skse/GameData.h"
 #include "skse/InternalSerialization.h"
+#include "skse/PluginAPI.h"
 
 #include "gtest.h"
 //#include "util/util.h"
@@ -18,6 +19,8 @@
 //#include "reflection/reflection.h"
 //#include "jcontainers_constants.h"
 //#include "collections/tes_context.h"
+
+extern SKSESerializationInterface	* g_serialization;
 
 namespace skse {
 
@@ -75,19 +78,14 @@ namespace skse {
 
     uint32_t resolve_handle(uint32_t handle) {
         if (!is_fake()) {
-            UInt8	modID = handle >> 24;
+            UInt8 modID = handle >> 24;
 
-            // should not have been saved anyway?
-            if (modID == 0xFF)
+            if (modID == 0xFF) { // dynamic form - return untouched
                 return handle;
+            }
 
-            UInt8	loadedModID = ResolveModIndex(modID);
-
-            if (loadedModID == 0xFF)
-                return handle;
-
-            // fixup ID, success
-            handle = (handle & 0x00FFFFFF) | (((uint32_t)loadedModID) << 24);
+            UInt64  handleOut = 0;
+            return g_serialization->ResolveHandle(handle, &handleOut) ? (uint32_t)handleOut : 0;
         }
 
         return handle;

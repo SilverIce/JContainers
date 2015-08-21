@@ -22,7 +22,9 @@ namespace collections
 
         using post_init = ::meta<void(*)(tes_context&)>;
 
-        tes_context() {
+        tes_context()
+            : form_watcher(form_watching::dyn_form_watcher::instance())
+        {
             for (auto& init : post_init::getListConst()) {
                 init(*this);
             }
@@ -72,7 +74,7 @@ namespace collections
         // to attach lua context
         std::unique_ptr<dependent_context*>     lua_context;
 
-        form_watching::dyn_form_watcher form_watcher;
+        form_watching::dyn_form_watcher& form_watcher;
 
         //////
     public:
@@ -85,7 +87,7 @@ namespace collections
 
         template<class Archive> void serialize(Archive & ar, const unsigned int version) {
             ar & static_cast<base&>(*this);
-            ar & form_watcher;
+            //ar & form_watcher;
         }
 
         void clearState();
@@ -97,7 +99,7 @@ namespace collections
         void u_clearState() {
             base::u_clearState();
 
-            form_watcher.u_remove_unwatched_forms();
+            form_watcher.u_clearState();
         }
 
     };

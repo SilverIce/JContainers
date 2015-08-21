@@ -59,10 +59,6 @@ namespace collections {
             ar & _var;
             break;
         }
-
-        if (auto fId = get<FormId>()) {
-            *this = form_handling::resolve_handle(*fId);
-        }
     }
 
     template<class Archive>

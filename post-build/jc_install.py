@@ -90,6 +90,13 @@ class Config(object):
         return self._jcLib
 
 
+def systemCall(command):
+    print 'sys. call:', command
+
+    if os.system(command) != 0:
+        raise Exception('sys. command', command, 'has failed')
+
+
 def makeScripts(lib, sourceDir, compiledDir):
     lib.produceCode(sourceDir)
 
@@ -103,11 +110,9 @@ def makeScripts(lib, sourceDir, compiledDir):
         '-o=' + quotes(compiledDir)
     ]
 
-    print 'compiling scripts:', ' '.join(args)
-    failed = os.system(' '.join(args)) != 0
+    print 'compiling scripts'
+    systemCall(' '.join(args))
 
-    if failed:
-        raise Exception('makeScripts', 'subprocess returns non-zero error code')
     #import subprocess
     #subprocess.check_call(args)
 
@@ -126,7 +131,7 @@ def makeScripts(lib, sourceDir, compiledDir):
 
 
 def copyTree(root_src_dir, root_dst_dir):
-    os.system('XCOPY "{}" "{}" /E /I /F /Y /Q'.format(root_src_dir, root_dst_dir))
+    systemCall('XCOPY "{}" "{}" /E /I /F /Y /Q'.format(root_src_dir, root_dst_dir))
 
 
 def setupSkyrimTree(config):
@@ -156,7 +161,7 @@ def doLocalInstall(mode, targetDir):
     makeScripts(config.jcLib, config.pscDir, config.compiledDir)
 
     # real installation
-    trueInstallDir = os.path.join(targetDir, 'Data')
+    trueInstallDir = targetDir
     copyTree(config.dataDir, trueInstallDir)
 
     
