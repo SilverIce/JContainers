@@ -112,6 +112,9 @@ namespace collections {
         explicit item(int val) : _var((SInt32)val) {}
         explicit item(bool val) : _var((SInt32)val) {}
         explicit item(FormId id) : _var(weak_form_id(id)) {}
+        explicit item(const weak_form_id& id) : _var(id) {}
+        explicit item(weak_form_id&& id) : _var(id) {}
+
         explicit item(object_base& o) : _var(o) {}
 
         explicit item(const std::string& val) : _var(val) {}
@@ -169,6 +172,11 @@ namespace collections {
             else {
                 _var = blank();
             }
+            return *this;
+        }
+
+        item& operator = (const weak_form_id& val) {
+            _var = val;
             return *this;
         }
 

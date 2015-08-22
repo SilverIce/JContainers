@@ -30,6 +30,10 @@ namespace collections
             }
         }
 
+        ~tes_context() {
+            shutdown();
+        }
+
         static tes_context& instance() {
             static tes_context st;
             return st;

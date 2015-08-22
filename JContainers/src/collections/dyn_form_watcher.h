@@ -198,6 +198,8 @@ namespace form_watching {
             return is_not_expired() ? _id : FormZero;
         }
 
+        bool operator ! () const { return !is_not_expired(); }
+
 /*
         void set(FormId id) {
             _id = id;
@@ -265,12 +267,12 @@ namespace form_watching {
 
     template<class Context>
     inline weak_form_id make_weak_form_id(FormId id, Context& context) {
-        return weak_form_id(id, context.form_watcher);
+        return weak_form_id(id);
     }
 
     template<class Context>
-    inline weak_form_id make_weak_form_id(TESForm* id, Context& context) {
-        return weak_form_id(id ? FormId(id->formID) : FormZero, context.form_watcher);
+    inline weak_form_id make_weak_form_id(const TESForm* id, Context& context) {
+        return id ? weak_form_id(*id) : weak_form_id();
     }
 
 }

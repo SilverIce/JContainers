@@ -95,38 +95,7 @@ namespace collections {
     //////////////////////////////////////////////////////////////////////////
 
     void form_map::u_onLoaded() {
-
-        for (auto itr = cnt.begin(); itr != cnt.end(); ) {
-
-            const FormId& oldKey = itr->first;
-            FormId newKey = form_handling::resolve_handle(oldKey);
-
-            if (oldKey == newKey) {
-                ++itr; // fine
-            }
-            else if (newKey == FormZero) {
-                itr = cnt.erase(itr);
-            }
-            else if (oldKey != newKey) { // and what if newKey will replace another oldKey???
-
-                // This case fixes an issue. Given a load order with two plugins like:
-                // .... A ... B..
-                // both plugins gets swapped
-                // and two form Id's swapped too: 0xaa001 swapped with 0xbb001
-                // the form-id from the A replaces the form-id from the B
-
-                auto anotherOldKeyItr = cnt.find(newKey);
-                if (anotherOldKeyItr != cnt.end()) { // exactly that rare case, newKey equals to some other oldKey
-                    // do not insert as it will replace other oldKey, SWAP values instead
-                    std::swap(anotherOldKeyItr->second, itr->second);
-                    ++itr;
-                }
-                else {
-                    cnt.insert(container_type::value_type(newKey, std::move(itr->second)));
-                    itr = cnt.erase(itr);
-                }
-            }
-        }
+        cnt.erase(weak_form_id{});
     }
 
     //////////////////////////////////////////////////////////////////////////

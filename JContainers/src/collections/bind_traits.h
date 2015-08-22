@@ -22,7 +22,7 @@ namespace reflection { namespace binding {
         }
     };
 
-    template<> struct GetConv < object_stack_ref& > : ObjectConverter<>{};
+    template<> struct GetConv < object_stack_ref > : ObjectConverter<>{};
 
     template<> struct GetConv < object_base* > : ObjectConverter<>{};
     template<> struct GetConv < array* > : ObjectConverter< array >{};
@@ -46,28 +46,16 @@ namespace reflection { namespace binding {
         }
     };
 
-    template<> struct j2Str < FormId > : j2Str < TESForm* > {};
+    /////////////////
 
-
-    //////////////////////////////////////////////////////////////////////////
-
-    template<class T, class P> struct j2Str < boost::intrusive_ptr_jc<T, P> > {
-        static function_parameter typeInfo() { return j2Str<T*>::typeInfo(); }
+    template<> struct GetConv < form_watching::weak_form_id > {
+        typedef TESForm* tes_type;
+        static TESForm* convert2Tes(const weak_form_id& id) {
+            return LookupFormByID(id.get());
+        }
+        static form_watching::weak_form_id convert2J(const TESForm* form) {
+            return make_weak_form_id(form, tes_context::instance());
+        }
     };
-
-    template<class T, class P> struct j2Str < boost::intrusive_ptr_jc<T, P>& > {
-        static function_parameter typeInfo() { return j2Str<T*>::typeInfo(); }
-    };
-
-    struct jc_object_type_info {
-        static function_parameter typeInfo() { return function_parameter_make("int", "object"); }
-    };
-
-    template<> struct j2Str < object_base * > : jc_object_type_info{};
-    template<> struct j2Str < map * > : jc_object_type_info{};
-    template<> struct j2Str < array * > : jc_object_type_info{};
-    template<> struct j2Str < form_map * > : jc_object_type_info{};
-    template<> struct j2Str < integer_map * > : jc_object_type_info{};
-    template<> struct j2Str < Handle > : jc_object_type_info{};
 }
 }

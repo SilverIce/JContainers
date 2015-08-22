@@ -60,7 +60,7 @@ namespace collections {
     public:
 
         object_context();
-        ~object_context();
+        virtual ~object_context();
 
         std::vector<object_stack_ref> filter_objects(std::function<bool(object_base& obj)> predicate) const;
 

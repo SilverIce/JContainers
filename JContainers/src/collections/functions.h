@@ -95,6 +95,7 @@ namespace collections {
         static bool check(const char *s)  { return s != nullptr && *s; }
         static bool check(TESForm *f)  { return f != nullptr; }
         static bool check(FormId f)  { return f != FormZero; }
+        static bool check(const weak_form_id& f)  { return f.is_not_expired(); }
         static bool check(int32_t)  { return true; }
     };
 

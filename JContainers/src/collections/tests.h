@@ -156,7 +156,7 @@ namespace collections { namespace {
     TEST(reference_serialization, test) {
 
         const char* testData[][2] = {
-            "__reference|", "",
+            "__reference|", nullptr,
             "__reference|anyString", "anyString",
             "__reference||anyString", "|anyString",
 
@@ -316,14 +316,26 @@ namespace collections { namespace {
         }
     }
 
+    JC_TEST(json_handling, old_json_still_supported)
+    {
+        object_base* root = json_deserializer::object_from_json_data(context, STR(
+            {
+                "__formData": null,
+                "__formData|D|0x4" : []
+            }
+        ));
+
+        EXPECT_NOT_NIL(root);
+        EXPECT_NOT_NIL(root->as<form_map>());
+    }
+
     JC_TEST(json_handling, object_references)
     {
         object_base* root = json_deserializer::object_from_json_data(context, STR(
         {
             "parentArray": [
                 {
-                    "objChildArrayOfChildJMap1": [],
-                        "rootRef" : "__reference|"
+                    "objChildArrayOfChildJMap1": []
                 },
                 {
                     "objChildArrayOfChildJMap2": [],
@@ -338,9 +350,9 @@ namespace collections { namespace {
         }
         ));
 
-        auto compareRefs = [&](object_base *root, const char *path1, const char *path2) {
-            auto o1 = path_resolving::_resolve<object_base*>(context, root, path1);
-            auto o2 = path_resolving::_resolve<object_base*>(context, root, path2);
+        auto compareRefs = [&](object_base &root, const char *path1, const char *path2) {
+            auto o1 = ca::get(root, path1)->object();
+            auto o2 = ca::get(root, path2)->object();
             EXPECT_TRUE(o1 && o2 && o1 == o2);
         };
 
@@ -351,12 +363,11 @@ namespace collections { namespace {
             const char *equalPaths[][2] = {
                 ".parentArray[0]", ".parentArray[1].referenceToChildJMap1",
                 ".parentArray[0]", ".parentArray[1].referenceToChildJMap1",
-                ".parentArray[0].rootRef", "",
                 ".parentArray[2][__formData|D|0x4]", ".parentArray[1].referenceToFormMapValue"
             };
 
             for (auto& pair : equalPaths) {
-                compareRefs(root, pair[0], pair[1]);
+                compareRefs(*root, pair[0], pair[1]);
             }
         };
 
@@ -392,9 +403,7 @@ namespace collections { namespace {
     {
         {
             // array containing himself
-            array& root = json_deserializer::object_from_json_data(context, STR(
-                ["__reference|"]
-            ))->as_link<array>();
+            auto& root = array::objectWithInitializer([](array& me) { me.u_push(me); }, context);
 
             EXPECT_TRUE(root[0] == root.base());
             //EXPECT_NOT_NIL(root);
@@ -440,14 +449,12 @@ namespace collections { namespace {
 
     JC_TEST(garbage_collection, no_deadlopp_proof)
     {
-        auto obj = json_deserializer::object_from_json_data(context, STR([[[ "__reference|" ]]]));
-        EXPECT_NOT_NIL(obj);
-        obj->tes_retain();
+        auto& obj = array::objectWithInitializer([](array& me) { me.u_push(me); }, context);
+        obj.tes_retain();
 
         EXPECT_TRUE(context.collect_garbage() == 0);
 
-        obj = json_deserializer::object_from_json_data(context, STR([["__reference|"]]));
-        EXPECT_NOT_NIL(obj);
+        auto& obj2 = array::objectWithInitializer([](array& me) { me.u_push(me); }, context);
         context.collect_garbage();
     }
 
@@ -466,7 +473,7 @@ namespace collections { namespace {
             for (int j = 0; j < 10; ++j) {
                 auto rnd = rand() % 10;
 
-                cont->push(item(arrays[rnd]));
+                cont->push(arrays[rnd]);
             }
         }
 

@@ -18,7 +18,7 @@ namespace reflection {  namespace binding {
     template<> 
         function_parameter type_info< SInt32 >() { return function_parameter_make("int", nullptr); }
     template<>
-        function_parameter type_info< UInt32 >() { return function_parameter_make("int", nullptr); }
+        function_parameter type_info< UInt32 >() { return function_parameter_make("int", "this"); }
     template<>
         function_parameter type_info< TESForm * >() { return function_parameter_make("form", nullptr); }
     template<>

@@ -231,17 +231,17 @@ namespace lua { namespace api {
     static_assert(sizeof FormId == sizeof CForm, "");
 
     cexport FormId JFormMap_nextKey(const form_map *obj, FormId lastKey) {
-        FormId next = FormId::FormZero;
-        formmap_functions::nextKey(obj, lastKey, [&](const FormId& key) { next = key; });
-        return next;
+        weak_form_id next;
+        formmap_functions::nextKey(obj, weak_form_id{ lastKey }, [&](const weak_form_id& key) { next = key; });
+        return next.get();
     }
 
     cexport void JFormMap_setValue(form_map *obj, FormId key, const JCValue* val) {
-        formmap_functions::doWriteOp(obj, key, [val](item& itm) { JCValue_fillItem(val, itm); });
+        formmap_functions::doWriteOp(obj, weak_form_id{ key }, [val](item& itm) { JCValue_fillItem(val, itm); });
     }
 
     cexport JCToLuaValue JFormMap_getValue(form_map *obj, FormId key) {
-        return formmap_functions::doReadOpR(obj, key, JCToLuaValue_None(), [](item& itm) { return JCToLuaValue_fromItem(itm); });
+        return formmap_functions::doReadOpR(obj, weak_form_id{ key }, JCToLuaValue_None(), [](item& itm) { return JCToLuaValue_fromItem(itm); });
     }
 
     cexport handle JDB_instance(tes_context *jc_context) {

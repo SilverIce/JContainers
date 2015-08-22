@@ -43,7 +43,7 @@ namespace collections {
         }
 
         inline bool is_reference(const char *str) {
-            return str && strncmp(str, prefix, sizeof prefix - 1) == 0;
+            return str && strncmp(str, prefix, sizeof prefix - 1) == 0 && str[sizeof prefix] != '\0';
         }
 
         inline const char* extract_path(const char *str) {
@@ -146,10 +146,8 @@ namespace collections {
                 auto& path = pair.first;
                 object_base *resolvedObject = nullptr;
 
-                path_resolving::resolve(_context, &root, path.c_str(), [&resolvedObject](item *itm) {
-                    if (itm) {
-                        resolvedObject = itm->object();
-                    }
+                ca::visit_value(root, path.c_str(), ca::constant, [&resolvedObject](item& itm) {
+                    resolvedObject = itm.object();
                 });
 
                 if (!resolvedObject) {
@@ -189,7 +187,7 @@ namespace collections {
                     json_object_foreach(val, key, value) {
                         auto fkey = form_handling::from_string(key);
                         if (fkey) {
-                            cnt.u_set(*fkey, self->make_item(value, cnt, *fkey));
+                            cnt.u_set(make_weak_form_id(*fkey, self->_context), self->make_item(value, cnt, *fkey));
                         }
                     }
                 }
@@ -333,7 +331,7 @@ namespace collections {
         objects_to_fill _toFill;
 
         // contained - <container, key> relationship
-        typedef boost::variant<int32_t, std::string, FormId> key_variant;
+        typedef boost::variant<int32_t, std::string, weak_form_id> key_variant;
         typedef std::map<const object_base*, std::pair<const object_base*, key_variant > > key_info_map;
         key_info_map _keyInfo;
 
@@ -414,7 +412,7 @@ namespace collections {
                     json_object_serialization_consts::put_metainfo<form_map>(object);
 
                     for (auto& pair : cnt.u_container()) {
-                        auto key = form_handling::to_string(pair.first);
+                        auto key = form_handling::to_string(pair.first.get());
                         if (key) {
                             self->fill_key_info(pair.second, cnt, pair.first);
                             json_object_set_new(object, (*key).c_str(), self->create_value(pair.second));
@@ -531,9 +529,9 @@ namespace collections {
                     p.append(data);
                 }
 
-                void operator()(const FormId& fid) const {
+                void operator()(const weak_form_id& fid) const {
                     p.append("[");
-                    p.append(*form_handling::to_string(fid));
+                    p.append(*form_handling::to_string(fid.get()));
                     p.append("]");
                 }
 
