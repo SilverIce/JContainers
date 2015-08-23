@@ -39,31 +39,35 @@ namespace collections
             return st;
         }
 
+    private:
+
+        std::atomic<map*> _cached_root = nullptr;
+
+    public:
+
         object_stack_ref_template<map> database_ref() {
             return database();
         }
 
         map* database() {
-            object_base * result = getObject(_root_object_id);
-
+            map * result = _cached_root.load(std::memory_order_acquire);
             if (!result) {
-                _lazyDBLock.lock();
 
-                result = getObject(_root_object_id);
+                spinlock::guard g(_lazyDBLock);
+
+                result = _cached_root.load(std::memory_order_relaxed);
                 if (!result) {
                     result = &map::object(*this);
                     set_root(result);
-                }
 
-                _lazyDBLock.unlock();
+                    _cached_root.store(result, std::memory_order_release);
+                }
             }
 
             return result->as<map>();
         }
 
-        void setDataBase(map *db) {
-            set_root(db);
-        }
+    public:
 
         template<class T>
         T * getObjectOfType(Handle hdl) {
@@ -101,9 +105,10 @@ namespace collections
     protected:
 
         void u_clearState() {
-            base::u_clearState();
-
+            _cached_root = nullptr;
             form_watcher.u_clearState();
+
+            base::u_clearState();
         }
 
     };

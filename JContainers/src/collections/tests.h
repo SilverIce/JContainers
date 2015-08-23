@@ -514,12 +514,12 @@ namespace collections { namespace {
     {
         auto root = &map::object(context);
         auto rc1 = root->refCount();
-        context.setDataBase(root);
+        context.set_root(root);
         const auto rcDiff = root->refCount() - rc1;
         EXPECT_TRUE(rcDiff > 0);
 
         auto rc2 = root->refCount();
-        context.setDataBase(nullptr);
+        context.set_root(nullptr);
         const auto rcDiff2 = - root->refCount() + rc2;
         // had to hardcode this - old. db gets released, gets retained by aqueue, thus -rcDiff2 != rcDiff
         EXPECT_TRUE((1 + rcDiff2) == rcDiff);

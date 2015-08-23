@@ -146,7 +146,7 @@ namespace collections
     //////////////////////////////////////////////////////////////////////////
 
     object_base* object_context::root() {
-        return getObject(_root_object_id);
+        return getObject(_root_object_id.load(std::memory_order_relaxed));
     }
 
     void object_context::set_root(object_base *db) {
@@ -166,7 +166,7 @@ namespace collections
             prev->tes_release();
         }
 
-        _root_object_id = db ? db->uid() : HandleNull;
+        _root_object_id.store(db ? db->uid() : HandleNull, std::memory_order_relaxed);
     }
 
     //////////////////////////////////////////////////////////////////////////

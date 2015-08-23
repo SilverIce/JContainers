@@ -20,18 +20,14 @@ namespace form_watching {
     class watched_form {
     public:
 
-        std::atomic<bool> _deleted;
-
-        watched_form() {
-            _deleted._My_val = false; // hack
-        }
+        std::atomic<bool> _deleted = false;
 
         bool is_deleted() const {
-            return _deleted.load(std::memory_order_relaxed);
+            return _deleted.load(std::memory_order_acquire);
         }
 
         void set_deleted() {
-            _deleted.store(true, std::memory_order_relaxed);
+            _deleted.store(true, std::memory_order_release);
         }
     };
 

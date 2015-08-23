@@ -33,7 +33,7 @@ namespace boost { namespace serialization {
         }
 
         save_atomic(ar, t._tes_refCount);
-        ar << t._id;
+        save_atomic(ar, t._id);
         ar << t._tag;
     }
 
@@ -56,12 +56,12 @@ namespace boost { namespace serialization {
         switch (version) {
         case 2:
         case 1:
-            ar >> t._id;
+            load_atomic(ar, t._id);
             ar >> t._tag;
             break;
         case 0:
             ar >> t._type;
-            ar >> t._id;
+            load_atomic(ar, t._id);
             break;
         default:
             jc_assert(false);

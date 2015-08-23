@@ -35,15 +35,15 @@ namespace collections
             _all_objects.insert(&obj);
         }
 
-        void registerNewObjectId(object_base& obj) {
-            jc_assert(obj._uid() == HandleNull);
+        Handle registerNewObjectId(object_base& obj) {
+            //jc_assert(obj._uid() == HandleNull);
 
             write_lock g(_mutex);
 
             auto id = _idGen.new_id();
             jc_assert(_map.find(id) == _map.end());
             _map.insert(registry_container::value_type(id, &obj));
-            obj._id = (Handle)id;
+            return (Handle)id;
         }
 
         void removeObject(object_base& obj) {

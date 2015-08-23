@@ -5,14 +5,19 @@ namespace collections
     }
 
     Handle object_base::public_id() {
-        if (_id == HandleNull) {
+        using namespace std;
+
+        auto id = _id.load(memory_order_acquire);
+        if (id == HandleNull) {
             object_lock l(this);
-            if (_id == HandleNull) {
-                context().registry->registerNewObjectId(*this);
+            id = _id.load(memory_order_relaxed);
+            if (id == HandleNull) {
+                id = context().registry->registerNewObjectId(*this);
+                _id.store(id, memory_order_release);
             }
         }
 
-        return _id;
+        return id;
     }
 
     /*
@@ -35,10 +40,16 @@ namespace collections
     */
 
     Handle object_base::uid() {
-        if (_id == HandleNull) {
+        using namespace std;
+
+        auto id = _id.load(memory_order_acquire);
+        if (id == HandleNull) {
             object_lock l(this);
-            if (_id == HandleNull) {
-                context().registry->registerNewObjectId(*this);
+            id = _id.load(memory_order_relaxed);
+            if (id == HandleNull) {
+                id = context().registry->registerNewObjectId(*this);
+                _id.store(id, memory_order_release);
+                
                 if (!_refCount) {
                     // prolong_lifetime if the object is not referenced by another objects -> should be done,
                     // as we must ensure that not-owned object will not hang forever
@@ -48,7 +59,7 @@ namespace collections
         }
 
         // it's possible that release from queue will happen just before public id will be exposed?
-        return _id;
+        return id;
     }
 
 	// AQueue is the only caller of the function. The function invoked when the object's lifetime expires.
@@ -84,7 +95,7 @@ namespace collections
             --_tes_refCount;
             if (noOwners()) {
                 // a user releases the object, no owners - I may even delete it immediately
-                context().aqueue->prolong_lifetime(*this, false);
+                context().aqueue->prolong_lifetime(*this, true);
             }
         }
     }
@@ -94,7 +105,7 @@ namespace collections
             --_stack_refCount;
             if (noOwners()) {
                 // the object no more referenced by Lua or stack, no owners - I may even delete it immediately
-                // (immediately if not exposed to Skyrim)
+                // (immediately if the object is not exposed to Skyrim, i.e. has no public ID)
                 prolong_lifetime();
             }
         }
@@ -108,7 +119,7 @@ namespace collections
             --_refCount;
             if (noOwners()) {
                 // the object get's erased from another object, no owners - I may even delete it immediately
-                // (immediately if not exposed to Skyrim)
+                // (immediately if the object is not exposed to Skyrim, i.e. has no public ID)
                 prolong_lifetime();
             }
         }

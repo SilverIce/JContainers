@@ -262,6 +262,8 @@ namespace lua { namespace aux_wip {
         fixture() : pool(tc) {}
     };
 
+#if 0
+
     TEST_F(fixture, Lua, trtr)
     {
         std::atomic_int8_t stop = 0;
@@ -327,7 +329,7 @@ namespace lua { namespace aux_wip {
     {
         EXPECT_TRUE(autofreed_context(pool)->eval_lua_function(nullptr, "return testing.perform()")->intValue() != 0);
     }
-
+#endif
 }
 }
 
