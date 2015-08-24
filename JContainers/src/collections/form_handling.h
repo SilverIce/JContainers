@@ -12,9 +12,6 @@ namespace collections {
 
     namespace form_handling {
 
-        static const char * kFormData = "__formData";
-        static const char * kFormDataSeparator = "|";
-
         inline uint8_t mod_index(FormId formId) {
             return (uint32_t)formId >> 24;
         }
@@ -43,6 +40,9 @@ namespace collections {
                 return skse::lookup_form(handle) ? handle : FormId::Zero;
             }
         }
+
+        static const char kFormData[] = "__formData";
+        static const char * kFormDataSeparator = "|";
 
         inline boost::optional<std::string> to_string(FormId formId) {
 
@@ -77,7 +77,7 @@ namespace collections {
         }
 
         inline bool is_form_string(const char *string) {
-            return string && strncmp(string, kFormData, strlen(kFormData)) == 0;
+            return string && strncmp(string, kFormData, sizeof kFormData - 1) == 0;
         }
 
         // TODO: rename me!
@@ -85,13 +85,13 @@ namespace collections {
             namespace bs = boost;
             namespace ss = std;
 
-            auto pair1 = bs::half_split(fstring, "|");
+            auto pair1 = bs::half_split(fstring, kFormDataSeparator);
 
             if (pair1.second.empty() || !std::equal(pair1.first.begin(), pair1.first.end(), kFormData)) {
                 return boost::optional<FormId>(false, FormId::Zero);
             }
 
-            auto pair2 = bs::half_split(pair1.second, "|");
+            auto pair2 = bs::half_split(pair1.second, kFormDataSeparator);
             // pair2.first - modname part can be empty
             if (/*pair2.first.empty() || */pair2.second.empty()) {
                 return boost::optional<FormId>(false, FormId::Zero);

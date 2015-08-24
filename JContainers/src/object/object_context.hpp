@@ -129,7 +129,7 @@ namespace collections
 
     void object_context::u_applyUpdates(const serialization_version saveVersion) {
         if (saveVersion <= serialization_version::pre_gc) {
-            if (auto db = root()) {
+            if (auto db = u_getObject(_root_object_id.load(std::memory_order_relaxed))) {
                 db->tes_retain();
             }
         }
@@ -145,12 +145,8 @@ namespace collections
 
     //////////////////////////////////////////////////////////////////////////
 
-    object_base* object_context::root() {
-        return getObject(_root_object_id.load(std::memory_order_relaxed));
-    }
-
     void object_context::set_root(object_base *db) {
-        object_base * prev = getObject(_root_object_id);
+        object_base * prev = getObject(_root_object_id.load(std::memory_order_relaxed));
 
         if (prev == db) {
             return;

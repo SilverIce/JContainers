@@ -108,12 +108,8 @@ namespace collections {
 
     protected:
         std::atomic<Handle> _root_object_id{ HandleNull };
-        spinlock _lazyDBLock;
-
+        spinlock _lazyRootInitLock;
     public:
-        Handle root_id() const { return _root_object_id;}
-
-        object_base* root();
         void set_root(object_base *db);
 
     private:

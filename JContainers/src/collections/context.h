@@ -53,12 +53,15 @@ namespace collections
             map * result = _cached_root.load(std::memory_order_acquire);
             if (!result) {
 
-                spinlock::guard g(_lazyDBLock);
+                spinlock::guard g(_lazyRootInitLock);
 
                 result = _cached_root.load(std::memory_order_relaxed);
                 if (!result) {
-                    result = &map::object(*this);
-                    set_root(result);
+                    result = base::getObjectOfType<map>(_root_object_id.load(std::memory_order_relaxed));
+                    if (!result) {
+                        result = &map::object(*this);
+                        set_root(result);
+                    }
 
                     _cached_root.store(result, std::memory_order_release);
                 }
