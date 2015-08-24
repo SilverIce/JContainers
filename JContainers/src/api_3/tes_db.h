@@ -15,7 +15,7 @@ Manages keys and values associations as JMap";
 
         template<class T>
         static T solveGetter(const char* path, T t = T(0)) {
-            return tes_object::resolveGetter<T>(tes_context::instance().database(), path, t); 
+            return tes_object::resolveGetter<T>(&tes_context::instance().root(), path, t); 
         }
         REGISTERF(solveGetter<Float32>, "solveFlt", "path default=0.0",
 "attempts to get value associated with path.\n\
@@ -36,7 +36,7 @@ JDB.solveObj(\".frostfall.arrayC\") will return array containing [\"stringValue\
 
         template<class T>
         static bool solveSetter(const char* path, T value, bool createMissingKeys = false) { 
-            return tes_object::solveSetter(tes_context::instance().database(), path, value, createMissingKeys);
+            return tes_object::solveSetter(&tes_context::instance().root(), path, value, createMissingKeys);
         }
         REGISTERF(solveSetter<Float32>, "solveFltSetter", "path value createMissingKeys=false",
             "Attempts to assign value. Returns false if no such path\n"
@@ -48,16 +48,12 @@ JDB.solveObj(\".frostfall.arrayC\") will return array containing [\"stringValue\
 
 
         static void setObj(const char *path, object_stack_ref& obj) {
-            map *dbMap = tes_context::instance().database();
-
-            if (!dbMap) {
-                return;
-            }
+            map& dbMap = tes_context::instance().root();
 
             if (obj) {
-                tes_map::setItem(dbMap, path, obj);
+                tes_map::setItem(&dbMap, path, obj);
             } else {
-                tes_map::removeKey(dbMap, path);
+                tes_map::removeKey(&dbMap, path);
             }
         }
         REGISTERF(setObj, "setObj", "key object",
@@ -67,22 +63,22 @@ for ex. JDB.setObj(\"frostfall\", frostFallInformation) will associate 'frostall
 );
 
         static bool hasPath(const char* path) {
-            return tes_object::hasPath(tes_context::instance().database(), path);
+            return tes_object::hasPath(&tes_context::instance().root(), path);
         }
         REGISTERF2(hasPath, "path", "returns true, if DB capable resolve given path, e.g. it able to execute solve* or solver*Setter functions successfully");
 
         static object_base* allKeys() {
-            return tes_map::allKeys( tes_context::instance().database()->as<map>() );
+            return tes_map::allKeys( &tes_context::instance().root() );
         }
         REGISTERF2(allKeys, "*", "returns new array containing all JDB keys");
 
         static object_base* allValues() {
-            return tes_map::allValues( tes_context::instance().database()->as<map>() );
+            return tes_map::allValues( &tes_context::instance().root() );
         }
         REGISTERF2(allValues, "*", "returns new array containing all containers associated with JDB");
 
         static void writeToFile(const char * path) {
-            tes_object::writeToFile( tes_context::instance().database(), path);
+            tes_object::writeToFile( &tes_context::instance().root(), path);
         }
         REGISTERF2(writeToFile, "path", "writes storage data into JSON file at given path");
 

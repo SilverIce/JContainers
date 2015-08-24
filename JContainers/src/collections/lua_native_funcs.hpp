@@ -247,7 +247,7 @@ namespace lua { namespace api {
     }
 
     cexport handle JDB_instance(tes_context *jc_context) {
-        return jc_context->database();
+        return &jc_context->root();
     }
 }
 }

@@ -33,8 +33,6 @@ namespace collections
             }
         }
 
-        _root_object_id = HandleNull;
-
         /*  Not good, but working solution.
 
         purpose: free allocated memory
@@ -95,19 +93,16 @@ namespace collections
     template<>
     void object_context::load(boost::archive::binary_iarchive & ar, unsigned int version) {
         ar >> *registry >> *aqueue;
-        boost::serialization::load_atomic(ar, _root_object_id);
     }
 
     template<>
     void object_context::save(boost::archive::binary_oarchive & ar, unsigned int version) const {
         ar << *registry << *aqueue;
-        boost::serialization::save_atomic(ar, _root_object_id);
     }
 
     template<>
     void object_context::load_data_in_old_way(boost::archive::binary_iarchive& ar) {
         ar >> *registry >> *aqueue;
-        boost::serialization::load_atomic(ar, _root_object_id);
     }
 
     void object_context::u_print_stats() const {
@@ -127,14 +122,6 @@ namespace collections
         }
     }
 
-    void object_context::u_applyUpdates(const serialization_version saveVersion) {
-        if (saveVersion <= serialization_version::pre_gc) {
-            if (auto db = u_getObject(_root_object_id.load(std::memory_order_relaxed))) {
-                db->tes_retain();
-            }
-        }
-    }
-
     void object_context::u_postLoadMaintenance(const serialization_version saveVersion)
     {
         util::do_with_timing("Garbage collection", [&]() {
@@ -142,30 +129,6 @@ namespace collections
             _DMESSAGE("%u garbage objects collected. %u objects are parts of cyclic graphs", res.garbage_total, res.part_of_graphs);
         });
     }
-
-    //////////////////////////////////////////////////////////////////////////
-
-    void object_context::set_root(object_base *db) {
-        object_base * prev = getObject(_root_object_id.load(std::memory_order_relaxed));
-
-        if (prev == db) {
-            return;
-        }
-
-        if (db) {
-            //db->retain();
-            db->tes_retain(); // emulates a user-who-needs @root, this will prevent @db from being garbage collected
-        }
-
-        if (prev) {
-            //prev->release();
-            prev->tes_release();
-        }
-
-        _root_object_id.store(db ? db->uid() : HandleNull, std::memory_order_relaxed);
-    }
-
-    //////////////////////////////////////////////////////////////////////////
 
     void object_context::add_dependent_context(dependent_context& ctx) {
         spinlock::guard g(_dependent_contexts_mutex);

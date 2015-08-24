@@ -71,8 +71,8 @@ namespace tes_api_3 {
                 return nullptr;
             }
 
-            auto db = tes_context::instance().database();
-            form_map::ref fmap = tes_map::getItem<object_base*>(db, storageName)->as<form_map>();
+            auto& db = tes_context::instance().root();
+            form_map::ref fmap = tes_map::getItem<object_base*>(&db, storageName)->as<form_map>();
 
             if (!fmap) {
                 fmap = tes_object::object<form_map>();
@@ -95,8 +95,8 @@ namespace tes_api_3 {
                 auto fmap = makeFormStorage(storageName);
                 tes_form_map::setItem(fmap, formKey, entry);
             } else {
-                auto db = tes_context::instance().database();
-                auto fmap = tes_map::getItem<object_base*>(db, storageName)->as<form_map>();
+                auto& db = tes_context::instance().root();
+                auto fmap = tes_map::getItem<object_base*>(&db, storageName)->as<form_map>();
                 tes_form_map::removeKey(fmap, formKey);
             }
         }
@@ -119,8 +119,8 @@ namespace tes_api_3 {
         REGISTERF(makeMapEntry, "makeEntry", "storageName fKey", "returns (or creates new if not found) JMap entry for given storage and form");
 
         static object_base *findEntry(const char *storageName, key_cref form) {
-            auto db = tes_context::instance().database();
-            form_map *fmap = tes_map::getItem<object_base*>(db, storageName)->as<form_map>();
+            auto& db = tes_context::instance().root();
+            form_map *fmap = tes_map::getItem<object_base*>(&db, storageName)->as<form_map>();
             return tes_form_map::getItem<object_base*>(fmap, form);
         }
         REGISTERF2(findEntry, "storageName fKey", "search for entry for given storage and form");

@@ -49,7 +49,6 @@ namespace collections {
 
     protected:
         void u_postLoadInitializations();
-        void u_applyUpdates(const serialization_version saveVersion);
         void u_postLoadMaintenance(const serialization_version saveVersion);
         void u_print_stats() const;
 
@@ -105,12 +104,6 @@ namespace collections {
 
         friend class boost::serialization::access;
         BOOST_SERIALIZATION_SPLIT_MEMBER();
-
-    protected:
-        std::atomic<Handle> _root_object_id{ HandleNull };
-        spinlock _lazyRootInitLock;
-    public:
-        void set_root(object_base *db);
 
     private:
         spinlock _dependent_contexts_mutex;

@@ -18,6 +18,9 @@ namespace collections
     class tes_context : public object_context
     {
         using base = object_context;
+
+        void u_applyUpdates(const serialization_version saveVersion);
+
     public:
 
         using post_init = ::meta<void(*)(tes_context&)>;
@@ -42,33 +45,13 @@ namespace collections
     private:
 
         std::atomic<map*> _cached_root = nullptr;
+        std::atomic<Handle> _root_object_id{ HandleNull };
+        spinlock _lazyRootInitLock;
 
     public:
 
-        object_stack_ref_template<map> database_ref() {
-            return database();
-        }
-
-        map* database() {
-            map * result = _cached_root.load(std::memory_order_acquire);
-            if (!result) {
-
-                spinlock::guard g(_lazyRootInitLock);
-
-                result = _cached_root.load(std::memory_order_relaxed);
-                if (!result) {
-                    result = base::getObjectOfType<map>(_root_object_id.load(std::memory_order_relaxed));
-                    if (!result) {
-                        result = &map::object(*this);
-                        set_root(result);
-                    }
-
-                    _cached_root.store(result, std::memory_order_release);
-                }
-            }
-
-            return result->as<map>();
-        }
+        void set_root(object_base *db);
+        map& root();
 
     public:
 
@@ -96,18 +79,21 @@ namespace collections
         void read_from_string(const std::string & data);
         std::string write_to_string();
 
-        template<class Archive> void serialize(Archive & ar, const unsigned int version) {
-            ar & static_cast<base&>(*this);
-            //ar & form_watcher;
-        }
+        template<class Archive> void load(Archive & ar, unsigned int version);
+        template<class Archive> void save(Archive & ar, unsigned int version) const;
+        template<class Archive> void load_data_in_old_way(Archive& ar);
 
         void clearState();
         // complete shutdown, this context shouldn't be used for now
         void shutdown();
 
+        friend class boost::serialization::access;
+        BOOST_SERIALIZATION_SPLIT_MEMBER();
+
     protected:
 
         void u_clearState() {
+            _root_object_id.store(HandleNull, std::memory_order_relaxed);
             _cached_root = nullptr;
             form_watcher.u_clearState();
 

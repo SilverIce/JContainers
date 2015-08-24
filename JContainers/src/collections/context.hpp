@@ -154,6 +154,31 @@ namespace collections {
         return stream.str();
     }
 
+    template<class Archive> void tes_context::load_data_in_old_way(Archive& ar) {
+        base::load_data_in_old_way(ar);
+        boost::serialization::load_atomic(ar, _root_object_id);
+    }
+
+    template<class Archive> void tes_context::load(Archive & ar, unsigned int version) {
+        ar & static_cast<base&>(*this);
+        boost::serialization::load_atomic(ar, _root_object_id);
+    }
+
+    template<class Archive> void tes_context::save(Archive & ar, unsigned int version) const {
+        ar & static_cast<const base&>(*this);
+        boost::serialization::save_atomic(ar, _root_object_id);
+    }
+
+    ///////////////////////////
+
+    void tes_context::u_applyUpdates(const serialization_version saveVersion) {
+        if (saveVersion <= serialization_version::pre_gc) {
+            if (auto db = u_getObject(_root_object_id.load(std::memory_order_relaxed))) {
+                db->tes_retain();
+            }
+        }
+    }
+
     ////////////////////////
 
     void tes_context::shutdown() {
@@ -165,5 +190,51 @@ namespace collections {
         activity_stopper s{ *this };
         u_clearState();
     }
+
+    ////////////////////////////
+
+    void tes_context::set_root(object_base *db) {
+        object_base * prev = getObject(_root_object_id.load(std::memory_order_relaxed));
+
+        if (prev == db) {
+            return;
+        }
+
+        if (db) {
+            //db->retain();
+            db->tes_retain(); // emulates a user-who-needs @root, this will prevent @db from being garbage collected
+        }
+
+        if (prev) {
+            //prev->release();
+            prev->tes_release();
+        }
+
+        _root_object_id.store(db ? db->uid() : HandleNull, std::memory_order_relaxed);
+    }
+
+    map& tes_context::root()
+{
+        map * result = _cached_root.load(std::memory_order_acquire);
+        if (!result) {
+
+            spinlock::guard g(_lazyRootInitLock);
+
+            result = _cached_root.load(std::memory_order_relaxed);
+            if (!result) {
+                result = base::getObjectOfType<map>(_root_object_id.load(std::memory_order_relaxed));
+                if (!result) {
+                    result = &map::object(*this);
+                    set_root(result);
+                }
+
+                _cached_root.store(result, std::memory_order_release);
+            }
+        }
+
+        return *result;
+    }
+
+    //////////////////////////////////////////////////////////////////////////
 
 }

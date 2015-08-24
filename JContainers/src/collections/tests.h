@@ -503,14 +503,13 @@ namespace collections { namespace {
         EXPECT_TRUE(*cnt.u_get("acdc")->stringValue() == name);
     }
 
-    JC_TEST(tes_context, database)
+    JC_TEST(tes_context, root)
     {
-        auto db = context.database();
-        EXPECT_TRUE(db != nullptr);
-        EXPECT_TRUE(db == context.database());
+        auto& db = context.root();
+        EXPECT_TRUE(&db == &context.root());
     }
 
-    JC_TEST(tes_context, database_setter)
+    JC_TEST(tes_context, root_gets_retained)
     {
         auto root = &map::object(context);
         auto rc1 = root->refCount();

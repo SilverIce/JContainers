@@ -104,7 +104,7 @@ By using this function a user helps JC to get rid of no-more-needed to the user 
 
                 array::ref location;
 
-                ca::visit_value(*tes_context::instance().database(), path.c_str(), ca::creative, [&](item& value) {
+                ca::visit_value(tes_context::instance().root(), path.c_str(), ca::creative, [&](item& value) {
                     if (auto loc = value.object()->as<array>()) {
                         location = loc;
                     }
@@ -131,7 +131,7 @@ JValue.cleanPool(\"uniquePoolName\")"
 
         static void cleanPool(const char *poolName) {
             if (poolName) {
-                auto locationsMap = tes_context::instance().database()->findOrDef(JC_OBJECT_POOL_KEY).object()->as<map>();
+                auto locationsMap = tes_context::instance().root().findOrDef(JC_OBJECT_POOL_KEY).object()->as<map>();
                 if (locationsMap) {
                     locationsMap->erase(poolName);
                 }
