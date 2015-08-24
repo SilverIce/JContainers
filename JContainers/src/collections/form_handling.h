@@ -27,6 +27,10 @@ namespace collections {
             return (uint32_t)formId & 0x00FFFFFF;
         }
 
+        inline uint64_t form_id_to_handle(FormId id) {
+            return 0x0000ffff00000000 | (uint64_t)id;
+        }
+
         inline FormId construct(uint8_t mod_id, uint32_t local_identifier) {
             return (FormId) ((mod_id << 24) | local_id((FormId)local_identifier));
         }

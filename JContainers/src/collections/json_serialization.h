@@ -291,7 +291,7 @@ namespace collections {
                 } else {
                     if (form_handling::is_form_string(string)) {
                         /*  having dilemma here:
-                            if string looks like form-string and plugin name can't be resolved:
+                            if the string looks like form-string and plugin name can't be resolved:
                             a. lost info and convert it to FormZero
                             b. save info and convert it to string
                         */
@@ -300,7 +300,7 @@ namespace collections {
                     else if (schedule_ref_resolving(string, container, item_key)) { // otherwise it's reference string?
                         ;
                     }
-                    else {  // otherwise it's just a string, althought it starts with "__"
+                    else {  // otherwise it's just a string, although it starts with "__"
                         item = string;
                     }
                 }

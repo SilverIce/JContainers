@@ -4,7 +4,9 @@
 //#include <memory>
 #include <atomic>
 #include "boost/shared_ptr.hpp"
+#include "boost/smart_ptr/weak_ptr.hpp"
 #include "boost/serialization/split_member.hpp"
+#include "boost/noncopyable.hpp"
 
 #include "rw_mutex.h"
 #include "form_id.h"
@@ -17,10 +19,26 @@ namespace form_watching {
 
     class dyn_form_watcher;
 
-    class watched_form {
+    class watched_form : public boost::noncopyable {
+
+        FormId _handle = FormId::Zero;
+        std::atomic<bool> _deleted = false;
+
     public:
 
-        std::atomic<bool> _deleted = false;
+        watched_form() = delete;
+
+        explicit watched_form(FormId handle)
+            : _handle(handle)
+        {
+            skse::retain_handle(handle);
+        }
+
+        ~watched_form() {
+            if (false == is_deleted()) {
+                skse::release_handle(_handle);
+            }
+        }
 
         bool is_deleted() const {
             return _deleted.load(std::memory_order_acquire);
@@ -37,7 +55,7 @@ namespace form_watching {
     // Had to be single instance as there is single Skyrim instance only?
     class dyn_form_watcher {
 
-        using watched_forms_t = std::hash_map<FormId, boost::shared_ptr<watched_form> >;
+        using watched_forms_t = std::hash_map<FormId, boost::weak_ptr<watched_form> >;
     public:
 
         bshared_mutex _mutex;

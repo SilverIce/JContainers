@@ -20,6 +20,9 @@ namespace skse {
     FormId resolve_handle(FormId handle);
     TESForm* lookup_form(FormId handle);
 
+    void retain_handle(FormId handle);
+    void release_handle(FormId handle);
+
     bool is_fake();
     void set_no_fake();
     void console_print(const char * fmt, ...);

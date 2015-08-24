@@ -1,7 +1,12 @@
 #pragma once
 
+#include "boost/smart_ptr/make_shared_object.hpp"
+#include <boost/algorithm/string/join.hpp>
+
 #include "skse/GameForms.h"
+#include "skse/PapyrusVM.h"
 #include "skse/skse.h"
+
 #include "collections/form_handling.h"
 #include "collections/dyn_form_watcher.h"
 
@@ -11,9 +16,16 @@ namespace collections {
 
         namespace fh = form_handling;
 
+        template<class ...Params>
+        inline void log(const char* fmt, Params&& ...ps) {
+            std::string s("FormWatching: ");
+            s += fmt;
+            skse::console_print(s.c_str(), std::forward<Params>(ps) ...);
+        }
+
         void dyn_form_watcher::on_form_deleted(FormId fId)
         {
-            _DMESSAGE("dyn_form_watcher: flag form 0x%x as deleted", fId);
+            log("flag form 0x%x as deleted", fId);
 
             if_condition_then_perform(
                 [fId](const dyn_form_watcher& w) {
@@ -23,8 +35,10 @@ namespace collections {
                     auto itr = w._watched_forms.find(fId);
                     if (itr != w._watched_forms.end()) {
                         //skse::console_print("dyn_form_watcher:on_form_deleted form %x", fId);
-
-                        itr->second->set_deleted();
+                        auto watched = itr->second.lock();
+                        if (watched) {
+                            watched->set_deleted();
+                        }
                         w._watched_forms.erase(itr);
                     }
                 },
@@ -34,7 +48,7 @@ namespace collections {
 
         boost::shared_ptr<watched_form> dyn_form_watcher::watch_form(FormId fId)
         {
-            _DMESSAGE("dyn_form_watcher: form 0x%x being watched", fId);
+            log("form 0x%x being watched", fId);
 
             write_lock l{ _mutex };
             return u_watch_form(fId);
@@ -45,7 +59,7 @@ namespace collections {
 
             lock_or_fail(std::atomic_flag& flg) : flag(flg) {
                 BOOST_ASSERT_MSG(false == flg.test_and_set(std::memory_order_acquire),
-                    "my dyn_form_watcher test has failed?");
+                    "My dyn_form_watcher test has failed? Report this please");
             }
 
             ~lock_or_fail() {
@@ -55,20 +69,19 @@ namespace collections {
 
         boost::shared_ptr<watched_form> dyn_form_watcher::u_watch_form(FormId fId)
         {
-            lock_or_fail g(_is_inside_unsafe_func);
+            lock_or_fail g{ _is_inside_unsafe_func };
+
+            log("watching form %x", fId);
 
             auto itr = _watched_forms.find(fId);
-            if (itr != _watched_forms.end()) {
-                return itr->second;
+            if (itr != _watched_forms.end() && !itr->second.expired()) {
+                return itr->second.lock();
             }
             else {
-
-                return _watched_forms.emplace(
-                    watched_forms_t::value_type{
-                        fId,
-                        boost::shared_ptr < watched_form > {new watched_form{}}
-                    }
-                ).first->second;
+                auto watched = boost::make_shared<watched_form>(fId);
+                //boost::shared_ptr < watched_form > watched{ new watched_form{ fId } };
+                _watched_forms.emplace(watched_forms_t::value_type{ fId, watched });
+                return watched;
             }
         }
 
@@ -101,7 +114,7 @@ namespace collections {
                     return true;
                 }
                 else {
-                    _DMESSAGE("weak_form_id: form 0x%x lazily zeroed out", _id);
+                    log("weak_form_id: form 0x%x lazily zeroed out", _id);
                     _watched_form = nullptr;
                     _expired = true;
                 }

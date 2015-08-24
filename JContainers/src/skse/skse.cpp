@@ -14,6 +14,8 @@
 #include "skse/PluginAPI.h"
 
 #include "gtest.h"
+#include "collections/form_handling.h"
+#include "skse/PapyrusVM.h"
 //#include "util/util.h"
 //#include "jc_interface.h"
 //#include "reflection/reflection.h"
@@ -137,4 +139,17 @@ namespace skse {
         console_print(fmt, args);
         va_end(args);
     }
+
+    void retain_handle(FormId handle) {
+        if (!is_fake()) {
+            (*g_objectHandlePolicy)->AddRef(collections::form_handling::form_id_to_handle(handle));
+        }
+    }
+
+    void release_handle(FormId handle) {
+        if (!is_fake()) {
+            (*g_objectHandlePolicy)->Release(collections::form_handling::form_id_to_handle(handle));
+        }
+    }
+
 }
