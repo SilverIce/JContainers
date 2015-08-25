@@ -14,8 +14,6 @@ namespace collections {
 
     namespace form_watching {
 
-        dyn_form_watcher dyn_form_watcher::_instance;
-
         namespace fh = form_handling;
 
         template<class ...Params>
@@ -51,8 +49,6 @@ namespace collections {
 
         boost::shared_ptr<watched_form> dyn_form_watcher::watch_form(FormId fId)
         {
-            log("form %x being watched", fId);
-
             write_lock l{ _mutex };
             return u_watch_form(fId);
         }
@@ -89,6 +85,14 @@ namespace collections {
             }
         }
 
+        void tiny_test(FormId id) {
+            auto form = skse::lookup_form(id);
+            if (form) {
+                auto handle = (*g_objectHandlePolicy)->Create(TESForm::kTypeID, form);
+                BOOST_ASSERT((uint32_t)(handle >> 32) == 0x0000ffff);
+            }
+        }
+
         weak_form_id::weak_form_id(FormId id)
             : _id(id)
             , _expired(skse::lookup_form(id) == nullptr)
@@ -96,6 +100,8 @@ namespace collections {
             if (!fh::is_static(id) && !_expired) {
                 _watched_form = dyn_form_watcher::instance().watch_form(id);
             }
+
+            tiny_test(id);
         }
 
         weak_form_id::weak_form_id(const TESForm& form)
@@ -105,6 +111,8 @@ namespace collections {
             if (!fh::is_static(_id)) {
                 _watched_form = dyn_form_watcher::instance().watch_form(_id);
             }
+
+            tiny_test(_id);
         }
 
         bool weak_form_id::is_not_expired() const

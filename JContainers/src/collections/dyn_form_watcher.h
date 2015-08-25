@@ -61,8 +61,6 @@ namespace form_watching {
         watched_forms_t _watched_forms;
         std::atomic_flag _is_inside_unsafe_func;
 
-        static dyn_form_watcher _instance;
-
     public:
 
         dyn_form_watcher() {
@@ -70,6 +68,7 @@ namespace form_watching {
         }
 
         static dyn_form_watcher& instance() {
+            static dyn_form_watcher _instance;
             return _instance;
         }
 

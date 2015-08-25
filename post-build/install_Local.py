@@ -10,6 +10,6 @@ if __name__ == '__main__':
 	localDir = "../../Data"
 
 	mode = sys.argv[1]
-	doLocalInstall(mode, "\\\\VBOXSVR\\vilya\\PlayOnLinux's virtual drives\\Skyrim\\drive_c\\Program Files\\Mod Organizer\\mods\\JContainers.3.2.4 - WINE")
+	doLocalInstall(mode, localDir)
 	print 'post-install finished'
 	
