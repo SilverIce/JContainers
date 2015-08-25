@@ -10,9 +10,21 @@
 #   ifdef NO_JC_DEBUG
 #       define jc_assert(expr)
 #       define jc_debug(message, ...)
+#       define jc_assert_msg(expr, fmt, ...)
 #   else
-#       define jc_assert(expr)              if (!(expr)) { __debugbreak(); }
+#       define jc_assert(expr)              do { if (!(expr)) { __debugbreak(); } } while(0)
 #       define jc_debug(message, ...)       printf(message"\n", __VA_ARGS__);
+
+extern void _MESSAGE(const char* fmr, ...);
+
+#       define jc_assert_msg(expr, fmt, ...)    \
+            do { \
+                if (!(expr)) { \
+                    _MESSAGE(fmt, __VA_ARGS__); \
+                    assert(false); \
+                } \
+            } while(0)
+
 #   endif
 
 __declspec(noreturn) inline void noreturn_func() {}

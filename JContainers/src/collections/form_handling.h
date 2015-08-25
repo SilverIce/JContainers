@@ -24,6 +24,10 @@ namespace collections {
             return (uint32_t)formId & 0x00FFFFFF;
         }
 
+        inline bool is_form_handle(FormHandle handle) {
+            return (uint32_t)((uint64_t)handle >> 32) == 0x0000FFFF;
+        }
+
         inline FormHandle form_id_to_handle(FormId id) {
             return (FormHandle)(0x0000ffff00000000 | (uint64_t)id);
         }

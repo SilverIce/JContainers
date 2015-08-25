@@ -1,7 +1,9 @@
 #pragma once
 
-#include "boost/smart_ptr/make_shared_object.hpp"
+#include <boost/smart_ptr/make_shared_object.hpp>
 #include <boost/algorithm/string/join.hpp>
+#include <assert.h>
+#include <inttypes.h>
 
 #include "skse/GameForms.h"
 #include "skse/PapyrusVM.h"
@@ -23,22 +25,72 @@ namespace collections {
             skse::console_print(s.c_str(), std::forward<Params>(ps) ...);
         }
 
-        void dyn_form_watcher::on_form_deleted(FormHandle fId)
+        class watched_form : public boost::noncopyable {
+
+            const FormId _handle = FormId::Zero;
+            std::atomic<bool> _deleted = false;
+
+        public:
+
+            watched_form() = delete;
+
+            explicit watched_form(FormId handle)
+                : _handle(handle)
+            {
+                log("watched_form retains %X", handle);
+                skse::retain_handle(handle);
+            }
+
+            ~watched_form() {
+                if (false == is_deleted()) {
+                    log("watched_form releases %X", _handle);
+                    skse::release_handle(_handle);
+                }
+            }
+
+            bool is_deleted() const {
+                return _deleted.load(std::memory_order_acquire);
+            }
+
+            void set_deleted() {
+                _deleted.store(true, std::memory_order_release);
+            }
+        };
+
+        dyn_form_watcher dyn_form_watcher::_instance;
+
+        dyn_form_watcher::dyn_form_watcher() {
+            _is_inside_unsafe_func._My_flag = false;
+            log("dyn_form_watcher created");
+        }
+
+        void dyn_form_watcher::on_form_deleted(FormHandle handle)
         {
-            BOOST_ASSERT_MSG(form_handling::is_static((FormId)fId) == false,
-                "If failed, then there is static form destruction event too?");
+            // already failed, there are plenty of any kind of objects that are deleted every moment, even during initial splash screen
+            //jc_assert_msg(form_handling::is_static((FormId)handle) == false,
+                //"If failed, then there is static form destruction event too? fId %" PRIX64, handle);
+
+            if (!fh::is_form_handle(handle)) {
+                log("on_form_deleted: skipped %" PRIX64, handle);
+                return;
+            }
+
+            // to test whether static form gets ever destroyed or not
+            //jc_assert(form_handling::is_static((FormId)handle) == false);
+
+            log("on_form_deleted: %" PRIX64, handle);
 
             if_condition_then_perform(
-                [fId](const dyn_form_watcher& w) {
-                    return w._watched_forms.find(fId) != w._watched_forms.end();
+                [handle](const dyn_form_watcher& w) {
+                    return w._watched_forms.find(handle) != w._watched_forms.end();
                 },
-                [fId](dyn_form_watcher& w) {
-                    auto itr = w._watched_forms.find(fId);
+                [handle](dyn_form_watcher& w) {
+                    auto itr = w._watched_forms.find(handle);
                     if (itr != w._watched_forms.end()) {
                         auto watched = itr->second.lock();
                         if (watched) {
                             watched->set_deleted();
-                            log("flag form %x as deleted", fId);
+                            log("flag handle %" PRIX64 " as deleted", handle);
                         }
                         w._watched_forms.erase(itr);
                     }
@@ -57,7 +109,7 @@ namespace collections {
             std::atomic_flag& flag;
 
             lock_or_fail(std::atomic_flag& flg) : flag(flg) {
-                BOOST_ASSERT_MSG(false == flg.test_and_set(std::memory_order_acquire),
+                jc_assert_msg(false == flg.test_and_set(std::memory_order_acquire),
                     "My dyn_form_watcher test has failed? Report this please");
             }
 
@@ -68,7 +120,7 @@ namespace collections {
 
         boost::shared_ptr<watched_form> dyn_form_watcher::u_watch_form(FormId fId)
         {
-            log("watching form %x", fId);
+            log("watching form %X", fId);
 
             lock_or_fail g{ _is_inside_unsafe_func };
 
@@ -86,11 +138,12 @@ namespace collections {
         }
 
         void tiny_test(FormId id) {
+/*
             auto form = skse::lookup_form(id);
             if (form) {
                 auto handle = (*g_objectHandlePolicy)->Create(TESForm::kTypeID, form);
-                BOOST_ASSERT((uint32_t)(handle >> 32) == 0x0000ffff);
-            }
+                jc_assert(form_handling::is_form_handle(FormHandle(handle)));
+            }*/
         }
 
         weak_form_id::weak_form_id(FormId id)
@@ -126,7 +179,7 @@ namespace collections {
                     return true;
                 }
                 else {
-                    log("weak_form_id: form %x is known as deleted now", _id);
+                    log("weak_form_id: form %X is known as deleted now", _id);
                     _watched_form = nullptr;
                     _expired = true;
                 }

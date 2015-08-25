@@ -246,6 +246,14 @@ namespace lua { namespace api {
         return formmap_functions::doReadOpR(obj, weak_form_id{ key }, JCToLuaValue_None(), [](item& itm) { return JCToLuaValue_fromItem(itm); });
     }
 
+    cexport void JFormMap_removeKey(form_map *obj, FormId key) {
+        if (obj) {
+            obj->erase(weak_form_id{ key });
+        }
+    }
+
+    ////////////////////////////
+
     cexport handle JDB_instance(tes_context *jc_context) {
         return &jc_context->root();
     }

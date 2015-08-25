@@ -18,36 +18,7 @@ namespace collections {
 namespace form_watching {
 
     class dyn_form_watcher;
-
-    class watched_form : public boost::noncopyable {
-
-        const FormId _handle = FormId::Zero;
-        std::atomic<bool> _deleted = false;
-
-    public:
-
-        watched_form() = delete;
-
-        explicit watched_form(FormId handle)
-            : _handle(handle)
-        {
-            skse::retain_handle(handle);
-        }
-
-        ~watched_form() {
-            if (false == is_deleted()) {
-                skse::release_handle(_handle);
-            }
-        }
-
-        bool is_deleted() const {
-            return _deleted.load(std::memory_order_acquire);
-        }
-
-        void set_deleted() {
-            _deleted.store(true, std::memory_order_release);
-        }
-    };
+    class watched_form;
 
     // - remove FormID if none watches it
     // - 
@@ -61,14 +32,12 @@ namespace form_watching {
         watched_forms_t _watched_forms;
         std::atomic_flag _is_inside_unsafe_func;
 
+        static dyn_form_watcher _instance;
     public:
 
-        dyn_form_watcher() {
-            _is_inside_unsafe_func._My_flag = false;
-        }
+        dyn_form_watcher();
 
         static dyn_form_watcher& instance() {
-            static dyn_form_watcher _instance;
             return _instance;
         }
 
