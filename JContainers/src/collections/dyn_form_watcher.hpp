@@ -61,7 +61,6 @@ namespace collections {
 
         dyn_form_watcher::dyn_form_watcher() {
             _is_inside_unsafe_func._My_flag = false;
-            log("dyn_form_watcher created");
         }
 
         void dyn_form_watcher::on_form_deleted(FormHandle handle)

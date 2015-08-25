@@ -36,7 +36,9 @@ namespace {
 
     void revert(SKSESerializationInterface * intfc) {
         util::do_with_timing("Revert", []() {
+            skse::set_silent_api();
             collections::tes_context::instance().clearState();
+            skse::set_real_api();
         });
     }
 
@@ -89,6 +91,10 @@ namespace {
         };
 
         util::do_with_timing("Load", [intfc]() {
+
+            skse::set_silent_api();
+            collections::tes_context::instance().clearState();
+            skse::set_real_api();
 
             UInt32 type = 0;
             UInt32 version = 0;
@@ -155,7 +161,7 @@ namespace {
                 g_messaging = messaging;
             }
 
-            skse::set_no_fake();
+            skse::set_real_api();
 
             return true;
         }
@@ -172,8 +178,6 @@ namespace {
 
         __declspec(dllexport) bool SKSEPlugin_Load(const SKSEInterface * skse) {
 
-            assert(skse::is_fake() == false);
-
             g_serialization->SetUniqueID(g_pluginHandle, (UInt32)consts::storage_chunk);
 
             g_serialization->SetRevertCallback(g_pluginHandle, revert);
@@ -182,7 +186,7 @@ namespace {
 
 
             /*
-            Critical bug, reported by Anthitesis (yet he didn't knew that). Had to be found several months ago,
+            Critical bug, reported by Antithesis (yet he didn't knew that). Had to be found several months ago,
             ruins experience as any load order change may turn form pointer into nothing, .
             
             */

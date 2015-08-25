@@ -23,8 +23,10 @@ namespace skse {
     void retain_handle(FormId handle);
     void release_handle(FormId handle);
 
-    bool is_fake();
-    void set_no_fake();
     void console_print(const char * fmt, ...);
     void console_print(const char * fmt, const va_list& args);
+
+    void set_real_api();
+    void set_fake_api();
+    void set_silent_api();
 }
