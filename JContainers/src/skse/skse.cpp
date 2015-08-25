@@ -142,13 +142,13 @@ namespace skse {
 
     void retain_handle(FormId handle) {
         if (!is_fake()) {
-            (*g_objectHandlePolicy)->AddRef(collections::form_handling::form_id_to_handle(handle));
+            (*g_objectHandlePolicy)->AddRef((UInt64)collections::form_handling::form_id_to_handle(handle));
         }
     }
 
     void release_handle(FormId handle) {
         if (!is_fake()) {
-            (*g_objectHandlePolicy)->Release(collections::form_handling::form_id_to_handle(handle));
+            (*g_objectHandlePolicy)->Release((UInt64)collections::form_handling::form_id_to_handle(handle));
         }
     }
 

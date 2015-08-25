@@ -14,8 +14,8 @@ namespace collections {
 
     typedef UInt32 HandleT;
 
-    enum Handle : HandleT {
-        HandleNull = 0,
+    enum class Handle : HandleT {
+        Null = 0,
     };
 
     class object_base;
@@ -49,7 +49,7 @@ namespace collections {
         typedef uint32_t time_point;
 
     public:
-        std::atomic<Handle> _id                 = HandleNull;
+        std::atomic<Handle> _id                 = Handle::Null;
 
         std::atomic_int32_t _refCount           = 0;
         std::atomic_int32_t _tes_refCount       = 0;
@@ -87,7 +87,7 @@ namespace collections {
 		Handle uid();
 
         bool is_public() const {
-            return _uid() != HandleNull;
+            return _uid() != Handle::Null;
         }
 
         template<class T> T* as() {

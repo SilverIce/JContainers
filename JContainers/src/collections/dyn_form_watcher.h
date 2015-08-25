@@ -21,7 +21,7 @@ namespace form_watching {
 
     class watched_form : public boost::noncopyable {
 
-        FormId _handle = FormId::Zero;
+        const FormId _handle = FormId::Zero;
         std::atomic<bool> _deleted = false;
 
     public:
@@ -55,13 +55,13 @@ namespace form_watching {
     // Had to be single instance as there is single Skyrim instance only?
     class dyn_form_watcher {
 
-        using watched_forms_t = std::hash_map<FormId, boost::weak_ptr<watched_form> >;
-    public:
-
+        using watched_forms_t = std::hash_map<FormHandle, boost::weak_ptr<watched_form> >;
+    private:
         bshared_mutex _mutex;
         watched_forms_t _watched_forms;
-
         std::atomic_flag _is_inside_unsafe_func;
+
+        static dyn_form_watcher _instance;
 
     public:
 
@@ -70,8 +70,7 @@ namespace form_watching {
         }
 
         static dyn_form_watcher& instance() {
-            static dyn_form_watcher _inst;
-            return _inst;
+            return _instance;
         }
 
         template<class ReadCondition, class WriteAction, class Target>
@@ -90,7 +89,7 @@ namespace form_watching {
             return condition_met;
         }
 
-        void on_form_deleted(FormId fId);
+        void on_form_deleted(FormHandle fId);
 
         void u_clearState() {
             _watched_forms.clear();

@@ -24,8 +24,8 @@ namespace collections {
             return (uint32_t)formId & 0x00FFFFFF;
         }
 
-        inline uint64_t form_id_to_handle(FormId id) {
-            return 0x0000ffff00000000 | (uint64_t)id;
+        inline FormHandle form_id_to_handle(FormId id) {
+            return (FormHandle)(0x0000ffff00000000 | (uint64_t)id);
         }
 
         inline FormId construct(uint8_t mod_id, uint32_t local_identifier) {
@@ -70,7 +70,7 @@ namespace collections {
             string += kFormDataSeparator;
 
             char buff[20] = {'\0'};
-            sprintf(buff, "0x%x", formIdClean);
+            _snprintf(buff, sizeof buff, "0x%x", formIdClean);
             string += buff;
 
             return string;
@@ -103,7 +103,7 @@ namespace collections {
             if (!pluginName.empty()) {
                 modIdx = skse::modindex_from_name( ss::string(pluginName.begin(), pluginName.end()).c_str() );
                 if (modIdx == FormGlobalPrefix) {
-                    return boost::optional<FormId>(false, FormId::Zero);
+                    return boost::none;
                 }
             }
             else {
@@ -118,10 +118,10 @@ namespace collections {
                 formId = std::stoul(ss::string(formIdString.begin(), formIdString.end()), nullptr, 0);
             }
             catch (const std::invalid_argument& ) {
-                return boost::optional<FormId>(false, FormId::Zero);
+                return boost::none;
             }
             catch (const std::out_of_range& ) {
-                return boost::optional<FormId>(false, FormId::Zero);
+                return boost::none;
             }
 
             return construct(modIdx, formId);

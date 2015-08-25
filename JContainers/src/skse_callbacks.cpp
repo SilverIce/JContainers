@@ -188,9 +188,7 @@ namespace {
             */
             // test
             g_serialization->SetFormDeleteCallback(g_pluginHandle, [](UInt64 handle) {
-                if ((uint32_t)(handle >> 32) == 0) { // skip identifiers with high level bits
-                    collections::form_watching::dyn_form_watcher::instance().on_form_deleted((FormId)handle);
-                }
+                tes_context::instance().form_watcher.on_form_deleted((FormHandle)handle);
             });
 
             g_papyrus->Register(registerAllFunctions);

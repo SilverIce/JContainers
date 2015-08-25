@@ -45,7 +45,7 @@ namespace collections
     private:
 
         std::atomic<map*> _cached_root = nullptr;
-        std::atomic<Handle> _root_object_id{ HandleNull };
+        std::atomic<Handle> _root_object_id{ Handle::Null };
         spinlock _lazyRootInitLock;
 
     public:
@@ -93,7 +93,7 @@ namespace collections
     protected:
 
         void u_clearState() {
-            _root_object_id.store(HandleNull, std::memory_order_relaxed);
+            _root_object_id.store(Handle::Null, std::memory_order_relaxed);
             _cached_root = nullptr;
             form_watcher.u_clearState();
 

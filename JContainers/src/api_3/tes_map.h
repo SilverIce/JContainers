@@ -13,7 +13,7 @@ namespace tes_api_3 {
 
         using map_functions = map_functions_templ < Cnt >;
         using map_type = Cnt;
-        using tes_key = typename reflection::binding::GetConv<typename map_type::key_type>::tes_type;
+        using tes_key = reflection::binding::get_converter_tes_type<typename map_type::key_type>;
 
         typedef typename Cnt* ref;
 
@@ -33,7 +33,7 @@ namespace tes_api_3 {
         REGISTERF(getItem<Float32>, "getFlt", "object key default=0.0", "");
         REGISTERF(getItem<skse::string_ref>, "getStr", "object key default=\"\"", "");
         REGISTERF(getItem<object_base*>, "getObj", "object key default=0", "");
-        REGISTERF(getItem<TESForm*>, "getForm", "object key default=None", "");
+        REGISTERF(getItem<FormId>, "getForm", "object key default=None", "");
 
         template<class T>
         static void setItem(Cnt *obj, key_cref key, T val) {
@@ -43,7 +43,7 @@ namespace tes_api_3 {
         REGISTERF(setItem<Float32>, "setFlt", "* key value", "");
         REGISTERF(setItem<const char *>, "setStr", "* key value", "");
         REGISTERF(setItem<object_base*>, "setObj", "* key container", "");
-        REGISTERF(setItem<TESForm*>, "setForm", "* key value", "");
+        REGISTERF(setItem<FormId>, "setForm", "* key value", "");
 
         static bool hasKey(ref obj, key_cref key) {
             return valueType(obj, key) != 0;
@@ -85,7 +85,7 @@ namespace tes_api_3 {
             std::transform(obj->u_container().begin(), obj->u_container().end(),
                 std::back_inserter(keys),
                 [](const typename map_type::value_type& p) {
-                    return reflection::binding::GetConv<typename map_type::key_type>::convert2Tes(p.first);
+                    return reflection::binding::get_converter<typename map_type::key_type>::convert2Tes(p.first);
                 }
             );
 
@@ -171,7 +171,7 @@ namespace tes_api_3 {
         }
     };
 
-    typedef tes_map_t<const char*, map > tes_map;
+    typedef tes_map_t<const char*, map, const char*, const char*> tes_map;
     typedef tes_map_t<weak_form_id, form_map> tes_form_map;
     typedef tes_map_t<int32_t, integer_map, int32_t, int32_t> tes_integer_map;
 

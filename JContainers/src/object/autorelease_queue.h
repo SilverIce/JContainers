@@ -169,7 +169,7 @@ namespace collections {
         void stop() {
             // with _timer_mutex locked it will wait for @tick function execution completion
             // the point is to execute @stop after @tick (so @tick will not auto-restart the timer)
-            _stopped.store(true, std::memory_order_relaxed);
+            _stopped.store(true, std::memory_order_release);
             _timer.cancel();
 
             // wait for completion, ensure it's stoppped
@@ -237,7 +237,7 @@ namespace collections {
 
         void u_startTimer() {
 
-            if (_stopped.load(std::memory_order_relaxed) == true) {
+            if (_stopped.load(std::memory_order_acquire) == true) {
                 return;
             }
 

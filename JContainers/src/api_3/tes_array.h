@@ -144,7 +144,7 @@ NEGATIVE_IDX_COMMENT);
         REGISTERF(itemAtIndex<Float32>, "getFlt", "* index default=0.0", "");
         REGISTERF(itemAtIndex<skse::string_ref>, "getStr", "* index default=\"\"", "");
         REGISTERF(itemAtIndex<object_base*>, "getObj", "* index default=0", "");
-        REGISTERF(itemAtIndex<TESForm*>, "getForm", "* index default=None", "");
+        REGISTERF(itemAtIndex<FormId>, "getForm", "* index default=None", "");
 
         template<class T>
         static SInt32 findVal(ref obj, T value, SInt32 pySearchStartIndex = 0) {
@@ -171,7 +171,7 @@ NEGATIVE_IDX_COMMENT);
         REGISTERF(findVal<Float32>, "findFlt", "* value searchStartIndex=0", "");
         REGISTERF(findVal<const char *>, "findStr", "* value searchStartIndex=0", "");
         REGISTERF(findVal<object_base*>, "findObj", "* container searchStartIndex=0", "");
-        REGISTERF(findVal<TESForm*>, "findForm", "* value searchStartIndex=0", "");
+        REGISTERF(findVal<FormId>, "findForm", "* value searchStartIndex=0", "");
 
         template<class T>
         static void replaceItemAtIndex(ref obj, Index index, T val) {
@@ -184,7 +184,7 @@ NEGATIVE_IDX_COMMENT);
         REGISTERF(replaceItemAtIndex<Float32>, "setFlt", "* index value", "");
         REGISTERF(replaceItemAtIndex<const char *>, "setStr", "* index value", "");
         REGISTERF(replaceItemAtIndex<object_base*>, "setObj", "* index container", "");
-        REGISTERF(replaceItemAtIndex<TESForm*>, "setForm", "* index value", "");
+        REGISTERF(replaceItemAtIndex<FormId>, "setForm", "* index value", "");
 
         template<class T>
         static void addItemAt(ref obj, T val, SInt32 addToIndex = -1) {
@@ -197,7 +197,7 @@ if addToIndex >= 0 it inserts value at given index. "NEGATIVE_IDX_COMMENT);
         REGISTERF(addItemAt<Float32>, "addFlt", "* value addToIndex=-1", "");
         REGISTERF(addItemAt<const char *>, "addStr", "* value addToIndex=-1", "");
         REGISTERF(addItemAt<object_base*>, "addObj", "* container addToIndex=-1", "");
-        REGISTERF(addItemAt<TESForm*>, "addForm", "* value addToIndex=-1", "");
+        REGISTERF(addItemAt<FormId>, "addForm", "* value addToIndex=-1", "");
 
         static Index count(ref obj) {
             return tes_object::count(obj);

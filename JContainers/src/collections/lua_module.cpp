@@ -262,7 +262,7 @@ namespace lua { namespace aux_wip {
         fixture() : pool(tc) {}
     };
 
-#if 0
+#if 1
 
     TEST_F(fixture, Lua, trtr)
     {
@@ -309,7 +309,7 @@ namespace lua { namespace aux_wip {
         EXPECT_TRUE(*testTransporting("return Form(20)") == FormId(20));
 
 
-        auto& db = *tc.database();
+        auto& db = tc.root();
         EXPECT_TRUE(*testTransporting("return JDB") == db.base());
 
         db.set("test", 10);

@@ -14,6 +14,8 @@ namespace collections {
 
     namespace form_watching {
 
+        dyn_form_watcher dyn_form_watcher::_instance;
+
         namespace fh = form_handling;
 
         template<class ...Params>
@@ -23,9 +25,10 @@ namespace collections {
             skse::console_print(s.c_str(), std::forward<Params>(ps) ...);
         }
 
-        void dyn_form_watcher::on_form_deleted(FormId fId)
+        void dyn_form_watcher::on_form_deleted(FormHandle fId)
         {
-            log("flag form 0x%x as deleted", fId);
+            BOOST_ASSERT_MSG(form_handling::is_static((FormId)fId) == false,
+                "If failed, then there is static form destruction event too?");
 
             if_condition_then_perform(
                 [fId](const dyn_form_watcher& w) {
@@ -34,10 +37,10 @@ namespace collections {
                 [fId](dyn_form_watcher& w) {
                     auto itr = w._watched_forms.find(fId);
                     if (itr != w._watched_forms.end()) {
-                        //skse::console_print("dyn_form_watcher:on_form_deleted form %x", fId);
                         auto watched = itr->second.lock();
                         if (watched) {
                             watched->set_deleted();
+                            log("flag form %x as deleted", fId);
                         }
                         w._watched_forms.erase(itr);
                     }
@@ -48,7 +51,7 @@ namespace collections {
 
         boost::shared_ptr<watched_form> dyn_form_watcher::watch_form(FormId fId)
         {
-            log("form 0x%x being watched", fId);
+            log("form %x being watched", fId);
 
             write_lock l{ _mutex };
             return u_watch_form(fId);
@@ -69,18 +72,19 @@ namespace collections {
 
         boost::shared_ptr<watched_form> dyn_form_watcher::u_watch_form(FormId fId)
         {
-            lock_or_fail g{ _is_inside_unsafe_func };
-
             log("watching form %x", fId);
 
-            auto itr = _watched_forms.find(fId);
+            lock_or_fail g{ _is_inside_unsafe_func };
+
+            FormHandle handle = form_handling::form_id_to_handle(fId);
+
+            auto itr = _watched_forms.find(handle);
             if (itr != _watched_forms.end() && !itr->second.expired()) {
                 return itr->second.lock();
             }
             else {
                 auto watched = boost::make_shared<watched_form>(fId);
-                //boost::shared_ptr < watched_form > watched{ new watched_form{ fId } };
-                _watched_forms.emplace(watched_forms_t::value_type{ fId, watched });
+                _watched_forms[handle] = watched;
                 return watched;
             }
         }
@@ -114,7 +118,7 @@ namespace collections {
                     return true;
                 }
                 else {
-                    log("weak_form_id: form 0x%x lazily zeroed out", _id);
+                    log("weak_form_id: form %x is known as deleted now", _id);
                     _watched_form = nullptr;
                     _expired = true;
                 }

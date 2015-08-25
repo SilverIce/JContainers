@@ -8,10 +8,10 @@ namespace collections
         using namespace std;
 
         auto id = _id.load(memory_order_acquire);
-        if (id == HandleNull) {
+        if (id == Handle::Null) {
             object_lock l(this);
             id = _id.load(memory_order_relaxed);
-            if (id == HandleNull) {
+            if (id == Handle::Null) {
                 id = context().registry->registerNewObjectId(*this);
                 _id.store(id, memory_order_release);
             }
@@ -43,10 +43,10 @@ namespace collections
         using namespace std;
 
         auto id = _id.load(memory_order_acquire);
-        if (id == HandleNull) {
+        if (id == Handle::Null) {
             object_lock l(this);
             id = _id.load(memory_order_relaxed);
-            if (id == HandleNull) {
+            if (id == Handle::Null) {
                 id = context().registry->registerNewObjectId(*this);
                 _id.store(id, memory_order_release);
                 

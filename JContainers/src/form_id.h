@@ -10,6 +10,9 @@ namespace collections {
         Zero = 0,
     };
 
+    enum class FormHandle : uint64_t {
+    };
+
     enum {
         FormGlobalPrefix = 0xFF,
     };

@@ -273,7 +273,7 @@ namespace collections { namespace {
             {
                 tes_context ctx;
 
-                Handle rootId = HandleNull;
+                Handle rootId = Handle::Null;
                 {
                     auto root = json_deserializer::object_from_file(ctx, file_path);
                     EXPECT_NOT_NIL(root);

@@ -371,7 +371,7 @@ namespace collections {
 
     template<> inline Handle item::readAs<Handle>() {
         auto obj = object();
-        return obj ? obj->uid() : HandleNull;
+        return obj ? obj->uid() : Handle::Null;
     }
 
     template<> inline TESForm * item::readAs<TESForm*>() {
@@ -381,4 +381,9 @@ namespace collections {
     template<> inline object_base * item::readAs<object_base*>() {
         return object();
     }
+
+    template<> inline FormId item::readAs<FormId>() {
+        return formId();
+    }
+
 }

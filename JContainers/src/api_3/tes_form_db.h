@@ -140,7 +140,7 @@ namespace tes_api_3 {
         REGISTERF(solveGetter<SInt32>, "solveInt", "fKey path default=0", nullptr);
         REGISTERF(solveGetter<skse::string_ref>, "solveStr", "fKey path default=\"\"", nullptr);
         REGISTERF(solveGetter<Handle>, "solveObj", "fKey path default=0", nullptr);
-        REGISTERF(solveGetter<TESForm*>, "solveForm", "fKey path default=None", nullptr);
+        REGISTERF(solveGetter<FormId>, "solveForm", "fKey path default=None", nullptr);
 
         template<class T>
         static bool solveSetter(key_cref form, const char* path, T value, bool createMissingKeys = false) {
@@ -153,7 +153,7 @@ namespace tes_api_3 {
         REGISTERF(solveSetter<SInt32>, "solveIntSetter", "fKey path value createMissingKeys=false", nullptr);
         REGISTERF(solveSetter<const char*>, "solveStrSetter", "fKey path value createMissingKeys=false", nullptr);
         REGISTERF(solveSetter<object_stack_ref&>, "solveObjSetter", "fKey path value createMissingKeys=false", nullptr);
-        REGISTERF(solveSetter<TESForm*>, "solveFormSetter", "fKey path value createMissingKeys=false", nullptr);
+        REGISTERF(solveSetter<FormId>, "solveFormSetter", "fKey path value createMissingKeys=false", nullptr);
 
         static bool hasPath(key_cref form, const char* path) {
             subpath_extractor sub(path);
@@ -188,7 +188,7 @@ namespace tes_api_3 {
         REGISTERF(getItem<Float32>, "getFlt", "fKey key", "");
         REGISTERF(getItem<skse::string_ref>, "getStr", "fKey key", "");
         REGISTERF(getItem<object_base *>, "getObj", "fKey key", "");
-        REGISTERF(getItem<TESForm*>, "getForm", "fKey key", "");
+        REGISTERF(getItem<FormId>, "getForm", "fKey key", "");
 
         template<class T>
         static void setItem(key_cref form, const char* path, T item) {
@@ -199,7 +199,7 @@ namespace tes_api_3 {
         REGISTERF(setItem<Float32>, "setFlt", "fKey key value", "");
         REGISTERF(setItem<const char *>, "setStr", "fKey key value", "");
         REGISTERF(setItem<object_stack_ref&>, "setObj", "fKey key container", "");
-        REGISTERF(setItem<TESForm*>, "setForm", "fKey key value", "");
+        REGISTERF(setItem<FormId>, "setForm", "fKey key value", "");
     };
 
     TES_META_INFO(tes_form_db);

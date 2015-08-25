@@ -210,7 +210,7 @@ namespace collections {
             prev->tes_release();
         }
 
-        _root_object_id.store(db ? db->uid() : HandleNull, std::memory_order_relaxed);
+        _root_object_id.store(db ? db->uid() : Handle::Null, std::memory_order_relaxed);
     }
 
     map& tes_context::root()
