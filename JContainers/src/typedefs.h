@@ -21,7 +21,7 @@ extern void _MESSAGE(const char* fmr, ...);
             do { \
                 if (!(expr)) { \
                     _MESSAGE(fmt, __VA_ARGS__); \
-                    assert(false); \
+                    assert(false && fmt); \
                 } \
             } while(0)
 

@@ -20,9 +20,10 @@ namespace collections {
 
         template<class ...Params>
         inline void log(const char* fmt, Params&& ...ps) {
+/*
             std::string s("FormWatching: ");
             s += fmt;
-            skse::console_print(s.c_str(), std::forward<Params>(ps) ...);
+            skse::console_print(s.c_str(), std::forward<Params>(ps) ...);*/
         }
 
         class watched_form : public boost::noncopyable {
