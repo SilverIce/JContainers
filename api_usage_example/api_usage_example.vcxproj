@@ -55,6 +55,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)\dep\skse;$(SolutionDir)\dep;$(SolutionDir)\JContainers\src</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
