@@ -233,7 +233,7 @@ namespace collections
                                 path_type(end, path.end()) );
             };
 
-            auto arrayRule = [](const state &st) -> state {
+            auto arrayRule = [&context](const state &st) -> state {
 
                 const auto& path = st.path;
 
@@ -250,6 +250,7 @@ namespace collections
                 }
 
                 int32_t indexOrFormId = 0;
+                FormId frmId = FormId::Zero;
 
                 if (!form_handling::is_form_string(indexRange.begin())) {
                     try {
@@ -268,7 +269,7 @@ namespace collections
                         return state(false, st);
                     }
 
-                    indexOrFormId = *fId;
+                    frmId = *fId;
                 }
 
                 object_lock lock(st.object);
@@ -279,12 +280,12 @@ namespace collections
                 }
 
                 return state(   true,
-                                [=](object_base* container) {
+                                [=, &context](object_base* container) {
                                     if (container->as<array>()) {
                                         return container->as<array>()->u_get(indexOrFormId);
                                     }
                                     else if (container->as<form_map>()) {
-                                        return container->as<form_map>()->u_get((FormId)indexOrFormId);
+                                        return container->as<form_map>()->u_get(make_weak_form_id(frmId, context));
                                     }
                                     else if (container->as<integer_map>()) {
                                         return container->as<integer_map>()->u_get(indexOrFormId);
@@ -340,6 +341,7 @@ namespace collections
         using std::forward;
         using std::string;
 
+        namespace {
         using cstring = bs::iterator_range<const char*>;
         //using keys = std::vector<key_variant>;
 
@@ -364,13 +366,12 @@ namespace collections
             cstring rest_of_path;
         };
 
-        bs::optional<key_and_rest> parse_path(const cstring& path) {
+        template<class Context>
+        bs::optional<key_and_rest> parse_path(Context& context, const cstring& path) {
 
             if (path.empty()) {
                 return bs::none;
             }
-
-            typedef bs::optional<key_and_rest>(*rule)(const cstring &);
 
             auto mapRule = [](const cstring &path)-> bs::optional < key_and_rest > {
 
@@ -389,7 +390,7 @@ namespace collections
                 return key_and_rest{ std::move(str), cstring(end, path.end()) };
             };
 
-            auto arrayRule = [](const cstring &path)-> bs::optional < key_and_rest > {
+            auto arrayRule = [&context](const cstring &path)-> bs::optional < key_and_rest > {
 
                 if (!bs::starts_with(path, "[") || path.size() < 3) {
                     return bs::none;
@@ -423,11 +424,15 @@ namespace collections
                         return bs::none;
                     }
 
-                    return key_and_rest{ *fId, cstring(end + 1, path.end()) };
+                    return key_and_rest{ make_weak_form_id(*fId, context), cstring(end + 1, path.end()) };
                 }
             };
 
             return parse_path_helper<key_and_rest>(path, arrayRule, mapRule);
+        }
+
+        tes_context& HACK_get_tcontext(object_base& obj) {
+            return static_cast<tes_context&>(obj.context());
         }
 
         struct constant_accessor {
@@ -455,7 +460,7 @@ namespace collections
                 */
                 if (!itemPtr) {
                     itemPtr = u_assign_value(collection, key->key, item());
-                    auto next_key = parse_path(key->rest_of_path);
+                    auto next_key = parse_path(HACK_get_tcontext(collection), key->rest_of_path);
                     if (itemPtr && next_key) {
                         struct creator : public bs::static_visitor<object_base*> {
                             object_context* ctx;
@@ -463,7 +468,7 @@ namespace collections
 
                             object_base* operator ()(const int32_t& k) const { return &integer_map::object(*ctx); }
                             object_base* operator ()(const string& k) const { return &map::object(*ctx); }
-                            object_base* operator ()(const FormId& k) const { return &form_map::object(*ctx); }
+                            object_base* operator ()(const weak_form_id& k) const { return &form_map::object(*ctx); }
                         };
                         *itemPtr = bs::apply_visitor(creator(&collection.context()), next_key->key);
                     }
@@ -482,7 +487,7 @@ namespace collections
             retrieve obj -> str -> (obj, key)
             retrieve obj str = recurs obj[(key, rest)] (key, rest) obj
                                 where
-                                   (key, rest) = parse str
+                                    (key, rest) = parse str
 
             recurs v    (key, rest)     src = recurs v[(nkey, nrest)] (nkey, nrest) v where (nkey, nrest) = parse rest
             recurs V    (key, Nothing)  src = (src, key)
@@ -492,7 +497,7 @@ namespace collections
             */
 
             static bs::optional<accesss_info> retrieve(object_base& collection, const cstring& path) {
-                auto key_opt = parse_path(path);
+                auto key_opt = parse_path(HACK_get_tcontext(collection), path);
                 return recurs(access_value::access_value(collection, key_opt), key_opt, collection);
             }
 
@@ -507,7 +512,7 @@ namespace collections
                     return accesss_info{ source, std::move(k->key) };
                 }
                 else if (as_object && !k->rest_of_path.empty()) {
-                    auto next_key = parse_path(k->rest_of_path);
+                    auto next_key = parse_path(HACK_get_tcontext(source), k->rest_of_path);
                     return recurs(access_value::access_value(*as_object, next_key), next_key, *as_object);
                 }
                 else {
@@ -519,6 +524,7 @@ namespace collections
         enum {
             collection_path_limit = 1024,
         };
+        }
 
         bs::optional<accesss_info> access_constant(object_base& collection, const char* cpath) {
             auto all_path = bs::make_iterator_range(cpath, cpath + strnlen_s(cpath, collection_path_limit));

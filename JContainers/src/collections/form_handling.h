@@ -12,11 +12,8 @@ namespace collections {
 
     namespace form_handling {
 
-        static const char * kFormData = "__formData";
-        static const char * kFormDataSeparator = "|";
-
         inline uint8_t mod_index(FormId formId) {
-            return formId >> 24;
+            return (uint32_t)formId >> 24;
         }
 
         inline bool is_static(FormId formId) {
@@ -24,7 +21,15 @@ namespace collections {
         }
 
         inline uint32_t local_id(FormId formId) {
-            return formId & 0x00FFFFFF;
+            return (uint32_t)formId & 0x00FFFFFF;
+        }
+
+        inline bool is_form_handle(FormHandle handle) {
+            return (uint32_t)((uint64_t)handle >> 32) == 0x0000FFFF;
+        }
+
+        inline FormHandle form_id_to_handle(FormId id) {
+            return (FormHandle)(0x0000ffff00000000 | (uint64_t)id);
         }
 
         inline FormId construct(uint8_t mod_id, uint32_t local_identifier) {
@@ -33,17 +38,20 @@ namespace collections {
 
         inline FormId resolve_handle(FormId handle) {
             if (is_static(handle)) {
-                return (FormId)skse::resolve_handle((uint32_t)handle);
+                return skse::resolve_handle(handle);
             }
             else {
-                return skse::lookup_form((uint32_t)handle) ? handle : FormZero;
+                return skse::lookup_form(handle) ? handle : FormId::Zero;
             }
         }
+
+        static const char kFormData[] = "__formData";
+        static const char * kFormDataSeparator = "|";
 
         inline boost::optional<std::string> to_string(FormId formId) {
 
             auto modID = mod_index(formId);
-            uint32_t formIdClean = formId;
+            uint32_t formIdClean = (uint32_t)formId;
 
             const char * modName = nullptr;
 
@@ -60,20 +68,20 @@ namespace collections {
                 modName = "";
             }
 
-            std::string string = kFormData;
+            std::string string{ kFormData };
             string += kFormDataSeparator;
             string += modName;
             string += kFormDataSeparator;
 
             char buff[20] = {'\0'};
-            sprintf(buff, "0x%x", formIdClean);
+            _snprintf(buff, sizeof buff, "0x%x", formIdClean);
             string += buff;
 
             return string;
         }
 
         inline bool is_form_string(const char *string) {
-            return string && strncmp(string, kFormData, strlen(kFormData)) == 0;
+            return string && strncmp(string, kFormData, sizeof kFormData - 1) == 0;
         }
 
         // TODO: rename me!
@@ -81,16 +89,16 @@ namespace collections {
             namespace bs = boost;
             namespace ss = std;
 
-            auto pair1 = bs::half_split(fstring, "|");
+            auto pair1 = bs::half_split(fstring, kFormDataSeparator);
 
             if (pair1.second.empty() || !std::equal(pair1.first.begin(), pair1.first.end(), kFormData)) {
-                return boost::optional<FormId>(false, FormZero);
+                return boost::optional<FormId>(false, FormId::Zero);
             }
 
-            auto pair2 = bs::half_split(pair1.second, "|");
+            auto pair2 = bs::half_split(pair1.second, kFormDataSeparator);
             // pair2.first - modname part can be empty
             if (/*pair2.first.empty() || */pair2.second.empty()) {
-                return boost::optional<FormId>(false, FormZero);
+                return boost::optional<FormId>(false, FormId::Zero);
             }
             
             auto& pluginName = pair2.first;
@@ -99,7 +107,7 @@ namespace collections {
             if (!pluginName.empty()) {
                 modIdx = skse::modindex_from_name( ss::string(pluginName.begin(), pluginName.end()).c_str() );
                 if (modIdx == FormGlobalPrefix) {
-                    return boost::optional<FormId>(false, FormZero);
+                    return boost::none;
                 }
             }
             else {
@@ -114,14 +122,13 @@ namespace collections {
                 formId = std::stoul(ss::string(formIdString.begin(), formIdString.end()), nullptr, 0);
             }
             catch (const std::invalid_argument& ) {
-                return boost::optional<FormId>(false, FormZero);
+                return boost::none;
             }
             catch (const std::out_of_range& ) {
-                return boost::optional<FormId>(false, FormZero);
+                return boost::none;
             }
 
-            formId = construct(modIdx, formId);
-            return (FormId)formId;
+            return construct(modIdx, formId);
         }
 
         inline boost::optional<FormId> from_string(const char* source) {

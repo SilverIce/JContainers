@@ -2,14 +2,17 @@
 
 #include <boost/variant.hpp>
 #include <string>
+#include <xutility>
 
 #include "common/ITypes.h"
 #include "object/object_base.h"
 #include "skse/skse.h"
 #include "skse/string.h"
 
+#include "form_id.h"
 #include "collections/collections.h"
-#include "collections/types.h"
+#include "collections/dyn_form_watcher.h"
+
 
 namespace collections {
 
@@ -27,7 +30,7 @@ namespace collections {
     public:
         typedef boost::blank blank;
         typedef Float32 Real;
-        typedef boost::variant<boost::blank, SInt32, Real, FormId, internal_object_ref, std::string> variant;
+        typedef boost::variant<boost::blank, SInt32, Real, weak_form_id, internal_object_ref, std::string> variant;
 
     private:
         variant _var;
@@ -39,7 +42,7 @@ namespace collections {
         template<> struct type2index < boost::blank >  { static const item_type index = none; };
         template<> struct type2index < SInt32 >  { static const item_type index = integer; };
         template<> struct type2index < Real >  { static const item_type index = real; };
-        template<> struct type2index < FormId >  { static const item_type index = form; };
+        template<> struct type2index < weak_form_id >  { static const item_type index = form; };
         template<> struct type2index < internal_object_ref >  { static const item_type index = object; };
         template<> struct type2index < std::string >  { static const item_type index = string; };
 
@@ -109,11 +112,14 @@ namespace collections {
         explicit item(SInt32 val) : _var(val) {}
         explicit item(int val) : _var((SInt32)val) {}
         explicit item(bool val) : _var((SInt32)val) {}
-        explicit item(FormId id) : _var(id) {}
+        explicit item(FormId id) : _var(weak_form_id(id)) {}
+        explicit item(const weak_form_id& id) : _var(id) {}
+        explicit item(weak_form_id&& id) : _var(std::move(id)) {}
+
         explicit item(object_base& o) : _var(o) {}
 
         explicit item(const std::string& val) : _var(val) {}
-        explicit item(std::string&& val) : _var(val) {}
+        explicit item(std::string&& val) : _var(std::move(val)) {}
 
         // the Item is none if the pointers below are zero:
         explicit item(const TESForm *val) {
@@ -148,11 +154,10 @@ namespace collections {
         item& operator = (boost::none_t) { _var = boost::blank(); return *this; }
         item& operator = (object_base& v) { _var = &v; return *this; }
 
-
         item& operator = (FormId formId) {
             // prevent zero FormId from being saved
-            if (formId) {
-                _var = formId;
+            if (formId != FormId::Zero) {
+                _var = weak_form_id{ formId };
             }
             else {
                 _var = blank();
@@ -171,6 +176,11 @@ namespace collections {
             return *this;
         }
 
+        item& operator = (const weak_form_id& val) {
+            _var = val;
+            return *this;
+        }
+
         item& operator = (const char *val) {
             return _assignPtr(val);
         }
@@ -181,7 +191,7 @@ namespace collections {
 
         item& operator = (const TESForm *val) {
             if (val) {
-                _var = (FormId)val->formID;
+                _var = weak_form_id{ *val };
             }
             else {
                 _var = blank();
@@ -213,6 +223,9 @@ namespace collections {
             else if (auto val = boost::get<item::Real>(&_var)) {
                 return *val;
             }
+            else if (auto val = boost::get<weak_form_id>(&_var)) {
+                return static_cast<SInt32>(val->get());
+            }
             return 0;
         }
 
@@ -229,14 +242,14 @@ namespace collections {
 
         TESForm * form() const {
             auto frmId = formId();
-            return frmId != FormZero ? skse::lookup_form(frmId) : nullptr;
+            return frmId != FormId::Zero ? skse::lookup_form(frmId) : nullptr;
         }
 
         FormId formId() const {
-            if (auto val = boost::get<FormId>(&_var)) {
-                return *val;
+            if (auto val = boost::get<weak_form_id>(&_var)) {
+                return val->get();
             }
-            return FormZero;
+            return FormId::Zero;
         }
 
         class are_strict_equals : public boost::static_visitor<bool> {
@@ -274,7 +287,7 @@ namespace collections {
         //////////////////////////////////////////////////////////////////////////
     private:
         static_assert(std::is_same<
-            boost::variant<boost::blank, SInt32, Real, FormId, internal_object_ref, std::string>,
+            boost::variant<boost::blank, SInt32, Real, weak_form_id, internal_object_ref, std::string>,
             variant
         >::value, "update _user2variant code below");
 
@@ -361,7 +374,7 @@ namespace collections {
 
     template<> inline Handle item::readAs<Handle>() {
         auto obj = object();
-        return obj ? obj->uid() : HandleNull;
+        return obj ? obj->uid() : Handle::Null;
     }
 
     template<> inline TESForm * item::readAs<TESForm*>() {
@@ -371,4 +384,9 @@ namespace collections {
     template<> inline object_base * item::readAs<object_base*>() {
         return object();
     }
+
+    template<> inline FormId item::readAs<FormId>() {
+        return formId();
+    }
+
 }

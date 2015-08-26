@@ -35,7 +35,7 @@ namespace collections
     namespace ca {
         namespace bs = boost;
 
-        using key_variant = boost::variant<int32_t, std::string, FormId>;
+        using key_variant = boost::variant<int32_t, std::string, weak_form_id>;
 
         struct u_access_value_helper {
             template<class Collection>

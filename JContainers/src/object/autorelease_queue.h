@@ -5,8 +5,12 @@
 #include <boost\serialization\version.hpp>
 #include <boost\asio\io_service.hpp>
 #include <boost\asio\deadline_timer.hpp>
+#include "common\IThread.h"
+#include "util\util.h"
 
 namespace collections {
+
+#define WINE_SUPPORT 1
 
     class object_registry;
 
@@ -34,17 +38,19 @@ namespace collections {
         object_registry& _registry;
         queue _queue;
         time_point _tickCounter;
-
         spinlock _queue_mutex;
-
-        std::atomic_bool    _stopped;
         
         // it's not overkill to use asio?
         boost::asio::io_service _io;
         boost::asio::io_service::work _work;
         boost::asio::deadline_timer _timer;
+        std::mutex _timer_mutex;
+        bool _timer_cancelled = false;
+#   if WINE_SUPPORT
+        IThread _thread;
+#   else
         std::thread _thread;
-
+#   endif
         // reusable array for temp objects
         std::vector<queue_object_ref> _toRelease;
 
@@ -116,10 +122,13 @@ namespace collections {
             , _work(_io)
             , _timer(_io)
         {
-            _stopped.store(true, std::memory_order_relaxed);
+#   if WINE_SUPPORT
+            _thread.Start([](void *io_ptr) { reinterpret_cast<decltype(_io)*>(io_ptr)->run(); }, &_io);
+#   else
             _thread = std::thread([&]() { _io.run(); });
+#   endif
             start();
-            jc_debug("aqueue created")
+            //jc_debug("aqueue created")
         }
 
         // prolongs object lifetime for ~10 seconds
@@ -135,7 +144,7 @@ namespace collections {
 
         void not_prolong_lifetime(object_base& object) {
             if (object.is_in_aqueue()) {
-                jc_debug("aqueue: removed id - %u", object._uid());
+                //jc_debug("aqueue: removed id - %u", object._uid());
                 spinlock::guard g(_queue_mutex);
                 object._aqueue_push_time = time_subtract(_tickCounter, obj_lifeInTicks);
             }
@@ -157,22 +166,21 @@ namespace collections {
 
         // starts asynchronouos aqueue run, asynchronouosly releases objects when their time comes, starts timers, 
         void start() {
-            if (false == _stopped.exchange(false, std::memory_order_relaxed)) {
-                return; //already running
-            }
-
-            u_startTimer();
+            //util::do_with_timing("aqueue start", [&]() {
+                _timer_cancelled = false;
+                u_startTimer();
+            //});
         }
 
         // stops async. processes launched by @start function,
         void stop() {
-            // with _timer_mutex locked it will wait for @tick function execution completion
-            // the point is to execute @stop after @tick (so @tick will not auto-restart the timer)
-            _stopped.store(true, std::memory_order_relaxed);
-            _timer.cancel();
-
-            // wait for completion, ensure it's stoppped
-            _timer.wait();
+            //util::do_with_timing("aqueue stop", [&]() {
+                // with _timer_mutex locked it will wait for @tick function execution completion
+                // the point is to execute @stop after @tick (so @tick will not auto-restart the timer)
+                std::lock_guard<std::mutex> g(_timer_mutex);
+                _timer_cancelled = true;
+                _timer.cancel();
+            //});
         }
 
         void u_nullify() {
@@ -187,10 +195,16 @@ namespace collections {
 
             stop();
             _io.stop();
+
+#   if WINE_SUPPORT
+            _thread.Stop();
+            WaitForSingleObject(_thread.GetHandle(), INFINITE);
+#   else
             if (_thread.joinable()) {
                 _thread.join();
             }
-            jc_debug("aqueue destroyed")
+#   endif
+            //jc_debug("aqueue destroyed")
         }
 
     public:
@@ -235,22 +249,18 @@ namespace collections {
 
         void u_startTimer() {
 
-            if (_stopped.load(std::memory_order_relaxed) == true) {
-                return;
-            }
-
             boost::system::error_code code;
             _timer.expires_from_now(boost::posix_time::seconds(tick_duration), code);
             assert(!code);
 
-            _timer.async_wait([this](const boost::system::error_code& e) {
-                //jc_debug("aqueue code: %s - %u", e.message().c_str(), e.value());
-                if (!e) { // !e means no error, no cancel, successful completion
+            _timer.async_wait([this](const boost::system::error_code& error) {
+                std::lock_guard<std::mutex> g(_timer_mutex);
+                if (!error && !_timer_cancelled) { // !e means no error, no cancel, successful completion
                     this->tick();
                     this->u_startTimer();
 				}
 				else {
-					jc_debug("aqueue timer was cancelled");
+					//jc_debug("aqueue timer was cancelled");
 				}
             });
         }

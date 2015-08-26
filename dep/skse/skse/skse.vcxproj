@@ -86,6 +86,7 @@
       <ForcedIncludeFiles>common/IPrefix.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <StringPooling>true</StringPooling>
       <WholeProgramOptimization>true</WholeProgramOptimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
     </ClCompile>
     <Link>
       <OutputFile>$(OutDir)skse_1_9_32.dll</OutputFile>

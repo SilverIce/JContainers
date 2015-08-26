@@ -7,8 +7,9 @@
 #include "object/object_base.h"
 #include "object/object_context.h"
 
-#include "collections/error_code.h"
+//#include "collections/error_code.h"
 #include "collections/collections.h"
+#include "collections/dyn_form_watcher.h"
 
 namespace collections
 {
@@ -16,14 +17,24 @@ namespace collections
 
     class tes_context : public object_context
     {
+        using base = object_context;
+
+        void u_applyUpdates(const serialization_version saveVersion);
+
     public:
 
         using post_init = ::meta<void(*)(tes_context&)>;
 
-        tes_context() {
+        tes_context()
+            : form_watcher(form_watching::dyn_form_watcher::instance())
+        {
             for (auto& init : post_init::getListConst()) {
                 init(*this);
             }
+        }
+
+        ~tes_context() {
+            shutdown();
         }
 
         static tes_context& instance() {
@@ -31,31 +42,18 @@ namespace collections
             return st;
         }
 
-        object_stack_ref_template<map> database_ref() {
-            return database();
-        }
+    private:
 
-        map* database() {
-            object_base * result = getObject(_root_object_id);
+        std::atomic<map*> _cached_root = nullptr;
+        std::atomic<Handle> _root_object_id{ Handle::Null };
+        spinlock _lazyRootInitLock;
 
-            if (!result) {
-                _lazyDBLock.lock();
+    public:
 
-                result = getObject(_root_object_id);
-                if (!result) {
-                    result = &map::object(*this);
-                    set_root(result);
-                }
+        void set_root(object_base *db);
+        map& root();
 
-                _lazyDBLock.unlock();
-            }
-
-            return result->as<map>();
-        }
-
-        void setDataBase(map *db) {
-            set_root(db);
-        }
+    public:
 
         template<class T>
         T * getObjectOfType(Handle hdl) {
@@ -69,6 +67,38 @@ namespace collections
 
         // to attach lua context
         std::unique_ptr<dependent_context*>     lua_context;
+
+        form_watching::dyn_form_watcher& form_watcher;
+
+        //////
+    public:
+
+        void read_from_stream(std::istream & stream);
+        void write_to_stream(std::ostream& stream);
+
+        void read_from_string(const std::string & data);
+        std::string write_to_string();
+
+        template<class Archive> void load(Archive & ar, unsigned int version);
+        template<class Archive> void save(Archive & ar, unsigned int version) const;
+        template<class Archive> void load_data_in_old_way(Archive& ar);
+
+        void clearState();
+        // complete shutdown, this context shouldn't be used for now
+        void shutdown();
+
+        friend class boost::serialization::access;
+        BOOST_SERIALIZATION_SPLIT_MEMBER();
+
+    protected:
+
+        void u_clearState() {
+            _root_object_id.store(Handle::Null, std::memory_order_relaxed);
+            _cached_root = nullptr;
+            form_watcher.u_clearState();
+
+            base::u_clearState();
+        }
 
     };
 

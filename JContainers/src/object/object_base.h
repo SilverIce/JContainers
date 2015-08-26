@@ -14,8 +14,8 @@ namespace collections {
 
     typedef UInt32 HandleT;
 
-    enum Handle : HandleT {
-        HandleNull = 0,
+    enum class Handle : HandleT {
+        Null = 0,
     };
 
     class object_base;
@@ -49,7 +49,7 @@ namespace collections {
         typedef uint32_t time_point;
 
     public:
-        Handle _id                              = HandleNull;
+        std::atomic<Handle> _id                 = Handle::Null;
 
         std::atomic_int32_t _refCount           = 0;
         std::atomic_int32_t _tes_refCount       = 0;
@@ -57,7 +57,7 @@ namespace collections {
         std::atomic_int32_t _aqueue_refCount    = 0;
         time_point _aqueue_push_time            = 0;
 
-        CollectionType                          _type;
+        CollectionType                          _type = CollectionType::None;
         boost::optional<util::istring>          _tag;
     private:
         object_context *_context                = nullptr;
@@ -83,11 +83,11 @@ namespace collections {
         Handle public_id();
 
         CollectionType type() const { return _type; }
-        Handle _uid() const {  return _id; }
+        Handle _uid() const {  return _id.load(std::memory_order_relaxed); }
 		Handle uid();
 
         bool is_public() const {
-            return _id != HandleNull;
+            return _uid() != Handle::Null;
         }
 
         template<class T> T* as() {
@@ -137,8 +137,7 @@ namespace collections {
             return _aqueue_refCount.load(std::memory_order_relaxed) > 0;
         }
 
-        // push object into the queue (which owns it)
-        // after some amount of time object will be released
+        // push the object into the queue (which will own it temporarily)
         object_base * prolong_lifetime();
         object_base * zero_lifetime();
 
@@ -173,7 +172,7 @@ namespace collections {
         // release calls and resulting deadlock
         virtual void u_nullifyObjects() = 0;
 
-        SInt32 s_count() {
+        SInt32 s_count() const {
             lock g(_mutex);
             return u_count();
         }

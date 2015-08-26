@@ -146,11 +146,14 @@ namespace collections {
                 auto& path = pair.first;
                 object_base *resolvedObject = nullptr;
 
-                path_resolving::resolve(_context, &root, path.c_str(), [&resolvedObject](item *itm) {
-                    if (itm) {
-                        resolvedObject = itm->object();
-                    }
-                });
+                if (path.empty() == false) {
+                    ca::visit_value(root, path.c_str(), ca::constant, [&resolvedObject](item& itm) {
+                        resolvedObject = itm.object();
+                    });
+                }
+                else { // special case "__reference|"
+                    resolvedObject = &root;
+                }
 
                 if (!resolvedObject) {
                     continue;
@@ -189,7 +192,8 @@ namespace collections {
                     json_object_foreach(val, key, value) {
                         auto fkey = form_handling::from_string(key);
                         if (fkey) {
-                            cnt.u_set(*fkey, self->make_item(value, cnt, *fkey));
+                            weak_form_id weak_key = make_weak_form_id(*fkey, self->_context);
+                            cnt.u_set(weak_key, self->make_item(value, cnt, weak_key));
                         }
                     }
                 }
@@ -287,16 +291,16 @@ namespace collections {
                 } else {
                     if (form_handling::is_form_string(string)) {
                         /*  having dilemma here:
-                            if string looks like form-string and plugin name can't be resolved:
+                            if the string looks like form-string and plugin name can't be resolved:
                             a. lost info and convert it to FormZero
                             b. save info and convert it to string
                         */
-                        item = form_handling::from_string(string).get_value_or(FormZero);
+                        item = form_handling::from_string(string).get_value_or(FormId::Zero);
                     }
                     else if (schedule_ref_resolving(string, container, item_key)) { // otherwise it's reference string?
                         ;
                     }
-                    else {  // otherwise it's just a string, althought it starts with "__"
+                    else {  // otherwise it's just a string, although it starts with "__"
                         item = string;
                     }
                 }
@@ -333,7 +337,7 @@ namespace collections {
         objects_to_fill _toFill;
 
         // contained - <container, key> relationship
-        typedef boost::variant<int32_t, std::string, FormId> key_variant;
+        typedef boost::variant<int32_t, std::string, weak_form_id> key_variant;
         typedef std::map<const object_base*, std::pair<const object_base*, key_variant > > key_info_map;
         key_info_map _keyInfo;
 
@@ -414,7 +418,7 @@ namespace collections {
                     json_object_serialization_consts::put_metainfo<form_map>(object);
 
                     for (auto& pair : cnt.u_container()) {
-                        auto key = form_handling::to_string(pair.first);
+                        auto key = form_handling::to_string(pair.first.get());
                         if (key) {
                             self->fill_key_info(pair.second, cnt, pair.first);
                             json_object_set_new(object, (*key).c_str(), self->create_value(pair.second));
@@ -476,8 +480,8 @@ namespace collections {
                     return json_real(val);
                 }
 
-                json_ref operator()(const FormId&  val) const {
-                    auto formStr = form_handling::to_string(val);
+                json_ref operator()(const weak_form_id& val) const {
+                    auto formStr = form_handling::to_string(val.get());
                     if (formStr) {
                         return (*this)(*formStr);
                     }
@@ -513,7 +517,7 @@ namespace collections {
 
         std::string path_to_object(const object_base& obj) const {
 
-            std::string path;
+            std::string path{ reference_serialization::prefix };
 
             struct path_appender : boost::static_visitor<> {
                 std::string& p;
@@ -531,9 +535,9 @@ namespace collections {
                     p.append(data);
                 }
 
-                void operator()(const FormId& fid) const {
+                void operator()(const weak_form_id& fid) const {
                     p.append("[");
-                    p.append(*form_handling::to_string(fid));
+                    p.append(*form_handling::to_string(fid.get()));
                     p.append("]");
                 }
 
@@ -555,8 +559,6 @@ namespace collections {
                     break;
                 }
             }
-
-            path.append(reference_serialization::prefix);
 
             for (auto& key_var : keys) {
                 boost::apply_visitor(path_appender, *key_var);

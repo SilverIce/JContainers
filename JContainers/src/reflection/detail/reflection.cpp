@@ -3,6 +3,7 @@
 #include <map>
 #include "gtest.h"
 #include "util/spinlock.h"
+#include "util/singleton.h"
 #include "skse/PapyrusVM.h"
 
 #include "reflection/detail/code_producer.hpp"
@@ -33,12 +34,15 @@ namespace reflection {
         return classDB;
     };
 
-    static std::once_flag class_registry_once_flag;
-    static std::map<istring, class_info> class_registry_map;
+
+    static util::singleton<std::map<istring, class_info> > g_class_registry_map(
+        []() {
+            return new std::map<istring, class_info>{ makeDB() };
+        }
+    );
 
     const std::map<istring, class_info>& class_registry() {
-        std::call_once(class_registry_once_flag, []() { class_registry_map = makeDB(); });
-        return class_registry_map;
+        return g_class_registry_map.get();
     }
 
     const function_info* find_function_of_class(const char * functionName, const char *className) {

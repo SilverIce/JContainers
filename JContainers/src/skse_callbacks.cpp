@@ -14,7 +14,9 @@
 #include "jc_interface.h"
 #include "reflection/reflection.h"
 #include "jcontainers_constants.h"
+
 #include "collections/context.h"
+#include "collections/dyn_form_watcher.h"
 
 class VMClassRegistry;
 
@@ -22,20 +24,21 @@ namespace jc {
     extern root_interface root;
 }
 
+SKSESerializationInterface	* g_serialization = nullptr;
+static SKSEPapyrusInterface			* g_papyrus = nullptr;
+static SKSEMessagingInterface       * g_messaging = nullptr;
+
 namespace {
 
     using namespace collections;
 
     static PluginHandle					g_pluginHandle = kPluginHandle_Invalid;
 
-    static SKSESerializationInterface	* g_serialization = nullptr;
-    static SKSEPapyrusInterface			* g_papyrus = nullptr;
-    static SKSEMessagingInterface       * g_messaging = nullptr;
-
-
     void revert(SKSESerializationInterface * intfc) {
         util::do_with_timing("Revert", []() {
+            skse::set_silent_api();
             collections::tes_context::instance().clearState();
+            skse::set_real_api();
         });
     }
 
@@ -88,6 +91,10 @@ namespace {
         };
 
         util::do_with_timing("Load", [intfc]() {
+
+            skse::set_silent_api();
+            collections::tes_context::instance().clearState();
+            skse::set_real_api();
 
             UInt32 type = 0;
             UInt32 version = 0;
@@ -154,7 +161,7 @@ namespace {
                 g_messaging = messaging;
             }
 
-            skse::set_no_fake();
+            skse::set_real_api();
 
             return true;
         }
@@ -176,6 +183,17 @@ namespace {
             g_serialization->SetRevertCallback(g_pluginHandle, revert);
             g_serialization->SetSaveCallback(g_pluginHandle, save);
             g_serialization->SetLoadCallback(g_pluginHandle, load);
+
+
+            /*
+            Critical bug, reported by Antithesis (yet he didn't knew that). Had to be found several months ago,
+            ruins experience as any load order change may turn form pointer into nothing, .
+            
+            */
+            // test
+            g_serialization->SetFormDeleteCallback(g_pluginHandle, [](UInt64 handle) {
+                tes_context::instance().form_watcher.on_form_deleted((FormHandle)handle);
+            });
 
             g_papyrus->Register(registerAllFunctions);
 

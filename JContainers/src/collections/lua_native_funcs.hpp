@@ -9,6 +9,10 @@ namespace lua {
     using formmap_functions = collections::formmap_functions;
     using array_functions = collections::array_functions;
     using CollectionType = collections::CollectionType;
+
+    using collections::weak_form_id;
+    using collections::FormId;
+    using collections::FormIdUnredlying;
 }
 
 namespace lua { namespace api {
@@ -89,8 +93,8 @@ namespace lua { namespace api {
                 value.object = { val.get() };
             }
 
-            void operator ()(const FormId& val) {
-                value.form = { val };
+            void operator ()(const weak_form_id& val) {
+                value.form = { (FormIdUnredlying)val.get() };
             }
 
         } converter;
@@ -229,21 +233,29 @@ namespace lua { namespace api {
     static_assert(sizeof FormId == sizeof CForm, "");
 
     cexport FormId JFormMap_nextKey(const form_map *obj, FormId lastKey) {
-        FormId next = FormId::FormZero;
-        formmap_functions::nextKey(obj, lastKey, [&](const FormId& key) { next = key; });
-        return next;
+        weak_form_id next;
+        formmap_functions::nextKey(obj, weak_form_id{ lastKey }, [&](const weak_form_id& key) { next = key; });
+        return next.get();
     }
 
     cexport void JFormMap_setValue(form_map *obj, FormId key, const JCValue* val) {
-        formmap_functions::doWriteOp(obj, key, [val](item& itm) { JCValue_fillItem(val, itm); });
+        formmap_functions::doWriteOp(obj, weak_form_id{ key }, [val](item& itm) { JCValue_fillItem(val, itm); });
     }
 
     cexport JCToLuaValue JFormMap_getValue(form_map *obj, FormId key) {
-        return formmap_functions::doReadOpR(obj, key, JCToLuaValue_None(), [](item& itm) { return JCToLuaValue_fromItem(itm); });
+        return formmap_functions::doReadOpR(obj, weak_form_id{ key }, JCToLuaValue_None(), [](item& itm) { return JCToLuaValue_fromItem(itm); });
     }
 
+    cexport void JFormMap_removeKey(form_map *obj, FormId key) {
+        if (obj) {
+            obj->erase(weak_form_id{ key });
+        }
+    }
+
+    ////////////////////////////
+
     cexport handle JDB_instance(tes_context *jc_context) {
-        return jc_context->database();
+        return &jc_context->root();
     }
 }
 }

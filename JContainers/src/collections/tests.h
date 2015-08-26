@@ -53,7 +53,7 @@ namespace collections { namespace {
         i1 = (TESForm*)nullptr;
         EXPECT_TRUE(i1.isNull());
 
-        i1 = FormZero;
+        i1 = FormId::Zero;
         EXPECT_TRUE(i1.isNull());
 
         i1 = (object_base *)nullptr;
@@ -94,7 +94,7 @@ namespace collections { namespace {
     {
         EXPECT_TRUE(item(100) < item(2.0));
         EXPECT_TRUE(item(1.0) < item(2.0));
-        EXPECT_TRUE(item(10) < item(FormZero));
+        EXPECT_TRUE(item(10) < item(FormId::Zero));
         EXPECT_TRUE(item("aa") < item("text"));
         EXPECT_TRUE(item("A") < item("b"));
 
@@ -273,7 +273,7 @@ namespace collections { namespace {
             {
                 tes_context ctx;
 
-                Handle rootId = HandleNull;
+                Handle rootId = Handle::Null;
                 {
                     auto root = json_deserializer::object_from_file(ctx, file_path);
                     EXPECT_NOT_NIL(root);
@@ -316,6 +316,19 @@ namespace collections { namespace {
         }
     }
 
+    JC_TEST(json_handling, old_json_still_supported)
+    {
+        object_base* root = json_deserializer::object_from_json_data(context, STR(
+            {
+                "__formData": null,
+                "__formData|D|0x4" : []
+            }
+        ));
+
+        EXPECT_NOT_NIL(root);
+        EXPECT_NOT_NIL(root->as<form_map>());
+    }
+
     JC_TEST(json_handling, object_references)
     {
         object_base* root = json_deserializer::object_from_json_data(context, STR(
@@ -338,9 +351,9 @@ namespace collections { namespace {
         }
         ));
 
-        auto compareRefs = [&](object_base *root, const char *path1, const char *path2) {
-            auto o1 = path_resolving::_resolve<object_base*>(context, root, path1);
-            auto o2 = path_resolving::_resolve<object_base*>(context, root, path2);
+        auto compareRefs = [&](object_base &root, const char *path1, const char *path2) {
+            auto o1 = ca::get(root, path1)->object();
+            auto o2 = ca::get(root, path2)->object();
             EXPECT_TRUE(o1 && o2 && o1 == o2);
         };
 
@@ -351,12 +364,11 @@ namespace collections { namespace {
             const char *equalPaths[][2] = {
                 ".parentArray[0]", ".parentArray[1].referenceToChildJMap1",
                 ".parentArray[0]", ".parentArray[1].referenceToChildJMap1",
-                ".parentArray[0].rootRef", "",
                 ".parentArray[2][__formData|D|0x4]", ".parentArray[1].referenceToFormMapValue"
             };
 
             for (auto& pair : equalPaths) {
-                compareRefs(root, pair[0], pair[1]);
+                compareRefs(*root, pair[0], pair[1]);
             }
         };
 
@@ -364,6 +376,7 @@ namespace collections { namespace {
         validateGraph(root);
 
         auto jvalue = json_serializer::create_json_value(*root);
+        auto json_text = json_serializer::create_json_data(*root);
         auto root2 = json_deserializer::object_from_json(context, jvalue.get());
         validateGraph(root2);
     }
@@ -382,6 +395,8 @@ namespace collections { namespace {
 
                 std::ifstream file(itr->path().generic_string(), std::ios::in | std::ios::binary);
                 context.read_from_stream(file);
+
+                EXPECT_TRUE(context.object_count() > 100); // dumb assumption
             }
         }
 
@@ -440,14 +455,12 @@ namespace collections { namespace {
 
     JC_TEST(garbage_collection, no_deadlopp_proof)
     {
-        auto obj = json_deserializer::object_from_json_data(context, STR([[[ "__reference|" ]]]));
-        EXPECT_NOT_NIL(obj);
-        obj->tes_retain();
+        auto& obj = array::objectWithInitializer([](array& me) { me.u_push(me); }, context);
+        obj.tes_retain();
 
         EXPECT_TRUE(context.collect_garbage() == 0);
 
-        obj = json_deserializer::object_from_json_data(context, STR([["__reference|"]]));
-        EXPECT_NOT_NIL(obj);
+        auto& obj2 = array::objectWithInitializer([](array& me) { me.u_push(me); }, context);
         context.collect_garbage();
     }
 
@@ -466,7 +479,7 @@ namespace collections { namespace {
             for (int j = 0; j < 10; ++j) {
                 auto rnd = rand() % 10;
 
-                cont->push(item(arrays[rnd]));
+                cont->push(arrays[rnd]);
             }
         }
 
@@ -490,23 +503,22 @@ namespace collections { namespace {
         EXPECT_TRUE(*cnt.u_get("acdc")->stringValue() == name);
     }
 
-    JC_TEST(tes_context, database)
+    JC_TEST(tes_context, root)
     {
-        auto db = context.database();
-        EXPECT_TRUE(db != nullptr);
-        EXPECT_TRUE(db == context.database());
+        auto& db = context.root();
+        EXPECT_TRUE(&db == &context.root());
     }
 
-    JC_TEST(tes_context, database_setter)
+    JC_TEST(tes_context, root_gets_retained)
     {
         auto root = &map::object(context);
         auto rc1 = root->refCount();
-        context.setDataBase(root);
+        context.set_root(root);
         const auto rcDiff = root->refCount() - rc1;
         EXPECT_TRUE(rcDiff > 0);
 
         auto rc2 = root->refCount();
-        context.setDataBase(nullptr);
+        context.set_root(nullptr);
         const auto rcDiff2 = - root->refCount() + rc2;
         // had to hardcode this - old. db gets released, gets retained by aqueue, thus -rcDiff2 != rcDiff
         EXPECT_TRUE((1 + rcDiff2) == rcDiff);

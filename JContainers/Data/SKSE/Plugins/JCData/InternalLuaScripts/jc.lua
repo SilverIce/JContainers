@@ -116,7 +116,7 @@ local JMapNativeFuncs = retrieveNativeFunctions('JMap',
 local JFormMapNativeFuncs = retrieveNativeFunctions('JFormMap',
     {
       object = {'handle'},
-      removeKey = {'bool', 'handle, CForm'},
+      -- not usable anymore: removeKey = {'bool', 'handle, CForm'},
       allKeys = {'handle', 'handle'},
       allValues = {'handle', 'handle'},
     }
@@ -415,7 +415,7 @@ do
     if value then
       jclib.JFormMap_setValue(optr.___id, key, returnJCValue(value))
     else
-      JFormMapNativeFuncs.removeKey(optr.___id, key)
+      jclib.JFormMap_removeKey(optr.___id, key)
     end
   end
 

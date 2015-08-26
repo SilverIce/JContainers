@@ -262,6 +262,8 @@ namespace lua { namespace aux_wip {
         fixture() : pool(tc) {}
     };
 
+#if 1
+
     TEST_F(fixture, Lua, trtr)
     {
         std::atomic_int8_t stop = 0;
@@ -304,10 +306,10 @@ namespace lua { namespace aux_wip {
 
         EXPECT_TRUE(*testTransporting("return 10") == 10.0f);
         EXPECT_TRUE(*testTransporting("return 'die'") == std::string("die"));
-        EXPECT_TRUE(*testTransporting("return Form(20)") == FormId(20));
+        EXPECT_TRUE(*testTransporting("return Form(20)") == weak_form_id{ FormId(20) });
 
 
-        auto& db = *tc.database();
+        auto& db = tc.root();
         EXPECT_TRUE(*testTransporting("return JDB") == db.base());
 
         db.set("test", 10);
@@ -327,7 +329,7 @@ namespace lua { namespace aux_wip {
     {
         EXPECT_TRUE(autofreed_context(pool)->eval_lua_function(nullptr, "return testing.perform()")->intValue() != 0);
     }
-
+#endif
 }
 }
 

@@ -8,6 +8,7 @@ namespace tes_api_3 {
     const char *kCommentObject = "creates new container object. returns container identifier (integer number).\n"
         "identifier is the thing you will have to pass to the most of container's functions as a first argument";
 
+
 #define VALUE_TYPE_COMMENT "0 - no value, 1 - none, 2 - int, 3 - float, 4 - form, 5 - object, 6 - string"
 
     class tes_object : public class_meta< tes_object > {
@@ -103,7 +104,7 @@ By using this function a user helps JC to get rid of no-more-needed to the user 
 
                 array::ref location;
 
-                ca::visit_value(*tes_context::instance().database(), path.c_str(), ca::creative, [&](item& value) {
+                ca::visit_value(tes_context::instance().root(), path.c_str(), ca::creative, [&](item& value) {
                     if (auto loc = value.object()->as<array>()) {
                         location = loc;
                     }
@@ -130,7 +131,7 @@ JValue.cleanPool(\"uniquePoolName\")"
 
         static void cleanPool(const char *poolName) {
             if (poolName) {
-                auto locationsMap = tes_context::instance().database()->findOrDef(JC_OBJECT_POOL_KEY).object()->as<map>();
+                auto locationsMap = tes_context::instance().root().findOrDef(JC_OBJECT_POOL_KEY).object()->as<map>();
                 if (locationsMap) {
                     locationsMap->erase(poolName);
                 }

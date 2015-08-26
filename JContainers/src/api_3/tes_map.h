@@ -3,13 +3,17 @@ namespace tes_api_3 {
     using namespace collections;
 
 
-    template<class Key, class Cnt>
-    class tes_map_t : public class_meta< tes_map_t<Key, Cnt> > {
+    template<class Key
+        , class Cnt
+        , class key_ref = Key &
+        , class key_cref = const Key &
+    >
+    class tes_map_t : public class_meta< tes_map_t<Key, Cnt, key_ref, key_cref> > {
     public:
 
         using map_functions = map_functions_templ < Cnt >;
         using map_type = Cnt;
-        using tes_key = typename reflection::binding::GetConv<typename map_type::key_type>::tes_type;
+        using tes_key = reflection::binding::get_converter_tes_type<typename map_type::key_type>;
 
         typedef typename Cnt* ref;
 
@@ -21,7 +25,7 @@ namespace tes_api_3 {
         REGISTERF(tes_object::object<Cnt>, "object", "", kCommentObject);
 
         template<class T>
-        static T getItem(Cnt *obj, Key key, T def = T(0)) {
+        static T getItem(Cnt *obj, key_cref key, T def = T(0)) {
             map_functions::doReadOp(obj, key, [&](item& itm) { def = itm.readAs<T>(); });
             return def;
         }
@@ -29,24 +33,24 @@ namespace tes_api_3 {
         REGISTERF(getItem<Float32>, "getFlt", "object key default=0.0", "");
         REGISTERF(getItem<skse::string_ref>, "getStr", "object key default=\"\"", "");
         REGISTERF(getItem<object_base*>, "getObj", "object key default=0", "");
-        REGISTERF(getItem<TESForm*>, "getForm", "object key default=None", "");
+        REGISTERF(getItem<FormId>, "getForm", "object key default=None", "");
 
         template<class T>
-        static void setItem(Cnt *obj, Key key, T val) {
+        static void setItem(Cnt *obj, key_cref key, T val) {
             map_functions::doWriteOp(obj, key, [&](item& itm) { itm = val; });
         }
         REGISTERF(setItem<SInt32>, "setInt", "* key value", "creates key-value association. replaces existing value if any");
         REGISTERF(setItem<Float32>, "setFlt", "* key value", "");
         REGISTERF(setItem<const char *>, "setStr", "* key value", "");
         REGISTERF(setItem<object_base*>, "setObj", "* key container", "");
-        REGISTERF(setItem<TESForm*>, "setForm", "* key value", "");
+        REGISTERF(setItem<FormId>, "setForm", "* key value", "");
 
-        static bool hasKey(ref obj, Key key) {
+        static bool hasKey(ref obj, key_cref key) {
             return valueType(obj, key) != 0;
         }
         REGISTERF2(hasKey, "* key", "returns true, if something associated with key");
 
-        static SInt32 valueType(ref obj, Key key) {
+        static SInt32 valueType(ref obj, key_cref key) {
             auto type = item_type::no_item;
             map_functions::doReadOp(obj, key, [&](item& itm) { type = itm.type(); });
             return (SInt32)type;
@@ -63,7 +67,7 @@ namespace tes_api_3 {
 
                 arr._array.reserve(obj->u_count());
                 for each(auto& pair in obj->u_container()) {
-                    arr.u_container().push_back(item(pair.first));
+                    arr.u_container().emplace_back(pair.first);
                 }
             },
                 tes_context::instance());
@@ -81,7 +85,7 @@ namespace tes_api_3 {
             std::transform(obj->u_container().begin(), obj->u_container().end(),
                 std::back_inserter(keys),
                 [](const typename map_type::value_type& p) {
-                    return reflection::binding::GetConv<typename map_type::key_type>::convert2Tes(p.first);
+                    return reflection::binding::get_converter<typename map_type::key_type>::convert2Tes(p.first);
                 }
             );
 
@@ -106,8 +110,8 @@ namespace tes_api_3 {
         }
         REGISTERF(allValues, "allValues", "*", "returns new array containing all values");
 
-        static bool removeKey(Cnt *obj, Key key) {
-            if (obj && map_key_checker::check(key)) {
+        static bool removeKey(Cnt *obj, key_cref key) {
+            if (obj) {
                 return obj->erase(key);
             }
             return false;
@@ -155,7 +159,7 @@ namespace tes_api_3 {
 
         //////////////////////////////////////////////////////////////////////////
 
-        static Key nextKey(ref obj, Key previousKey, Key endKey) {
+        static Key nextKey(ref obj, key_cref previousKey, key_ref endKey) {
             map_functions::nextKey(obj, previousKey, [&](const typename Cnt::key_type & key) { endKey = key; });
             return endKey;
         }
@@ -167,9 +171,9 @@ namespace tes_api_3 {
         }
     };
 
-    typedef tes_map_t<const char*, map > tes_map;
-    typedef tes_map_t<FormId, form_map> tes_form_map;
-    typedef tes_map_t<SInt32, integer_map> tes_integer_map;
+    typedef tes_map_t<const char*, map, const char*, const char*> tes_map;
+    typedef tes_map_t<weak_form_id, form_map> tes_form_map;
+    typedef tes_map_t<int32_t, integer_map, int32_t, int32_t> tes_integer_map;
 
     void tes_map::additionalSetup() {
         metaInfo._className = "JMap";

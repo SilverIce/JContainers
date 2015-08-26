@@ -36,7 +36,7 @@ namespace reflection { namespace binding {
     };
 
     struct StringConverter {
-        typedef skse::string_ref tes_type;
+        using tes_type = skse::string_ref;
 
         static const char* convert2J(const skse::string_ref& str) {
             return str.c_str();
@@ -106,13 +106,23 @@ namespace reflection { namespace binding {
 
 #undef  MAKE_ME_HAPPY
 
+    template<class T>
+    using remove_cref = typename std::remove_const<typename std::remove_reference<T>::type>::type;
+
+    template<class T>
+    using get_converter = GetConv< remove_cref<T> >;
+
+    template<class T>
+    using get_converter_tes_type = typename get_converter<T>::tes_type;
+
+
     template <class R, class... Params>
     struct proxy<R (*)(Params ...)>
     {
         static std::vector<type_info_func> parameter_info() {
             return {
-                &j2Str<R>::typeInfo,
-                &j2Str<Params>::typeInfo ...
+                &j2Str< get_converter_tes_type<R> >::typeInfo,
+                &j2Str< get_converter_tes_type<Params> >::typeInfo ...
             };
         }
 
@@ -128,13 +138,13 @@ namespace reflection { namespace binding {
             }
 
             struct non_void_ret {
-                static typename GetConv<R>::tes_type tes_func(
+                static get_converter_tes_type<R> tes_func(
                     StaticFunctionTag* tag,
-                    typename GetConv<Params>::tes_type ... params)
+                    get_converter_tes_type<Params> ... params)
                 {
                     return GetConv<R>::convert2Tes(
                         func(
-                            GetConv<Params>::convert2J(params) ...
+                            get_converter<Params>::convert2J(params) ...
                         )
                     );
                 }
@@ -143,9 +153,9 @@ namespace reflection { namespace binding {
             struct void_ret {
                 static void tes_func(
                     StaticFunctionTag* tag,
-                    typename GetConv<Params>::tes_type ... params)
+                    get_converter_tes_type<Params> ... params)
                 {
-                    func(GetConv<Params>::convert2J(params) ...);
+                    func(get_converter<Params>::convert2J(params) ...);
                 }
             };
 
@@ -158,7 +168,7 @@ namespace reflection { namespace binding {
                 args.registry.RegisterFunction
                 (
                     new typename native_function_selector<sizeof...(Params)>::function<
-                        typename GetConv<R>::tes_type, typename GetConv<Params>::tes_type ...>
+                        get_converter_tes_type<R>, get_converter_tes_type<Params> ...>
                         (
                             args.functionName,
                             args.className,

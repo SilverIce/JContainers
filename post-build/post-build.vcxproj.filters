@@ -19,4 +19,9 @@
     <None Include="install_Local.py" />
     <None Include="jc_install.py" />
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="dummy.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
 </Project>
