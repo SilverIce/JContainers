@@ -98,7 +98,7 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <PreBuildEvent>
-      <Command>python.exe install_$(Configuration).py</Command>
+      <Command>python.exe install_Distrib.py Release</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

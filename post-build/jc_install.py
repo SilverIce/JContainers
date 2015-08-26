@@ -172,7 +172,7 @@ def bundlePlugin(mode):
     makeScripts(config.jcLib, config.pscDir, config.compiledDir)
 
     installDir = recreatePath(DIST_DIR, mode)
-    shutil.copytree(config.dataDir, os.path.join(installDir, 'Data'), ignore = shutil.ignore_patterns('*.exp', '*.lib', '*.pdb', 'test_data'))
+    shutil.copytree(config.dataDir, os.path.join(installDir, 'Data'), ignore = shutil.ignore_patterns('*.exp', '*.lib', 'test_data'))
     shutil.make_archive(os.path.join(DIST_DIR, 'JContainers.' + config.jcLib.versionString()), 'zip', installDir)
     shutil.rmtree(installDir, ignore_errors = True)
 
