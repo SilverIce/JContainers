@@ -28,6 +28,10 @@ namespace collections {
             return (uint32_t)((uint64_t)handle >> 32) == 0x0000FFFF;
         }
 
+        inline FormId form_handle_to_id(FormHandle handle) {
+            return static_cast<FormId>(handle);
+        }
+
         inline FormHandle form_id_to_handle(FormId id) {
             return (FormHandle)(0x0000ffff00000000 | (uint64_t)id);
         }

@@ -45,7 +45,7 @@ namespace collections {
         boost::asio::io_service::work _work;
         boost::asio::deadline_timer _timer;
         std::mutex _timer_mutex;
-        bool _timer_cancelled = false;
+        bool _timer_stopped = true;
 #   if WINE_SUPPORT
         IThread _thread;
 #   else
@@ -166,21 +166,21 @@ namespace collections {
 
         // starts asynchronouos aqueue run, asynchronouosly releases objects when their time comes, starts timers, 
         void start() {
-            //util::do_with_timing("aqueue start", [&]() {
-                _timer_cancelled = false;
+            std::lock_guard<std::mutex> g(_timer_mutex);
+            if (_timer_stopped) {
+                _timer_stopped = false;
                 u_startTimer();
-            //});
+            }
         }
 
         // stops async. processes launched by @start function,
         void stop() {
-            //util::do_with_timing("aqueue stop", [&]() {
-                // with _timer_mutex locked it will wait for @tick function execution completion
-                // the point is to execute @stop after @tick (so @tick will not auto-restart the timer)
-                std::lock_guard<std::mutex> g(_timer_mutex);
-                _timer_cancelled = true;
-                _timer.cancel();
-            //});
+            // with _timer_mutex locked it will wait for @tick function execution completion
+            // the point is to execute @stop after @tick (so @tick will not auto-restart the timer)
+            std::lock_guard<std::mutex> g(_timer_mutex);
+            _timer_stopped = true;
+            auto callbacks_cancelled = _timer.cancel();
+            jc_assert(callbacks_cancelled <= 1);
         }
 
         void u_nullify() {
@@ -255,7 +255,7 @@ namespace collections {
 
             _timer.async_wait([this](const boost::system::error_code& error) {
                 std::lock_guard<std::mutex> g(_timer_mutex);
-                if (!error && !_timer_cancelled) { // !e means no error, no cancel, successful completion
+                if (!error && !_timer_stopped) { // !e means no error, no cancel, successful completion
                     this->tick();
                     this->u_startTimer();
 				}

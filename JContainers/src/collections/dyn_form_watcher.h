@@ -26,7 +26,7 @@ namespace form_watching {
     // Had to be single instance as there is single Skyrim instance only?
     class dyn_form_watcher {
 
-        using watched_forms_t = std::hash_map<FormHandle, boost::weak_ptr<watched_form> >;
+        using watched_forms_t = std::hash_map<FormId, boost::weak_ptr<watched_form> >;
     private:
         bshared_mutex _mutex;
         watched_forms_t _watched_forms;
@@ -93,6 +93,8 @@ namespace form_watching {
         FormId get() const {
             return is_not_expired() ? _id : FormId::Zero;
         }
+
+        FormId get_raw() const { return _id; }
 
         bool operator ! () const { return !is_not_expired(); }
 

@@ -20,10 +20,9 @@ namespace collections {
 
         template<class ...Params>
         inline void log(const char* fmt, Params&& ...ps) {
-/*
             std::string s("FormWatching: ");
             s += fmt;
-            skse::console_print(s.c_str(), std::forward<Params>(ps) ...);*/
+            skse::console_print(s.c_str(), std::forward<Params>(ps) ...);
         }
 
         class watched_form : public boost::noncopyable {
@@ -71,7 +70,7 @@ namespace collections {
                 //"If failed, then there is static form destruction event too? fId %" PRIX64, handle);
 
             if (!fh::is_form_handle(handle)) {
-                log("on_form_deleted: skipped %" PRIX64, handle);
+                //log("on_form_deleted: skipped %" PRIX64, handle);
                 return;
             }
 
@@ -80,17 +79,19 @@ namespace collections {
 
             log("on_form_deleted: %" PRIX64, handle);
 
+            auto formId = fh::form_handle_to_id(handle);
+
             if_condition_then_perform(
-                [handle](const dyn_form_watcher& w) {
-                    return w._watched_forms.find(handle) != w._watched_forms.end();
+                [formId](const dyn_form_watcher& w) {
+                    return w._watched_forms.find(formId) != w._watched_forms.end();
                 },
-                [handle](dyn_form_watcher& w) {
-                    auto itr = w._watched_forms.find(handle);
+                [formId](dyn_form_watcher& w) {
+                    auto itr = w._watched_forms.find(formId);
                     if (itr != w._watched_forms.end()) {
                         auto watched = itr->second.lock();
                         if (watched) {
                             watched->set_deleted();
-                            log("flag handle %" PRIX64 " as deleted", handle);
+                            log("flag handle %" PRIX64 " as deleted", formId);
                         }
                         w._watched_forms.erase(itr);
                     }
@@ -124,15 +125,13 @@ namespace collections {
 
             lock_or_fail g{ _is_inside_unsafe_func };
 
-            FormHandle handle = form_handling::form_id_to_handle(fId);
-
-            auto itr = _watched_forms.find(handle);
+            auto itr = _watched_forms.find(fId);
             if (itr != _watched_forms.end() && !itr->second.expired()) {
                 return itr->second.lock();
             }
             else {
                 auto watched = boost::make_shared<watched_form>(fId);
-                _watched_forms[handle] = watched;
+                _watched_forms[fId] = watched;
                 return watched;
             }
         }
@@ -179,7 +178,7 @@ namespace collections {
                     return true;
                 }
                 else {
-                    log("weak_form_id: form %X is known as deleted now", _id);
+                    log("weak_form_id: form %X known as deleted now", _id);
                     _watched_form = nullptr;
                     _expired = true;
                 }

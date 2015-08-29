@@ -224,7 +224,7 @@ namespace collections {
                 return *val;
             }
             else if (auto val = boost::get<weak_form_id>(&_var)) {
-                return static_cast<SInt32>(val->get());
+                return static_cast<SInt32>(val->get_raw());
             }
             return 0;
         }
