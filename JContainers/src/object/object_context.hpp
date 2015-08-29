@@ -106,9 +106,9 @@ namespace collections
     }
 
     void object_context::u_print_stats() const {
-        _DMESSAGE("%lu objects total", registry->u_all_objects().size());
-        _DMESSAGE("%lu public objects", registry->u_public_object_count());
-        _DMESSAGE("%lu objects in aqueue", aqueue->u_count());
+        JC_log("%lu objects total", registry->u_all_objects().size());
+        JC_log("%lu public objects", registry->u_public_object_count());
+        JC_log("%lu objects in aqueue", aqueue->u_count());
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -126,7 +126,7 @@ namespace collections
     {
         util::do_with_timing("Garbage collection", [&]() {
             auto res = garbage_collector::u_collect(*registry, *aqueue);
-            _DMESSAGE("%u garbage objects collected. %u objects are parts of cyclic graphs", res.garbage_total, res.part_of_graphs);
+            JC_log("%u garbage objects collected. %u objects are parts of cyclic graphs", res.garbage_total, res.part_of_graphs);
         });
     }
 

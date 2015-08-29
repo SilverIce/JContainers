@@ -66,7 +66,7 @@ namespace {
                 //_DMESSAGE("%lu bytes saved", stream.tellp());
             }
             else {
-                _DMESSAGE("Unable open JC record");
+                JC_log("Unable open JC record");
             }
         });
     }
@@ -126,33 +126,33 @@ namespace {
             // store plugin handle so we can identify ourselves later
             g_pluginHandle = skse->GetPluginHandle();
 
-            _MESSAGE(JC_PLUGIN_NAME " " JC_VERSION_STR);
+            JC_log(JC_PLUGIN_NAME " " JC_VERSION_STR);
 
             if (skse->isEditor) {
-                _MESSAGE("loaded in editor, marking as incompatible");
+                JC_log("loaded in editor, marking as incompatible");
                 return false;
             }
             else if (skse->runtimeVersion != RUNTIME_VERSION_1_9_32_0) {
-                _MESSAGE("unsupported runtime version %08X", skse->runtimeVersion);
+                JC_log("unsupported runtime version %08X", skse->runtimeVersion);
                 return false;
             }
 
             // get the serialization interface and query its version
             g_serialization = (SKSESerializationInterface *)skse->QueryInterface(kInterface_Serialization);
             if (!g_serialization) {
-                _MESSAGE("couldn't get serialization interface");
+                JC_log("couldn't get serialization interface");
                 return false;
             }
 
             if (g_serialization->version < SKSESerializationInterface::kVersion) {
-                _MESSAGE("serialization interface too old (%d expected %d)", g_serialization->version, SKSESerializationInterface::kVersion);
+                JC_log("serialization interface too old (%d expected %d)", g_serialization->version, SKSESerializationInterface::kVersion);
                 return false;
             }
 
             g_papyrus = (SKSEPapyrusInterface *)skse->QueryInterface(kInterface_Papyrus);
 
             if (!g_papyrus) {
-                _MESSAGE("couldn't get papyrus interface");
+                JC_log("couldn't get papyrus interface");
                 return false;
             }
 
@@ -205,7 +205,7 @@ namespace {
                 });
             }
 
-            _MESSAGE("plugin loaded");
+            JC_log("plugin loaded");
 
             return true;
         }

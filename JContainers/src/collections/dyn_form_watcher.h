@@ -20,8 +20,7 @@ namespace form_watching {
     class dyn_form_watcher;
     class watched_form;
 
-    // - remove FormID if none watches it
-    // - 
+    void log(const char* fmt, ...);
 
     // Had to be single instance as there is single Skyrim instance only?
     class dyn_form_watcher {
@@ -62,6 +61,8 @@ namespace form_watching {
         void u_clearState() {
             _watched_forms.clear();
         }
+
+        size_t u_forms_count() const { return _watched_forms.size(); }
 
         boost::shared_ptr<watched_form> watch_form(FormId fId);
 

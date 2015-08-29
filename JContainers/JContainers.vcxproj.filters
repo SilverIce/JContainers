@@ -73,6 +73,9 @@
     <ClCompile Include="src\skse_callbacks.cpp">
       <Filter>plugin_interface</Filter>
     </ClCompile>
+    <ClCompile Include="src\util\logging.cpp">
+      <Filter>util</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\gtest.h">

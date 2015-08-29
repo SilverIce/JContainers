@@ -7,6 +7,9 @@
 
 #   define ARGS(...)    __VA_ARGS__
 
+extern void JC_log(const char * fmt, ...);
+extern void JC_log(const char* fmt, va_list& args);
+
 #   ifdef NO_JC_DEBUG
 #       define jc_assert(expr)
 #       define jc_debug(message, ...)
@@ -15,12 +18,10 @@
 #       define jc_assert(expr)              do { if (!(expr)) { __debugbreak(); } } while(0)
 #       define jc_debug(message, ...)       printf(message"\n", __VA_ARGS__);
 
-extern void _MESSAGE(const char* fmr, ...);
-
 #       define jc_assert_msg(expr, fmt, ...)    \
             do { \
                 if (!(expr)) { \
-                    _MESSAGE(fmt, __VA_ARGS__); \
+                    JC_log(fmt, __VA_ARGS__); \
                     assert(false && fmt); \
                 } \
             } while(0)

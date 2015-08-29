@@ -125,6 +125,7 @@ namespace collections {
             }
 
             u_print_stats();
+            JC_log("%lu non persistent forms being watched", form_watcher.u_forms_count());
         }
     }
 

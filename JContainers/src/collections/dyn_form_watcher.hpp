@@ -18,11 +18,11 @@ namespace collections {
 
         namespace fh = form_handling;
 
-        template<class ...Params>
-        inline void log(const char* fmt, Params&& ...ps) {
-            std::string s("FormWatching: ");
-            s += fmt;
-            skse::console_print(s.c_str(), std::forward<Params>(ps) ...);
+        void log(const char* fmt, ...) {
+            va_list	args;
+            va_start(args, fmt);
+            JC_log(fmt, args);
+            va_end(args);
         }
 
         class watched_form : public boost::noncopyable {

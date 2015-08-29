@@ -67,12 +67,12 @@ namespace lua { namespace aux_wip {
 
         explicit context(tes_context& context) : tcontext(context) {
             reopen_if_closed();
-            _DMESSAGE("Lua context created");
+            JC_log("Lua context created");
         }
 
         ~context() {
             close();
-            _DMESSAGE("Lua context destructed");
+            JC_log("Lua context destructed");
         }
 
         boost::optional<item> eval_lua_function(object_base *object, const char *lua_string) {
@@ -124,7 +124,7 @@ namespace lua { namespace aux_wip {
         }
 
         static void print_top_string(lua_State *l, const char* preambula) {
-            _MESSAGE("%s: %s", preambula, top_string(l));
+            JC_log("%s: %s", preambula, top_string(l));
             //skse::console_print(str);
         }
 
