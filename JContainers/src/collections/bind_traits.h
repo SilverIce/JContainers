@@ -18,7 +18,11 @@ namespace reflection { namespace binding {
         }
 
         static object_stack_ref_template<T> convert2J(HandleT hdl) {
-            return tes_context::instance().getObjectRefOfType<T>((Handle)hdl);
+            auto ref = tes_context::instance().getObjectRefOfType<T>((Handle)hdl);
+            if (!ref && hdl != to_integral(Handle::Null)) {
+                JC_log("Warning: access to non-existing object with id 0x%X", hdl);
+            }
+            return ref;
         }
     };
 

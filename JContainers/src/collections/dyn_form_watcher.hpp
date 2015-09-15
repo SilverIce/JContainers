@@ -77,7 +77,7 @@ namespace collections {
             // to test whether static form gets ever destroyed or not
             //jc_assert(form_handling::is_static((FormId)handle) == false);
 
-            log("on_form_deleted: %" PRIX64, handle);
+            ///log("on_form_deleted: %" PRIX64, handle);
 
             auto formId = fh::form_handle_to_id(handle);
 

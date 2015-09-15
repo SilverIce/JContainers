@@ -1,6 +1,7 @@
 #pragma once
 
 #include <assert.h>
+#include <type_traits>
 
 #   define STR(...)     __STR(__VA_ARGS__)
 #   define __STR(...)   #__VA_ARGS__
@@ -16,7 +17,7 @@ extern void JC_log(const char* fmt, va_list& args);
 #       define jc_assert_msg(expr, fmt, ...)
 #   else
 #       define jc_assert(expr)              do { if (!(expr)) { __debugbreak(); } } while(0)
-#       define jc_debug(message, ...)       printf(message"\n", __VA_ARGS__);
+#       define jc_debug(message, ...)       do { printf(message"\n", __VA_ARGS__); } while(0)
 
 #       define jc_assert_msg(expr, fmt, ...)    \
             do { \
@@ -30,3 +31,7 @@ extern void JC_log(const char* fmt, va_list& args);
 
 __declspec(noreturn) inline void noreturn_func() {}
 
+template<typename E>
+inline auto to_integral(E e) -> typename std::underlying_type<E>::type {
+    return static_cast<typename std::underlying_type<E>::type>(e);
+}
