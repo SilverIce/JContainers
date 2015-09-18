@@ -295,7 +295,7 @@ namespace collections {
                             a. lost info and convert it to FormZero
                             b. save info and convert it to string
                         */
-                        item = form_handling::from_string(string).get_value_or(FormId::Zero);
+                        item = make_weak_form_id(form_handling::from_string(string).get_value_or(FormId::Zero), _context);
                     }
                     else if (schedule_ref_resolving(string, container, item_key)) { // otherwise it's reference string?
                         ;

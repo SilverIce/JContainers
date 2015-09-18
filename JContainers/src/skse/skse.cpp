@@ -113,9 +113,10 @@ namespace skse {
             void release_handle(FormId handle) override {}
 
             void console_print(const char * fmt, const va_list& args) override {
+/*
                 printf("Fake Console: ");
                 vprintf_s(fmt, args);
-                printf("\n");
+                printf("\n");*/
             }
         };
 

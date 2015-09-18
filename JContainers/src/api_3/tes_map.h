@@ -25,7 +25,7 @@ namespace tes_api_3 {
         REGISTERF(tes_object::object<Cnt>, "object", "", kCommentObject);
 
         template<class T>
-        static T getItem(Cnt *obj, key_cref key, T def = T(0)) {
+        static T getItem(Cnt *obj, key_cref key, T def = default_value<T>()) {
             map_functions::doReadOp(obj, key, [&](item& itm) { def = itm.readAs<T>(); });
             return def;
         }
@@ -33,7 +33,7 @@ namespace tes_api_3 {
         REGISTERF(getItem<Float32>, "getFlt", "object key default=0.0", "");
         REGISTERF(getItem<skse::string_ref>, "getStr", "object key default=\"\"", "");
         REGISTERF(getItem<object_base*>, "getObj", "object key default=0", "");
-        REGISTERF(getItem<FormId>, "getForm", "object key default=None", "");
+        REGISTERF(getItem<weak_form_id>, "getForm", "object key default=None", "");
 
         template<class T>
         static void setItem(Cnt *obj, key_cref key, T val) {
@@ -43,7 +43,7 @@ namespace tes_api_3 {
         REGISTERF(setItem<Float32>, "setFlt", "* key value", "");
         REGISTERF(setItem<const char *>, "setStr", "* key value", "");
         REGISTERF(setItem<object_base*>, "setObj", "* key container", "");
-        REGISTERF(setItem<FormId>, "setForm", "* key value", "");
+        REGISTERF(setItem<weak_form_id>, "setForm", "* key value", "");
 
         static bool hasKey(ref obj, key_cref key) {
             return valueType(obj, key) != 0;

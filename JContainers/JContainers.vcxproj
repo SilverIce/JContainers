@@ -202,6 +202,7 @@
     <ClInclude Include="src\util\istring_serialization.h" />
     <ClInclude Include="src\util\singleton.h" />
     <ClInclude Include="src\util\spinlock.h" />
+    <ClInclude Include="src\util\stl_ext.h" />
     <ClInclude Include="src\util\util.h" />
   </ItemGroup>
   <ItemGroup>

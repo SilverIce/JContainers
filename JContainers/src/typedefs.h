@@ -31,7 +31,3 @@ extern void JC_log(const char* fmt, va_list& args);
 
 __declspec(noreturn) inline void noreturn_func() {}
 
-template<typename E>
-inline auto to_integral(E e) -> typename std::underlying_type<E>::type {
-    return static_cast<typename std::underlying_type<E>::type>(e);
-}

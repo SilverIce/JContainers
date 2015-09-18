@@ -26,7 +26,7 @@ namespace collections
         using post_init = ::meta<void(*)(tes_context&)>;
 
         tes_context()
-            : form_watcher(form_watching::dyn_form_watcher::instance())
+            : form_watcher(new form_watching::dyn_form_watcher{})
         {
             for (auto& init : post_init::getListConst()) {
                 init(*this);
@@ -68,7 +68,7 @@ namespace collections
         // to attach lua context
         std::unique_ptr<dependent_context*>     lua_context;
 
-        form_watching::dyn_form_watcher& form_watcher;
+        std::unique_ptr<form_watching::dyn_form_watcher> form_watcher;
 
         //////
     public:
@@ -95,11 +95,16 @@ namespace collections
         void u_clearState() {
             _root_object_id.store(Handle::Null, std::memory_order_relaxed);
             _cached_root = nullptr;
-            form_watcher.u_clearState();
+            form_watcher->u_clearState();
 
             base::u_clearState();
         }
 
     };
+
+    // so that this won't be lost or hidden
+    inline tes_context& HACK_get_tcontext(const object_base& obj) {
+        return static_cast<tes_context&>(obj.context());
+    }
 
 }

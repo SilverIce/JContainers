@@ -431,10 +431,6 @@ namespace collections
             return parse_path_helper<key_and_rest>(path, arrayRule, mapRule);
         }
 
-        tes_context& HACK_get_tcontext(object_base& obj) {
-            return static_cast<tes_context&>(obj.context());
-        }
-
         struct constant_accessor {
             static bs::optional<object_base*> access_value(object_base& collection, const bs::optional<key_and_rest>& key) {
                 if (!key) {

@@ -239,6 +239,9 @@
     <ClInclude Include="Data\SKSE\Plugins\JCData\InternalLuaScripts\api_for_lua.h">
       <Filter>collections</Filter>
     </ClInclude>
+    <ClInclude Include="src\util\stl_ext.h">
+      <Filter>util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="JContainers.rc" />

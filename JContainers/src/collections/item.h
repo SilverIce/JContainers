@@ -112,7 +112,7 @@ namespace collections {
         explicit item(SInt32 val) : _var(val) {}
         explicit item(int val) : _var((SInt32)val) {}
         explicit item(bool val) : _var((SInt32)val) {}
-        explicit item(FormId id) : _var(weak_form_id(id)) {}
+//        explicit item(FormId id) : _var(weak_form_id(id)) {}
         explicit item(const weak_form_id& id) : _var(id) {}
         explicit item(weak_form_id&& id) : _var(std::move(id)) {}
 
@@ -122,9 +122,10 @@ namespace collections {
         explicit item(std::string&& val) : _var(std::move(val)) {}
 
         // the Item is none if the pointers below are zero:
+/*
         explicit item(const TESForm *val) {
             *this = val;
-        }
+        }*/
         explicit item(const char * val) {
             *this = val;
         }
@@ -154,6 +155,7 @@ namespace collections {
         item& operator = (boost::none_t) { _var = boost::blank(); return *this; }
         item& operator = (object_base& v) { _var = &v; return *this; }
 
+/*
         item& operator = (FormId formId) {
             // prevent zero FormId from being saved
             if (formId != FormId::Zero) {
@@ -163,7 +165,7 @@ namespace collections {
                 _var = blank();
             }
             return *this;
-        }
+        }*/
 
         template<class T>
         item& _assignPtr(T *ptr) {
@@ -189,6 +191,7 @@ namespace collections {
             return _assignPtr(val);
         }
 
+/*
         item& operator = (const TESForm *val) {
             if (val) {
                 _var = weak_form_id{ *val };
@@ -197,7 +200,7 @@ namespace collections {
                 _var = blank();
             }
             return *this;
-        }
+        }*/
 
         object_base *object() const {
             if (auto ref = boost::get<internal_object_ref>(&_var)) {
@@ -234,10 +237,6 @@ namespace collections {
                 return val->c_str();
             }
             return nullptr;
-        }
-
-        std::string * stringValue() {
-            return boost::get<std::string>(&_var);
         }
 
         TESForm * form() const {
@@ -282,7 +281,7 @@ namespace collections {
             return is_type<SInt32>() || is_type<Real>();
         }
 
-        template<class T> T readAs();
+        template<class T> T readAs() const;
 
         //////////////////////////////////////////////////////////////////////////
     private:
@@ -350,43 +349,48 @@ namespace collections {
 
     };
 
-    template<> inline item::Real item::readAs<item::Real>() {
+    template<> inline item::Real item::readAs<item::Real>() const {
         return fltValue();
     }
 
-    template<> inline SInt32 item::readAs<SInt32>() {
+    template<> inline SInt32 item::readAs<SInt32>() const {
         return intValue();
     }
 
-    template<> inline const char * item::readAs<const char *>() {
+    template<> inline const char * item::readAs<const char *>() const {
         return strValue();
     }
 
-    template<> inline std::string item::readAs<std::string>() {
-        auto str = stringValue();
+    template<> inline std::string item::readAs<std::string>() const {
+        auto str = boost::get<std::string>(&_var);
         return str ? *str : std::string();
     }
 
-    template<> inline skse::string_ref item::readAs<skse::string_ref>() {
+    template<> inline skse::string_ref item::readAs<skse::string_ref>() const {
         const char *chr = strValue();
         return chr ? skse::string_ref(chr) : skse::string_ref();
     }
 
-    template<> inline Handle item::readAs<Handle>() {
+    template<> inline Handle item::readAs<Handle>() const {
         auto obj = object();
         return obj ? obj->uid() : Handle::Null;
     }
 
-    template<> inline TESForm * item::readAs<TESForm*>() {
+    template<> inline TESForm * item::readAs<TESForm*>() const {
         return form();
     }
 
-    template<> inline object_base * item::readAs<object_base*>() {
+    template<> inline object_base * item::readAs<object_base*>() const {
         return object();
     }
 
-    template<> inline FormId item::readAs<FormId>() {
+    template<> inline FormId item::readAs<FormId>() const {
         return formId();
+    }
+
+    template<> inline weak_form_id item::readAs<weak_form_id>() const {
+        auto form_ptr = get<weak_form_id>();
+        return form_ptr ? *form_ptr : weak_form_id{};
     }
 
 }

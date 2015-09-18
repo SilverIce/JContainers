@@ -3,6 +3,8 @@
 
 #include "jansson.h"
 
+BOOST_CLASS_VERSION(collections::tes_context, 1);
+
 namespace collections {
 
     template<class T, class D>
@@ -125,7 +127,7 @@ namespace collections {
             }
 
             u_print_stats();
-            JC_log("%lu non persistent forms being watched", form_watcher.u_forms_count());
+            JC_log("%lu non persistent forms being watched", form_watcher->u_forms_count());
         }
     }
 
@@ -161,13 +163,23 @@ namespace collections {
     }
 
     template<class Archive> void tes_context::load(Archive & ar, unsigned int version) {
-        ar & static_cast<base&>(*this);
+        ar >> static_cast<base&>(*this);
         boost::serialization::load_atomic(ar, _root_object_id);
+
+        if (version >= 1) {
+            form_watching::dyn_form_watcher* watcher = nullptr;
+            ar >> watcher;
+
+            form_watcher.reset(watcher);
+        }
     }
 
     template<class Archive> void tes_context::save(Archive & ar, unsigned int version) const {
-        ar & static_cast<const base&>(*this);
+        form_watching::dyn_form_watcher* watcher = form_watcher.get();
+
+        ar << static_cast<const base&>(*this);
         boost::serialization::save_atomic(ar, _root_object_id);
+        ar << watcher;
     }
 
     ///////////////////////////
@@ -215,7 +227,7 @@ namespace collections {
     }
 
     map& tes_context::root()
-{
+    {
         map * result = _cached_root.load(std::memory_order_acquire);
         if (!result) {
 

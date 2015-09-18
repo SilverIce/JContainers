@@ -1,5 +1,6 @@
 #pragma once
 
+#include "util/stl_ext.h"
 #include "reflection/tes_binding.h"
 #include "collections/collections.h"
 #include "collections/context.h"
@@ -19,7 +20,7 @@ namespace reflection { namespace binding {
 
         static object_stack_ref_template<T> convert2J(HandleT hdl) {
             auto ref = tes_context::instance().getObjectRefOfType<T>((Handle)hdl);
-            if (!ref && hdl != to_integral(Handle::Null)) {
+            if (!ref && hdl != util::to_integral(Handle::Null)) {
                 JC_log("Warning: access to non-existing object with id 0x%X", hdl);
             }
             return ref;

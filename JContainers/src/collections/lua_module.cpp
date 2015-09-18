@@ -42,6 +42,8 @@ namespace lua {
     using item = collections::item;
     using item_type = collections::item_type;
     using FormId = collections::FormId;
+
+    namespace cl = collections;
 }
 
 #include "lua_native_funcs.hpp"
@@ -56,16 +58,16 @@ namespace lua { namespace aux_wip {
 
     class context : public boost::noncopyable {
 
-        lua_State *l = nullptr;
-        tes_context& tcontext;
+        lua_State *_lua = nullptr;
+        tes_context& _context;
 
     public:
 
         lua_State *state() const {
-            return l;
+            return _lua;
         }
 
-        explicit context(tes_context& context) : tcontext(context) {
+        explicit context(tes_context& context) : _context(context) {
             reopen_if_closed();
             JC_log("Lua context created");
         }
@@ -79,37 +81,37 @@ namespace lua { namespace aux_wip {
 
             assert(lua_string);
 
-            lua_pushcfunction(l, LuaErrorHandler);
-            int errorHandler = lua_gettop(l);
+            lua_pushcfunction(_lua, LuaErrorHandler);
+            int errorHandler = lua_gettop(_lua);
 
-            lua_getglobal(l, "JC_compileAndRun");
-            lua_pushstring(l, lua_string);
-            lua_pushlightuserdata(l, object);
+            lua_getglobal(_lua, "JC_compileAndRun");
+            lua_pushstring(_lua, lua_string);
+            lua_pushlightuserdata(_lua, object);
             enum { num_args = 2, returned = 1 };
 
-            if (lua_pcall(l, num_args, returned, errorHandler) != LUA_OK) {
+            if (lua_pcall(_lua, num_args, returned, errorHandler) != LUA_OK) {
                 return boost::none;
             }
             else {
                 item result;
-                JCValue *val = (JCValue *)lua_topointer(l, -1);
-                JCValue_fillItem(val, result);
+                JCValue *val = (JCValue *)lua_topointer(_lua, -1);
+                JCValue_fillItem(_context, val, result);
                 return result;
             }
         }
 
         void reopen_if_closed() {
-            if (!l) {
-                l = luaL_newstate();
-                luaL_openlibs(l);
-                setupLuaContext(l, tcontext);
+            if (!_lua) {
+                _lua = luaL_newstate();
+                luaL_openlibs(_lua);
+                setupLuaContext(_lua, _context);
             }
         }
 
         void close() {
-            if (l) {
-                auto lua = l;
-                l = nullptr;
+            if (_lua) {
+                auto lua = _lua;
+                _lua = nullptr;
                 lua_close(lua);
             }
         }
@@ -124,8 +126,7 @@ namespace lua { namespace aux_wip {
         }
 
         static void print_top_string(lua_State *l, const char* preambula) {
-            JC_log("%s: %s", preambula, top_string(l));
-            //skse::console_print(str);
+            JC_log("Lua %s: %s", preambula, top_string(l));
         }
 
         static bool setupLuaContext(lua_State *l, tes_context& context) {
@@ -137,7 +138,7 @@ namespace lua { namespace aux_wip {
             int errorHandler = lua_gettop(l);
 
             if (luaL_loadfile(l, initScriptPath.generic_string().c_str()) != LUA_OK) {
-                print_top_string(l, "Lua unable to load init.lua and etc");
+                print_top_string(l, "unable to load init.lua and etc");
                 return false;
             }
 
@@ -148,7 +149,7 @@ namespace lua { namespace aux_wip {
             enum { num_lua_args = 3 }; // DONT FORGET ME!!
 
             if (lua_pcall(l, num_lua_args, LUA_MULTRET, errorHandler) != LUA_OK) {
-                print_top_string(l, "Lua unable to execute init.lua and etc");
+                print_top_string(l, "unable to execute init.lua and etc");
                 return false;
             }
 
@@ -158,7 +159,7 @@ namespace lua { namespace aux_wip {
         static int LuaErrorHandler(lua_State *l) {
 
             int message = lua_gettop(l);//1
-            print_top_string(l, "Lua error");
+            print_top_string(l, "error");
 
             lua_getglobal(l, "debug");//2
             lua_pushstring(l, "traceback");
@@ -167,7 +168,7 @@ namespace lua { namespace aux_wip {
 
             lua_call(l, 0, 1);
 
-            print_top_string(l, "Lua trace");
+            print_top_string(l, "trace");
 
             lua_pushvalue(l, message);
             return 1;
@@ -231,9 +232,7 @@ namespace lua { namespace aux_wip {
         }
 
         void warn_if_aquired() {
-            if (_aquired_count > 0) { // ololo. N contexts are still aquired, crash possible!
-                assert(false);
-            }
+            jc_assert_msg(_aquired_count == 0, "Lua: %u lua-contexts are still active and used", _aquired_count);
         }
     };
 
@@ -285,28 +284,13 @@ namespace lua { namespace aux_wip {
 
     TEST_F(fixture, Lua, evalLua)
     {
-        /*
-        auto result = eval_lua_function_for_test(l, &array::object(tes_context::instance()),
-        "assert(jobject);"
-        "local obj = JArray.objectWithArray {1,2,3,4,9};"
-        "return jc.filter(obj, function(x) return x < 3.5 end);"
-        );
-
-        EXPECT_TRUE(result);
-
-        auto obj = result->object();
-        EXPECT_NOT_NIL(obj);
-        auto filtered = result->object()->as<array>();
-        EXPECT_NOT_NIL(filtered);
-        EXPECT_TRUE(filtered->s_count() == 3);*/
-
         autofreed_context lc(pool);
 
         auto testTransporting = [&](const char *str) { return lc->eval_lua_function(nullptr, str); };
 
         EXPECT_TRUE(*testTransporting("return 10") == 10.0f);
         EXPECT_TRUE(*testTransporting("return 'die'") == std::string("die"));
-        EXPECT_TRUE(*testTransporting("return Form(20)") == weak_form_id{ FormId(20) });
+        EXPECT_TRUE(*testTransporting("return Form(20)") == cl::make_weak_form_id(FormId(20), tc));
 
 
         auto& db = tc.root();

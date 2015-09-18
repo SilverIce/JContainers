@@ -31,15 +31,6 @@ namespace form_watching {
         watched_forms_t _watched_forms;
         std::atomic_flag _is_inside_unsafe_func;
 
-        static dyn_form_watcher _instance;
-    public:
-
-        dyn_form_watcher();
-
-        static dyn_form_watcher& instance() {
-            return _instance;
-        }
-
         template<class ReadCondition, class WriteAction, class Target>
         static bool if_condition_then_perform(ReadCondition& condition, WriteAction& action, Target& target) {
             bool condition_met = false;
@@ -56,16 +47,28 @@ namespace form_watching {
             return condition_met;
         }
 
-        void on_form_deleted(FormHandle fId);
+        void remove_expired_forms() const {}
+        void remove_expired_forms();
 
+    public:
+
+        dyn_form_watcher();
+
+        template<class Archive>
+        void serialize(Archive & ar, const unsigned int version) {
+            remove_expired_forms();
+
+            ar & _watched_forms;
+        }
+
+        void on_form_deleted(FormHandle fId);
+        boost::shared_ptr<watched_form> watch_form(FormId fId);
+
+        // Not threadsafe part of api:
         void u_clearState() {
             _watched_forms.clear();
         }
-
         size_t u_forms_count() const { return _watched_forms.size(); }
-
-        boost::shared_ptr<watched_form> watch_form(FormId fId);
-
         boost::shared_ptr<watched_form> u_watch_form(FormId fId);
     };
 
@@ -77,19 +80,26 @@ namespace form_watching {
 
     public:
 
+        static weak_form_id make_expired(FormId formId) {
+            weak_form_id id;
+            id._id = formId;
+            id._expired = true;
+            return id;
+        }
+
         weak_form_id() {}
 
-        explicit weak_form_id(FormId id);
+        explicit weak_form_id(FormId id, dyn_form_watcher& watcher);
 
-        explicit weak_form_id(const TESForm& form);
+        explicit weak_form_id(const TESForm& form, dyn_form_watcher& watcher);
 
         // Special constructor - to load v <= 3.2.4 data
         enum load_old_id_t { load_old_id };
-        explicit weak_form_id(FormId id, load_old_id_t) {
-            u_load_old_form_id(id);
-        }
+        explicit weak_form_id(FormId id, load_old_id_t);
 
         bool is_not_expired() const;
+        bool is_expired() const { return !is_not_expired(); }
+        bool is_watched() const { return _watched_form.operator bool(); }
 
         FormId get() const {
             return is_not_expired() ? _id : FormId::Zero;
@@ -100,25 +110,18 @@ namespace form_watching {
         bool operator ! () const { return !is_not_expired(); }
 
         bool operator == (const weak_form_id& o) const {
-            return _id == o._id;
+            return get() == o.get();
         }
         bool operator != (const weak_form_id& o) const {
             return !(*this == o);
         }
-        bool operator < (const weak_form_id& o) const {
-            return _id < o._id;
-        }
+        bool operator < (const weak_form_id& o) const;
 
         friend class boost::serialization::access;
         BOOST_SERIALIZATION_SPLIT_MEMBER();
 
         template<class Archive> void save(Archive & ar, const unsigned int version) const;
-
         template<class Archive> void load(Archive & ar, const unsigned int version);
-
-    private:
-
-        void u_load_old_form_id(FormId oldId);
     };
 
 }
@@ -127,12 +130,11 @@ namespace form_watching {
 
     template<class Context>
     inline weak_form_id make_weak_form_id(FormId id, Context& context) {
-        return weak_form_id(id);
+        return weak_form_id{ id, *context.form_watcher };
     }
 
     template<class Context>
     inline weak_form_id make_weak_form_id(const TESForm* id, Context& context) {
-        return id ? weak_form_id(*id) : weak_form_id();
+        return id ? weak_form_id{ *id, *context.form_watcher } : weak_form_id{};
     }
-
 }

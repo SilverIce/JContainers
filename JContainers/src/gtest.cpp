@@ -84,7 +84,7 @@ namespace testing
             teststate.currentFailed = true;
             ++teststate.countFailedTests;
         }
-        __debugbreak();
+        //__debugbreak();
     }
 
     TEST(gtest, test_self)

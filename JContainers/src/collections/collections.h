@@ -68,7 +68,6 @@ namespace collections {
         }
     };
 
-    
     template<class R, class Collection, class F, class ...Args>
     inline R perform_on_object_and_return(Collection& container, F func, Args&&... args) {
         switch (container.type()) {
