@@ -156,6 +156,33 @@ namespace collections {
             }
         }
 
+        template<class KeyTypeIn>
+        static KeyTypeIn nextKey_forPapyrus(const T *obj, const KeyTypeIn& lastKey, const KeyTypeIn& endKey) {
+            if (obj) {
+                object_lock g(obj);
+                auto& container = obj->u_container();
+                if (key_checker::check(lastKey)) {
+                    auto itr = container.find(lastKey);
+                    const auto end = container.end();
+
+                    if (itr == end) {
+                        return endKey;
+                    }
+
+                    while (++itr != end) {
+                        if (itr->first != endKey) {
+                            return itr->first;
+                        }
+                    }
+                }
+                else if (container.empty() == false) {
+                    return container.begin()->first;
+                }
+            }
+
+            return endKey;
+        }
+
         template<class KeyFunc>
         static void getNthKey(const T *obj, int32_t keyIdx, KeyFunc keyFunc) {
             if (obj) {

@@ -160,8 +160,7 @@ namespace tes_api_3 {
         //////////////////////////////////////////////////////////////////////////
 
         static Key nextKey(ref obj, key_cref previousKey, key_ref endKey) {
-            map_functions::nextKey(obj, previousKey, [&](const typename Cnt::key_type & key) { endKey = key; });
-            return endKey;
+            return map_functions::nextKey_forPapyrus(obj, previousKey, endKey);
         }
 
         static Key getNthKey(ref obj, SInt32 keyIndex) {

@@ -10,7 +10,7 @@ namespace tes_api_3 {
         void additionalSetup() {
             metaInfo.comment =
 "Global entry point to store mod information. Main intent - replace global variables\n\
-Manages keys and values associations as JMap";
+Manages keys and values associations (like JMap)";
         }
 
         template<class T>
