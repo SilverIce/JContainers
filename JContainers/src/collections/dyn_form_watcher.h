@@ -75,8 +75,8 @@ namespace form_watching {
     class weak_form_id {
 
         FormId _id = FormId::Zero;
-        mutable boost::shared_ptr<watched_form> _watched_form;
-        mutable bool _expired = true;
+        boost::shared_ptr<watched_form> _watched_form;
+        bool _expired = true;
 
     public:
 

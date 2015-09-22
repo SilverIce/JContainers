@@ -24,9 +24,9 @@ extern "C" {
 #include "util/util.h"
 #include "gtest.h"
 #include "util/spinlock.h"
-
 #include "reflection/reflection.h"
 #include "jcontainers_constants.h"
+
 #include "collections/collections.h"
 #include "collections/context.h"
 #include "collections/functions.h"

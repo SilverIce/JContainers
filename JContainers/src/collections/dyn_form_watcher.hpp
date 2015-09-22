@@ -190,17 +190,7 @@ namespace collections {
                 return !_expired;
             }
 
-            if (!_expired) {
-                if (_watched_form && !_watched_form->is_deleted()) {
-                    return true;
-                }
-                else {
-                    log("weak_form_id: form %X known as deleted now", _id);
-                    _expired = true;
-                }
-            }
-
-            return false;
+            return _watched_form && !_watched_form->is_deleted();
         }
 
         weak_form_id::weak_form_id(FormId oldId, load_old_id_t) {
@@ -258,7 +248,7 @@ namespace collections {
         */
 
         bool weak_form_id::operator < (const weak_form_id& o) const {
-            return std::make_tuple(_id, _watched_form) < std::make_tuple(o._id, o._watched_form);
+            return std::make_tuple(_id, _expired, _watched_form) < std::make_tuple(o._id, o._expired, o._watched_form);
             //return _id < o._id;
             //return std::make_tuple(_id, _watched_form) < std::make_tuple(o._id, o._watched_form);
 
