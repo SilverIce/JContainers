@@ -22,7 +22,6 @@ namespace form_watching {
 
     void log(const char* fmt, ...);
 
-    // Had to be single instance as there is single Skyrim instance only?
     class dyn_form_watcher {
 
         using watched_forms_t = std::hash_map<FormId, boost::weak_ptr<watched_form> >;
@@ -64,7 +63,7 @@ namespace form_watching {
         void on_form_deleted(FormHandle fId);
         boost::shared_ptr<watched_form> watch_form(FormId fId);
 
-        // Not threadsafe part of api:
+        // Not threadsafe part of API:
         void u_clearState() {
             _watched_forms.clear();
         }

@@ -43,6 +43,8 @@ namespace collections {
             explicit watched_form(FormId handle)
                 : _handle(handle)
             {
+                jc_assert_msg(fh::is_static(handle) == false, "we aren't watching static forms (yet?)");
+
                 log("watched_form retains %X", handle);
                 skse::retain_handle(handle);
             }
@@ -82,7 +84,7 @@ namespace collections {
         };
 
         void dyn_form_watcher::remove_expired_forms() {
-            util::tree_erase_if(_watched_forms, [](watched_forms_t::value_type& pair) {
+            util::tree_erase_if(_watched_forms, [](const watched_forms_t::value_type& pair) {
                 return pair.second.expired();
             });
         }
@@ -168,7 +170,7 @@ namespace collections {
 
         weak_form_id::weak_form_id(FormId id, dyn_form_watcher& watcher)
             : _id(id)
-            , _expired(skse::lookup_form(id) == nullptr)
+            , _expired(false/*skse::lookup_form(id) == nullptr*/) // the test had to be disabled as the form might be not loaded yet. and there is no way to test thois
         {
             if (!fh::is_static(id) && !_expired) {
                 _watched_form = watcher.watch_form(id);
