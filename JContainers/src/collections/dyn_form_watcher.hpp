@@ -193,7 +193,7 @@ namespace collections {
             return _watched_form && !_watched_form->is_deleted();
         }
 
-        weak_form_id::weak_form_id(FormId oldId, load_old_id_t) {
+        weak_form_id::weak_form_id(FormId oldId, dyn_form_watcher& watcher, load_old_id_t) {
             if (form_handling::is_static(oldId)) {
                 FormId newId = skse::resolve_handle(oldId);
                 if (newId != FormId::Zero) {
@@ -206,14 +206,8 @@ namespace collections {
                 }
             }
             else { // otherwise it is dynamic form
-                if (skse::lookup_form(oldId)) {
-                    _watched_form = tes_context::instance().form_watcher->u_watch_form(oldId);
-                    _expired = false;
-                }
-                else {
-                    _expired = true;
-                }
-
+                _watched_form = watcher.u_watch_form(oldId);
+                _expired = false;
                 _id = oldId;
             }
         }

@@ -95,7 +95,7 @@ namespace form_watching {
 
         // Special constructor - to load v <= 3.2.4 data
         enum load_old_id_t { load_old_id };
-        explicit weak_form_id(FormId id, load_old_id_t);
+        explicit weak_form_id(FormId oldId, dyn_form_watcher& watcher, load_old_id_t);
 
         bool is_not_expired() const;
         bool is_expired() const { return !is_not_expired(); }

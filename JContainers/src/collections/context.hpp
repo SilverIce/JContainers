@@ -96,7 +96,8 @@ namespace collections {
                     }
 
                     {
-                        boost::archive::binary_iarchive archive{ stream };
+                        hack::iarchive_with_blob real_archive(stream, *this, *this);
+                        boost::archive::binary_iarchive& archive = real_archive;
 
                         if (hdr.commonVersion <= serialization_version::pre_dyn_form_watcher) {
                             load_data_in_old_way(archive);

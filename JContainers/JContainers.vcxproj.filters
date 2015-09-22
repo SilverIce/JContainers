@@ -242,6 +242,7 @@
     <ClInclude Include="src\util\stl_ext.h">
       <Filter>util</Filter>
     </ClInclude>
+    <ClInclude Include="src\iarchive_with_blob.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="JContainers.rc" />
