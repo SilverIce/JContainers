@@ -320,11 +320,11 @@ namespace lua { namespace aux_wip {
 namespace lua {
 
     boost::optional<item> eval_lua_function(tes_context& ctx, object_base *object, const char *lua_string) {
-        auto pool = static_cast<aux_wip::context_pool*>(*ctx.lua_context);
+        auto pool = static_cast<aux_wip::context_pool*>(ctx.lua_context.get());
         return aux_wip::autofreed_context(*pool)->eval_lua_function(object, lua_string);
     }
 
     static tes_context::post_init g_extender([](tes_context& ctx){
-        ctx.lua_context = std::make_unique<collections::dependent_context*>(new aux_wip::context_pool(ctx));
+        ctx.lua_context = std::make_shared<aux_wip::context_pool>(ctx);
     });
 }

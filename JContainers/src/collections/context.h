@@ -66,9 +66,9 @@ namespace collections
         }
 
         // to attach lua context
-        std::unique_ptr<dependent_context*>     lua_context;
+        std::shared_ptr<dependent_context>     lua_context;
 
-        std::unique_ptr<form_watching::dyn_form_watcher> form_watcher;
+        std::shared_ptr<form_watching::dyn_form_watcher> form_watcher;
 
         //////
     public:
