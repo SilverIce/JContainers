@@ -20,6 +20,8 @@ namespace form_watching {
     class dyn_form_watcher;
     class form_entry;
 
+    using form_entry_ref = boost::shared_ptr < form_entry > ;
+
     void log(const char* fmt, ...);
 
     class dyn_form_watcher {
@@ -61,7 +63,7 @@ namespace form_watching {
         }
 
         void on_form_deleted(FormHandle fId);
-        boost::shared_ptr<form_entry> watch_form(FormId fId);
+        form_entry_ref watch_form(FormId fId);
 
         // Not threadsafe part of API:
         void u_clearState() {
@@ -72,20 +74,19 @@ namespace form_watching {
 
     class weak_form_id {
 
-        boost::shared_ptr<form_entry> _watched_form;
+        form_entry_ref _watched_form;
 
     public:
 
-        static weak_form_id make_expired(FormId formId) {
-            weak_form_id id;
-            return id;
-        }
-
         weak_form_id() = default;
 
-        explicit weak_form_id(FormId id, dyn_form_watcher& watcher);
+        explicit weak_form_id(const form_entry_ref& entry) : _watched_form(entry) {}
+        explicit weak_form_id(form_entry_ref&& entry) : _watched_form(std::move(entry)) {}
 
-        explicit weak_form_id(const TESForm& form, dyn_form_watcher& watcher);
+        weak_form_id(FormId id, dyn_form_watcher& watcher);
+        weak_form_id(const TESForm& form, dyn_form_watcher& watcher);
+
+        static weak_form_id make_expired(FormId formId);
 
         // Special constructor - to load v <= 3.2.4 data
         enum load_old_id_t { load_old_id };
@@ -93,7 +94,6 @@ namespace form_watching {
 
         bool is_not_expired() const;
         bool is_expired() const { return !is_not_expired(); }
-        bool is_watched() const { return _watched_form.operator bool(); }
 
         FormId get() const;
         FormId get_raw() const;

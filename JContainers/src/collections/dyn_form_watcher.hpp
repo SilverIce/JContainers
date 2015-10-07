@@ -34,7 +34,8 @@ namespace collections {
 
             FormId _handle = FormId::Zero;
             std::atomic<bool> _deleted = false;
-            bool _is_handle_retained = false; // to not release the handle if the handle can't be retained (for ex. handle's object was not loaded)
+            // to not release the handle if the handle can't be retained (for ex. handle's object was not loaded)
+            bool _is_handle_retained = false;
 
             bool u_is_deleted() const {
                 return _deleted._My_val;
@@ -45,23 +46,35 @@ namespace collections {
 
         public:
 
+            form_entry(FormId handle, bool deleted, bool handle_was_retained)
+                : _handle(handle)
+                , _deleted(deleted)
+                , _is_handle_retained(handle_was_retained)
+            {}
+
             form_entry() = default;
 
-            explicit form_entry(FormId handle)
-                : _handle(handle)
-            {
-                log("watched_form retains %X", handle);
-                _is_handle_retained = skse::try_retain_handle(handle);
+            static form_entry_ref make(FormId handle) {
+                log("form_entry retains %X", handle);
+
+                return boost::make_shared<form_entry>(
+                    handle,
+                    false,
+                    skse::try_retain_handle(handle));
+            }
+
+            static form_entry_ref make_expired(FormId handle) {
+                return boost::make_shared<form_entry>(handle, true, false);
             }
 
             ~form_entry() {
                 if (!is_deleted() && _is_handle_retained) {
-                    log("watched_form releases %X", _handle);
+                    log("form_entry releases %X", _handle);
                     skse::release_handle(_handle);
                 }
             }
 
-            const FormId& id() const { return _handle; }
+            FormId id() const { return _handle; }
 
             bool is_deleted() const {
                 return _deleted.load(std::memory_order_acquire);
@@ -143,7 +156,7 @@ namespace collections {
             }
         }
 
-        boost::shared_ptr<form_entry> dyn_form_watcher::watch_form(FormId fId)
+        form_entry_ref dyn_form_watcher::watch_form(FormId fId)
         {
             if (fId == FormId::Zero) {
                 return nullptr;
@@ -151,13 +164,14 @@ namespace collections {
 
             log("watching form %X", fId);
 
-            auto get_or_assign = [fId](boost::weak_ptr<form_entry> & watched_weak) -> boost::shared_ptr<form_entry> {
+            auto get_or_assign = [fId](boost::weak_ptr<form_entry> & watched_weak) -> form_entry_ref {
                 std::lock_guard<boost::detail::spinlock> guard{ spinlock_pool::spinlock_for(&watched_weak) };
                 auto watched = watched_weak.lock();
 
                 if (!watched) {
-                    // what if two threads trying assign?? both are here or one is here and another performing @on_form_deleted func.
-                    watched_weak = watched = boost::make_shared<form_entry>(fId);
+                    // what if two threads trying assign??
+                    // both threads are here or one is here and another performing @on_form_deleted func.
+                    watched_weak = watched = form_entry::make(fId);
                 }
                 return watched;
             };
@@ -180,7 +194,7 @@ namespace collections {
                     return get_or_assign(itr->second);
                 }
                 else {
-                    auto watched = boost::make_shared<form_entry>(fId);
+                    auto watched = form_entry::make(fId);
                     _watched_forms[fId] = watched;
                     return watched;
                 }
@@ -221,6 +235,13 @@ namespace collections {
             : _watched_form(watcher.watch_form(skse::resolve_handle(oldId)))
         {
         }
+
+        weak_form_id weak_form_id::make_expired(FormId formId) {
+            auto entry = form_entry::make_expired(formId);
+            return weak_form_id{ entry };
+        }
+
+        //////////////////
 
         FormId weak_form_id::get() const {
             return is_not_expired() ? _watched_form->id() : FormId::Zero;
