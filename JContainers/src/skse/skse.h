@@ -20,7 +20,7 @@ namespace skse {
     FormId resolve_handle(FormId handle);
     TESForm* lookup_form(FormId handle);
 
-    void retain_handle(FormId handle);
+    bool try_retain_handle(FormId handle);
     void release_handle(FormId handle);
 
     void console_print(const char * fmt, ...);

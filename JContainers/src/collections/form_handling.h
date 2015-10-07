@@ -25,7 +25,7 @@ namespace collections {
         }
 
         inline bool is_form_handle(FormHandle handle) {
-            return (uint32_t)((uint64_t)handle >> 32) == 0x0000FFFF;
+            return ((uint64_t)handle >> 32) == 0x0000FFFF;
         }
 
         inline FormId form_handle_to_id(FormHandle handle) {
@@ -38,15 +38,6 @@ namespace collections {
 
         inline FormId construct(uint8_t mod_id, uint32_t local_identifier) {
             return (FormId) ((mod_id << 24) | local_id((FormId)local_identifier));
-        }
-
-        inline FormId resolve_handle(FormId handle) {
-            if (is_static(handle)) {
-                return skse::resolve_handle(handle);
-            }
-            else {
-                return skse::lookup_form(handle) ? handle : FormId::Zero;
-            }
         }
 
         static const char kFormData[] = "__formData";

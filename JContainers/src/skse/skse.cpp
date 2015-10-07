@@ -12,10 +12,12 @@
 #include "skse/GameData.h"
 #include "skse/InternalSerialization.h"
 #include "skse/PluginAPI.h"
-
-#include "gtest.h"
-#include "collections/form_handling.h"
 #include "skse/PapyrusVM.h"
+
+#include "util/stl_ext.h"
+#include "gtest.h"
+
+#include "collections/form_handling.h"
 //#include "util/util.h"
 //#include "jc_interface.h"
 //#include "reflection/reflection.h"
@@ -34,7 +36,7 @@ namespace skse {
             virtual FormId resolve_handle(FormId handle) = 0;
             virtual TESForm* lookup_form(FormId handle) = 0;
 
-            virtual void retain_handle(FormId handle) = 0;
+            virtual bool try_retain_handle(FormId handle) = 0;
             virtual void release_handle(FormId handle) = 0;
 
             virtual void console_print(const char * fmt, const va_list& args) = 0;
@@ -109,7 +111,7 @@ namespace skse {
                 return reinterpret_cast<TESForm*>(&fakeTesForm);
             }
 
-            void retain_handle(FormId handle) override {}
+            bool try_retain_handle(FormId handle) override { return true; }
             void release_handle(FormId handle) override {}
 
             void console_print(const char * fmt, const va_list& args) override {
@@ -125,7 +127,7 @@ namespace skse {
             uint8_t modindex_from_name(const char * name) override { return 0; }
             FormId resolve_handle(FormId handle) override { return FormId::Zero; }
             TESForm* lookup_form(FormId handle) override { return nullptr; }
-            void retain_handle(FormId handle) override {}
+            bool try_retain_handle(FormId handle) override { return true; }
             void release_handle(FormId handle) override {}
             void console_print(const char * fmt, const va_list& args) override {}
         };
@@ -142,20 +144,25 @@ namespace skse {
             }
 
             FormId resolve_handle(FormId handle) override {
-                if (collections::form_handling::is_static(handle) == false) { // dynamic form - return untouched
+                if ((util::to_integral(handle) >> 24) == 0xFF) { // dynamic form - return untouched
                     return handle;
                 }
 
                 UInt64 handleOut = 0;
-                return g_serialization->ResolveHandle((UInt64)handle, &handleOut) ? (FormId)handleOut : FormId::Zero;
+                return g_serialization->ResolveHandle(util::to_integral(handle), &handleOut) ? (FormId)handleOut : FormId::Zero;
             }
 
             TESForm* lookup_form(FormId handle) override {
                 return LookupFormByID((FormIdUnredlying)handle);
             }
 
-            void retain_handle(FormId handle) override {
-                (*g_objectHandlePolicy)->AddRef((UInt64)collections::form_handling::form_id_to_handle(handle));
+            bool try_retain_handle(FormId id) override {
+                auto handle = util::to_integral(collections::form_handling::form_id_to_handle(id));
+                if ((*g_objectHandlePolicy)->Resolve(TESObjectREFR::kTypeID, handle) != nullptr) {
+                    (*g_objectHandlePolicy)->AddRef(handle);
+                    return true;
+                }
+                return false;
             }
             void release_handle(FormId handle) override {
                 (*g_objectHandlePolicy)->Release((UInt64)collections::form_handling::form_id_to_handle(handle));
@@ -214,8 +221,8 @@ namespace skse {
         va_end(args);
     }
 
-    void retain_handle(FormId handle) {
-        g_current_api->retain_handle(handle);
+    bool try_retain_handle(FormId handle) {
+        return g_current_api->try_retain_handle(handle);
     }
 
     void release_handle(FormId handle) {

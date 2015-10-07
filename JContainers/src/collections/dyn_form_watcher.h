@@ -46,8 +46,8 @@ namespace form_watching {
             return condition_met;
         }
 
-        void remove_expired_forms() const {}
-        void remove_expired_forms();
+        void u_remove_expired_forms() const {}
+        void u_remove_expired_forms();
 
     public:
 
@@ -55,7 +55,7 @@ namespace form_watching {
 
         template<class Archive>
         void serialize(Archive & ar, const unsigned int version) {
-            remove_expired_forms();
+            u_remove_expired_forms();
 
             ar & _watched_forms;
         }
@@ -68,21 +68,16 @@ namespace form_watching {
             _watched_forms.clear();
         }
         size_t u_forms_count() const { return _watched_forms.size(); }
-        boost::shared_ptr<watched_form> u_watch_form(FormId fId);
     };
 
     class weak_form_id {
 
-        FormId _id = FormId::Zero;
         boost::shared_ptr<watched_form> _watched_form;
-        bool _expired = true;
 
     public:
 
         static weak_form_id make_expired(FormId formId) {
             weak_form_id id;
-            id._id = formId;
-            id._expired = true;
             return id;
         }
 
@@ -100,11 +95,8 @@ namespace form_watching {
         bool is_expired() const { return !is_not_expired(); }
         bool is_watched() const { return _watched_form.operator bool(); }
 
-        FormId get() const {
-            return is_not_expired() ? _id : FormId::Zero;
-        }
-
-        FormId get_raw() const { return _id; }
+        FormId get() const;
+        FormId get_raw() const;
 
         bool operator ! () const { return !is_not_expired(); }
 

@@ -7,6 +7,7 @@
 #include <inttypes.h>
 #include <map>
 #include <tuple>
+#include <mutex>
 
 //#include "skse/GameForms.h"
 //#include "skse/PapyrusVM.h"
@@ -16,7 +17,7 @@
 #include "collections/form_handling.h"
 #include "collections/dyn_form_watcher.h"
 
-BOOST_CLASS_VERSION(collections::form_watching::weak_form_id, 1);
+BOOST_CLASS_VERSION(collections::form_watching::weak_form_id, 2);
 
 namespace collections {
 
@@ -24,17 +25,23 @@ namespace collections {
 
         namespace fh = form_handling;
 
-        void log(const char* fmt, ...) {
-            va_list	args;
-            va_start(args, fmt);
-            JC_log(fmt, args);
-            va_end(args);
+        template<class ...Params>
+        inline void log(const char* fmt, Params&& ...ps) {
+            JC_log(fmt, std::forward<Params ...>(ps ...));
         }
 
         class watched_form : public boost::noncopyable {
 
             FormId _handle = FormId::Zero;
             std::atomic<bool> _deleted = false;
+            bool _is_handle_retained = false; // to not release the handle if the handle can't be retained (for ex. handle's object was not loaded)
+
+            bool u_is_deleted() const {
+                return _deleted._My_val;
+            }
+            void u_set_deleted() {
+                _deleted._My_val = true;
+            }
 
         public:
 
@@ -43,18 +50,18 @@ namespace collections {
             explicit watched_form(FormId handle)
                 : _handle(handle)
             {
-                jc_assert_msg(fh::is_static(handle) == false, "we aren't watching static forms (yet?)");
-
                 log("watched_form retains %X", handle);
-                skse::retain_handle(handle);
+                _is_handle_retained = skse::try_retain_handle(handle);
             }
 
             ~watched_form() {
-                if (false == is_deleted()) {
+                if (!is_deleted() && _is_handle_retained) {
                     log("watched_form releases %X", _handle);
                     skse::release_handle(_handle);
                 }
             }
+
+            const FormId& id() const { return _handle; }
 
             bool is_deleted() const {
                 return _deleted.load(std::memory_order_acquire);
@@ -68,22 +75,28 @@ namespace collections {
             BOOST_SERIALIZATION_SPLIT_MEMBER();
 
             template<class Archive> void save(Archive & ar, const unsigned int version) const {
-                ar & reinterpret_cast<const std::underlying_type<decltype(_handle)>::type &>(_handle);
-                ar & _deleted._My_val;
+                ar << util::to_integral_ref(_handle);
+                ar << _deleted._My_val;
             }
 
             template<class Archive> void load(Archive & ar, const unsigned int version) {
-                ar & reinterpret_cast<std::underlying_type<decltype(_handle)>::type &>(_handle);
-                ar & _deleted._My_val;
+                ar >> util::to_integral_ref(_handle);
+                ar >> _deleted._My_val;
 
-                // retain handle again
-                if (is_deleted() == false) {
-                    skse::retain_handle(_handle);
+                if (u_is_deleted() == false) {
+                    _handle = skse::resolve_handle(_handle);
+
+                    if (_handle != FormId::Zero) {
+                        _is_handle_retained = skse::try_retain_handle(_handle);
+                    }
+                    else {
+                        u_set_deleted();
+                    }
                 }
             }
         };
 
-        void dyn_form_watcher::remove_expired_forms() {
+        void dyn_form_watcher::u_remove_expired_forms() {
             util::tree_erase_if(_watched_forms, [](const watched_forms_t::value_type& pair) {
                 return pair.second.expired();
             });
@@ -93,6 +106,8 @@ namespace collections {
             _is_inside_unsafe_func._My_flag = false;
         }
 
+        using spinlock_pool = boost::detail::spinlock_pool < 'DyFW' > ;
+
         void dyn_form_watcher::on_form_deleted(FormHandle handle)
         {
             // already failed, there are plenty of any kind of objects that are deleted every moment, even during initial splash screen
@@ -100,7 +115,6 @@ namespace collections {
                 //"If failed, then there is static form destruction event too? fId %" PRIX64, handle);
 
             if (!fh::is_form_handle(handle)) {
-                //log("on_form_deleted: skipped %" PRIX64, handle);
                 return;
             }
 
@@ -110,36 +124,73 @@ namespace collections {
             ///log("on_form_deleted: %" PRIX64, handle);
 
             auto formId = fh::form_handle_to_id(handle);
+            {
+                read_lock r(_mutex);
 
-            if_condition_then_perform(
-                [formId](const dyn_form_watcher& w) {
-                    return w._watched_forms.find(formId) != w._watched_forms.end();
-                },
-                [formId](dyn_form_watcher& w) {
-                    auto itr = w._watched_forms.find(formId);
-                    if (itr != w._watched_forms.end()) {
-                        auto watched = itr->second.lock();
-                        if (watched) {
-                            watched->set_deleted();
-                            log("flag handle %" PRIX64 " as deleted", formId);
-                        }
-                        w._watched_forms.erase(itr);
+                auto itr = _watched_forms.find(formId);
+                if (itr != _watched_forms.end()) {
+                    // read and write
+
+                    std::lock_guard<boost::detail::spinlock> guard{ spinlock_pool::spinlock_for(&itr->second) };
+                    auto watched = itr->second.lock();
+
+                    if (watched) {
+                        watched->set_deleted();
+                        log("flag handle %" PRIX64 " as deleted", formId);
                     }
-                },
-                *this
-            );
+                    itr->second.reset();
+                }
+            }
         }
 
         boost::shared_ptr<watched_form> dyn_form_watcher::watch_form(FormId fId)
         {
-            write_lock l{ _mutex };
-            return u_watch_form(fId);
+            if (fId == FormId::Zero) {
+                return nullptr;
+            }
+
+            log("watching form %X", fId);
+
+            auto get_or_assign = [fId](boost::weak_ptr<watched_form> & watched_weak) -> boost::shared_ptr<watched_form> {
+                std::lock_guard<boost::detail::spinlock> guard{ spinlock_pool::spinlock_for(&watched_weak) };
+                auto watched = watched_weak.lock();
+
+                if (!watched) {
+                    // what if two threads trying assign?? both are here or one is here and another performing @on_form_deleted func.
+                    watched_weak = watched = boost::make_shared<watched_form>(fId);
+                }
+                return watched;
+            };
+
+            {
+                read_lock r(_mutex);
+                auto itr = _watched_forms.find(fId);
+
+                if (itr != _watched_forms.end()) {
+                    return get_or_assign(itr->second);
+                }
+            }
+
+            {
+                write_lock r(_mutex);
+
+                auto itr = _watched_forms.find(fId);
+
+                if (itr != _watched_forms.end()) {
+                    return get_or_assign(itr->second);
+                }
+                else {
+                    auto watched = boost::make_shared<watched_form>(fId);
+                    _watched_forms[fId] = watched;
+                    return watched;
+                }
+            }
         }
 
         struct lock_or_fail {
             std::atomic_flag& flag;
 
-            lock_or_fail(std::atomic_flag& flg) : flag(flg) {
+            explicit lock_or_fail(std::atomic_flag& flg) : flag(flg) {
                 jc_assert_msg(false == flg.test_and_set(std::memory_order_acquire),
                     "My dyn_form_watcher test has failed? Report this please");
             }
@@ -149,174 +200,102 @@ namespace collections {
             }
         };
 
-        boost::shared_ptr<watched_form> dyn_form_watcher::u_watch_form(FormId fId)
-        {
-            jc_assert_msg(fh::is_static(fId) == false, "we don't watch static forms (yet?)");
-
-            log("watching form %X", fId);
-
-            lock_or_fail g{ _is_inside_unsafe_func };
-
-            auto itr = _watched_forms.find(fId);
-            if (itr != _watched_forms.end() && !itr->second.expired()) {
-                return itr->second.lock();
-            }
-            else {
-                auto watched = boost::make_shared<watched_form>(fId);
-                _watched_forms[fId] = watched;
-                return watched;
-            }
-        }
+        ////////////////////////////////////////
 
         weak_form_id::weak_form_id(FormId id, dyn_form_watcher& watcher)
-            : _id(id)
-            , _expired(false/*skse::lookup_form(id) == nullptr*/) // the test had to be disabled as the form might be not loaded yet. and there is no way to test thois
+            : _watched_form(watcher.watch_form(id))
         {
-            if (!fh::is_static(id) && !_expired) {
-                _watched_form = watcher.watch_form(id);
-            }
         }
 
         weak_form_id::weak_form_id(const TESForm& form, dyn_form_watcher& watcher)
-            : _id(static_cast<FormId>(form.formID))
-            , _expired(false)
+            : _watched_form(watcher.watch_form(util::to_enum<FormId>(form.formID)))
         {
-            if (!fh::is_static(_id)) {
-                _watched_form = watcher.watch_form(_id);
-            }
         }
 
         bool weak_form_id::is_not_expired() const
         {
-            if (fh::is_static(_id)) {
-                return !_expired;
-            }
-
             return _watched_form && !_watched_form->is_deleted();
         }
 
-        weak_form_id::weak_form_id(FormId oldId, dyn_form_watcher& watcher, load_old_id_t) {
-            if (form_handling::is_static(oldId)) {
-                FormId newId = skse::resolve_handle(oldId);
-                if (newId != FormId::Zero) {
-                    _id = newId;
-                    _expired = false;
-                }
-                else {
-                    _id = oldId;
-                    _expired = true;
-                }
-            }
-            else { // otherwise it is dynamic form
-                _watched_form = watcher.u_watch_form(oldId);
-                _expired = false;
-                _id = oldId;
-            }
+        weak_form_id::weak_form_id(FormId oldId, dyn_form_watcher& watcher, load_old_id_t)
+            : _watched_form(watcher.watch_form(skse::resolve_handle(oldId)))
+        {
         }
 
-        /*
-         I'll just hope mod authors who use JContainers follow the news
+        FormId weak_form_id::get() const {
+            return is_not_expired() ? _watched_form->id() : FormId::Zero;
+        }
 
-         It seems I'll be forced to erase invalid form-keys from JFormMap containers, otherwise they may be filled up with lot of died forms and bring even more issues..
-         and lot of ambiguity.
-
-         Say, a JFormMap contains some form-key, which points to deleted, non-persistent form identifier - 0xff000014,
-         Skyrim creates new form and reuses 0xff000014  identifier, and a user performs JFormMap.hasKey test on that container. It had to returns False, as the keys are different
-
-         JFormMap.nextKey is another pray as the function may return None (due to non-persistent forms), so iteration process will be interrupted.
-         Thery is really no way, expect to not use @nextKey on JFormMap (use @allKeys or @allKeyAsPArray instead), unless you sure it will never contain non-persistent forms
-
-         As I said there is lot of ambiguity. What if I'll not remove ghost-forms (deleted forms and forms from disabled plugins)?
-
-         - arrays will still contain ghost-forms (deleted forms), as always, as before
-         - form-maps may suffer due to plenty of ghost-forms. JFormMap.nextKey will have more faults than now
-         - JFormDB will likey grow continuously due to plenty of ghost-forms
-
-         ======
-         As I said, it some kind of Pandora Box and it's not because of form retaining. The vein of 'lets preserve everything' is not that easily achievable.
-
-         Lot of questions raised. First of all, is ghost-form equality. Say there is 0xff000014 form in JArray container, the form gets deleted, Skyrim creates new form, 
-         reuses 0xff000014 identifier, a user inserts the form in the array, (and optionally - the form gets deleted).
-         Should JArray.unique left only one form? Are these forms are equal or not? Probably not, though from outer point of view both forms are 'None'.
-
-         Repeat the same as above for JFormMap and its keys. Now some important information associated with deleted form-key and in v3.3 I'm trying to not lost that information, make it accessible.
-         JFormMap is {deleted-form: data}, Skyrim creates @newForm, reuses 0xff000014 identifier. Should JFormMap.hasKey(newForm) return true? No. Thus this time the forms aren't equal.
-        */
+        FormId weak_form_id::get_raw() const {
+            return _watched_form ? _watched_form->id() : FormId::Zero;
+        }
 
         bool weak_form_id::operator < (const weak_form_id& o) const {
-            return std::make_tuple(_id, _expired, _watched_form) < std::make_tuple(o._id, o._expired, o._watched_form);
-            //return _id < o._id;
-            //return std::make_tuple(_id, _watched_form) < std::make_tuple(o._id, o._watched_form);
+            return _watched_form < o._watched_form;
 
-            /*
-                Don't  USE  THIS!!
-            if (_id < o._id) {
-                return true;
-            }
-            else if (_id > o._id) {
-                return false;
-            }
+            // Form Ids are not reliable, sorting is not stable, not persistent
+            /*auto getIdent = [](const watched_form * wf) {
+                return wf ? wf->identifier() : 0;
+            };
 
-            return is_not_expired() < o.is_not_expired();*/
+            return getIdent(_watched_form.get()) < getIdent(o._watched_form.get());*/
         }
 
         template<class Archive>
         void weak_form_id::save(Archive & ar, const unsigned int version) const
         {
-            bool expired = is_expired();
+            // optimization: the form was deleted - write null instead
 
-            ar << _id << expired;
-
-            if (!expired) {
+            if (is_not_expired())
                 ar << _watched_form;
+            else {
+                decltype(_watched_form) fake;
+                ar << fake;
             }
         }
 
         template<class Archive>
         void weak_form_id::load(Archive & ar, const unsigned int version)
         {
-            auto oldId = FormId::Zero;
-            bool expired = true;
-
-            ar >> oldId >> expired;
 
             switch (version)
             {
-            case 0: {
-                // v3.3 alpha-1 format. retrieve dyn_form_watcher instance
-                // it's not good code, obviuously
-                auto watcher = tes_context::instance().form_watcher.get();
-                if (!expired && skse::lookup_form(oldId)) {
-                    _watched_form = watcher->u_watch_form(oldId);
-                }
-                else {
-                    expired = true;
+            case 0: {// v3.3 alpha-1 format
+                FormId oldId = FormId::Zero;
+                ar >> oldId;
+                FormId id = skse::resolve_handle(oldId);
+                bool expired = false;
+                ar >> expired;
+
+                if (!expired) {
+                    auto watcher = hack::iarchive_with_blob::from_base_get<tes_context>(ar).form_watcher.get();
+                    _watched_form = watcher->watch_form(id);
                 }
                 break;
             }
-            case 1:
+            case 1: {
+                // Remove this case !!! This format wasn't ever published
+                FormId oldId = FormId::Zero;
+                ar >> oldId;
+                FormId id = skse::resolve_handle(oldId);
+                bool expired = false;
+                ar >> expired;
+
                 if (!expired) {
                     ar >> _watched_form;
                 }
+                else {
+                    auto watcher = hack::iarchive_with_blob::from_base_get<tes_context>(ar).form_watcher.get();
+                    _watched_form = watcher->watch_form(id);
+                }
+                break;
+            }
+            case 2:
+                ar >> _watched_form;
                 break;
             default:
                 assert(false);
                 break;
-            }
-
-            if (form_handling::is_static(oldId)) {
-                FormId newId = skse::resolve_handle(oldId);
-                if (newId != FormId::Zero) {
-                    _id = newId;
-                    _expired = false;
-                }
-                else {
-                    _id = oldId;
-                    _expired = true;
-                }
-            } else {
-                _expired = expired;
-                _id = oldId;
             }
         }
 
