@@ -30,7 +30,7 @@ namespace collections {
     public:
         typedef boost::blank blank;
         typedef Float32 Real;
-        typedef boost::variant<boost::blank, SInt32, Real, weak_form_id, internal_object_ref, std::string> variant;
+        typedef boost::variant<boost::blank, SInt32, Real, form_ref, internal_object_ref, std::string> variant;
 
     private:
         variant _var;
@@ -42,7 +42,7 @@ namespace collections {
         template<> struct type2index < boost::blank >  { static const item_type index = none; };
         template<> struct type2index < SInt32 >  { static const item_type index = integer; };
         template<> struct type2index < Real >  { static const item_type index = real; };
-        template<> struct type2index < weak_form_id >  { static const item_type index = form; };
+        template<> struct type2index < form_ref >  { static const item_type index = form; };
         template<> struct type2index < internal_object_ref >  { static const item_type index = object; };
         template<> struct type2index < std::string >  { static const item_type index = string; };
 
@@ -113,8 +113,8 @@ namespace collections {
         explicit item(int val) : _var((SInt32)val) {}
         explicit item(bool val) : _var((SInt32)val) {}
 //        explicit item(FormId id) : _var(weak_form_id(id)) {}
-        explicit item(const weak_form_id& id) : _var(id) {}
-        explicit item(weak_form_id&& id) : _var(std::move(id)) {}
+        explicit item(const form_ref& id) : _var(id) {}
+        explicit item(form_ref&& id) : _var(std::move(id)) {}
 
         explicit item(object_base& o) : _var(o) {}
 
@@ -178,7 +178,7 @@ namespace collections {
             return *this;
         }
 
-        item& operator = (const weak_form_id& val) {
+        item& operator = (const form_ref& val) {
             _var = val;
             return *this;
         }
@@ -226,7 +226,7 @@ namespace collections {
             else if (auto val = boost::get<item::Real>(&_var)) {
                 return *val;
             }
-            else if (auto val = boost::get<weak_form_id>(&_var)) {
+            else if (auto val = boost::get<form_ref>(&_var)) {
                 return static_cast<SInt32>(val->get_raw());
             }
             return 0;
@@ -245,7 +245,7 @@ namespace collections {
         }
 
         FormId formId() const {
-            if (auto val = boost::get<weak_form_id>(&_var)) {
+            if (auto val = boost::get<form_ref>(&_var)) {
                 return val->get();
             }
             return FormId::Zero;
@@ -286,7 +286,7 @@ namespace collections {
         //////////////////////////////////////////////////////////////////////////
     private:
         static_assert(std::is_same<
-            boost::variant<boost::blank, SInt32, Real, weak_form_id, internal_object_ref, std::string>,
+            boost::variant<boost::blank, SInt32, Real, form_ref, internal_object_ref, std::string>,
             variant
         >::value, "update _user2variant code below");
 
@@ -388,9 +388,9 @@ namespace collections {
         return formId();
     }
 
-    template<> inline weak_form_id item::readAs<weak_form_id>() const {
-        auto form_ptr = get<weak_form_id>();
-        return form_ptr ? *form_ptr : weak_form_id{};
+    template<> inline form_ref item::readAs<form_ref>() const {
+        auto form_ptr = get<form_ref>();
+        return form_ptr ? *form_ptr : form_ref{};
     }
 
 }

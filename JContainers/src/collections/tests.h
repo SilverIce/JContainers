@@ -50,7 +50,7 @@ namespace collections { namespace {
         i1 = (const char*)nullptr;
         EXPECT_TRUE(i1.isNull());
 
-        i1 = weak_form_id{};
+        i1 = form_ref{};
         EXPECT_FALSE(i1.isNull());
 
         i1 = (object_base *)nullptr;
@@ -91,7 +91,7 @@ namespace collections { namespace {
     {
         EXPECT_TRUE(item(100) < item(2.0));
         EXPECT_TRUE(item(1.0) < item(2.0));
-        EXPECT_TRUE(item(10) < item{ weak_form_id{} });
+        EXPECT_TRUE(item(10) < item{ form_ref{} });
         EXPECT_TRUE(item("aa") < item("text"));
         EXPECT_TRUE(item("A") < item("b"));
 

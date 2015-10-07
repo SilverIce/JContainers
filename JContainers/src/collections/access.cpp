@@ -464,7 +464,7 @@ namespace collections
 
                             object_base* operator ()(const int32_t& k) const { return &integer_map::object(*ctx); }
                             object_base* operator ()(const string& k) const { return &map::object(*ctx); }
-                            object_base* operator ()(const weak_form_id& k) const { return &form_map::object(*ctx); }
+                            object_base* operator ()(const form_ref& k) const { return &form_map::object(*ctx); }
                         };
                         *itemPtr = bs::apply_visitor(creator(&collection.context()), next_key->key);
                     }

@@ -72,25 +72,25 @@ namespace form_watching {
         size_t u_forms_count() const { return _watched_forms.size(); }
     };
 
-    class weak_form_id {
+    class form_ref {
 
         form_entry_ref _watched_form;
 
     public:
 
-        weak_form_id() = default;
+        form_ref() = default;
 
-        explicit weak_form_id(const form_entry_ref& entry) : _watched_form(entry) {}
-        explicit weak_form_id(form_entry_ref&& entry) : _watched_form(std::move(entry)) {}
+        explicit form_ref(const form_entry_ref& entry) : _watched_form(entry) {}
+        explicit form_ref(form_entry_ref&& entry) : _watched_form(std::move(entry)) {}
 
-        weak_form_id(FormId id, form_observer& watcher);
-        weak_form_id(const TESForm& form, form_observer& watcher);
+        form_ref(FormId id, form_observer& watcher);
+        form_ref(const TESForm& form, form_observer& watcher);
 
-        static weak_form_id make_expired(FormId formId);
+        static form_ref make_expired(FormId formId);
 
         // Special constructor - to load v <= 3.2.4 data
         enum load_old_id_t { load_old_id };
-        explicit weak_form_id(FormId oldId, form_observer& watcher, load_old_id_t);
+        explicit form_ref(FormId oldId, form_observer& watcher, load_old_id_t);
 
         bool is_not_expired() const;
         bool is_expired() const { return !is_not_expired(); }
@@ -100,13 +100,13 @@ namespace form_watching {
 
         bool operator ! () const { return !is_not_expired(); }
 
-        bool operator == (const weak_form_id& o) const {
+        bool operator == (const form_ref& o) const {
             return get() == o.get();
         }
-        bool operator != (const weak_form_id& o) const {
+        bool operator != (const form_ref& o) const {
             return !(*this == o);
         }
-        bool operator < (const weak_form_id& o) const;
+        bool operator < (const form_ref& o) const;
 
         friend class boost::serialization::access;
         BOOST_SERIALIZATION_SPLIT_MEMBER();
@@ -117,15 +117,15 @@ namespace form_watching {
 
 }
 
-    using form_watching::weak_form_id;
+    using form_watching::form_ref;
 
     template<class Context>
-    inline weak_form_id make_weak_form_id(FormId id, Context& context) {
-        return weak_form_id{ id, *context.form_watcher };
+    inline form_ref make_weak_form_id(FormId id, Context& context) {
+        return form_ref{ id, *context.form_watcher };
     }
 
     template<class Context>
-    inline weak_form_id make_weak_form_id(const TESForm* id, Context& context) {
-        return id ? weak_form_id{ *id, *context.form_watcher } : weak_form_id{};
+    inline form_ref make_weak_form_id(const TESForm* id, Context& context) {
+        return id ? form_ref{ *id, *context.form_watcher } : form_ref{};
     }
 }

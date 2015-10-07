@@ -10,7 +10,7 @@ namespace lua {
     using array_functions = collections::array_functions;
     using CollectionType = collections::CollectionType;
 
-    using collections::weak_form_id;
+    using collections::form_ref;
     using collections::FormId;
     using collections::FormIdUnredlying;
     using collections::HACK_get_tcontext;
@@ -94,7 +94,7 @@ namespace lua { namespace api {
                 value.object = { val.get() };
             }
 
-            void operator ()(const weak_form_id& val) {
+            void operator ()(const form_ref& val) {
                 value.form = { (FormIdUnredlying)val.get() };
             }
 
@@ -234,8 +234,8 @@ namespace lua { namespace api {
     static_assert(sizeof FormId == sizeof CForm, "");
 
     cexport FormId JFormMap_nextKey(const form_map *obj, FormId lastKey) {
-        weak_form_id next;
-        formmap_functions::nextKey(obj, make_weak_form_id(lastKey, HACK_get_tcontext(*obj)), [&](const weak_form_id& key) { next = key; });
+        form_ref next;
+        formmap_functions::nextKey(obj, make_weak_form_id(lastKey, HACK_get_tcontext(*obj)), [&](const form_ref& key) { next = key; });
         return next.get();
     }
 

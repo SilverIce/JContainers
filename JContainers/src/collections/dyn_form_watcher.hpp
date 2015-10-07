@@ -17,7 +17,7 @@
 #include "collections/form_handling.h"
 #include "collections/dyn_form_watcher.h"
 
-BOOST_CLASS_VERSION(collections::form_watching::weak_form_id, 2);
+BOOST_CLASS_VERSION(collections::form_watching::form_ref, 2);
 
 namespace collections {
 
@@ -216,43 +216,43 @@ namespace collections {
 
         ////////////////////////////////////////
 
-        weak_form_id::weak_form_id(FormId id, form_observer& watcher)
+        form_ref::form_ref(FormId id, form_observer& watcher)
             : _watched_form(watcher.watch_form(id))
         {
         }
 
-        weak_form_id::weak_form_id(const TESForm& form, form_observer& watcher)
+        form_ref::form_ref(const TESForm& form, form_observer& watcher)
             : _watched_form(watcher.watch_form(util::to_enum<FormId>(form.formID)))
         {
         }
 
-        bool weak_form_id::is_not_expired() const
+        bool form_ref::is_not_expired() const
         {
             return _watched_form && !_watched_form->is_deleted();
         }
 
-        weak_form_id::weak_form_id(FormId oldId, form_observer& watcher, load_old_id_t)
+        form_ref::form_ref(FormId oldId, form_observer& watcher, load_old_id_t)
             : _watched_form(watcher.watch_form(skse::resolve_handle(oldId)))
         {
         }
 
-        weak_form_id weak_form_id::make_expired(FormId formId) {
+        form_ref form_ref::make_expired(FormId formId) {
             auto entry = form_entry::make_expired(formId);
-            return weak_form_id{ entry };
+            return form_ref{ entry };
         }
 
 
         //////////////////
 
-        FormId weak_form_id::get() const {
+        FormId form_ref::get() const {
             return is_not_expired() ? _watched_form->id() : FormId::Zero;
         }
 
-        FormId weak_form_id::get_raw() const {
+        FormId form_ref::get_raw() const {
             return _watched_form ? _watched_form->id() : FormId::Zero;
         }
 
-        bool weak_form_id::operator < (const weak_form_id& o) const {
+        bool form_ref::operator < (const form_ref& o) const {
             return _watched_form < o._watched_form;
 
             // Form Ids are not reliable, sorting is not stable, not persistent
@@ -264,7 +264,7 @@ namespace collections {
         }
 
         template<class Archive>
-        void weak_form_id::save(Archive & ar, const unsigned int version) const
+        void form_ref::save(Archive & ar, const unsigned int version) const
         {
             // optimization: the form was deleted - write null instead
 
@@ -277,7 +277,7 @@ namespace collections {
         }
 
         template<class Archive>
-        void weak_form_id::load(Archive & ar, const unsigned int version)
+        void form_ref::load(Archive & ar, const unsigned int version)
         {
 
             switch (version)
@@ -326,7 +326,7 @@ namespace collections {
             namespace bs = boost;
 
             TEST(form_watching, simple){
-                weak_form_id id;
+                form_ref id;
 
                 EXPECT_TRUE(!id);
                 EXPECT_TRUE(id.get() == FormId::Zero);
@@ -336,14 +336,14 @@ namespace collections {
             TEST(form_watching, simple_2){
                 const auto fid = (FormId)0xff000014;
                 form_observer watcher;
-                weak_form_id id{ fid, watcher };
+                form_ref id{ fid, watcher };
 
                 EXPECT_FALSE(!id);
                 EXPECT_TRUE(id.get() == fid);
                 EXPECT_TRUE(id.get_raw() == fid);
 
                 {
-                    weak_form_id copy = id;
+                    form_ref copy = id;
                     EXPECT_FALSE(!copy);
                     EXPECT_TRUE(copy.get() == fid);
                     EXPECT_TRUE(copy.get_raw() == fid);
@@ -354,9 +354,9 @@ namespace collections {
             {
                 const auto fid = (FormId)0x14;
                 form_observer watcher;
-                weak_form_id non_expired{ fid, watcher };
+                form_ref non_expired{ fid, watcher };
 
-                std::vector<weak_form_id> forms = { weak_form_id::make_expired(fid) };
+                std::vector<form_ref> forms = { form_ref::make_expired(fid) };
 
                 EXPECT_FALSE(std::find(forms.begin(), forms.end(), non_expired) != forms.end()); // had to be EXPECT_FALSE
             }
@@ -370,9 +370,9 @@ namespace collections {
             {
                 const auto fid = (FormId)0x14;
                 form_observer watcher;
-                weak_form_id non_expired{ fid, watcher };
+                form_ref non_expired{ fid, watcher };
 
-                std::map<weak_form_id, int> forms = { { weak_form_id::make_expired(fid), 0 } };
+                std::map<form_ref, int> forms = { { form_ref::make_expired(fid), 0 } };
 
                 EXPECT_FALSE( contains(forms, non_expired) ); // had to be EXPECT_FALSE
             }
@@ -381,10 +381,10 @@ namespace collections {
             {
                 const auto fid = (FormId)0x14;
                 form_observer watcher;
-                weak_form_id non_expired{ fid, watcher };
-                auto expired = weak_form_id::make_expired(fid);
+                form_ref non_expired{ fid, watcher };
+                auto expired = form_ref::make_expired(fid);
 
-                std::map<weak_form_id, int> forms = { { non_expired, 0 } };
+                std::map<form_ref, int> forms = { { non_expired, 0 } };
 
                 EXPECT_FALSE(contains(forms, expired)); // had to be EXPECT_FALSE
             }
@@ -395,13 +395,13 @@ namespace collections {
                 const auto fhid = fh::form_id_to_handle(fid);
 
                 form_observer watcher;
-                weak_form_id id{ fid, watcher };
+                form_ref id{ fid, watcher };
 
-                std::map<weak_form_id, int> forms = { { id, 0 } };
+                std::map<form_ref, int> forms = { { id, 0 } };
 
                 watcher.on_form_deleted(fhid);
 
-                forms.insert({ weak_form_id{ fid, watcher }, 0 });
+                forms.insert({ form_ref{ fid, watcher }, 0 });
 
                 EXPECT_TRUE(forms.size() == 2);
 
@@ -419,12 +419,12 @@ namespace collections {
 
                 form_observer watcher;
 
-                std::map<weak_form_id, int> forms = { { weak_form_id{ fid, watcher }, 0 } };
+                std::map<form_ref, int> forms = { { form_ref{ fid, watcher }, 0 } };
                 watcher.on_form_deleted(fhid);
 
                 EXPECT_TRUE(forms.begin()->first.is_expired());
 
-                forms[weak_form_id{ fid, watcher }] = 0;
+                forms[form_ref{ fid, watcher }] = 0;
 
                 EXPECT_TRUE(forms.begin()->first.is_not_expired());
             }
@@ -435,15 +435,15 @@ namespace collections {
                // EXPECT_TRUE(fh::is_static(fid) == false);
 
                 form_observer watcher;
-                weak_form_id id{ fid, watcher };
-                weak_form_id id2{ fid, watcher };
+                form_ref id{ fid, watcher };
+                form_ref id2{ fid, watcher };
 
-                auto expectNotExpired = [&](const weak_form_id& id) {
+                auto expectNotExpired = [&](const form_ref& id) {
                     EXPECT_TRUE(id.is_not_expired());
                     EXPECT_TRUE(id.get() == fid);
                 };
 
-                auto expectExpired = [&](const weak_form_id& id) {
+                auto expectExpired = [&](const form_ref& id) {
                     EXPECT_FALSE(id.is_not_expired());
                     EXPECT_TRUE(id.get() == FormId::Zero);
                     EXPECT_TRUE(id.get_raw() == fid);

@@ -14,8 +14,8 @@ namespace tes_api_3 {
         return static_cast<T>(0);
     };
 
-    template<> collections::weak_form_id default_value<collections::weak_form_id>() {
-        return collections::weak_form_id{};
+    template<> collections::form_ref default_value<collections::form_ref>() {
+        return collections::form_ref{};
     };
 }
 
