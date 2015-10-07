@@ -55,7 +55,7 @@ namespace collections {
             form_entry() = default;
 
             static form_entry_ref make(FormId handle) {
-                log("form_entry retains %X", handle);
+                //log("form_entry retains %X", handle);
 
                 return boost::make_shared<form_entry>(
                     handle,
@@ -69,7 +69,7 @@ namespace collections {
 
             ~form_entry() {
                 if (!is_deleted() && _is_handle_retained) {
-                    log("form_entry releases %X", _handle);
+                    //log("form_entry releases %X", _handle);
                     skse::release_handle(_handle);
                 }
             }
@@ -149,7 +149,7 @@ namespace collections {
 
                     if (watched) {
                         watched->set_deleted();
-                        log("flag handle %" PRIX64 " as deleted", formId);
+                        log("flag form-entry %" PRIX32 " as deleted", formId);
                     }
                     itr->second.reset();
                 }
@@ -334,7 +334,7 @@ namespace collections {
             }
 
             TEST(form_watching, simple_2){
-                const auto fid = (FormId)0xff000014;
+                const auto fid = util::to_enum<FormId>(0xff000014);
                 form_observer watcher;
                 form_ref id{ fid, watcher };
 
@@ -350,9 +350,25 @@ namespace collections {
                 }
             }
 
+            TEST(form_observer, u_remove_expired_forms){
+                form_observer watcher;
+
+                const auto fid = util::to_enum<FormId>(0xff000014);
+
+                auto entry = watcher.watch_form(fid);
+                EXPECT_TRUE(watcher.u_forms_count() == 1);
+                EXPECT_NOT_NIL(entry.get());
+
+                watcher.on_form_deleted(fh::form_id_to_handle(fid));
+                watcher.u_remove_expired_forms();
+
+                EXPECT_TRUE(watcher.u_forms_count() == 0);
+                EXPECT_TRUE(entry->is_deleted());
+            }
+
             TEST(form_watching, bug_1)
             {
-                const auto fid = (FormId)0x14;
+                const auto fid = util::to_enum<FormId>(0x14);
                 form_observer watcher;
                 form_ref non_expired{ fid, watcher };
 
@@ -368,7 +384,7 @@ namespace collections {
 
             TEST(form_watching, bug_2)
             {
-                const auto fid = (FormId)0x14;
+                const auto fid = util::to_enum<FormId>(0x14);
                 form_observer watcher;
                 form_ref non_expired{ fid, watcher };
 
@@ -379,7 +395,7 @@ namespace collections {
 
             TEST(form_watching, bug_3)
             {
-                const auto fid = (FormId)0x14;
+                const auto fid = util::to_enum<FormId>(0x14);
                 form_observer watcher;
                 form_ref non_expired{ fid, watcher };
                 auto expired = form_ref::make_expired(fid);
@@ -391,7 +407,7 @@ namespace collections {
 
             TEST(form_watching, bug_4)
             {
-                const auto fid = (FormId)0xff000014;
+                const auto fid = util::to_enum<FormId>(0xff000014);
                 const auto fhid = fh::form_id_to_handle(fid);
 
                 form_observer watcher;
@@ -414,7 +430,7 @@ namespace collections {
 
             TEST(form_watching, bug_5)
             {
-                const auto fid = (FormId)0xff000014;
+                const auto fid = util::to_enum<FormId>(0xff000014);
                 const auto fhid = fh::form_id_to_handle(fid);
 
                 form_observer watcher;
@@ -430,7 +446,7 @@ namespace collections {
             }
 
             TEST(form_watching, dynamic_form_id){
-                const auto fid = (FormId)0xff000014;
+                const auto fid = util::to_enum<FormId>(0xff000014);
                 const auto fhid = fh::form_id_to_handle(fid);
                // EXPECT_TRUE(fh::is_static(fid) == false);
 

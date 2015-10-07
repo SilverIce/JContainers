@@ -128,7 +128,6 @@ namespace collections {
             }
 
             u_print_stats();
-            JC_log("%lu non persistent forms being watched", form_watcher->u_forms_count());
         }
     }
 
@@ -144,6 +143,11 @@ namespace collections {
             arch << *this;
             u_print_stats();
         }
+    }
+
+    void tes_context::u_print_stats() const {
+        base::u_print_stats();
+        JC_log("%lu forms being observed", form_watcher->u_forms_count());
     }
 
     void tes_context::read_from_string(const std::string & data) {

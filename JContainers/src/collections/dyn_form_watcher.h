@@ -25,42 +25,16 @@ namespace form_watching {
     void log(const char* fmt, ...);
 
     class form_observer {
-
-        using watched_forms_t = std::hash_map<FormId, boost::weak_ptr<form_entry> >;
     private:
+        using watched_forms_t = std::hash_map<FormId, boost::weak_ptr<form_entry> >;
+
         bshared_mutex _mutex;
         watched_forms_t _watched_forms;
         std::atomic_flag _is_inside_unsafe_func;
 
-        template<class ReadCondition, class WriteAction, class Target>
-        static bool if_condition_then_perform(ReadCondition& condition, WriteAction& action, Target& target) {
-            bool condition_met = false;
-            {
-                read_lock r(target._mutex);
-                condition_met = condition(const_cast<const Target&>(target));
-            }
-
-            if (condition_met) {
-                write_lock w(target._mutex);
-                action(target);
-            }
-
-            return condition_met;
-        }
-
-        void u_remove_expired_forms() const {}
-        void u_remove_expired_forms();
-
     public:
 
         form_observer();
-
-        template<class Archive>
-        void serialize(Archive & ar, const unsigned int version) {
-            u_remove_expired_forms();
-
-            ar & _watched_forms;
-        }
 
         void on_form_deleted(FormHandle fId);
         form_entry_ref watch_form(FormId fId);
@@ -69,7 +43,22 @@ namespace form_watching {
         void u_clearState() {
             _watched_forms.clear();
         }
+
         size_t u_forms_count() const { return _watched_forms.size(); }
+        void u_remove_expired_forms();
+
+        /////////////////////////
+
+        friend class boost::serialization::access;
+        BOOST_SERIALIZATION_SPLIT_MEMBER();
+
+        template<class Archive> void save(Archive & ar, const unsigned int version) const {
+            ar << _watched_forms;
+        }
+        template<class Archive> void load(Archive & ar, const unsigned int version) {
+            ar >> _watched_forms;
+            u_remove_expired_forms();
+        }
     };
 
     class form_ref {

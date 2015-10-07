@@ -19,6 +19,7 @@ namespace collections
     {
         using base = object_context;
 
+        void u_print_stats() const;
         void u_applyUpdates(const serialization_version saveVersion);
 
     public:
