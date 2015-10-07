@@ -18,13 +18,13 @@ namespace collections {
 namespace form_watching {
 
     class dyn_form_watcher;
-    class watched_form;
+    class form_entry;
 
     void log(const char* fmt, ...);
 
     class dyn_form_watcher {
 
-        using watched_forms_t = std::hash_map<FormId, boost::weak_ptr<watched_form> >;
+        using watched_forms_t = std::hash_map<FormId, boost::weak_ptr<form_entry> >;
     private:
         bshared_mutex _mutex;
         watched_forms_t _watched_forms;
@@ -61,7 +61,7 @@ namespace form_watching {
         }
 
         void on_form_deleted(FormHandle fId);
-        boost::shared_ptr<watched_form> watch_form(FormId fId);
+        boost::shared_ptr<form_entry> watch_form(FormId fId);
 
         // Not threadsafe part of API:
         void u_clearState() {
@@ -72,7 +72,7 @@ namespace form_watching {
 
     class weak_form_id {
 
-        boost::shared_ptr<watched_form> _watched_form;
+        boost::shared_ptr<form_entry> _watched_form;
 
     public:
 
@@ -81,7 +81,7 @@ namespace form_watching {
             return id;
         }
 
-        weak_form_id() {}
+        weak_form_id() = default;
 
         explicit weak_form_id(FormId id, dyn_form_watcher& watcher);
 

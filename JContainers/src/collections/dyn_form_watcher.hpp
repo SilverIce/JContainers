@@ -30,7 +30,7 @@ namespace collections {
             JC_log(fmt, std::forward<Params ...>(ps ...));
         }
 
-        class watched_form : public boost::noncopyable {
+        class form_entry : public boost::noncopyable {
 
             FormId _handle = FormId::Zero;
             std::atomic<bool> _deleted = false;
@@ -45,16 +45,16 @@ namespace collections {
 
         public:
 
-            watched_form() = default;
+            form_entry() = default;
 
-            explicit watched_form(FormId handle)
+            explicit form_entry(FormId handle)
                 : _handle(handle)
             {
                 log("watched_form retains %X", handle);
                 _is_handle_retained = skse::try_retain_handle(handle);
             }
 
-            ~watched_form() {
+            ~form_entry() {
                 if (!is_deleted() && _is_handle_retained) {
                     log("watched_form releases %X", _handle);
                     skse::release_handle(_handle);
@@ -143,7 +143,7 @@ namespace collections {
             }
         }
 
-        boost::shared_ptr<watched_form> dyn_form_watcher::watch_form(FormId fId)
+        boost::shared_ptr<form_entry> dyn_form_watcher::watch_form(FormId fId)
         {
             if (fId == FormId::Zero) {
                 return nullptr;
@@ -151,13 +151,13 @@ namespace collections {
 
             log("watching form %X", fId);
 
-            auto get_or_assign = [fId](boost::weak_ptr<watched_form> & watched_weak) -> boost::shared_ptr<watched_form> {
+            auto get_or_assign = [fId](boost::weak_ptr<form_entry> & watched_weak) -> boost::shared_ptr<form_entry> {
                 std::lock_guard<boost::detail::spinlock> guard{ spinlock_pool::spinlock_for(&watched_weak) };
                 auto watched = watched_weak.lock();
 
                 if (!watched) {
                     // what if two threads trying assign?? both are here or one is here and another performing @on_form_deleted func.
-                    watched_weak = watched = boost::make_shared<watched_form>(fId);
+                    watched_weak = watched = boost::make_shared<form_entry>(fId);
                 }
                 return watched;
             };
@@ -180,7 +180,7 @@ namespace collections {
                     return get_or_assign(itr->second);
                 }
                 else {
-                    auto watched = boost::make_shared<watched_form>(fId);
+                    auto watched = boost::make_shared<form_entry>(fId);
                     _watched_forms[fId] = watched;
                     return watched;
                 }
