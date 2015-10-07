@@ -17,14 +17,14 @@ namespace collections {
     
 namespace form_watching {
 
-    class dyn_form_watcher;
+    class form_observer;
     class form_entry;
 
     using form_entry_ref = boost::shared_ptr < form_entry > ;
 
     void log(const char* fmt, ...);
 
-    class dyn_form_watcher {
+    class form_observer {
 
         using watched_forms_t = std::hash_map<FormId, boost::weak_ptr<form_entry> >;
     private:
@@ -53,7 +53,7 @@ namespace form_watching {
 
     public:
 
-        dyn_form_watcher();
+        form_observer();
 
         template<class Archive>
         void serialize(Archive & ar, const unsigned int version) {
@@ -83,14 +83,14 @@ namespace form_watching {
         explicit weak_form_id(const form_entry_ref& entry) : _watched_form(entry) {}
         explicit weak_form_id(form_entry_ref&& entry) : _watched_form(std::move(entry)) {}
 
-        weak_form_id(FormId id, dyn_form_watcher& watcher);
-        weak_form_id(const TESForm& form, dyn_form_watcher& watcher);
+        weak_form_id(FormId id, form_observer& watcher);
+        weak_form_id(const TESForm& form, form_observer& watcher);
 
         static weak_form_id make_expired(FormId formId);
 
         // Special constructor - to load v <= 3.2.4 data
         enum load_old_id_t { load_old_id };
-        explicit weak_form_id(FormId oldId, dyn_form_watcher& watcher, load_old_id_t);
+        explicit weak_form_id(FormId oldId, form_observer& watcher, load_old_id_t);
 
         bool is_not_expired() const;
         bool is_expired() const { return !is_not_expired(); }

@@ -26,7 +26,7 @@ namespace collections
         using post_init = ::meta<void(*)(tes_context&)>;
 
         tes_context()
-            : form_watcher(new form_watching::dyn_form_watcher{})
+            : form_watcher(new form_watching::form_observer{})
         {
             for (auto& init : post_init::getListConst()) {
                 init(*this);
@@ -68,7 +68,7 @@ namespace collections
         // to attach lua context
         std::shared_ptr<dependent_context>     lua_context;
 
-        std::shared_ptr<form_watching::dyn_form_watcher> form_watcher;
+        std::shared_ptr<form_watching::form_observer> form_watcher;
 
         //////
     public:

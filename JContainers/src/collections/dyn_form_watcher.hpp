@@ -109,19 +109,19 @@ namespace collections {
             }
         };
 
-        void dyn_form_watcher::u_remove_expired_forms() {
+        void form_observer::u_remove_expired_forms() {
             util::tree_erase_if(_watched_forms, [](const watched_forms_t::value_type& pair) {
                 return pair.second.expired();
             });
         }
 
-        dyn_form_watcher::dyn_form_watcher() {
+        form_observer::form_observer() {
             _is_inside_unsafe_func._My_flag = false;
         }
 
         using spinlock_pool = boost::detail::spinlock_pool < 'DyFW' > ;
 
-        void dyn_form_watcher::on_form_deleted(FormHandle handle)
+        void form_observer::on_form_deleted(FormHandle handle)
         {
             // already failed, there are plenty of any kind of objects that are deleted every moment, even during initial splash screen
             //jc_assert_msg(form_handling::is_static((FormId)handle) == false,
@@ -156,7 +156,7 @@ namespace collections {
             }
         }
 
-        form_entry_ref dyn_form_watcher::watch_form(FormId fId)
+        form_entry_ref form_observer::watch_form(FormId fId)
         {
             if (fId == FormId::Zero) {
                 return nullptr;
@@ -216,12 +216,12 @@ namespace collections {
 
         ////////////////////////////////////////
 
-        weak_form_id::weak_form_id(FormId id, dyn_form_watcher& watcher)
+        weak_form_id::weak_form_id(FormId id, form_observer& watcher)
             : _watched_form(watcher.watch_form(id))
         {
         }
 
-        weak_form_id::weak_form_id(const TESForm& form, dyn_form_watcher& watcher)
+        weak_form_id::weak_form_id(const TESForm& form, form_observer& watcher)
             : _watched_form(watcher.watch_form(util::to_enum<FormId>(form.formID)))
         {
         }
@@ -231,7 +231,7 @@ namespace collections {
             return _watched_form && !_watched_form->is_deleted();
         }
 
-        weak_form_id::weak_form_id(FormId oldId, dyn_form_watcher& watcher, load_old_id_t)
+        weak_form_id::weak_form_id(FormId oldId, form_observer& watcher, load_old_id_t)
             : _watched_form(watcher.watch_form(skse::resolve_handle(oldId)))
         {
         }
@@ -240,6 +240,7 @@ namespace collections {
             auto entry = form_entry::make_expired(formId);
             return weak_form_id{ entry };
         }
+
 
         //////////////////
 
@@ -334,7 +335,7 @@ namespace collections {
 
             TEST(form_watching, simple_2){
                 const auto fid = (FormId)0xff000014;
-                dyn_form_watcher watcher;
+                form_observer watcher;
                 weak_form_id id{ fid, watcher };
 
                 EXPECT_FALSE(!id);
@@ -352,7 +353,7 @@ namespace collections {
             TEST(form_watching, bug_1)
             {
                 const auto fid = (FormId)0x14;
-                dyn_form_watcher watcher;
+                form_observer watcher;
                 weak_form_id non_expired{ fid, watcher };
 
                 std::vector<weak_form_id> forms = { weak_form_id::make_expired(fid) };
@@ -368,7 +369,7 @@ namespace collections {
             TEST(form_watching, bug_2)
             {
                 const auto fid = (FormId)0x14;
-                dyn_form_watcher watcher;
+                form_observer watcher;
                 weak_form_id non_expired{ fid, watcher };
 
                 std::map<weak_form_id, int> forms = { { weak_form_id::make_expired(fid), 0 } };
@@ -379,7 +380,7 @@ namespace collections {
             TEST(form_watching, bug_3)
             {
                 const auto fid = (FormId)0x14;
-                dyn_form_watcher watcher;
+                form_observer watcher;
                 weak_form_id non_expired{ fid, watcher };
                 auto expired = weak_form_id::make_expired(fid);
 
@@ -393,7 +394,7 @@ namespace collections {
                 const auto fid = (FormId)0xff000014;
                 const auto fhid = fh::form_id_to_handle(fid);
 
-                dyn_form_watcher watcher;
+                form_observer watcher;
                 weak_form_id id{ fid, watcher };
 
                 std::map<weak_form_id, int> forms = { { id, 0 } };
@@ -416,7 +417,7 @@ namespace collections {
                 const auto fid = (FormId)0xff000014;
                 const auto fhid = fh::form_id_to_handle(fid);
 
-                dyn_form_watcher watcher;
+                form_observer watcher;
 
                 std::map<weak_form_id, int> forms = { { weak_form_id{ fid, watcher }, 0 } };
                 watcher.on_form_deleted(fhid);
@@ -433,7 +434,7 @@ namespace collections {
                 const auto fhid = fh::form_id_to_handle(fid);
                // EXPECT_TRUE(fh::is_static(fid) == false);
 
-                dyn_form_watcher watcher;
+                form_observer watcher;
                 weak_form_id id{ fid, watcher };
                 weak_form_id id2{ fid, watcher };
 

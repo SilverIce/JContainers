@@ -168,7 +168,7 @@ namespace collections {
         boost::serialization::load_atomic(ar, _root_object_id);
 
         if (version >= 1) {
-            form_watching::dyn_form_watcher* watcher = nullptr;
+            form_watching::form_observer* watcher = nullptr;
             ar >> watcher;
 
             form_watcher.reset(watcher);
@@ -176,7 +176,7 @@ namespace collections {
     }
 
     template<class Archive> void tes_context::save(Archive & ar, unsigned int version) const {
-        form_watching::dyn_form_watcher* watcher = form_watcher.get();
+        form_watching::form_observer* watcher = form_watcher.get();
 
         ar << static_cast<const base&>(*this);
         boost::serialization::save_atomic(ar, _root_object_id);
