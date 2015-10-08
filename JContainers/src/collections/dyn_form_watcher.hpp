@@ -13,6 +13,7 @@
 //#include "skse/PapyrusVM.h"
 #include "skse/skse.h"
 #include "util/stl_ext.h"
+#include "util/util.h"
 
 #include "collections/form_handling.h"
 #include "collections/dyn_form_watcher.h"
@@ -36,13 +37,6 @@ namespace collections {
             std::atomic<bool> _deleted = false;
             // to not release the handle if the handle can't be retained (for ex. handle's object was not loaded)
             bool _is_handle_retained = false;
-
-            bool u_is_deleted() const {
-                return _deleted._My_val;
-            }
-            void u_set_deleted() {
-                _deleted._My_val = true;
-            }
 
         public:
 
@@ -82,6 +76,13 @@ namespace collections {
 
             void set_deleted() {
                 _deleted.store(true, std::memory_order_release);
+            }
+
+            bool u_is_deleted() const {
+                return _deleted._My_val;
+            }
+            void u_set_deleted() {
+                _deleted._My_val = true;
             }
 
             friend class boost::serialization::access;
@@ -252,17 +253,6 @@ namespace collections {
             return _watched_form ? _watched_form->id() : FormId::Zero;
         }
 
-        bool form_ref::operator < (const form_ref& o) const {
-            return _watched_form < o._watched_form;
-
-            // Form Ids are not reliable, sorting is not stable, not persistent
-            /*auto getIdent = [](const watched_form * wf) {
-                return wf ? wf->identifier() : 0;
-            };
-
-            return getIdent(_watched_form.get()) < getIdent(o._watched_form.get());*/
-        }
-
         template<class Archive>
         void form_ref::save(Archive & ar, const unsigned int version) const
         {
@@ -350,6 +340,7 @@ namespace collections {
                 }
             }
 
+/*
             TEST(form_observer, u_remove_expired_forms){
                 form_observer watcher;
 
@@ -364,7 +355,7 @@ namespace collections {
 
                 EXPECT_TRUE(watcher.u_forms_count() == 0);
                 EXPECT_TRUE(entry->is_deleted());
-            }
+            }*/
 
             TEST(form_watching, bug_1)
             {
@@ -411,29 +402,6 @@ namespace collections {
                 const auto fhid = fh::form_id_to_handle(fid);
 
                 form_observer watcher;
-                form_ref id{ fid, watcher };
-
-                std::map<form_ref, int> forms = { { id, 0 } };
-
-                watcher.on_form_deleted(fhid);
-
-                forms.insert({ form_ref{ fid, watcher }, 0 });
-
-                EXPECT_TRUE(forms.size() == 2);
-
-                watcher.on_form_deleted(fhid);
-                // @forms contains equal keys now!
-
-                EXPECT_TRUE(forms.size() == 2);
-
-            }
-
-            TEST(form_watching, bug_5)
-            {
-                const auto fid = util::to_enum<FormId>(0xff000014);
-                const auto fhid = fh::form_id_to_handle(fid);
-
-                form_observer watcher;
 
                 std::map<form_ref, int> forms = { { form_ref{ fid, watcher }, 0 } };
                 watcher.on_form_deleted(fhid);
@@ -442,7 +410,9 @@ namespace collections {
 
                 forms[form_ref{ fid, watcher }] = 0;
 
-                EXPECT_TRUE(forms.begin()->first.is_not_expired());
+                EXPECT_TRUE(forms.size() == 2);
+                // one of the keys should be non-expired
+                EXPECT_TRUE(forms.begin()->first.is_not_expired() != (++forms.begin())->first.is_not_expired());
             }
 
             TEST(form_watching, dynamic_form_id){

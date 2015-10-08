@@ -3,6 +3,7 @@
 #include <hash_map>
 //#include <memory>
 #include <atomic>
+#include <tuple>
 #include "boost/shared_ptr.hpp"
 #include "boost/smart_ptr/weak_ptr.hpp"
 #include "boost/serialization/split_member.hpp"
@@ -22,24 +23,22 @@ namespace form_watching {
 
     using form_entry_ref = boost::shared_ptr < form_entry > ;
 
-    void log(const char* fmt, ...);
-
     class form_observer {
     private:
         using watched_forms_t = std::hash_map<FormId, boost::weak_ptr<form_entry> >;
 
         bshared_mutex _mutex;
         watched_forms_t _watched_forms;
-        std::atomic_flag _is_inside_unsafe_func;
 
     public:
 
-        form_observer();
+        form_observer() = default;
 
         void on_form_deleted(FormHandle fId);
         form_entry_ref watch_form(FormId fId);
 
         // Not threadsafe part of API:
+
         void u_clearState() {
             _watched_forms.clear();
         }
@@ -89,19 +88,35 @@ namespace form_watching {
 
         bool operator ! () const { return !is_not_expired(); }
 
+        // "Stupid" comparison operators, compare identifiers:
+        // the functions don't care whether the @form_refs are really equal or not -
+        // really equal form_refs have equal @_watched_form field
+        // The comparison is NOT stable
         bool operator == (const form_ref& o) const {
             return get() == o.get();
         }
         bool operator != (const form_ref& o) const {
             return !(*this == o);
         }
-        bool operator < (const form_ref& o) const;
+        bool operator < (const form_ref& o) const {
+            return get() < o.get();
+        }
+
+        // Implements stable 'less than' comparison
+        struct stable_less_comparer;
 
         friend class boost::serialization::access;
         BOOST_SERIALIZATION_SPLIT_MEMBER();
 
         template<class Archive> void save(Archive & ar, const unsigned int version) const;
         template<class Archive> void load(Archive & ar, const unsigned int version);
+    };
+
+    struct form_ref::stable_less_comparer {
+        bool operator () (const form_ref& left, const form_ref& right) const {
+            auto leftId = left.get_raw(), rightId = right.get_raw();
+            return std::tie(leftId, left._watched_form) < std::tie(rightId, right._watched_form);
+        }
     };
 
 }

@@ -363,7 +363,7 @@ namespace collections {
     };
 
 
-    class form_map : public basic_map_collection< form_map, std::map<form_ref, item> >
+    class form_map : public basic_map_collection< form_map, std::map<form_ref, item, form_ref::stable_less_comparer> >
     {
     public:
         enum  {
