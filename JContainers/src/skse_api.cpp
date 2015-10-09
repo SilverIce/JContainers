@@ -22,13 +22,14 @@ namespace jc {
     extern root_interface root;
 }
 
+SKSESerializationInterface	* g_serialization = nullptr;
+
 namespace {
 
     using namespace collections;
 
     static PluginHandle					g_pluginHandle = kPluginHandle_Invalid;
 
-    static SKSESerializationInterface	* g_serialization = nullptr;
     static SKSEPapyrusInterface			* g_papyrus = nullptr;
     static SKSEMessagingInterface       * g_messaging = nullptr;
 
