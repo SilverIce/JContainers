@@ -233,12 +233,14 @@ namespace collections {
                 }
                 else if (json_is_object(metaInfo)) { // handle metaInfo
                     auto typeName = json_string_value(json_object_get(metaInfo, jsc::kTypeName));
-                    if (strcmp(jsc::type2name<form_map>(), typeName) == 0) {
-                        object = &form_map::object(_context);
-                    }
-                    else if (strcmp(jsc::type2name<integer_map>(), typeName) == 0) {
-                        object = &integer_map::object(_context);
-                    }
+					if (typeName) {
+						if (strcmp(jsc::type2name<form_map>(), typeName) == 0) {
+							object = &form_map::object(_context);
+						}
+						else if (strcmp(jsc::type2name<integer_map>(), typeName) == 0) {
+							object = &integer_map::object(_context);
+						}
+					}
                 }
                 else {
                     object = &map::object(_context);
