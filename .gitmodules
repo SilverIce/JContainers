@@ -7,3 +7,6 @@
 [submodule "doc/wiki"]
 	path = doc/wiki
 	url = https://github.com/SilverIce/JContainers.wiki.git
+[submodule "dep/googletest/googletest"]
+	path = dep/googletest/googletest
+	url = https://github.com/google/googletest.git

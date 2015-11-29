@@ -1,8 +1,14 @@
 #pragma once
 
-//#include "typedefs.h"
-#include "meta.h"
+#include "../dep/googletest/googletest/googletest/include/gtest/gtest.h"
+//#include "meta.h"
 
+
+#define EXPECT_NOT_NIL(expr) EXPECT_NE((expr), nullptr)
+#define EXPECT_NIL(expr) EXPECT_EQ((expr), nullptr)
+
+
+/*
 namespace testing
 {
     struct State;
@@ -99,3 +105,4 @@ namespace testing
             ::testing::check(testState, false, __FUNCTION__, "'" #expression "' throws exception"); \
         }
 }
+*/

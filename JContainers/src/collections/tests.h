@@ -2,12 +2,16 @@
 
 namespace collections {
 
-    struct JCFixture : testing::Fixture {
+    struct JCFixture : public ::testing::Test {
         tes_context context;
+
+/*
+        void SetUpTestCase(){}
+        void TearDownTestCase(){}*/
     };
 
-#   define JC_TEST(name, name2) TEST_F(JCFixture, name, name2)
-#   define JC_TEST_DISABLED(name, name2) TEST_F(JCFixture, name, DISABLED_##name2)
+#   define JC_TEST(name, name2) TEST_F(JCFixture, name ## _ ## name2)
+#   define JC_TEST_DISABLED(name, name2) TEST_F(JCFixture, name ## _DISABLED_ ## name2)
 
 }
 
@@ -228,9 +232,9 @@ namespace collections { namespace {
 
     // load json file into tes_context -> serialize into json again -> compare with original json
     // also compares original json with json, loaded from serialized tex_context (do_comparison2 function)
-    struct json_loading_test : testing::Fixture {
+    struct json_loading_test_ {
 
-        void test() {
+        static void test() {
 
             namespace fs = boost::filesystem;
 
@@ -249,7 +253,7 @@ namespace collections { namespace {
             EXPECT_TRUE(atLeastOneTested);
         }
 
-        void do_comparison(const char *file_path) {
+        static void do_comparison(const char *file_path) {
             EXPECT_NOT_NIL(file_path);
 
             auto jsonOut = make_unique_ptr((json_t*)nullptr, &json_decref);
@@ -266,7 +270,7 @@ namespace collections { namespace {
             EXPECT_TRUE(json_equal(originJson.get(), jsonOut.get()) == 1);
         }
 
-        void do_comparison2(const char *file_path) {
+        static void do_comparison2(const char *file_path) {
             EXPECT_NOT_NIL(file_path);
 
             auto jsonOut = make_unique_ptr((json_t*)nullptr, &json_decref);
@@ -295,7 +299,9 @@ namespace collections { namespace {
         }
     };
 
-    TEST_F_CUSTOM_CLASS(json_loading_test, t);
+    TEST(json_loading_test, t) {
+        json_loading_test_::test();
+    }
 
     JC_TEST(json_serializer, no_infinite_recursion)
     {

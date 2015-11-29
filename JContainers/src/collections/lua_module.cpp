@@ -256,7 +256,7 @@ namespace lua { namespace aux_wip {
     };
 
 
-    struct fixture : testing::Fixture {
+    struct fixture : public ::testing::Test {
         tes_context tc;
         context_pool pool;
         fixture() : pool(tc) {}
@@ -264,7 +264,7 @@ namespace lua { namespace aux_wip {
 
 #if 1
 
-    TEST_F(fixture, Lua, trtr)
+    TEST_F(fixture, Lua_trtr)
     {
         std::atomic_int8_t stop = 0;
 
@@ -283,7 +283,7 @@ namespace lua { namespace aux_wip {
         t2.join();
     }
 
-    TEST_F(fixture, Lua, evalLua)
+    TEST_F(fixture, Lua_evalLua)
     {
         /*
         auto result = eval_lua_function_for_test(l, &array::object(tes_context::instance()),
@@ -325,7 +325,7 @@ namespace lua { namespace aux_wip {
 
     }
 
-    TEST_F(fixture, Lua, launch_all_lua_tests)
+    TEST_F(fixture, Lua_launch_all_lua_tests)
     {
         EXPECT_TRUE(autofreed_context(pool)->eval_lua_function(nullptr, "return testing.perform()")->intValue() != 0);
     }

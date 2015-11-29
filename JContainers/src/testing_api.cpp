@@ -19,7 +19,8 @@ extern "C" {
         });
     }
 
-    __declspec(dllexport) void JC_runTests() {
-        testing::runTests(meta<testing::TestInfo>::getListConst());
+    __declspec(dllexport) bool JC_runTests(int argc, char** argv) {
+        ::testing::InitGoogleTest(&argc, argv);
+        return RUN_ALL_TESTS() == 0;
     }
 }

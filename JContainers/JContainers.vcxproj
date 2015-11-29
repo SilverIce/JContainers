@@ -66,7 +66,7 @@
     <ClCompile>
       <Optimization>MinSpace</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>src;$(SolutionDir)\dep\boost;$(SolutionDir)\dep;$(SolutionDir)\dep\skse;$(SolutionDir)\dep\jansson\jansson\src;$(SolutionDir)\dep\jansson;$(SolutionDir)\dep\luajit\luajit-2.0\src;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;$(SolutionDir)\dep\boost;$(SolutionDir)\dep;$(SolutionDir)\dep\skse;$(SolutionDir)\dep\googletest\googletest\googletest\include;$(SolutionDir)\dep\jansson\jansson\src;$(SolutionDir)\dep\jansson;$(SolutionDir)\dep\luajit\luajit-2.0\src;$(ProjectDir)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NO_JC_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -98,7 +98,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>src;$(SolutionDir)\dep\boost;$(SolutionDir)\dep;$(SolutionDir)\dep\skse;$(SolutionDir)\dep\jansson\jansson\src;$(SolutionDir)\dep\jansson;$(SolutionDir)\dep\luajit\luajit-2.0\src;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;$(SolutionDir)\dep\boost;$(SolutionDir)\dep;$(SolutionDir)\dep\skse;$(SolutionDir)\dep\googletest\googletest\googletest\include;$(SolutionDir)\dep\jansson\jansson\src;$(SolutionDir)\dep\jansson;$(SolutionDir)\dep\luajit\luajit-2.0\src;$(ProjectDir)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -142,7 +142,6 @@
     <ClCompile Include="src\skse_callbacks.cpp" />
     <ClCompile Include="src\testing_api.cpp" />
     <ClCompile Include="src\jc_interface.cpp" />
-    <ClCompile Include="src\gtest.cpp" />
     <ClCompile Include="src\jcontainers_pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -212,6 +211,9 @@
   <ItemGroup>
     <ProjectReference Include="..\dep\common\common.vcxproj">
       <Project>{20c6411c-596f-4b85-be4e-8bc91f59d8a6}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\dep\googletest\gtest.vcxproj">
+      <Project>{c8f6c172-56f2-4e76-b5fa-c3b423b31be7}</Project>
     </ProjectReference>
     <ProjectReference Include="..\dep\jansson\jansson.vcxproj">
       <Project>{f9ef3ca7-06a8-4bb2-9232-c4251e65829b}</Project>

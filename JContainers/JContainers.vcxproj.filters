@@ -33,9 +33,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\gtest.cpp">
-      <Filter>gtest</Filter>
-    </ClCompile>
     <ClCompile Include="src\jcontainers_pch.cpp" />
     <ClCompile Include="src\jc_interface.cpp">
       <Filter>plugin_interface</Filter>

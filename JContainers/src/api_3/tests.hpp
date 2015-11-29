@@ -198,7 +198,7 @@ namespace tes_api_3 {
             ++itr;
             key = tes_map_ext::nextKey<std::string>(m, key.c_str());
         }
-        EXPECT_TRUE(itr == m->u_container().end())
+        EXPECT_TRUE(itr == m->u_container().end());
     }
 
     TEST(tes_object, pool)
