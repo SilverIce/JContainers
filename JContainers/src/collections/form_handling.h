@@ -62,7 +62,7 @@ namespace collections {
             if (is_static(formId)) { // common case
                 modName = skse::modname_from_index (modID);
                 if (!modName) {
-                    return false;
+                    return boost::none;
                 }
 
                 formIdClean = local_id(formId);
@@ -72,16 +72,10 @@ namespace collections {
                 modName = "";
             }
 
-            std::string string{ kFormData };
-            string += kFormDataSeparator;
-            string += modName;
-            string += kFormDataSeparator;
+            char string[MAX_PATH] = { '\0' };
+            assert(-1 != _snprintf_s(string, sizeof string, "__formData|%s|0x%x", modName, formIdClean));
 
-            char buff[20] = {'\0'};
-            _snprintf(buff, sizeof buff, "0x%x", formIdClean);
-            string += buff;
-
-            return string;
+            return boost::optional<std::string>{ string };
         }
 
         inline bool is_form_string(const char *string) {
@@ -109,7 +103,11 @@ namespace collections {
 
             UInt8 modIdx = 0;
             if (!pluginName.empty()) {
-                modIdx = skse::modindex_from_name( ss::string(pluginName.begin(), pluginName.end()).c_str() );
+                char *long_string = (char*)_malloca(pluginName.size() + 1);
+                auto res = strncpy_s(long_string, pluginName.size() + 1, pluginName.begin(), pluginName.size());
+                assert(0 == res);
+
+                modIdx = skse::modindex_from_name(long_string);
                 if (modIdx == FormGlobalPrefix) {
                     return boost::none;
                 }
@@ -121,18 +119,31 @@ namespace collections {
 
             auto& formIdString = pair2.second;
 
-            uint32_t formId = 0;
-            try {
-                formId = std::stoul(ss::string(formIdString.begin(), formIdString.end()), nullptr, 0);
-            }
-            catch (const std::invalid_argument& ) {
-                return boost::none;
-            }
-            catch (const std::out_of_range& ) {
-                return boost::none;
+            auto stoul_optimized = [](boost::iterator_range<const char*>& str, size_t *_Idx, int _Base) -> bs::optional<unsigned long> {	// convert string to unsigned long
+                char *long_string = (char*)_malloca(str.size() + 1);
+                auto res = strncpy_s(long_string, str.size() + 1, str.begin(), str.size());
+                assert(0 == res);
+
+                const char *_Ptr = long_string;
+                char *_Eptr;
+                errno = 0;
+                unsigned long _Ans = _CSTD strtoul(_Ptr, &_Eptr, _Base);
+
+                if (_Ptr == _Eptr)
+                    return boost::none; //_Xinvalid_argument("invalid stoul argument");
+                if (errno == ERANGE)
+                    return boost::none; //_Xout_of_range("stoul argument out of range");
+                if (_Idx != 0)
+                    *_Idx = (size_t)(_Eptr - _Ptr);
+                return (_Ans);
+            };
+
+            bs::optional<unsigned long> optFormId = stoul_optimized(formIdString, nullptr, 0);
+            if (optFormId) {
+                return construct(modIdx, *optFormId);
             }
 
-            return construct(modIdx, formId);
+            return boost::none;
         }
 
         inline boost::optional<FormId> from_string(const char* source) {

@@ -85,8 +85,15 @@ namespace collections {
     public:
 
         static json_unique_ref json_from_file(const char *path) {
-            json_error_t error; //  TODO: output error
-            json_ref ref = json_load_file(path, 0, &error);
+            json_ref ref = nullptr;
+            if (path) {
+                json_error_t error; //  TODO: output error
+                auto file = make_unique_ptr(fopen(path, "rb"), fclose);
+                auto cb = [](void *buffer, size_t buflen, void *data) -> size_t {
+                    return data ? fread(buffer, 1, buflen, reinterpret_cast<FILE*>(data)) : 0;
+                };
+                ref = json_load_callback(cb, file.get(), 0, &error);
+            }
             return make_unique_ptr(ref, json_decref);
         }
 
