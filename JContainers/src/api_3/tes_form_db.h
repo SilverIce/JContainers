@@ -46,7 +46,7 @@ namespace tes_api_3 {
                 auto pair2 = bs::half_split_if(pair1.second, bs::is_any_of(".["));
 
                 if (!pair2.first.empty() && !pair2.second.empty()) {
-                    auto strorageNameLen = (std::min)(bytesCount-1,  pair2.first.size());
+                    auto strorageNameLen = std::min<size_t>(bytesCount-1,  pair2.first.size());
                     std::copy_n(pair2.first.begin(), strorageNameLen, _storageName);
                     _storageName[strorageNameLen] = '\0';
 

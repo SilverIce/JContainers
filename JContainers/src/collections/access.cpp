@@ -347,12 +347,12 @@ namespace collections
 
         template<class R, class Arg, class F1, class ... F>
         boost::optional<R> parse_path_helper(Arg&& a, F1&& f1, F&& ... funcs) {
-            auto result = f1(forward<Arg>(a));
+            auto result = f1(std::forward<Arg>(a));
             if (result) {
                 return result;
             }
             else {
-                return parse_path_helper<R>(forward<Arg>(a), forward<F>(funcs)...);
+                return parse_path_helper<R>(std::forward<Arg>(a), std::forward<F>(funcs)...);
             }
         };
 

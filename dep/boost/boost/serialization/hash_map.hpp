@@ -2,7 +2,7 @@
 #define BOOST_SERIALIZATION_HASH_MAP_HPP
 
 // MS compatible compilers support #pragma once
-#if defined(_MSC_VER) && (_MSC_VER >= 1020)
+#if defined(_MSC_VER)
 # pragma once
 #endif
 
@@ -18,7 +18,8 @@
 //  See http://www.boost.org for updates, documentation, and revision history.
 
 #include <boost/config.hpp>
-#include <hash_map>
+#ifdef BOOST_HAS_HASH
+#include BOOST_HASH_MAP_HEADER
 
 #include <boost/serialization/utility.hpp>
 #include <boost/serialization/hash_collections_save_imp.hpp>
@@ -39,11 +40,11 @@ struct archive_input_hash_map
         Container &s, 
         const unsigned int v
     ){
-        typedef BOOST_DEDUCED_TYPENAME Container::value_type type;
+        typedef typename Container::value_type type;
         detail::stack_construct<Archive, type> t(ar, v);
         // borland fails silently w/o full namespace
         ar >> boost::serialization::make_nvp("item", t.reference());
-        std::pair<BOOST_DEDUCED_TYPENAME Container::const_iterator, bool> result = 
+        std::pair<typename Container::const_iterator, bool> result = 
             s.insert(t.reference());
         // note: the following presumes that the map::value_type was NOT tracked
         // in the archive.  This is the usual case, but here there is no way
@@ -66,11 +67,11 @@ struct archive_input_hash_multimap
         Container &s, 
         const unsigned int v
     ){
-        typedef BOOST_DEDUCED_TYPENAME Container::value_type type;
+        typedef typename Container::value_type type;
         detail::stack_construct<Archive, type> t(ar, v);
         // borland fails silently w/o full namespace
         ar >> boost::serialization::make_nvp("item", t.reference());
-        BOOST_DEDUCED_TYPENAME Container::const_iterator result 
+        typename Container::const_iterator result 
             = s.insert(t.reference());
         // note: the following presumes that the map::value_type was NOT tracked
         // in the archive.  This is the usual case, but here there is no way
@@ -93,14 +94,14 @@ template<
 >
 inline void save(
     Archive & ar,
-    const std::hash_map<
+    const BOOST_STD_EXTENSION_NAMESPACE::hash_map<
         Key, HashFcn, EqualKey, Allocator
     > &t,
     const unsigned int file_version
 ){
     boost::serialization::stl::save_hash_collection<
         Archive, 
-        std::hash_map<
+        BOOST_STD_EXTENSION_NAMESPACE::hash_map<
             Key, HashFcn, EqualKey, Allocator
         >
     >(ar, t);
@@ -115,19 +116,19 @@ template<
 >
 inline void load(
     Archive & ar,
-    std::hash_map<
+    BOOST_STD_EXTENSION_NAMESPACE::hash_map<
         Key, HashFcn, EqualKey, Allocator
     > &t,
     const unsigned int file_version
 ){
     boost::serialization::stl::load_hash_collection<
         Archive,
-        std::hash_map<
+        BOOST_STD_EXTENSION_NAMESPACE::hash_map<
             Key, HashFcn, EqualKey, Allocator
         >,
         boost::serialization::stl::archive_input_hash_map<
             Archive, 
-            std::hash_map<
+            BOOST_STD_EXTENSION_NAMESPACE::hash_map<
                 Key, HashFcn, EqualKey, Allocator
             >
         >
@@ -145,7 +146,7 @@ template<
 >
 inline void serialize(
     Archive & ar,
-    std::hash_map<
+    BOOST_STD_EXTENSION_NAMESPACE::hash_map<
         Key, HashFcn, EqualKey, Allocator
     > &t,
     const unsigned int file_version
@@ -163,14 +164,14 @@ template<
 >
 inline void save(
     Archive & ar,
-    const std::hash_multimap<
+    const BOOST_STD_EXTENSION_NAMESPACE::hash_multimap<
         Key, HashFcn, EqualKey, Allocator
     > &t,
     const unsigned int file_version
 ){
     boost::serialization::stl::save_hash_collection<
         Archive, 
-        std::hash_multimap<
+        BOOST_STD_EXTENSION_NAMESPACE::hash_multimap<
             Key, HashFcn, EqualKey, Allocator
         >
     >(ar, t);
@@ -185,19 +186,19 @@ template<
 >
 inline void load(
     Archive & ar,
-    std::hash_multimap<
+    BOOST_STD_EXTENSION_NAMESPACE::hash_multimap<
         Key, HashFcn, EqualKey, Allocator
     > &t,
     const unsigned int file_version
 ){
     boost::serialization::stl::load_hash_collection<
         Archive,
-        std::hash_multimap<
+        BOOST_STD_EXTENSION_NAMESPACE::hash_multimap<
             Key, HashFcn, EqualKey, Allocator
         >,
         boost::serialization::stl::archive_input_hash_multimap<
             Archive, 
-            std::hash_multimap<
+            BOOST_STD_EXTENSION_NAMESPACE::hash_multimap<
                 Key, HashFcn, EqualKey, Allocator
             >
         >
@@ -215,7 +216,7 @@ template<
 >
 inline void serialize(
     Archive & ar,
-    std::hash_multimap<
+    BOOST_STD_EXTENSION_NAMESPACE::hash_multimap<
         Key, HashFcn, EqualKey, Allocator
     > &t,
     const unsigned int file_version
@@ -226,4 +227,5 @@ inline void serialize(
 } // namespace serialization
 } // namespace boost
 
+#endif // BOOST_HAS_HASH
 #endif // BOOST_SERIALIZATION_HASH_MAP_HPP
