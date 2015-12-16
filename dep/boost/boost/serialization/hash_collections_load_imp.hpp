@@ -62,7 +62,7 @@ inline void load_hash_collection(Archive & ar, Container &s)
     }
     s.clear();
     #if ! defined(__MWERKS__)
-    s.resize(bucket_count);
+    //s.resize(bucket_count);
     #endif
     InputFunction ifunc;
     while(count-- > 0){

@@ -107,6 +107,14 @@ public:
 
     BOOST_ARCHIVE_OR_WARCHIVE_DECL void
     init();
+
+    template<class SE, class ST, class SA>
+    BOOST_ARCHIVE_OR_WARCHIVE_DECL(void)
+    save(const std::basic_string<SE, ST, SA> &s) {
+        std::size_t l = static_cast<std::size_t>(s.size());
+        this->This()->save(l);
+        save_binary(s.data(), l * sizeof(SE) / sizeof(char));
+    }
     
     BOOST_ARCHIVE_OR_WARCHIVE_DECL 
     basic_binary_oprimitive(

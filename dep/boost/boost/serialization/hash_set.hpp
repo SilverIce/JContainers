@@ -74,20 +74,19 @@ template<
     class Archive, 
     class Key, 
     class HashFcn, 
-    class EqualKey,
-    class Allocator
+    class EqualKey
 >
 inline void save(
     Archive & ar,
     const BOOST_STD_EXTENSION_NAMESPACE::hash_set<
-        Key, HashFcn, EqualKey, Allocator
+        Key, HashFcn, EqualKey
     > &t,
     const unsigned int file_version
 ){
     boost::serialization::stl::save_hash_collection<
         Archive, 
         BOOST_STD_EXTENSION_NAMESPACE::hash_set<
-            Key, HashFcn, EqualKey, Allocator
+            Key, HashFcn, EqualKey
         > 
     >(ar, t);
 }
@@ -96,25 +95,24 @@ template<
     class Archive, 
     class Key, 
     class HashFcn, 
-    class EqualKey,
-    class Allocator
+    class EqualKey
 >
 inline void load(
     Archive & ar,
     BOOST_STD_EXTENSION_NAMESPACE::hash_set<
-        Key, HashFcn, EqualKey, Allocator
+        Key, HashFcn, EqualKey
     > &t,
     const unsigned int file_version
 ){
     boost::serialization::stl::load_hash_collection<
         Archive,
         BOOST_STD_EXTENSION_NAMESPACE::hash_set<
-            Key, HashFcn, EqualKey, Allocator
+            Key, HashFcn, EqualKey
         >,
         boost::serialization::stl::archive_input_hash_set<
             Archive, 
             BOOST_STD_EXTENSION_NAMESPACE::hash_set<
-                Key, HashFcn, EqualKey, Allocator
+                Key, HashFcn, EqualKey
             >
         >
     >(ar, t);
@@ -126,13 +124,12 @@ template<
     class Archive, 
     class Key, 
     class HashFcn, 
-    class EqualKey,
-    class Allocator
+    class EqualKey
 >
 inline void serialize(
     Archive & ar,
     BOOST_STD_EXTENSION_NAMESPACE::hash_set<
-        Key, HashFcn, EqualKey, Allocator
+        Key, HashFcn, EqualKey
     > &t,
     const unsigned int file_version
 ){
@@ -144,20 +141,19 @@ template<
     class Archive, 
     class Key, 
     class HashFcn, 
-    class EqualKey,
-    class Allocator
+    class EqualKey
 >
 inline void save(
     Archive & ar,
     const BOOST_STD_EXTENSION_NAMESPACE::hash_multiset<
-        Key, HashFcn, EqualKey, Allocator
+        Key, HashFcn, EqualKey
     > &t,
     const unsigned int file_version
 ){
     boost::serialization::stl::save_hash_collection<
         Archive, 
         BOOST_STD_EXTENSION_NAMESPACE::hash_multiset<
-            Key, HashFcn, EqualKey, Allocator
+            Key, HashFcn, EqualKey
         > 
     >(ar, t);
 }
@@ -166,25 +162,24 @@ template<
     class Archive, 
     class Key, 
     class HashFcn, 
-    class EqualKey,
-    class Allocator
+    class EqualKey
 >
 inline void load(
     Archive & ar,
     BOOST_STD_EXTENSION_NAMESPACE::hash_multiset<
-        Key, HashFcn, EqualKey, Allocator
+        Key, HashFcn, EqualKey
     > &t,
     const unsigned int file_version
 ){
     boost::serialization::stl::load_hash_collection<
         Archive,
         BOOST_STD_EXTENSION_NAMESPACE::hash_multiset<
-            Key, HashFcn, EqualKey, Allocator
+            Key, HashFcn, EqualKey
         >,
         boost::serialization::stl::archive_input_hash_multiset<
             Archive,
             BOOST_STD_EXTENSION_NAMESPACE::hash_multiset<
-                Key, HashFcn, EqualKey, Allocator
+                Key, HashFcn, EqualKey
             > 
         >
     >(ar, t);
@@ -196,13 +191,12 @@ template<
     class Archive, 
     class Key, 
     class HashFcn, 
-    class EqualKey,
-    class Allocator
+    class EqualKey
 >
 inline void serialize(
     Archive & ar,
     BOOST_STD_EXTENSION_NAMESPACE::hash_multiset<
-        Key, HashFcn, EqualKey, Allocator
+        Key, HashFcn, EqualKey
     > & t,
     const unsigned int file_version
 ){
