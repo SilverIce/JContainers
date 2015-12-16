@@ -123,7 +123,8 @@ namespace collections {
             , _timer(_io)
         {
 #   if WINE_SUPPORT
-            _thread.Start([](void *io_ptr) { reinterpret_cast<decltype(_io)*>(io_ptr)->run(); }, &_io);
+            using io_ptr_type = decltype(_io);
+            _thread.Start([](void *io_ptr) { reinterpret_cast<io_ptr_type*>(io_ptr)->run(); }, &_io);
 #   else
             _thread = std::thread([&]() { _io.run(); });
 #   endif
