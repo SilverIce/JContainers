@@ -10,10 +10,9 @@
 #include "common/ITypes.h"
 #include "common/IDebugLog.h"
 #include "skse/GameForms.h"
-
-//#include "collections/tes_context.h"
-#include "object/object_base.h"
 #include "skse/skse.h"
+
+#include "object/object_base.h"
 
 #include "collections/item.h"
 
@@ -35,7 +34,7 @@ namespace collections {
 
     public:
 
-        // just for convence to not use static_cast's
+        // just for convinience - to not use static_cast's
         object_base& base() { return *this; }
         const object_base& base() const { return *this; }
 

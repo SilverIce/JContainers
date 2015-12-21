@@ -5,9 +5,7 @@ namespace tes_api_3 {
 
     using namespace collections;
 
-    const char *kCommentObject = "creates new container object. returns container identifier (integer number).\n"
-        "identifier is the thing you will have to pass to the most of container's functions as a first argument";
-
+    const char *kCommentObject = "creates new container object. returns container's identifier (unique integer number).";
 
 #define VALUE_TYPE_COMMENT "0 - no value, 1 - none, 2 - int, 3 - float, 4 - form, 5 - object, 6 - string"
 
@@ -19,7 +17,7 @@ namespace tes_api_3 {
         REGISTER_TES_NAME("JValue");
 
         void additionalSetup() {
-            metaInfo.comment = "Each instanceable container (JArray, JMap, JFormMap, JIntMap) inherits JValue functionality";
+            metaInfo.comment = "Common functionality, shared by JArray, JMap, JFormMap, JIntMap";
         }
 
         static object_base* retain(ref obj, const char* tag = nullptr) {
@@ -35,7 +33,7 @@ namespace tes_api_3 {
 R"===(--- Lifetime management functionality.
 Read this https://github.com/SilverIce/JContainers/wiki/Lifetime-Management before using any of lifetime management functions
 
-Retains and returns the object. Purpose - extend object lifetime)==="
+Retains and returns the object.)==="
             );
 
         template<class T>
@@ -82,9 +80,8 @@ Retains and returns the object. Purpose - extend object lifetime)==="
             }
         }
         REGISTERF2(releaseObjectsWithTag, "tag",
-"For cleanup purpose only - releases lost (and not lost) objects with given tag.\n"
-"Complements all retain calls objects with given tag received with release calls.\n"
-"See 'object lifetime management' section for more information");
+"For cleanup purpose only - releases all objects with given tag.\n"
+"Complements all retain calls the objects with given tag received with release calls.");
 
         static ref zeroLifetime(ref obj) {
             if (obj) {
@@ -92,8 +89,8 @@ Retains and returns the object. Purpose - extend object lifetime)==="
             }
             return obj;
         }
-        REGISTERF2(zeroLifetime, "*", "Reduces the time JC temporarily owns the object to a minimal value, returns the object.\n\
-By using this function a user helps JC to get rid of no-more-needed to the user object as soon as possible (ofc. the object won't be deleted if something retains or contains it)");
+        REGISTERF2(zeroLifetime, "*", "Minimizes the time JC temporarily owns the object, returns the object.\n\
+By using this function you help JC to delete unused object as soon as possible (the object won't be deleted if something retains or contains it)");
 
 #       define JC_OBJECT_POOL_KEY   "__tempPools"
 
@@ -142,7 +139,7 @@ JValue.cleanPool(\"uniquePoolName\")"
         static ref shallowCopy(ref obj) {
             return obj ? &copying::shallow_copy(tes_context::instance(), *obj) : nullptr;
         }
-        REGISTERF2(shallowCopy, "*", "--- Mics. functionality\n\nReturns shallow copy (doesn't copy child objects)");
+        REGISTERF2(shallowCopy, "*", "--- Mics. functionality\n\nReturns shallow copy (won't copy child objects)");
 
         static ref deepCopy(ref obj) {
             return obj ? &copying::deep_copy(tes_context::instance(), *obj) : nullptr;
@@ -152,7 +149,7 @@ JValue.cleanPool(\"uniquePoolName\")"
         static bool isExists(ref obj) {
             return obj != nullptr;
         }
-        REGISTERF2(isExists, "*", "tests whether given object identifier points to existing object");
+        REGISTERF2(isExists, "*", "Tests whether given object identifier points to existing object");
 
         template<class T> static bool isCast(ref obj) {
             return obj->as<T>() != nullptr;
@@ -171,7 +168,7 @@ JValue.cleanPool(\"uniquePoolName\")"
         static SInt32 count(ref obj) {
             return obj ? obj->s_count() : 0;
         }
-        REGISTERF2(count, "*", "returns the number of items in container");
+        REGISTERF2(count, "*", "returns amount of items in container");
 
         static void clear(ref obj) {
             if (obj) {
@@ -184,7 +181,7 @@ JValue.cleanPool(\"uniquePoolName\")"
             auto obj = json_deserializer::object_from_file(tes_context::instance(), path);
             return  obj;
         }
-        REGISTERF2(readFromFile, "filePath", "JSON serialization/deserialization:\n\ncreates and returns new container object containing the contents of JSON file");
+        REGISTERF2(readFromFile, "filePath", "JSON serialization/deserialization:\n\ncreates and returns new container object containing contents of JSON file");
 
         static object_base* readFromDirectory(const char *dirPath, const char *extension = "")
         {
@@ -219,8 +216,8 @@ JValue.cleanPool(\"uniquePoolName\")"
             return &files;
         }
         REGISTERF2(readFromDirectory, "directoryPath extension=\"\"",
-            "parses JSON files in directory (non recursive) and returns JMap containing {filename, container-object} pairs.\n"
-            "note: by default it does not filters files by extension and will try to parse everything");
+            "Parses JSON files in a directory (non recursive) and returns JMap containing {filename, container-object} pairs.\n"
+            "Note: by default it does not filter files by extension and will try to parse everything");
 
         static object_base* objectFromPrototype(const char *prototype) {
             auto obj = json_deserializer::object_from_json_data( tes_context::instance(), prototype);
@@ -265,7 +262,7 @@ JValue.cleanPool(\"uniquePoolName\")"
         }
         REGISTERF(hasPath, "hasPath", "* path",
 "Path resolving:\n\n\
-returns true, if container capable resolve given path.\n\
+returns true, if it's possible to resolve given path.\n\
 for ex. JValue.hasPath(container, \".player.health\") will check if given container has 'player' which has 'health' information"
                                       );
 

@@ -215,7 +215,7 @@ namespace collections {
     }
 
     map& tes_context::root()
-{
+    {
         map * result = _cached_root.load(std::memory_order_acquire);
         if (!result) {
 
