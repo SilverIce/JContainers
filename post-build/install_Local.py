@@ -2,14 +2,13 @@ from jc_install import *
 import sys
 
 if __name__ == '__main__':
-	
-	if len(sys.argv) < 2:
-		raise Exception('argc less than 1')
+    
+    if len(sys.argv) < 2:
+        raise Exception('argc less than 1')
 
-	wineDir = "\\\\VBOXSVR\\vilya\\PlayOnLinux's virtual drives\\Skyrim\\drive_c\\Program Files\\Mod Organizer\\mods\\JContainers.3.2.4 - WINE"
-	localDir = "../../Data"
+    mode = sys.argv[1]
+    installDir = sys.argv[2]
 
-	mode = sys.argv[1]
-	doLocalInstall(mode, localDir)
-	print 'post-install finished'
-	
+    doLocalInstall(mode, installDir)
+    print('post-install finished')
+    

@@ -5,7 +5,7 @@ import shutil
 def makepath(*args):
     path = os.path.join(*args)
 
-    print 'makepath:', path
+    print('makepath:', path)
 
     if not os.path.exists(path):
         os.makedirs(path)
@@ -33,11 +33,11 @@ class JCLib(object):
         import ctypes
         from ctypes import cdll
 
-        print 'loading', JCLib.dllName(), 'at:', location
+        print ('loading', JCLib.dllName(), 'at', location)
 
         self.location = location
         self.lib = cdll.LoadLibrary(location);
-        self.lib.JC_versionString.restype = ctypes.c_char_p
+        #self.lib.JC_versionString.restype = ctypes.c_char_p
         self.lib.JC_produceCode.argtypes = [ctypes.c_char_p]
 
     @staticmethod
@@ -45,9 +45,9 @@ class JCLib(object):
         return 'JContainers.dll'
 
     def produceCode(self, into):
-        print 'generating papyrus scripts into:', into
+        print ('generating papyrus scripts into: ', into)
         makepath(into)
-        self.lib.JC_produceCode(into)
+        self.lib.JC_produceCode(into.encode('utf-8'))
 
     def versionString(self):
         return self.lib.JC_versionString()
@@ -91,7 +91,7 @@ class Config(object):
 
 
 def systemCall(command):
-    print 'sys. call:', command
+    print('sys. call:', command)
 
     if os.system(command) != 0:
         raise Exception('sys. command', command, 'has failed')
@@ -110,7 +110,7 @@ def makeScripts(lib, sourceDir, compiledDir):
         '-o=' + quotes(compiledDir)
     ]
 
-    print 'compiling scripts'
+    print('compiling scripts')
     systemCall(' '.join(args))
 
     #import subprocess
@@ -140,7 +140,7 @@ def setupSkyrimTree(config):
 
 def recreatePath(*args):
     path = os.path.join(*args)
-    print 'recreating path:', path
+    print ('recreating path:', path)
 
     shutil.rmtree(path, ignore_errors = True)
 
@@ -153,8 +153,8 @@ def recreatePath(*args):
     
 
 def doLocalInstall(mode, targetDir):
-    print 'mode:', mode
-    print 'install path:', os.path.abspath(targetDir)
+    print ('mode:', mode)
+    print ('install path:', os.path.abspath(targetDir))
 
     config = Config(mode)
     setupSkyrimTree(config)
