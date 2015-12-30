@@ -1,69 +1,77 @@
-#include "collections\access.h"
+
 namespace tes_api_3 {
 
     using namespace collections;
 
-#if 0
+#if 1
     class tes_lua : public class_meta < tes_lua > {
     public:
 
         void additionalSetup() {
-            metaInfo.comment = "executes lua code";
+            metaInfo.comment = "Evaluates Lua code";
         }
 
-        /*
-        
-        popTransport db = pop db["__luaTransportPool"]
+#define ARGNAMES "luaCode transport default="
+#define ARGNAMES_2 " minimizeLifetime=true"
+        REGISTERF(evalLua<Float32>, "evalLuaFlt", ARGNAMES "0.0" ARGNAMES_2,
+R"===(Evaluates piece of Lua code. The arguments are carried by @transport object.
+The @transport is any kind of object, not just JMap.
+If @minimizeLifetime is True the function will invoke JValue.zeroLifetime on the @transport object.
+Returns @default value if evaluation fails.
+Usage example:
 
-        retrieveOrMake tree key def = tree[key]
+    ; 7 from the end until 9 from the end. Returns "Lua" string
+    string input = "Hello Lua user"
+    string s = JLua.evaLuaStr("return string.sub(args.string, args.low, args.high)",\
+        JLua.setObj("string",input, JLua.setInt("low",7, JLua.setInt("high",9 )))\
+    )
+)===");
+        REGISTERF(evalLua<SInt32>, "evalLuaInt", ARGNAMES "0" ARGNAMES_2, nullptr);
+        REGISTERF(evalLua<skse::string_ref>, "evalLuaStr", ARGNAMES R"("")" ARGNAMES_2, nullptr);
+        REGISTERF(evalLua<Handle>, "evalLuaObj", ARGNAMES "0" ARGNAMES_2, nullptr);
+        REGISTERF(evalLua<TESForm*>, "evalLuaForm", ARGNAMES "None" ARGNAMES_2, nullptr);
+#undef ARGNAMES
+#undef ARGNAMES_2
 
-        pop (x:xs) = x
-        pop [] = Transport
-        
-        */
-
-        static array& get_transport_pool(tes_context& ctx) {
-
-            auto root = ctx.database();
-
-            object_lock l(root);
-
-            auto itm = root->u_get("__luaTransportPool");
-            if (!itm) {
-                itm = root->u_set("__luaTransportPool", array::object(ctx));
+        template<class ResultType>
+        static ResultType evalLua(const char* luaCode, object_base* transport, ResultType def, bool minimizeLifetime = true) {
+            auto result = lua::eval_lua_function(tes_context::instance(), transport, luaCode);
+            if (transport && minimizeLifetime) {
+                transport->zero_lifetime();
             }
-
-            return itm->object()->as_link<array>();
+            return result ? result->readAs<ResultType>() : def;
         }
 
-        static array* transport() {
-            array* transport = nullptr;
-            {
-                auto& ctx = tes_context::instance();
-                array& transportPool = get_transport_pool(ctx);
+#define ARGNAMES "key value transport=0"
+        REGISTERF(pushArg<const char*>, "setStr", ARGNAMES,
+R"===(Inserts new (or replaces existing) {key -> value} pair. Expects that @transport is JMap object, if @transport is 0 it creates new JMap object.
+Returns @transport)===");
+        REGISTERF(pushArg<Float32>, "setFlt", ARGNAMES, "");
+        REGISTERF(pushArg<SInt32>, "setInt", ARGNAMES, "");
+        REGISTERF(pushArg<FormId>, "setForm", ARGNAMES, "");
+        REGISTERF(pushArg<object_base*>, "setObj", ARGNAMES, "");
+#undef ARGNAMES
 
-                object_lock l(transportPool);
-                auto var = transportPool.u_erase_and_return(-1);
-                if (var) {
-                    transport = var->object()->as<array>();
-                } else {
-                    transport = &array::object(ctx);
-                }
+        template<class ArgType>
+        static map* pushArg(const char* key, ArgType arg, map* transport = nullptr) {
+            if (!transport) {
+                transport = &map::object(tes_context::instance());
             }
+
+            tes_map::setItem<ArgType>(transport, key, arg);
             return transport;
         }
 
-        static int evalLuaInt(const char* luaCode, array* transport) {
-            auto result = lua::eval_lua_function(tes_context::instance(), obj, luaCode);
-            return result ? result->readAs<T>() : def;
-        }
-
-
-        REGISTER_TES_NAME("JCLua");
-
-        //evalLuaInt("return a[1] + a[2]", pushInt(1, pushInt(2, LuaTransport())))
+        REGISTER_TES_NAME("JLua");
     };
 
+    TEST(JLua, simple)
+    {
+        EXPECT_EQ( 8, tes_lua::evalLua<float>("return args.x * args.y", tes_lua::pushArg("x", 2, tes_lua::pushArg("y", 4)), 0.f) );
+
+        EXPECT_EQ(1, tes_lua::evalLua<SInt32>("return jobject ~= nil", tes_lua::pushArg("garbage", 4), -1))
+            << "@jobject (@args alias) isn't supported";
+    }
     TES_META_INFO(tes_lua);
 #endif
 }

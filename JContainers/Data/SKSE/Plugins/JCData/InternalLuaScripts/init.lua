@@ -184,7 +184,7 @@ local function makeEvalLuaFunction()
   local function compileAndCache (luaString)
     local func = jc_function_cache[luaString]
     if not func then
-      local f, message = loadstring('local jobject = ... ;' .. luaString)
+      local f, message = loadstring('local args = ...; local jobject = args;' .. luaString)
       if f then
         func = f
         setfenv(f, evallua_sandbox)
