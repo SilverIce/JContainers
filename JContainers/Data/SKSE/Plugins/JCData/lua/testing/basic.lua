@@ -1,6 +1,9 @@
 
 local JCTypeList = {JArray, JMap, JFormMap}
 
+local function print( ... )
+end
+
 return function()
   
   do
