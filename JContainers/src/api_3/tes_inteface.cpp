@@ -11,6 +11,7 @@
 
 #include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include <shlobj.h>
 

@@ -214,12 +214,13 @@ JValue.cleanPool(\"uniquePoolName\")"
             filesystem::directory_iterator end_itr;
             filesystem::path root(dirPath);
 
-            map &files = map::object(tes_context::instance()); 
+            map &files = map::object(tes_context::instance());
 
             for ( filesystem::directory_iterator itr( root ); itr != end_itr; ++itr ) {
 
-                if ( filesystem::is_regular_file( *itr ) &&
-                     (!*extension || itr->path().extension().generic_string().compare(extension) == 0) ) {
+                if (!filesystem::is_directory(*itr) &&
+                     (!*extension || boost::iequals(extension, itr->path().extension().generic_string())) )
+                {
                     auto asniString = itr->path().generic_string();
                     auto jsonObject = tes_object::readFromFile(asniString.c_str());
 
