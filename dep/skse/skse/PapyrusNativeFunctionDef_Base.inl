@@ -317,59 +317,66 @@ public:
     using namespace std;
     using clock_type = boost::chrono::process_user_cpu_clock;
 
-    auto start = clock_type::now();
 
 		// call the callback
+        try {
+            auto start = clock_type::now();
 #if !VOID_SPEC
-		T_Result	result =
+            T_Result	result =
 #endif
-			((CallbackType)m_callback)(base
+                ((CallbackType)m_callback)(base
 
 #if NUM_PARAMS >= 1
-			, arg0
+                , arg0
 #endif
 #if NUM_PARAMS >= 2
-			, arg1
+                , arg1
 #endif
 #if NUM_PARAMS >= 3
-			, arg2
+                , arg2
 #endif
 #if NUM_PARAMS >= 4
-			, arg3
+                , arg3
 #endif
 #if NUM_PARAMS >= 5
-			, arg4
+                , arg4
 #endif
 #if NUM_PARAMS >= 6
-			, arg5
+                , arg5
 #endif
 #if NUM_PARAMS >= 7
-			, arg6
+                , arg6
 #endif
 #if NUM_PARAMS >= 8
-			, arg7
+                , arg7
 #endif
 #if NUM_PARAMS >= 9
-			, arg8
+                , arg8
 #endif
 #if NUM_PARAMS >= 10
-			, arg9
+                , arg9
 #endif
 
-			);
+                );
 
-        auto end = clock_type::now();
-        auto diff = boost::chrono::duration_cast<boost::chrono::nanoseconds>(end - start).count();
+            auto end = clock_type::now();
+            auto diff = boost::chrono::duration_cast<boost::chrono::nanoseconds>(end - start).count();
 
-        _time_summ.fetch_add(diff, std::memory_order_relaxed);
-        _call_count.fetch_add(1, std::memory_order_relaxed);
+            _time_summ.fetch_add(diff, std::memory_order_relaxed);
+            _call_count.fetch_add(1, std::memory_order_relaxed);
 
-		// pack the result
+
+            // pack the result
 #if VOID_SPEC
-		resultValue->SetNone();
+            resultValue->SetNone();
 #else
-		PackValue(resultValue, &result, registry);
+            PackValue(resultValue, &result, registry);
 #endif
+        }
+        catch (const std::invalid_argument& ) {
+            resultValue->SetNone();
+            return false;
+        }
 
 		return true;
 	}

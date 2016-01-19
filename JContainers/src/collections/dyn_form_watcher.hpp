@@ -28,7 +28,7 @@ namespace collections {
 
         template<class ...Params>
         inline void log(const char* fmt, Params&& ...ps) {
-            JC_log(fmt, std::forward<Params ...>(ps ...));
+            //JC_log(fmt, std::forward<Params ...>(ps ...));
         }
 
         class form_entry : public boost::noncopyable {
