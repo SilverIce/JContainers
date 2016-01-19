@@ -287,51 +287,57 @@ public:
 		UnpackValue(&arg9, CALL_MEMBER_FN(state->argList, Get)(state, 9, argOffset));
 #endif
 
-		// call the callback
+        try {
+            // call the callback
 #if !VOID_SPEC
-		T_Result	result =
+            T_Result	result =
 #endif
-			((CallbackType)m_callback)(base
+                ((CallbackType)m_callback)(base
 
 #if NUM_PARAMS >= 1
-			, arg0
+                , arg0
 #endif
 #if NUM_PARAMS >= 2
-			, arg1
+                , arg1
 #endif
 #if NUM_PARAMS >= 3
-			, arg2
+                , arg2
 #endif
 #if NUM_PARAMS >= 4
-			, arg3
+                , arg3
 #endif
 #if NUM_PARAMS >= 5
-			, arg4
+                , arg4
 #endif
 #if NUM_PARAMS >= 6
-			, arg5
+                , arg5
 #endif
 #if NUM_PARAMS >= 7
-			, arg6
+                , arg6
 #endif
 #if NUM_PARAMS >= 8
-			, arg7
+                , arg7
 #endif
 #if NUM_PARAMS >= 9
-			, arg8
+                , arg8
 #endif
 #if NUM_PARAMS >= 10
-			, arg9
+                , arg9
 #endif
 
-			);
+                );
 
-		// pack the result
+            // pack the result
 #if VOID_SPEC
-		resultValue->SetNone();
+            resultValue->SetNone();
 #else
-		PackValue(resultValue, &result, registry);
+            PackValue(resultValue, &result, registry);
 #endif
+        }
+        catch (const std::invalid_argument& e) {
+            resultValue->SetNone();
+            return false;
+        }
 
 		return true;
 	}
