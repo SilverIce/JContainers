@@ -132,7 +132,7 @@ namespace tes_api_3 {
         template<class T>
         static T solveGetter(FormId form, const char* path, T t = T(0)) {
             subpath_extractor sub(path, is_path);
-            return tes_object::resolveGetter<T>(findEntry(sub.storageName(), form), sub.rest(), t); 
+            return tes_object::resolveGetter<T>(makeMapEntry(sub.storageName(), form), sub.rest(), t);
         }
         REGISTERF(solveGetter<Float32>, "solveFlt", "fKey path default=0.0", "attempts to get value associated with path.");
         REGISTERF(solveGetter<SInt32>, "solveInt", "fKey path default=0", nullptr);
@@ -244,7 +244,6 @@ namespace tes_api_3 {
         EXPECT_EQ(entry, tes_form_db::makeMapEntry(storageName, fakeForm));
     }
 
-
     TEST(tes_form_db, get_set)
     {
         FormId fakeForm = (FormId)0x14;
@@ -259,5 +258,18 @@ namespace tes_api_3 {
         EXPECT_TRUE(ar == tes_form_db::solveGetter<object_base*>(fakeForm, path));
     }
 
+    TEST(tes_form_db, solve_setter_bugfix)
+    {
+        FormId fakeForm = (FormId)0x14;
 
+        const char *path = ".forms.abc.intVal";
+        const SInt32 value = 1;
+
+        EXPECT_FALSE(tes_form_db::hasPath(fakeForm, path));
+        EXPECT_TRUE(tes_form_db::solveSetter<SInt32>(fakeForm, path, value, true));
+
+        EXPECT_TRUE(tes_form_db::hasPath(fakeForm, path));// << "solveSetter didn't create form entry";
+
+        EXPECT_EQ(value, tes_form_db::solveGetter<SInt32>(fakeForm, path));
+    }
 }
