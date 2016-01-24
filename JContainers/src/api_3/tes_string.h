@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "util/util.h"
+#include "util/stl_ext.h"
 
 namespace collections {
 
@@ -35,6 +36,23 @@ namespace collections {
 Returns JArray object containing lines.\n\
 Accepts ASCII and UTF-8 encoded strings only");
 
+        static UInt32 decodeFormStringToFormId(const char* form_string) {
+            return util::to_integral(decodeFormStringToForm(form_string));
+        }
+        static FormId decodeFormStringToForm(const char* form_string) {
+            return boost::get_optional_value_or(form_handling::from_string(form_string), FormId::Zero);
+        }
+        static skse::string_ref encodeFormToString(FormId id) {
+            return skse::string_ref{ boost::get_optional_value_or(form_handling::to_string(id), "") };
+        }
+        static skse::string_ref encodeFormIdToString(UInt32 id) {
+            return encodeFormToString( util::to_enum<FormId>(id) );
+        }
+
+        REGISTERF2(decodeFormStringToFormId, "formString", "FormId|Form <-> \"__formData|<pluginName>|<lowFormId>\"-string converisons");
+        REGISTERF2(decodeFormStringToForm, "formString", "");
+        REGISTERF2(encodeFormToString, "value", "");
+        REGISTERF2(encodeFormIdToString, "formId", "");
     };
 
     TES_META_INFO(tes_string);
