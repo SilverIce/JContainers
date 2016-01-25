@@ -25,7 +25,7 @@ namespace tes_api_3 {
         REGISTERF(tes_object::object<Cnt>, "object", "", kCommentObject);
 
         template<class T>
-        static T getItem(Cnt *obj, key_cref key, T def = T(0)) {
+        static T getItem(Cnt *obj, key_cref key, T def = default_value<T>()) {
             map_functions::doReadOp(obj, key, [&](item& itm) { def = itm.readAs<T>(); });
             return def;
         }
@@ -33,7 +33,7 @@ namespace tes_api_3 {
         REGISTERF(getItem<Float32>, "getFlt", "object key default=0.0", "");
         REGISTERF(getItem<skse::string_ref>, "getStr", "object key default=\"\"", "");
         REGISTERF(getItem<object_base*>, "getObj", "object key default=0", "");
-        REGISTERF(getItem<FormId>, "getForm", "object key default=None", "");
+        REGISTERF(getItem<form_ref>, "getForm", "object key default=None", "");
 
         template<class T>
         static void setItem(Cnt *obj, key_cref key, T val) {
@@ -43,7 +43,7 @@ namespace tes_api_3 {
         REGISTERF(setItem<Float32>, "setFlt", "* key value", "");
         REGISTERF(setItem<const char *>, "setStr", "* key value", "");
         REGISTERF(setItem<object_base*>, "setObj", "* key container", "");
-        REGISTERF(setItem<FormId>, "setForm", "* key value", "");
+        REGISTERF(setItem<form_ref>, "setForm", "* key value", "");
 
         static bool hasKey(ref obj, key_cref key) {
             return valueType(obj, key) != 0;
@@ -160,8 +160,7 @@ namespace tes_api_3 {
         //////////////////////////////////////////////////////////////////////////
 
         static Key nextKey(ref obj, key_cref previousKey, key_ref endKey) {
-            map_functions::nextKey(obj, previousKey, [&](const typename Cnt::key_type & key) { endKey = key; });
-            return endKey;
+            return map_functions::nextKey_forPapyrus(obj, previousKey, endKey);
         }
 
         static Key getNthKey(ref obj, SInt32 keyIndex) {
@@ -172,7 +171,7 @@ namespace tes_api_3 {
     };
 
     typedef tes_map_t<const char*, map, const char*, const char*> tes_map;
-    typedef tes_map_t<weak_form_id, form_map> tes_form_map;
+    typedef tes_map_t<form_ref, form_map> tes_form_map;
     typedef tes_map_t<int32_t, integer_map, int32_t, int32_t> tes_integer_map;
 
     void tes_map::additionalSetup() {

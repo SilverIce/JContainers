@@ -98,7 +98,7 @@ namespace collections {
         static bool check(const char *s)  { return s != nullptr && *s; }
         static bool check(TESForm *f)  { return f != nullptr; }
         static bool check(FormId f)  { return f != FormId::Zero; }
-        static bool check(const weak_form_id& f)  { return f.is_not_expired(); }
+        static bool check(const form_ref& f)  { return f.is_not_expired(); }
         static bool check(int32_t)  { return true; }
     };
 
@@ -157,6 +157,33 @@ namespace collections {
                     keyFunc(container.begin()->first);
                 }
             }
+        }
+
+        template<class KeyTypeIn>
+        static KeyTypeIn nextKey_forPapyrus(const T *obj, const KeyTypeIn& lastKey, const KeyTypeIn& endKey) {
+            if (obj) {
+                object_lock g(obj);
+                auto& container = obj->u_container();
+                if (key_checker::check(lastKey)) {
+                    auto itr = container.find(lastKey);
+                    const auto end = container.end();
+
+                    if (itr == end) {
+                        return endKey;
+                    }
+
+                    while (++itr != end) {
+                        if (itr->first != endKey) {
+                            return itr->first;
+                        }
+                    }
+                }
+                else if (container.empty() == false) {
+                    return container.begin()->first;
+                }
+            }
+
+            return endKey;
         }
 
         template<class KeyFunc>

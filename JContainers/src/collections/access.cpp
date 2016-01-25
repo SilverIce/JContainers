@@ -431,10 +431,6 @@ namespace collections
             return parse_path_helper<key_and_rest>(path, arrayRule, mapRule);
         }
 
-        tes_context& HACK_get_tcontext(object_base& obj) {
-            return static_cast<tes_context&>(obj.context());
-        }
-
         struct constant_accessor {
             static bs::optional<object_base*> access_value(object_base& collection, const bs::optional<key_and_rest>& key) {
                 if (!key) {
@@ -468,7 +464,7 @@ namespace collections
 
                             object_base* operator ()(const int32_t& k) const { return &integer_map::object(*ctx); }
                             object_base* operator ()(const string& k) const { return &map::object(*ctx); }
-                            object_base* operator ()(const weak_form_id& k) const { return &form_map::object(*ctx); }
+                            object_base* operator ()(const form_ref& k) const { return &form_map::object(*ctx); }
                         };
                         *itemPtr = bs::apply_visitor(creator(&collection.context()), next_key->key);
                     }

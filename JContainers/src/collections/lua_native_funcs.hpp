@@ -10,9 +10,10 @@ namespace lua {
     using array_functions = collections::array_functions;
     using CollectionType = collections::CollectionType;
 
-    using collections::weak_form_id;
+    using collections::form_ref;
     using collections::FormId;
     using collections::FormIdUnredlying;
+    using collections::HACK_get_tcontext;
 }
 
 namespace lua { namespace api {
@@ -93,7 +94,7 @@ namespace lua { namespace api {
                 value.object = { val.get() };
             }
 
-            void operator ()(const weak_form_id& val) {
+            void operator ()(const form_ref& val) {
                 value.form = { (FormIdUnredlying)val.get() };
             }
 
@@ -108,10 +109,10 @@ namespace lua { namespace api {
         return itm ? JCToLuaValue_fromItem(*itm) : JCToLuaValue_None();
     }
 
-    void JCValue_fillItem(const JCValue *v, item& itm) {
+    void JCValue_fillItem(tes_context& context, const JCValue *v, item& itm) {
         switch (v ? v->type : item_type::no_item) {
         case item_type::form:
-            itm = (FormId)v->form.___id;
+            itm = collections::make_weak_form_id((FormId)v->form.___id, context);
             break;
         case item_type::integer:
             itm = v->integer;
@@ -201,7 +202,7 @@ namespace lua { namespace api {
 
     cexport void JArray_setValue(array* obj, index key, const JCValue* val) {
         array_functions::doReadOp(obj, key, [=](index idx) {
-            JCValue_fillItem(val, obj->u_container()[idx]);
+            JCValue_fillItem(HACK_get_tcontext(*obj), val, obj->u_container()[idx]);
         });
         //std::cout << "value assigned: " << JCValue_toString(val) << std::endl;
     }
@@ -209,7 +210,7 @@ namespace lua { namespace api {
     cexport void JArray_insert(array* obj, const JCValue* val, index key) {
         array_functions::doWriteOp(obj, key, [=](index idx) {
             auto& cnt = obj->u_container();
-            JCValue_fillItem(val, *cnt.insert(cnt.begin() + idx, item()));
+            JCValue_fillItem(HACK_get_tcontext(*obj), val, *cnt.insert(cnt.begin() + idx, item()));
         });
         //std::cout << "value assigned: " << JCValue_toString(val) << std::endl;
     }
@@ -222,7 +223,7 @@ namespace lua { namespace api {
     }
 
     cexport void JMap_setValue(map *obj, cstring key, const JCValue* val) {
-        map_functions::doWriteOp(obj, key, [val](item& itm) { JCValue_fillItem(val, itm); });
+        map_functions::doWriteOp(obj, key, [obj, val](item& itm) { JCValue_fillItem(HACK_get_tcontext(*obj), val, itm); });
     }
 
     cexport JCToLuaValue JMap_getValue(map *obj, cstring key) {
@@ -233,22 +234,22 @@ namespace lua { namespace api {
     static_assert(sizeof FormId == sizeof CForm, "");
 
     cexport FormId JFormMap_nextKey(const form_map *obj, FormId lastKey) {
-        weak_form_id next;
-        formmap_functions::nextKey(obj, weak_form_id{ lastKey }, [&](const weak_form_id& key) { next = key; });
+        form_ref next;
+        formmap_functions::nextKey(obj, make_weak_form_id(lastKey, HACK_get_tcontext(*obj)), [&](const form_ref& key) { next = key; });
         return next.get();
     }
 
     cexport void JFormMap_setValue(form_map *obj, FormId key, const JCValue* val) {
-        formmap_functions::doWriteOp(obj, weak_form_id{ key }, [val](item& itm) { JCValue_fillItem(val, itm); });
+        formmap_functions::doWriteOp(obj, make_weak_form_id(key, HACK_get_tcontext(*obj)), [obj, val](item& itm) { JCValue_fillItem(HACK_get_tcontext(*obj), val, itm); });
     }
 
     cexport JCToLuaValue JFormMap_getValue(form_map *obj, FormId key) {
-        return formmap_functions::doReadOpR(obj, weak_form_id{ key }, JCToLuaValue_None(), [](item& itm) { return JCToLuaValue_fromItem(itm); });
+        return formmap_functions::doReadOpR(obj, make_weak_form_id(key, HACK_get_tcontext(*obj)), JCToLuaValue_None(), [](item& itm) { return JCToLuaValue_fromItem(itm); });
     }
 
     cexport void JFormMap_removeKey(form_map *obj, FormId key) {
         if (obj) {
-            obj->erase(weak_form_id{ key });
+            obj->erase(make_weak_form_id(key, HACK_get_tcontext(*obj)));
         }
     }
 

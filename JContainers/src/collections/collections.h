@@ -67,7 +67,6 @@ namespace collections {
         }
     };
 
-    
     template<class R, class Collection, class F, class ...Args>
     inline R perform_on_object_and_return(Collection& container, F func, Args&&... args) {
         switch (container.type()) {
@@ -363,7 +362,7 @@ namespace collections {
     };
 
 
-    class form_map : public basic_map_collection< form_map, std::map<weak_form_id, item> >
+    class form_map : public basic_map_collection< form_map, std::map<form_ref, item, form_ref::stable_less_comparer> >
     {
     public:
         enum  {

@@ -199,7 +199,7 @@ namespace collections {
                     json_object_foreach(val, key, value) {
                         auto fkey = form_handling::from_string(key);
                         if (fkey) {
-                            weak_form_id weak_key = make_weak_form_id(*fkey, self->_context);
+                            form_ref weak_key = make_weak_form_id(*fkey, self->_context);
                             cnt.u_set(weak_key, self->make_item(value, cnt, weak_key));
                         }
                     }
@@ -302,7 +302,7 @@ namespace collections {
                             a. lost info and convert it to FormZero
                             b. save info and convert it to string
                         */
-                        item = form_handling::from_string(string).get_value_or(FormId::Zero);
+                        item = make_weak_form_id(form_handling::from_string(string).get_value_or(FormId::Zero), _context);
                     }
                     else if (schedule_ref_resolving(string, container, item_key)) { // otherwise it's reference string?
                         ;
@@ -344,7 +344,7 @@ namespace collections {
         objects_to_fill _toFill;
 
         // contained - <container, key> relationship
-        typedef boost::variant<int32_t, std::string, weak_form_id> key_variant;
+        typedef boost::variant<int32_t, std::string, form_ref> key_variant;
         typedef std::map<const object_base*, std::pair<const object_base*, key_variant > > key_info_map;
         key_info_map _keyInfo;
 
@@ -487,7 +487,7 @@ namespace collections {
                     return json_real(val);
                 }
 
-                json_ref operator()(const weak_form_id& val) const {
+                json_ref operator()(const form_ref& val) const {
                     auto formStr = form_handling::to_string(val.get());
                     if (formStr) {
                         return (*this)(*formStr);
@@ -542,7 +542,7 @@ namespace collections {
                     p.append(data);
                 }
 
-                void operator()(const weak_form_id& fid) const {
+                void operator()(const form_ref& fid) const {
                     p.append("[");
                     p.append(*form_handling::to_string(fid.get()));
                     p.append("]");

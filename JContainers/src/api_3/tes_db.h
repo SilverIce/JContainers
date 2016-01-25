@@ -10,11 +10,11 @@ namespace tes_api_3 {
         void additionalSetup() {
             metaInfo.comment =
 "Global entry point to store mod information. Main intent - replace global variables\n\
-Manages keys and values associations as JMap";
+Manages keys and values associations (like JMap)";
         }
 
         template<class T>
-        static T solveGetter(const char* path, T t = T(0)) {
+        static T solveGetter(const char* path, T t= default_value<T>()) {
             return tes_object::resolveGetter<T>(&tes_context::instance().root(), path, t); 
         }
         REGISTERF(solveGetter<Float32>, "solveFlt", "path default=0.0",
@@ -32,7 +32,7 @@ JDB.solveObj(\".frostfall.arrayC\") will return array containing [\"stringValue\
         REGISTERF(solveGetter<SInt32>, "solveInt", "path default=0", nullptr);
         REGISTERF(solveGetter<skse::string_ref>, "solveStr", "path default=\"\"", nullptr);
         REGISTERF(solveGetter<object_base*>, "solveObj", "path default=0", nullptr);
-        REGISTERF(solveGetter<FormId>, "solveForm", "path default=None", nullptr);
+        REGISTERF(solveGetter<form_ref>, "solveForm", "path default=None", nullptr);
 
         template<class T>
         static bool solveSetter(const char* path, T value, bool createMissingKeys = false) { 
@@ -44,7 +44,7 @@ JDB.solveObj(\".frostfall.arrayC\") will return array containing [\"stringValue\
         REGISTERF(solveSetter<SInt32>, "solveIntSetter", "path value createMissingKeys=false", nullptr);
         REGISTERF(solveSetter<const char*>, "solveStrSetter", "path value createMissingKeys=false", nullptr);
         REGISTERF(solveSetter<object_base*>, "solveObjSetter", "path value createMissingKeys=false", nullptr);
-        REGISTERF(solveSetter<FormId>, "solveFormSetter", "path value createMissingKeys=false", nullptr);
+        REGISTERF(solveSetter<form_ref>, "solveFormSetter", "path value createMissingKeys=false", nullptr);
 
 
         static void setObj(const char *path, object_stack_ref& obj) {

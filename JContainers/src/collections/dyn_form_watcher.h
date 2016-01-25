@@ -3,6 +3,7 @@
 #include <hash_map>
 //#include <memory>
 #include <atomic>
+#include <tuple>
 #include "boost/shared_ptr.hpp"
 #include "boost/smart_ptr/weak_ptr.hpp"
 #include "boost/serialization/split_member.hpp"
@@ -17,122 +18,120 @@ namespace collections {
     
 namespace form_watching {
 
-    class dyn_form_watcher;
-    class watched_form;
+    class form_observer;
+    class form_entry;
 
-    void log(const char* fmt, ...);
+    using form_entry_ref = boost::shared_ptr < form_entry > ;
 
-    // Had to be single instance as there is single Skyrim instance only?
-    class dyn_form_watcher {
-
-        using watched_forms_t = std::hash_map<FormId, boost::weak_ptr<watched_form> >;
+    class form_observer {
     private:
+        using watched_forms_t = std::hash_map<FormId, boost::weak_ptr<form_entry> >;
+
         bshared_mutex _mutex;
         watched_forms_t _watched_forms;
-        std::atomic_flag _is_inside_unsafe_func;
 
-        static dyn_form_watcher _instance;
     public:
 
-        dyn_form_watcher();
-
-        static dyn_form_watcher& instance() {
-            return _instance;
-        }
-
-        template<class ReadCondition, class WriteAction, class Target>
-        static bool if_condition_then_perform(ReadCondition& condition, WriteAction& action, Target& target) {
-            bool condition_met = false;
-            {
-                read_lock r(target._mutex);
-                condition_met = condition(const_cast<const Target&>(target));
-            }
-
-            if (condition_met) {
-                write_lock w(target._mutex);
-                action(target);
-            }
-
-            return condition_met;
-        }
+        form_observer() = default;
 
         void on_form_deleted(FormHandle fId);
+        form_entry_ref watch_form(FormId fId);
+
+        // Not threadsafe part of API:
 
         void u_clearState() {
             _watched_forms.clear();
         }
 
         size_t u_forms_count() const { return _watched_forms.size(); }
+        void u_remove_expired_forms();
 
-        boost::shared_ptr<watched_form> watch_form(FormId fId);
+        /////////////////////////
 
-        boost::shared_ptr<watched_form> u_watch_form(FormId fId);
+        friend class boost::serialization::access;
+        BOOST_SERIALIZATION_SPLIT_MEMBER();
+
+        template<class Archive> void save(Archive & ar, const unsigned int version) const {
+            ar << _watched_forms;
+        }
+        template<class Archive> void load(Archive & ar, const unsigned int version) {
+            ar >> _watched_forms;
+            u_remove_expired_forms();
+        }
     };
 
-    class weak_form_id {
+    class form_ref {
 
-        FormId _id = FormId::Zero;
-        mutable boost::shared_ptr<watched_form> _watched_form;
-        mutable bool _expired = true;
+        form_entry_ref _watched_form;
 
     public:
 
-        weak_form_id() {}
+        form_ref() = default;
 
-        explicit weak_form_id(FormId id);
+        explicit form_ref(const form_entry_ref& entry) : _watched_form(entry) {}
+        explicit form_ref(form_entry_ref&& entry) : _watched_form(std::move(entry)) {}
 
-        explicit weak_form_id(const TESForm& form);
+        form_ref(FormId id, form_observer& watcher);
+        form_ref(const TESForm& form, form_observer& watcher);
+
+        static form_ref make_expired(FormId formId);
 
         // Special constructor - to load v <= 3.2.4 data
         enum load_old_id_t { load_old_id };
-        explicit weak_form_id(FormId id, load_old_id_t) {
-            u_load_old_form_id(id);
-        }
+        explicit form_ref(FormId oldId, form_observer& watcher, load_old_id_t);
 
         bool is_not_expired() const;
+        bool is_expired() const { return !is_not_expired(); }
 
-        FormId get() const {
-            return is_not_expired() ? _id : FormId::Zero;
-        }
-
-        FormId get_raw() const { return _id; }
+        FormId get() const;
+        FormId get_raw() const;
 
         bool operator ! () const { return !is_not_expired(); }
 
-        bool operator == (const weak_form_id& o) const {
-            return _id == o._id;
+        // "Stupid" comparison operators, it compares form's identifiers:
+        // the functions below don't care whether the @form_refs are really equal or not -
+        // they are equal if they have equal @_watched_form fields
+        // The comparison is NOT stable
+        bool operator == (const form_ref& o) const {
+            return get() == o.get();
         }
-        bool operator != (const weak_form_id& o) const {
+        bool operator != (const form_ref& o) const {
             return !(*this == o);
         }
-        bool operator < (const weak_form_id& o) const {
-            return _id < o._id;
+        bool operator < (const form_ref& o) const {
+            return get() < o.get();
         }
+
+        // Implements stable 'less than' comparison
+        struct stable_less_comparer;
 
         friend class boost::serialization::access;
         BOOST_SERIALIZATION_SPLIT_MEMBER();
 
         template<class Archive> void save(Archive & ar, const unsigned int version) const;
-
         template<class Archive> void load(Archive & ar, const unsigned int version);
+    };
 
-    private:
-
-        void u_load_old_form_id(FormId oldId);
+    struct form_ref::stable_less_comparer {
+        bool operator () (const form_ref& left, const form_ref& right) const {
+            auto leftId = left.get_raw(), rightId = right.get_raw();
+            return std::tie(leftId, left._watched_form) < std::tie(rightId, right._watched_form);
+        }
     };
 
 }
 
-    using form_watching::weak_form_id;
+    using form_watching::form_ref;
 
     template<class Context>
-    inline weak_form_id make_weak_form_id(FormId id, Context& context) {
-        return weak_form_id(id);
+    inline form_ref make_weak_form_id(FormId id, Context& context) {
+        return form_ref{ id, *context.form_watcher };
     }
 
     template<class Context>
-    inline weak_form_id make_weak_form_id(const TESForm* id, Context& context) {
-        return id ? weak_form_id(*id) : weak_form_id();
+    inline form_ref make_weak_form_id(const TESForm* id, Context& context) {
+        return id
+            ? form_ref(*id, *context.form_watcher)
+            : form_ref();
     }
-
 }

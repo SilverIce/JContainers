@@ -9,6 +9,14 @@ namespace tes_api_3 {
             metaInfo.version = (uint32_t)consts::api_version;
         }
     };
+
+    template<class T> T default_value() {
+        return static_cast<T>(0);
+    };
+
+    template<> collections::form_ref default_value<collections::form_ref>() {
+        return collections::form_ref{};
+    };
 }
 
 #include "api_3/tes_object.h"

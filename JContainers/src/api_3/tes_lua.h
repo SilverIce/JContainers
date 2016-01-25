@@ -48,7 +48,7 @@ R"===(Inserts new (or replaces existing) {key -> value} pair. Expects that @tran
 Returns @transport)===");
         REGISTERF(pushArg<Float32>, "setFlt", ARGNAMES, "");
         REGISTERF(pushArg<SInt32>, "setInt", ARGNAMES, "");
-        REGISTERF(pushArg<FormId>, "setForm", ARGNAMES, "");
+        REGISTERF(pushArg<form_ref>, "setForm", ARGNAMES, "");
         REGISTERF(pushArg<object_base*>, "setObj", ARGNAMES, "");
 #undef ARGNAMES
 

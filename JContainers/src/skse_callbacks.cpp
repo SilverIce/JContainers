@@ -185,14 +185,8 @@ namespace {
             g_serialization->SetLoadCallback(g_pluginHandle, load);
 
 
-            /*
-            Critical bug, reported by Antithesis (yet he didn't knew that). Had to be found several months ago,
-            ruins experience as any load order change may turn form pointer into nothing, .
-            
-            */
-            // test
             g_serialization->SetFormDeleteCallback(g_pluginHandle, [](UInt64 handle) {
-                tes_context::instance().form_watcher.on_form_deleted((FormHandle)handle);
+                tes_context::instance().form_watcher->on_form_deleted((FormHandle)handle);
             });
 
             g_papyrus->Register(registerAllFunctions);

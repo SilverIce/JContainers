@@ -177,6 +177,7 @@
     <ClInclude Include="src\collections\context.hpp" />
     <ClInclude Include="src\collections\error_code.h" />
     <ClInclude Include="src\form_id.h" />
+    <ClInclude Include="src\iarchive_with_blob.h" />
     <ClInclude Include="src\jc_interface.h" />
     <ClInclude Include="src\object\autorelease_queue.h" />
     <ClInclude Include="src\object\garbage_collector.h" />

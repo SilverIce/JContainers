@@ -54,11 +54,8 @@ namespace collections { namespace {
         i1 = (const char*)nullptr;
         EXPECT_TRUE(i1.isNull());
 
-        i1 = (TESForm*)nullptr;
-        EXPECT_TRUE(i1.isNull());
-
-        i1 = FormId::Zero;
-        EXPECT_TRUE(i1.isNull());
+        i1 = form_ref{};
+        EXPECT_FALSE(i1.isNull());
 
         i1 = (object_base *)nullptr;
         EXPECT_TRUE(i1.isNull());
@@ -98,11 +95,9 @@ namespace collections { namespace {
     {
         EXPECT_TRUE(item(100) < item(2.0));
         EXPECT_TRUE(item(1.0) < item(2.0));
-        EXPECT_TRUE(item(10) < item(FormId::Zero));
+        EXPECT_TRUE(item(10) < item( form_ref() ));
         EXPECT_TRUE(item("aa") < item("text"));
         EXPECT_TRUE(item("A") < item("b"));
-
-        //EXPECT_TRUE(Item(1.0) < Item(FormZero));
     }
 
     TEST(form_handling, test)
@@ -266,6 +261,9 @@ namespace collections { namespace {
 
             auto originJson = json_deserializer::json_from_file(file_path);
             EXPECT_NOT_NIL(originJson);
+
+            auto originJson_text = json_dumps(originJson.get(), 0);
+            auto jsonOut_text = json_dumps(jsonOut.get(), 0);
 
             EXPECT_TRUE(json_equal(originJson.get(), jsonOut.get()) == 1);
         }
@@ -506,7 +504,7 @@ namespace collections { namespace {
         std::string name = "back in black";
         cnt.u_set("ACDC", name);
 
-        EXPECT_TRUE(*cnt.u_get("acdc")->stringValue() == name);
+        EXPECT_TRUE(*cnt.u_get("acdc") == name);
     }
 
     JC_TEST(tes_context, root)

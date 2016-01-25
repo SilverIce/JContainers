@@ -31,6 +31,7 @@
 #include "rw_mutex.h"
 #include "gtest.h"
 
+#include "iarchive_with_blob.h"
 #include "jcontainers_constants.h"
 #include "object_base.h"
 #include "object_context.h"

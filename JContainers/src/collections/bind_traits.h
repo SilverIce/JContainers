@@ -1,5 +1,6 @@
 #pragma once
 
+#include "util/stl_ext.h"
 #include "reflection/tes_binding.h"
 #include "collections/collections.h"
 #include "collections/context.h"
@@ -19,7 +20,7 @@ namespace reflection { namespace binding {
 
         static object_stack_ref_template<T> convert2J(HandleT hdl) {
             auto ref = tes_context::instance().getObjectRefOfType<T>((Handle)hdl);
-            if (!ref && hdl != to_integral(Handle::Null)) {
+            if (!ref && hdl != util::to_integral(Handle::Null)) {
                 JC_log("Warning: access to non-existing object with id 0x%X", hdl);
             }
             return ref;
@@ -52,12 +53,12 @@ namespace reflection { namespace binding {
 
     /////////////////
 
-    template<> struct GetConv < form_watching::weak_form_id > {
+    template<> struct GetConv < form_watching::form_ref > {
         typedef TESForm* tes_type;
-        static TESForm* convert2Tes(const weak_form_id& id) {
+        static TESForm* convert2Tes(const form_ref& id) {
             return LookupFormByID((uint32_t)id.get());
         }
-        static form_watching::weak_form_id convert2J(const TESForm* form) {
+        static form_watching::form_ref convert2J(const TESForm* form) {
             return make_weak_form_id(form, tes_context::instance());
         }
     };

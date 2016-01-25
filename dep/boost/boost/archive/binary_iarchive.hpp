@@ -48,7 +48,9 @@ public:
             binary_iarchive, std::istream::char_type, std::istream::traits_type
         >(bsb, flags)
     {}
-};
+
+    virtual ~binary_iarchive() {}
+ };
 
 } // namespace archive
 } // namespace boost

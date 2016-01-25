@@ -50,14 +50,14 @@ namespace tes_api_3 {
         }
         REGISTERF2(objectWithSize, "size", "creates array of given size, filled with empty items");
 
-        template<class T>
-        static object_base* fromArray(VMArray<T> arr) {
+        template<class TesType, class JCType = TesType>
+        static object_base* fromArray(VMArray<TesType> arr) {
             auto obj = &array::objectWithInitializer([&](array &me) {
                 me.u_container().reserve(arr.Length());
                 for (UInt32 i = 0; i < arr.Length(); ++i) {
-                    T val;
+                    TesType val;
                     arr.Get(&val, i);
-                    me.u_container().emplace_back(val);
+                    me.u_container().emplace_back(reflection::binding::get_converter<JCType>::convert2J(val));
                 }
             },
                 tes_context::instance());
@@ -70,7 +70,7 @@ objectWithBooleans converts booleans into integers");
         REGISTERF(fromArray<skse::string_ref>, "objectWithStrings",  "values", nullptr);
         REGISTERF(fromArray<Float32>, "objectWithFloats",  "values", nullptr);
         REGISTERF(fromArray<bool>, "objectWithBooleans",  "values", nullptr);
-        REGISTERF(fromArray<TESForm*>, "objectWithForms", "values", nullptr);
+        REGISTERF(ARGS(fromArray<TESForm*, form_ref>), "objectWithForms", "values", nullptr);
 
         static object_base* subArray(ref source, SInt32 startIndex, SInt32 endIndex) {
             if (!source) {
@@ -115,24 +115,25 @@ NEGATIVE_IDX_COMMENT);
             struct inserter : BGSListForm::Visitor {
 
                 virtual bool Accept(TESForm * form) override {
-                    arr->u_container().insert(arr->u_container().begin() + insertIdx, item(form));
+                    arr->u_container().insert(arr->u_container().begin() + insertIdx, item{ make_weak_form_id(form, context) });
                     return false;
                 }
 
                 array *arr;
                 uint32_t insertIdx;
+                tes_context& context;
 
-                inserter(array *obj, uint32_t insertAt) : arr(obj), insertIdx(insertAt) {}
+                inserter(array *obj, uint32_t insertAt, tes_context& c) : arr(obj), insertIdx(insertAt), context(c) {}
             };
 
             doWriteOp(obj, insertAtIndex, [formList, &obj](uint32_t idx) {
-                formList->Visit(inserter(obj, idx));
+                formList->Visit(inserter{ obj, idx, tes_context::instance() });
             });
         }
         REGISTERF2(addFromFormList, "* source insertAtIndex=-1", nullptr);
 
         template<class T>
-        static T itemAtIndex(ref obj, Index index, T t = T(0)) {
+        static T itemAtIndex(ref obj, Index index, T t = default_value<T>()) {
             doReadOp(obj, index, [=, &t](uint32_t idx) {
                 t = obj->_array[idx].readAs<T>();
             });
@@ -144,7 +145,7 @@ NEGATIVE_IDX_COMMENT);
         REGISTERF(itemAtIndex<Float32>, "getFlt", "* index default=0.0", "");
         REGISTERF(itemAtIndex<skse::string_ref>, "getStr", "* index default=\"\"", "");
         REGISTERF(itemAtIndex<object_base*>, "getObj", "* index default=0", "");
-        REGISTERF(itemAtIndex<FormId>, "getForm", "* index default=None", "");
+        REGISTERF(itemAtIndex<form_ref>, "getForm", "* index default=None", "");
 
         template<class T>
         static SInt32 findVal(ref obj, T value, SInt32 pySearchStartIndex = 0) {
@@ -171,7 +172,7 @@ NEGATIVE_IDX_COMMENT);
         REGISTERF(findVal<Float32>, "findFlt", "* value searchStartIndex=0", "");
         REGISTERF(findVal<const char *>, "findStr", "* value searchStartIndex=0", "");
         REGISTERF(findVal<object_base*>, "findObj", "* container searchStartIndex=0", "");
-        REGISTERF(findVal<FormId>, "findForm", "* value searchStartIndex=0", "");
+        REGISTERF(findVal<form_ref>, "findForm", "* value searchStartIndex=0", "");
 
         template<class T>
         static void replaceItemAtIndex(ref obj, Index index, T val) {
@@ -184,7 +185,7 @@ NEGATIVE_IDX_COMMENT);
         REGISTERF(replaceItemAtIndex<Float32>, "setFlt", "* index value", "");
         REGISTERF(replaceItemAtIndex<const char *>, "setStr", "* index value", "");
         REGISTERF(replaceItemAtIndex<object_base*>, "setObj", "* index container", "");
-        REGISTERF(replaceItemAtIndex<FormId>, "setForm", "* index value", "");
+        REGISTERF(replaceItemAtIndex<form_ref>, "setForm", "* index value", "");
 
         template<class T>
         static void addItemAt(ref obj, T val, SInt32 addToIndex = -1) {
@@ -197,7 +198,7 @@ if addToIndex >= 0 it inserts value at given index. "NEGATIVE_IDX_COMMENT);
         REGISTERF(addItemAt<Float32>, "addFlt", "* value addToIndex=-1", "");
         REGISTERF(addItemAt<const char *>, "addStr", "* value addToIndex=-1", "");
         REGISTERF(addItemAt<object_base*>, "addObj", "* container addToIndex=-1", "");
-        REGISTERF(addItemAt<FormId>, "addForm", "* value addToIndex=-1", "");
+        REGISTERF(addItemAt<form_ref>, "addForm", "* value addToIndex=-1", "");
 
         static Index count(ref obj) {
             return tes_object::count(obj);

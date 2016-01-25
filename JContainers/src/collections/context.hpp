@@ -3,6 +3,8 @@
 
 #include "jansson.h"
 
+BOOST_CLASS_VERSION(collections::tes_context, 1);
+
 namespace collections {
 
     template<class T, class D>
@@ -94,7 +96,8 @@ namespace collections {
                     }
 
                     {
-                        boost::archive::binary_iarchive archive{ stream };
+                        hack::iarchive_with_blob real_archive(stream, *this, *this);
+                        boost::archive::binary_iarchive& archive = real_archive;
 
                         if (hdr.commonVersion <= serialization_version::pre_dyn_form_watcher) {
                             load_data_in_old_way(archive);
@@ -125,7 +128,6 @@ namespace collections {
             }
 
             u_print_stats();
-            JC_log("%lu non persistent forms being watched", form_watcher.u_forms_count());
         }
     }
 
@@ -141,6 +143,11 @@ namespace collections {
             arch << *this;
             u_print_stats();
         }
+    }
+
+    void tes_context::u_print_stats() const {
+        base::u_print_stats();
+        JC_log("%lu forms being observed", form_watcher->u_forms_count());
     }
 
     void tes_context::read_from_string(const std::string & data) {
@@ -161,13 +168,23 @@ namespace collections {
     }
 
     template<class Archive> void tes_context::load(Archive & ar, unsigned int version) {
-        ar & static_cast<base&>(*this);
+        ar >> static_cast<base&>(*this);
         boost::serialization::load_atomic(ar, _root_object_id);
+
+        if (version >= 1) {
+            form_watching::form_observer* watcher = nullptr;
+            ar >> watcher;
+
+            form_watcher.reset(watcher);
+        }
     }
 
     template<class Archive> void tes_context::save(Archive & ar, unsigned int version) const {
-        ar & static_cast<const base&>(*this);
+        form_watching::form_observer* watcher = form_watcher.get();
+
+        ar << static_cast<const base&>(*this);
         boost::serialization::save_atomic(ar, _root_object_id);
+        ar << watcher;
     }
 
     ///////////////////////////

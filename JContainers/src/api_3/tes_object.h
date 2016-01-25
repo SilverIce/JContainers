@@ -269,7 +269,7 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
         REGISTERF(solvedValueType, "solvedValueType", "* path", "Returns type of resolved value. "VALUE_TYPE_COMMENT);
 
         template<class T>
-        static T resolveGetter(object_base *obj, const char* path, T val = T(0)) {
+        static T resolveGetter(object_base *obj, const char* path, T val = default_value<T>()) {
             if (!obj || !path)
                 return val;
 
@@ -285,7 +285,7 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
         REGISTERF(resolveGetter<SInt32>, "solveInt", "* path default=0", nullptr);
         REGISTERF(resolveGetter<skse::string_ref>, "solveStr", "* path default=\"\"", nullptr);
         REGISTERF(resolveGetter<Handle>, "solveObj", "* path default=0", nullptr);
-        REGISTERF(resolveGetter<TESForm*>, "solveForm", "* path default=None", nullptr);
+        REGISTERF(resolveGetter<form_ref>, "solveForm", "* path default=None", nullptr);
 
         template<class T>
         static bool solveSetter(object_base* obj, const char* path, T value, bool createMissingKeys = false) {
@@ -302,10 +302,10 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
         REGISTERF(solveSetter<SInt32>, "solveIntSetter", "* path value createMissingKeys=false", nullptr);
         REGISTERF(solveSetter<const char*>, "solveStrSetter", "* path value createMissingKeys=false", nullptr);
         REGISTERF(solveSetter<ref>, "solveObjSetter", "* path value createMissingKeys=false", nullptr);
-        REGISTERF(solveSetter<TESForm*>, "solveFormSetter", "* path value createMissingKeys=false", nullptr);
+        REGISTERF(solveSetter<form_ref>, "solveFormSetter", "* path value createMissingKeys=false", nullptr);
 
         template<class T>
-        static T evalLua(ref obj, const char* luaCode, T def = T(0)) {
+        static T evalLua(ref obj, const char* luaCode, T def = default_value<T>()) {
             auto result = lua::eval_lua_function(tes_context::instance(), obj, luaCode);
             return result ? result->readAs<T>() : def;
         }
@@ -313,7 +313,7 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
         REGISTERF(evalLua<SInt32>, "evalLuaInt", "* luaCode default=0", nullptr);
         REGISTERF(evalLua<skse::string_ref>, "evalLuaStr", "* luaCode default=\"\"", nullptr);
         REGISTERF(evalLua<Handle>, "evalLuaObj", "* luaCode default=0", nullptr);
-        REGISTERF(evalLua<TESForm*>, "evalLuaForm", "* luaCode default=None", nullptr);
+        REGISTERF(evalLua<form_ref>, "evalLuaForm", "* luaCode default=None", nullptr);
 
     };
 
