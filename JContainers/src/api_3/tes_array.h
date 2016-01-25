@@ -274,6 +274,56 @@ if addToIndex >= 0 it inserts value at given index. "NEGATIVE_IDX_COMMENT);
         }
         REGISTERF2(unique, "*", "Sorts the items, removes duplicates. Returns array itself. You can treat it as JSet now");
 
+        template<
+            typename ValueType,
+            typename PArrayType = VMArray<ValueType>
+        >
+        static bool writeToPapyrusArray(
+                ref obj
+                , PArrayType targetArray
+                , SInt32 py_writeAtIdx = 0         // start write at index of @targetArray
+                , SInt32 py_stopWriteAtIdx = -1    // stop writing at this last index of @targetArray
+                , SInt32 py_readIdx = 0
+                //, ValueType defaultRead = ValueType(0)
+            )
+        {
+            if (!obj) {
+                return false;
+            }
+
+            const auto targetLength = targetArray.Length();
+            const auto fstIdx = convertReadIndex(targetLength, py_writeAtIdx);
+            const auto lstIdx = convertReadIndex(targetLength, py_stopWriteAtIdx);
+
+            if (!(fstIdx && lstIdx && *fstIdx <= *lstIdx)) {
+                return false;
+            }
+
+            object_lock l(obj);
+            const auto readIdx = convertReadIndex(obj, py_readIdx);
+            const int32_t countToRead = *lstIdx - *fstIdx + 1;
+
+            if (!(readIdx && (*readIdx + countToRead - 1) < obj->u_count())) {
+                return false;
+            }
+
+            for (int32_t i = 0; i < countToRead; ++i) {
+                ValueType value = (*obj)[i + *readIdx].readAs<ValueType>();
+                targetArray.Set(&value, i + *fstIdx);
+            }
+
+            return true;
+        }
+
+#define ARGNAMES "* targetArray writeAtIdx=0 stopWriteAtIdx=-1 readIdx=0"
+        REGISTERF(writeToPapyrusArray<SInt32>, "writeToIntegerPArray", ARGNAMES, "TOTOTO??");
+        REGISTERF(writeToPapyrusArray<Float32>, "writeToFloatPArray", ARGNAMES, "");
+        REGISTERF(writeToPapyrusArray<TESForm*>, "writeToFormPArray", ARGNAMES, "");
+        //REGISTERF(writeToPapyrusArray<bool>, "writeToBooleanPArray", ARGNAMES, "");
+        REGISTERF(writeToPapyrusArray<skse::string_ref>, "writeToStringPArray", ARGNAMES, "");
+
+#undef ARGNAMES
+
     };
 
     TES_META_INFO(tes_array);

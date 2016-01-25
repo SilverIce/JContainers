@@ -13,12 +13,15 @@ namespace collections {
         typedef int32_t index;
         typedef boost::optional<index> maybe_index;
 
-        static maybe_index convertReadIndex(const object_base *ar, index pyIndex) {
-            auto count = ar->u_count();
+        static maybe_index convertReadIndex(int32_t count, index pyIndex) {
             index index = (pyIndex >= 0 ? pyIndex : (count + pyIndex));
 
             return maybe_index(count > 0 && index < count,
                 index);
+        }
+
+        static maybe_index convertReadIndex(const object_base *ar, index pyIndex) {
+            return convertReadIndex(ar->u_count(), pyIndex);
         }
 
         static maybe_index convertWriteIndex(const object_base *ar, index pyIndex) {
