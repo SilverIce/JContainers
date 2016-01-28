@@ -23,9 +23,9 @@ namespace tes_api_3 {
 
             const char *_rest;
             char _storageName[bytesCount];
-        public:
 
-            explicit subpath_extractor(const char * const path, path_type type = is_key) {
+            template<path_type type>
+            void extract(const char * const path) {
                 _storageName[0] = '\0';
                 _rest = nullptr;
 
@@ -46,13 +46,32 @@ namespace tes_api_3 {
                 auto pair2 = bs::half_split_if(pair1.second, bs::is_any_of(".["));
 
                 if (!pair2.first.empty() && !pair2.second.empty()) {
-                    auto strorageNameLen = (std::min)(bytesCount-1,  pair2.first.size());
+                    auto strorageNameLen = (std::min)(bytesCount - 1, pair2.first.size());
                     std::copy_n(pair2.first.begin(), strorageNameLen, _storageName);
                     _storageName[strorageNameLen] = '\0';
 
                     _rest = (type == is_key ?
                         pair2.second.begin() : pair2.second.begin() - 1);
                 }
+            }
+
+        public:
+
+            explicit subpath_extractor() {
+                _rest = nullptr;
+                _storageName[0] = '\0';
+            }
+
+            static subpath_extractor extract_as_path(const char * const path) {
+                subpath_extractor ex{};
+                ex.extract<is_path>(path);
+                return ex;
+            }
+
+            static subpath_extractor extract_as_key(const char * const path) {
+                subpath_extractor ex{};
+                ex.extract<is_key>(path);
+                return ex;
             }
 
             const char *rest() const {
@@ -131,8 +150,8 @@ namespace tes_api_3 {
 
         template<class T>
         static T solveGetter(FormId form, const char* path, T t = T(0)) {
-            subpath_extractor sub(path, is_path);
-            return tes_object::resolveGetter<T>(makeMapEntry(sub.storageName(), form), sub.rest(), t);
+            auto sub = subpath_extractor::extract_as_path(path);
+            return tes_object::resolveGetter<T>(findEntry(sub.storageName(), form), sub.rest(), t);
         }
         REGISTERF(solveGetter<Float32>, "solveFlt", "fKey path default=0.0", "attempts to get value associated with path.");
         REGISTERF(solveGetter<SInt32>, "solveInt", "fKey path default=0", nullptr);
@@ -142,8 +161,8 @@ namespace tes_api_3 {
 
         template<class T>
         static bool solveSetter(FormId form, const char* path, T value, bool createMissingKeys = false) {
-            subpath_extractor sub(path, is_path);
-            return tes_object::solveSetter(findEntry(sub.storageName(), form), sub.rest(), value, createMissingKeys);
+            auto sub = subpath_extractor::extract_as_path(path);
+            return tes_object::solveSetter(makeMapEntry(sub.storageName(), form), sub.rest(), value, createMissingKeys);
         }
         REGISTERF(solveSetter<Float32>, "solveFltSetter", "fKey path value createMissingKeys=false",
             "Attempts to assign value. Returns false if no such path\n"
@@ -154,7 +173,7 @@ namespace tes_api_3 {
         REGISTERF(solveSetter<TESForm*>, "solveFormSetter", "fKey path value createMissingKeys=false", nullptr);
 
         static bool hasPath(FormId form, const char* path) {
-            subpath_extractor sub(path);
+            auto sub = subpath_extractor::extract_as_path(path);
             return tes_object::hasPath(findMapEntry(sub.storageName(), form), sub.rest());
         }
         REGISTERF2(hasPath, "fKey path", "returns true, if capable resolve given path, e.g. it able to execute solve* or solver*Setter functions successfully");
@@ -162,8 +181,8 @@ namespace tes_api_3 {
         //////////////////////////////////////////////////////////////////////////
 
         static object_base* allKeys(FormId form, const char *path) {
-            subpath_extractor sub(path);
-            return tes_map::allKeys( findMapEntry(sub.storageName(), form) );
+            auto sub = subpath_extractor::extract_as_key(path);
+            return tes_map::allKeys(findMapEntry(sub.storageName(), form));
         }
         REGISTERF2(allKeys, "fKey key",
             "JMap-like interface functions:\n"
@@ -171,15 +190,15 @@ namespace tes_api_3 {
             "returns new array containing all keys");
 
         static object_base* allValues(FormId form, const char *path) {
-            subpath_extractor sub(path);
-            return tes_map::allValues( findMapEntry(sub.storageName(), form) );
+            auto sub = subpath_extractor::extract_as_key(path);
+            return tes_map::allValues(findMapEntry(sub.storageName(), form));
         }
         REGISTERF2(allValues, "fKey key", "returns new array containing all values");
 
         template<class T>
         static T getItem(FormId form, const char* path) {
-            subpath_extractor sub(path);
-            return tes_map::getItem<T>( findMapEntry(sub.storageName(), form), sub.rest());
+            auto sub = subpath_extractor::extract_as_key(path);
+            return tes_map::getItem<T>(findMapEntry(sub.storageName(), form), sub.rest());
         }
         // TODO: where is default value parameter?
         REGISTERF(getItem<SInt32>, "getInt", "fKey key", "returns value associated with key");
@@ -190,8 +209,8 @@ namespace tes_api_3 {
 
         template<class T>
         static void setItem(FormId form, const char* path, T item) {
-            subpath_extractor sub(path);
-            tes_map::setItem( makeMapEntry(sub.storageName(), form), sub.rest(), item);
+            auto sub = subpath_extractor::extract_as_key(path);
+            tes_map::setItem(makeMapEntry(sub.storageName(), form), sub.rest(), item);
         }
         REGISTERF(setItem<SInt32>, "setInt", "fKey key value", "creates key-value association. replaces existing value if any");
         REGISTERF(setItem<Float32>, "setFlt", "fKey key value", "");
@@ -205,11 +224,11 @@ namespace tes_api_3 {
     TEST(tes_form_db, subpath_extractor)
     {
         auto expectKeyEq = [&](const char *path, const char *storageName, const char *asKey, const char *asPath) {
-            auto extr = tes_form_db::subpath_extractor(path);
+            auto extr = tes_form_db::subpath_extractor::extract_as_key(path);
             EXPECT_TRUE((!storageName && !extr.storageName()) || strcmp(extr.storageName(), storageName) == 0 );
             EXPECT_TRUE((!asKey && !extr.rest()) || strcmp(extr.rest(), asKey) == 0 );
 
-            auto pathExtr = tes_form_db::subpath_extractor(path, tes_form_db::is_path);
+            auto pathExtr = tes_form_db::subpath_extractor::extract_as_path(path);
             EXPECT_TRUE((!storageName && !pathExtr.storageName()) || strcmp(pathExtr.storageName(), storageName) == 0 );
             EXPECT_TRUE((!asPath && !pathExtr.rest()) || strcmp(pathExtr.rest(), asPath) == 0 );
         };
