@@ -1,6 +1,17 @@
 #include "jcontainers_constants.h"
 #include "reflection/reflection.h"
 #include "gtest.h"
+#include <functional>
+
+ std::vector<std::function<void()> > g_funcs;
+
+void printTiming() {
+
+            for (auto& tt : g_funcs) {
+                tt();
+            }
+
+}
 
 // C API for python scripts as a part of bundling and testing functionality
 extern "C" {

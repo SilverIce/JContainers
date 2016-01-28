@@ -1,3 +1,11 @@
+#include <atomic>
+#include <chrono>
+#include <cstdint>
+#include <functional>
+#include <boost/chrono.hpp>
+
+extern std::vector<std::function<void()> > g_funcs;
+
 #if NUM_PARAMS > 10
 #error PapyrusNativeFunctionDef: too many params
 #endif
@@ -125,6 +133,22 @@ public:
 	CLASS_NAME(const char * fnName, const char * className, CallbackType callback, VMClassRegistry * registry)
 		:NativeFunction(fnName, className, IsStaticType <T_Base>::value, NUM_PARAMS)
 	{
+        g_funcs.push_back([this](){
+            auto call_cnt = _call_count.load(std::memory_order_relaxed);
+
+            double timing = 0;
+            if (call_cnt != 0)
+                timing = (double)_time_summ.load(std::memory_order_relaxed) / (double)call_cnt / 1000;
+
+
+            _MESSAGE("%s %s: %f / %u", GetClassName()->data, GetName()->data, timing, call_cnt);
+/*
+            _MESSAGE("_call_count %u", call_cnt);
+            _MESSAGE("_time_summ %u nanosec", _time_summ.load(std::memory_order_relaxed));
+            if (call_cnt != 0)
+                _MESSAGE("_timing %f nanosec", (double)_time_summ.load(std::memory_order_relaxed) / (double)call_cnt);*/
+        });
+
 		// store callback
 		m_callback = (void *)callback;
 
@@ -227,6 +251,9 @@ public:
 
 	virtual ~CLASS_NAME()	{ }
 
+    std::atomic<uint64_t> _time_summ = 0;
+    std::atomic<uint32_t> _call_count = 0;
+
 	virtual bool	Run(VMValue * baseValue, VMClassRegistry * registry, UInt32 unk2, VMValue * resultValue, VMState * state)
 	{
 #if _DEBUG
@@ -287,6 +314,11 @@ public:
 		UnpackValue(&arg9, CALL_MEMBER_FN(state->argList, Get)(state, 9, argOffset));
 #endif
 
+    using namespace std;
+    using clock_type = boost::chrono::process_user_cpu_clock;
+
+    auto start = clock_type::now();
+
 		// call the callback
 #if !VOID_SPEC
 		T_Result	result =
@@ -325,6 +357,12 @@ public:
 #endif
 
 			);
+
+        auto end = clock_type::now();
+        auto diff = boost::chrono::duration_cast<boost::chrono::nanoseconds>(end - start).count();
+
+        _time_summ.fetch_add(diff, std::memory_order_relaxed);
+        _call_count.fetch_add(1, std::memory_order_relaxed);
 
 		// pack the result
 #if VOID_SPEC

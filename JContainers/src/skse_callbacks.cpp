@@ -20,6 +20,8 @@
 
 class VMClassRegistry;
 
+extern void printTiming();
+
 namespace jc {
     extern root_interface root;
 }
@@ -43,6 +45,8 @@ namespace {
     }
 
     void save(SKSESerializationInterface * intfc) {
+
+        printTiming();
 
         namespace io = boost::iostreams;
 

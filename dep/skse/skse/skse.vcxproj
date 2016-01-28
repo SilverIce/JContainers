@@ -75,7 +75,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\;..\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\;..\;$(SolutionDir)\dep\boost</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>RUNTIME;RUNTIME_VERSION=0x09200000;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -108,7 +108,7 @@
     <ClCompile>
       <Optimization>Full</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\..\;..\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\;..\;$(SolutionDir)\dep\boost</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>NDEBUG;RUNTIME;RUNTIME_VERSION=0x09200000;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader />
@@ -137,7 +137,7 @@
     <ClCompile>
       <Optimization>Full</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\..\;..\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\;..\;$(SolutionDir)\dep\boost</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>NDEBUG;RUNTIME;RUNTIME_VERSION=0x09200000;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>
