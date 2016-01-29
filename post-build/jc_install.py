@@ -37,7 +37,7 @@ class JCLib(object):
 
         self.location = location
         self.lib = cdll.LoadLibrary(location);
-        #self.lib.JC_versionString.restype = ctypes.c_char_p
+        self.lib.JC_versionString.restype = ctypes.c_char_p
         self.lib.JC_produceCode.argtypes = [ctypes.c_char_p]
 
     @staticmethod
@@ -50,7 +50,7 @@ class JCLib(object):
         self.lib.JC_produceCode(into.encode('utf-8'))
 
     def versionString(self):
-        return self.lib.JC_versionString()
+        return self.lib.JC_versionString().decode('utf-8')
 
     def runTests(self):
         self.lib.JC_runTests()
