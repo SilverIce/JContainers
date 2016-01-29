@@ -81,7 +81,7 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <PreBuildEvent>
-      <Command>python.exe install_Local.py $(Configuration)</Command>
+      <Command>python.exe install_Local.py $(Configuration) "C:\\Program Files\\Mod Organizer\\mods\\JContainers-v3.3A"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Distrib|Win32'">

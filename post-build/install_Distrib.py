@@ -9,4 +9,4 @@ if __name__ == '__main__':
 	bundlePlugin(mode)
 	bundleDevResources(mode)
 
-	print 'post-install finished'
+	print('post-install finished')
