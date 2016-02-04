@@ -61,7 +61,9 @@ namespace collections {
         item(const item& other) : _var(other._var) {}
 
         item& operator = (item&& other) {
-            _var = std::move(other._var);
+            if (this != &other) {
+                _var = std::move(other._var);
+            }
             return *this;
         }
 
