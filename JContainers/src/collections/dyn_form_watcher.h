@@ -123,11 +123,11 @@ namespace form_watching {
 
     template<class Context>
     inline form_ref make_weak_form_id(FormId id, Context& context) {
-        return form_ref{ id, *context.form_watcher };
+        return form_ref{ id, context._form_watcher };
     }
 
     template<class Context>
     inline form_ref make_weak_form_id(const TESForm* id, Context& context) {
-        return id ? form_ref(*id, *context.form_watcher) : form_ref();
+        return id ? form_ref(*id, context._form_watcher) : form_ref();
     }
 }

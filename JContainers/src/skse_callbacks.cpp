@@ -186,7 +186,7 @@ namespace {
 
 
             g_serialization->SetFormDeleteCallback(g_pluginHandle, [](UInt64 handle) {
-                tes_context::instance().form_watcher->on_form_deleted((FormHandle)handle);
+                tes_context::instance()._form_watcher.on_form_deleted((FormHandle)handle);
             });
 
             g_papyrus->Register(registerAllFunctions);

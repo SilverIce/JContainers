@@ -56,7 +56,7 @@ namespace collections {
             var = std::move(v);
         }
         void operator () ( FormId& v) {
-            var = form_ref{ v, *context.form_watcher, form_ref::load_old_id };
+            var = form_ref{ v, context._form_watcher, form_ref::load_old_id };
         }
         item::variant& var;
         tes_context& context;
@@ -126,7 +126,7 @@ namespace collections {
                 cnt.emplace(value_type {
                     form_ref {
                         pair.first,
-                        *hack::iarchive_with_blob::from_base_get<tes_context>(ar).form_watcher.get(),
+                        hack::iarchive_with_blob::from_base_get<tes_context>(ar)._form_watcher,
                         form_ref::load_old_id
                     },
                     std::move(pair.second)

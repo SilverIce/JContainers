@@ -325,8 +325,8 @@ namespace collections {
                 ar >> expired;
 
                 if (!expired) {
-                    auto watcher = hack::iarchive_with_blob::from_base_get<tes_context>(ar).form_watcher.get();
-                    _watched_form = watcher->watch_form(id);
+                    auto& watcher = hack::iarchive_with_blob::from_base_get<tes_context>(ar)._form_watcher;
+                    _watched_form = watcher.watch_form(id);
                 }
                 break;
             }
@@ -342,8 +342,8 @@ namespace collections {
                     ar >> _watched_form;
                 }
                 else {
-                    auto watcher = hack::iarchive_with_blob::from_base_get<tes_context>(ar).form_watcher.get();
-                    _watched_form = watcher->watch_form(id);
+                    auto& watcher = hack::iarchive_with_blob::from_base_get<tes_context>(ar)._form_watcher;
+                    _watched_form = watcher.watch_form(id);
                 }
                 break;
             }

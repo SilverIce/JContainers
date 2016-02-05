@@ -26,9 +26,7 @@ namespace collections
 
         using post_init = ::meta<void(*)(tes_context&)>;
 
-        tes_context()
-            : form_watcher(new form_watching::form_observer{})
-        {
+        tes_context() {
             for (auto& init : post_init::getListConst()) {
                 init(*this);
             }
@@ -66,7 +64,7 @@ namespace collections
         // to attach lua context
         std::shared_ptr<dependent_context>     lua_context;
 
-        std::shared_ptr<form_watching::form_observer> form_watcher;
+        form_watching::form_observer _form_watcher;
 
         //////
     public:
@@ -93,7 +91,7 @@ namespace collections
         void u_clearState() {
             _root_object_id.store(Handle::Null, std::memory_order_relaxed);
             _cached_root = nullptr;
-            form_watcher->u_clearState();
+            _form_watcher.u_clearState();
 
             base::u_clearState();
         }

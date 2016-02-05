@@ -158,7 +158,7 @@ namespace collections {
 
     void tes_context::u_print_stats() const {
         base::u_print_stats();
-        JC_log("%lu forms being observed", form_watcher->u_forms_count());
+        JC_log("%lu forms being observed", _form_watcher.u_forms_count());
     }
 
     void tes_context::read_from_string(const std::string & data) {
@@ -183,19 +183,14 @@ namespace collections {
         boost::serialization::load_atomic(ar, _root_object_id);
 
         if (version >= 1) {
-            form_watching::form_observer* watcher = nullptr;
-            ar >> watcher;
-
-            form_watcher.reset(watcher);
+            ar >> _form_watcher;
         }
     }
 
     template<class Archive> void tes_context::save(Archive & ar, unsigned int version) const {
-        form_watching::form_observer* watcher = form_watcher.get();
-
         ar << static_cast<const base&>(*this);
         boost::serialization::save_atomic(ar, _root_object_id);
-        ar << watcher;
+        ar << _form_watcher;
     }
 
     ///////////////////////////
