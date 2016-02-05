@@ -1,5 +1,6 @@
 #include <boost/iostreams/stream.hpp>
 #include <boost/iostreams/device/array.hpp>
+#include "util/singleton.h"
 
 #include "jansson.h"
 
@@ -143,6 +144,16 @@ namespace collections {
             arch << *this;
             u_print_stats();
         }
+    }
+
+    namespace {
+        util::singleton<tes_context, false> g_tes_context_singleton {
+            []() { return new tes_context(); }
+        };
+    }
+
+    tes_context& tes_context::instance() {
+        return g_tes_context_singleton.get();
     }
 
     void tes_context::u_print_stats() const {
