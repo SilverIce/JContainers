@@ -315,6 +315,20 @@ namespace collections {
 
             namespace bs = boost;
 
+            TEST(form_watching, perft){
+
+                form_observer watcher;
+                util::do_with_timing("form_observer performance", [&](){
+
+
+                    for (int i = 0; i < 1000000; ++i) {
+                        watcher.watch_form(util::to_enum<FormId>(i % 1000));
+                    }
+
+                });
+            }
+
+
             TEST(form_watching, simple){
                 form_ref id;
 
