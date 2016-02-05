@@ -18,7 +18,7 @@
 #include "collections/form_handling.h"
 #include "collections/dyn_form_watcher.h"
 
-BOOST_CLASS_VERSION(collections::form_watching::form_ref, 2);
+BOOST_CLASS_VERSION(collections::form_watching::form_ref, 3);
 
 namespace collections {
 
@@ -35,7 +35,7 @@ namespace collections {
 
             FormId _handle = FormId::Zero;
             std::atomic<bool> _deleted = false;
-            // to not release the handle if the handle can't be retained (for ex. handle's object was not loaded)
+            // to not release the handle if the handle wasn't be previously retained (for ex. handle's object was not loaded)
             bool _is_handle_retained = false;
 
         public:
@@ -111,16 +111,19 @@ namespace collections {
         };
 
         void form_observer::u_remove_expired_forms() {
+/*
             util::tree_erase_if(_watched_forms, [](const watched_forms_t::value_type& pair) {
                 return pair.second.expired();
-            });
+            });*/
         }
 
-        /*form_observer::form_observer() {
-            _is_inside_unsafe_func._My_flag = false;
-        }*/
+        namespace {
 
-        using spinlock_pool = boost::detail::spinlock_pool < 'DyFW' > ;
+            static boost::detail::spinlock & spinlock_for(FormId formId) {
+                using spinlock_pool = boost::detail::spinlock_pool < 'DyFW' > ;
+                return spinlock_pool::spinlock_for(reinterpret_cast<void*>(formId));
+            }
+        }
 
         void form_observer::on_form_deleted(FormHandle handle)
         {
@@ -139,13 +142,11 @@ namespace collections {
 
             auto formId = fh::form_handle_to_id(handle);
             {
-                read_lock r(_mutex);
-
                 auto itr = _watched_forms.find(formId);
                 if (itr != _watched_forms.end()) {
                     // read and write
 
-                    std::lock_guard<boost::detail::spinlock> guard{ spinlock_pool::spinlock_for(&itr->second) };
+                    std::lock_guard<boost::detail::spinlock> guard{ spinlock_for(formId) };
                     auto watched = itr->second.lock();
 
                     if (watched) {
@@ -157,6 +158,66 @@ namespace collections {
             }
         }
 
+        template<class Archive, class Collection, class ElementSaver>
+        void save_collection(Archive& archive, const Collection& collection, ElementSaver&& saver) {
+            uint32_t count = collection.size();
+            archive << count;
+            for (const auto& pair : collection) {
+                saver(archive, pair);
+            }
+        }
+        template<class Archive, class Collection, class ElementLoader>
+        void load_collection(Archive& archive, Collection& collection, ElementLoader&& loader) {
+            uint32_t count = 0;
+            archive >> count;
+
+            while (count > 0) {
+                --count;
+                loader(archive, collection);
+            }
+        }
+
+        template<class Archive>
+        void form_observer::load(Archive & ar, const unsigned int version) {
+
+            switch (version) {
+            case 3:
+                load_collection(ar, _watched_forms, [&ar](Archive& ar, decltype(_watched_forms)& collection) {
+                    form_entry_ref entry;
+                    ar >> entry;
+
+                    if (entry && !entry->is_deleted()) {
+                        collection[entry->id()] = std::move(entry);
+                    }
+                });
+                break;
+            case 2:{
+                std::hash_map<FormId, boost::weak_ptr<form_entry> > oldCnt;
+                ar >> oldCnt;
+
+                for (auto& pair : oldCnt) {
+                    form_entry_ref entry = pair.second.lock();
+                    if (entry && !entry->is_deleted()) {
+                        _watched_forms[entry->id()] = std::move(entry);
+                    }
+                }
+            }
+                break;
+            default:
+                jc_assert_msg(false, "Older versions of form_observer shouldn't be in release builds. In first place");
+                break;
+            }
+        }
+
+        template<class Archive>
+        void form_observer::save(Archive & ar, const unsigned int version) const {
+
+            save_collection(ar, _watched_forms, [&ar](Archive& ar, const decltype(_watched_forms)::value_type& pair) {
+                auto entry = pair.second.lock();
+                ar << entry;
+            });
+        }
+
         form_entry_ref form_observer::watch_form(FormId fId)
         {
             if (fId == FormId::Zero) {
@@ -165,34 +226,18 @@ namespace collections {
 
             log("watching form %X", fId);
 
-            auto get_or_assign = [fId](boost::weak_ptr<form_entry> & watched_weak) -> form_entry_ref {
-                std::lock_guard<boost::detail::spinlock> guard{ spinlock_pool::spinlock_for(&watched_weak) };
-                auto watched = watched_weak.lock();
-
-                if (!watched) {
-                    // what if two threads trying assign??
-                    // both threads are here or one is here and another performing @on_form_deleted func.
-                    watched_weak = watched = form_entry::make(fId);
-                }
-                return watched;
-            };
-
             {
-                read_lock r(_mutex);
-                auto itr = _watched_forms.find(fId);
-
-                if (itr != _watched_forms.end()) {
-                    return get_or_assign(itr->second);
-                }
-            }
-
-            {
-                write_lock r(_mutex);
+                std::lock_guard<boost::detail::spinlock> guard{ spinlock_for(fId) };
 
                 auto itr = _watched_forms.find(fId);
-
                 if (itr != _watched_forms.end()) {
-                    return get_or_assign(itr->second);
+                    auto watched = itr->second.lock();
+                    if (!watched) {
+                        // what if two threads trying assign??
+                        // both threads are here or one is here and another performing @on_form_deleted func.
+                        itr->second = watched = form_entry::make(fId);
+                    }
+                    return watched;
                 }
                 else {
                     auto watched = form_entry::make(fId);

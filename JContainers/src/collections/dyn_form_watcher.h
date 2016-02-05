@@ -1,6 +1,7 @@
 #pragma once
 
-#include <hash_map>
+//#include <hash_map>
+#include <concurrent_unordered_map.h>
 //#include <memory>
 #include <atomic>
 #include <tuple>
@@ -9,10 +10,10 @@
 #include "boost/serialization/split_member.hpp"
 #include "boost/noncopyable.hpp"
 
+#include "util/spinlock.h"
+
 #include "rw_mutex.h"
 #include "form_id.h"
-#include "util/spinlock.h"
-//#include "intrusive_ptr.hpp"
 
 namespace collections {
     
@@ -25,9 +26,11 @@ namespace form_watching {
 
     class form_observer {
     private:
-        using watched_forms_t = std::hash_map<FormId, boost::weak_ptr<form_entry> >;
+        using weak_entry = boost::weak_ptr<form_entry>;
+       // using watched_forms_old_t = std::hash_map<FormId, weak_entry >;
+        using watched_forms_t = concurrency::concurrent_unordered_map < FormId, weak_entry >;
 
-        bshared_mutex _mutex;
+        //bshared_mutex _mutex;
         watched_forms_t _watched_forms;
 
     public:
@@ -51,13 +54,8 @@ namespace form_watching {
         friend class boost::serialization::access;
         BOOST_SERIALIZATION_SPLIT_MEMBER();
 
-        template<class Archive> void save(Archive & ar, const unsigned int version) const {
-            ar << _watched_forms;
-        }
-        template<class Archive> void load(Archive & ar, const unsigned int version) {
-            ar >> _watched_forms;
-            u_remove_expired_forms();
-        }
+        template<class Archive> void save(Archive & ar, const unsigned int version) const;
+        template<class Archive> void load(Archive & ar, const unsigned int version);
     };
 
     class form_ref {
@@ -88,9 +86,9 @@ namespace form_watching {
 
         bool operator ! () const { return !is_not_expired(); }
 
-        // "Stupid" comparison operators, it compares form's identifiers:
-        // the functions below don't care whether the @form_refs are really equal or not -
-        // they are equal if they have equal @_watched_form fields
+        // "Stupid" comparison operators, compare identifiers:
+        // the functions don't care whether the @form_refs are really equal or not -
+        // really equal form_refs have equal @_watched_form field
         // The comparison is NOT stable
         bool operator == (const form_ref& o) const {
             return get() == o.get();
@@ -130,8 +128,6 @@ namespace form_watching {
 
     template<class Context>
     inline form_ref make_weak_form_id(const TESForm* id, Context& context) {
-        return id
-            ? form_ref(*id, *context.form_watcher)
-            : form_ref();
+        return id ? form_ref(*id, *context.form_watcher) : form_ref();
     }
 }
