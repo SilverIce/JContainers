@@ -2,7 +2,7 @@
 #include "lua_module.h"
 
 #include <boost/noncopyable.hpp>
-#include <boost/thread/tss.hpp>
+//#include <boost/thread/tss.hpp>
 #include <boost/optional.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/lockfree/queue.hpp>

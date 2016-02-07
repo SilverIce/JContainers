@@ -287,7 +287,6 @@ namespace collections {
             return form_ref{ entry };
         }
 
-
         //////////////////
 
         FormId form_ref::get() const {
@@ -301,7 +300,7 @@ namespace collections {
         template<class Archive>
         void form_ref::save(Archive & ar, const unsigned int version) const
         {
-            // optimization: the form was deleted - write null instead
+            // optimization: if the form was deleted (is_not_expired is false) - write null instead
 
             if (is_not_expired())
                 ar << _watched_form;

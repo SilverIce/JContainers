@@ -87,7 +87,8 @@ namespace collections {
                 try {
 
                     auto hdr = header::read_from_stream(stream);
-                    bool isNotSupported = serialization_version::current < hdr.commonVersion || hdr.commonVersion <= serialization_version::no_header;
+                    bool isNotSupported = serialization_version::current < hdr.commonVersion
+                        || hdr.commonVersion <= serialization_version::no_header;
 
                     if (isNotSupported) {
                         std::ostringstream error;

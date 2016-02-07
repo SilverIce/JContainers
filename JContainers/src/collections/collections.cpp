@@ -73,7 +73,7 @@ namespace collections {
         default:
             BOOST_ASSERT(false);
             break;
-        case 2: { // v 3.2.4 and below
+        case 2: { // v 3.2.X and below
             using variant_old = boost::variant<boost::blank, SInt32, Real, FormId, internal_object_ref, std::string>;
             variant_old var;
             ar >> var;
@@ -119,7 +119,7 @@ namespace collections {
         default:
             BOOST_ASSERT_MSG(false, "invalid form_map version");
             break;
-        case 0: {
+        case 0: {   // v3.2.X -> v3.3.X
             std::map<FormId, item> oldMap;
             ar >> oldMap;
             for (auto& pair : oldMap) {
