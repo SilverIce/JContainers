@@ -63,6 +63,8 @@ namespace collections {
         object_context *_context                = nullptr;
 
         void release_counter(std::atomic_int32_t& counter);
+        bool is_completely_initialized() const { return _context != nullptr; }
+        void try_prolong_lifetime();
 
     public:
 

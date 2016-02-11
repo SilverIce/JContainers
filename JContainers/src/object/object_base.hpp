@@ -120,8 +120,21 @@ namespace collections
             if (noOwners()) {
                 // the object get's erased from another object, no owners - I may even delete it immediately
                 // (immediately if the object is not exposed to Skyrim, i.e. has no public ID)
-                prolong_lifetime();
+
+                // Note that this function sometimes being called during loading (deserialization)
+                // We can't delete object during loading even if noOwners() is true - more owners may be loaded later
+                try_prolong_lifetime();
             }
+        }
+    }
+
+    // Issue: this method may be called during deserialization (e.g. object_base::release -> prolong_lifetime)
+    // Ofc. this causes crash because _context field is null, as the WHOLE system isn't completely initialized yet
+    // It's not clear how to solve this
+    // It's relatively safe to skip call - the object will be deleted by GC
+    void object_base::try_prolong_lifetime() {
+        if (this->is_completely_initialized()) { 
+            this->prolong_lifetime();
         }
     }
 

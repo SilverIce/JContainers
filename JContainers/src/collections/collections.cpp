@@ -122,15 +122,12 @@ namespace collections {
         case 0: {   // v3.2.X -> v3.3.X
             std::map<FormId, item> oldMap;
             ar >> oldMap;
+            auto& fwatcher = hack::iarchive_with_blob::from_base_get<tes_context>(ar)._form_watcher;
             for (auto& pair : oldMap) {
-                cnt.emplace(value_type {
-                    form_ref {
-                        pair.first,
-                        hack::iarchive_with_blob::from_base_get<tes_context>(ar)._form_watcher,
-                        form_ref::load_old_id
-                    },
-                    std::move(pair.second)
-                });
+                form_ref key{ pair.first, fwatcher, form_ref::load_old_id };
+                if (key) {
+                    cnt.emplace(value_type{ std::move(key), std::move(pair.second) });
+                }
             }
         }
             break;
