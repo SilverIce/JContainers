@@ -51,17 +51,19 @@ BOOST_CLASS_IMPLEMENTATION(boost::blank, boost::serialization::primitive_type);
 
 namespace collections {
 
+    template<class Archive>
     struct converter_324_to_330 : public boost::static_visitor < > {
         template<class T> void operator () ( T& v) {
             var = std::move(v);
         }
         void operator () ( FormId& v) {
-            var = form_ref{ v, context._form_watcher, form_ref::load_old_id };
+            auto& fwatcher = hack::iarchive_with_blob::from_base_get<tes_context>(archive)._form_watcher;
+            var = form_ref{ v, fwatcher, form_ref::load_old_id };
         }
         item::variant& var;
-        tes_context& context;
+        Archive& archive;
 
-        explicit converter_324_to_330(item::variant& var_, tes_context& ctx) : var(var_), context(ctx) {}
+        explicit converter_324_to_330(item::variant& var_, Archive& archive_) : var(var_), archive(archive_) {}
     };
     
     
@@ -77,7 +79,7 @@ namespace collections {
             using variant_old = boost::variant<boost::blank, SInt32, Real, FormId, internal_object_ref, std::string>;
             variant_old var;
             ar >> var;
-            var.apply_visitor(converter_324_to_330{ _var, hack::iarchive_with_blob::from_base_get<tes_context>(ar) });
+            var.apply_visitor(converter_324_to_330<Archive>{ _var, ar });
         }
             break;
         case 3:

@@ -74,7 +74,7 @@ namespace form_watching {
 
         static form_ref make_expired(FormId formId);
 
-        // Special constructor - to load v <= 3.2.4 data
+        // Special constructor - to load pre v3.3 data
         enum load_old_id_t { load_old_id };
         explicit form_ref(FormId oldId, form_observer& watcher, load_old_id_t);
 
@@ -84,7 +84,8 @@ namespace form_watching {
         FormId get() const;
         FormId get_raw() const;
 
-        bool operator ! () const { return !is_not_expired(); }
+        bool operator!() const BOOST_NOEXCEPT{ return !is_not_expired(); }
+        BOOST_EXPLICIT_OPERATOR_BOOL_NOEXCEPT()
 
         // "Stupid" comparison operators, compare identifiers:
         // the functions don't care whether the @form_refs are really equal or not -
