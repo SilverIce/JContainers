@@ -18,7 +18,8 @@
 #include "collections/form_handling.h"
 #include "collections/dyn_form_watcher.h"
 
-BOOST_CLASS_VERSION(collections::form_watching::form_ref, 3);
+BOOST_CLASS_VERSION(collections::form_watching::form_ref, 2);
+BOOST_CLASS_VERSION(collections::form_watching::form_observer, 3);
 
 namespace collections {
 
