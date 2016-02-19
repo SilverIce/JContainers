@@ -27,10 +27,8 @@ namespace form_watching {
     class form_observer {
     private:
         using weak_entry = boost::weak_ptr<form_entry>;
-       // using watched_forms_old_t = std::hash_map<FormId, weak_entry >;
         using watched_forms_t = concurrency::concurrent_unordered_map < FormId, weak_entry >;
 
-        //bshared_mutex _mutex;
         watched_forms_t _watched_forms;
 
     public:

@@ -6,6 +6,7 @@
 #include <boost/variant/variant.hpp>
 
 #include "collections/collections.h"
+#include "collections/default_value.h"
 
 namespace collections
 {
@@ -15,9 +16,11 @@ namespace collections
 
     namespace path_resolving {
 
-        void resolve(tes_context& ctx, item& target, const char *cpath, std::function<void(item *)> itemFunction, bool createMissingKeys = false);
+        void resolve(tes_context& ctx, item& target, const char *cpath,
+            const std::function<void(item *)>& itemFunction, bool createMissingKeys = false);
 
-        void resolve(tes_context& ctx, object_base *target, const char *cpath, std::function<void(item *)> itemFunction, bool createMissingKeys = false);
+        void resolve(tes_context& ctx, object_base *target, const char *cpath,
+            const std::function<void(item *)>& itemFunction, bool createMissingKeys = false);
 
         template<class T>
         inline T _resolve(tes_context& ctx, object_base *target, const char *cpath, T def = default_value<T>()) {

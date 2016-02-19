@@ -46,7 +46,7 @@ namespace collections
         };
 
         template<class T>
-        static bool _map_visit_helper(tes_context& context, T& container, path_type path, std::function<void(item *)> function)
+        static bool _map_visit_helper(tes_context& context, T& container, path_type path, std::function<void(item *)>&& function)
         {
             if (path.empty()) {
                 return false;
@@ -84,7 +84,9 @@ namespace collections
             return true;
         }
 
-        void resolve(tes_context& context, item& target, const char *cpath, std::function<void(item *)>  itemFunction, bool createMissingKeys) {
+        void resolve(tes_context& context, item& target, const char *cpath,
+            const std::function<void(item *)>& itemFunction, bool createMissingKeys)
+        {
             if (!cpath) {
                 return;
             }
@@ -97,7 +99,9 @@ namespace collections
             }
         }
 
-        void resolve(tes_context& context, object_base *collection, const char *cpath, std::function<void(item *)>  itemFunction, bool createMissingKeys) {
+        void resolve(tes_context& context, object_base *collection, const char *cpath,
+            const std::function<void(item *)>& itemFunction, bool createMissingKeys)
+        {
 
             if (!collection || !cpath) {
                 return;

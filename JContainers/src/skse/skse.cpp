@@ -107,7 +107,7 @@ namespace skse {
 
             TESForm* lookup_form(FormId handle) override {
                 // Just a blob of bytes which imitates TESForm
-                static char fakeTesForm[sizeof TESForm];
+                static char fakeTesForm[sizeof TESForm] = { '\0' };
                 return reinterpret_cast<TESForm*>(&fakeTesForm);
             }
 
@@ -153,7 +153,7 @@ namespace skse {
             }
 
             TESForm* lookup_form(FormId handle) override {
-                return LookupFormByID((FormIdUnredlying)handle);
+                return LookupFormByID(util::to_integral(handle));
             }
 
             bool try_retain_handle(FormId id) override {
@@ -165,7 +165,7 @@ namespace skse {
                 return false;
             }
             void release_handle(FormId handle) override {
-                (*g_objectHandlePolicy)->Release((UInt64)collections::form_handling::form_id_to_handle(handle));
+                (*g_objectHandlePolicy)->Release(util::to_integral(collections::form_handling::form_id_to_handle(handle)));
             }
 
             void console_print(const char * fmt, const va_list& args) override {
