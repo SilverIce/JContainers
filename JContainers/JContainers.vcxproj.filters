@@ -240,6 +240,9 @@
       <Filter>util</Filter>
     </ClInclude>
     <ClInclude Include="src\iarchive_with_blob.h" />
+    <ClInclude Include="src\collections\default_value.h">
+      <Filter>collections</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="JContainers.rc" />

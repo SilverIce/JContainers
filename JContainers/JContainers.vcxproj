@@ -160,6 +160,7 @@
     <ClInclude Include="src\api_3\tes_object.h" />
     <ClInclude Include="src\api_3\tes_string.h" />
     <ClInclude Include="src\collections\collections.h" />
+    <ClInclude Include="src\collections\default_value.h" />
     <ClInclude Include="src\collections\dyn_form_watcher.h" />
     <ClInclude Include="src\collections\dyn_form_watcher.hpp" />
     <ClInclude Include="src\collections\tests.h" />
