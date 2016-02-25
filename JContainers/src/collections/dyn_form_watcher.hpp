@@ -374,10 +374,11 @@ namespace collections {
             }
 
 
-            TEST(form_watching, simple){
-                form_ref id;
+            TEST(form_watching, default_contructor){
+                form_ref id{};
 
                 EXPECT_TRUE(!id);
+                EXPECT_FALSE(id);
                 EXPECT_TRUE(id.get() == FormId::Zero);
                 EXPECT_TRUE(id.get_raw() == FormId::Zero);
             }
@@ -416,6 +417,7 @@ namespace collections {
                 EXPECT_TRUE(entry->is_deleted());
             }*/
 
+            // lookup with a non-expired form-ref ID 0x14 to a list containing expired form-ref (0x14) should fail
             TEST(form_watching, bug_1)
             {
                 const auto fid = util::to_enum<FormId>(0x14);
@@ -432,6 +434,7 @@ namespace collections {
                 return cnt.find(value) != cnt.end();
             }
 
+            // lookup with a non-expired form-ref ID 0x14 (key) to a map containing expired form-ref key (0x14) should fail
             TEST(form_watching, bug_2)
             {
                 const auto fid = util::to_enum<FormId>(0x14);
@@ -443,6 +446,7 @@ namespace collections {
                 EXPECT_FALSE( contains(forms, non_expired) ); // had to be EXPECT_FALSE
             }
 
+            // lookup with a expired form-ref ID 0x14 (key) to a map containing non-expired form-ref key (0x14) should fail
             TEST(form_watching, bug_3)
             {
                 const auto fid = util::to_enum<FormId>(0x14);
@@ -474,6 +478,7 @@ namespace collections {
                 EXPECT_TRUE(forms.begin()->first.is_not_expired() != (++forms.begin())->first.is_not_expired());
             }
 
+            // both form refs (ID 0xff000014) should expire in the same moment of time, should point to the same form-entry
             TEST(form_watching, dynamic_form_id){
                 const auto fid = util::to_enum<FormId>(0xff000014);
                 const auto fhid = fh::form_id_to_handle(fid);
