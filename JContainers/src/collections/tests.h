@@ -385,19 +385,20 @@ namespace collections { namespace {
         validateGraph(root2);
     }
 
-    JC_TEST(tes_context, backward_compatibility)
+    TEST(tes_context, backward_compatibility)
     {
         namespace fs = boost::filesystem;
 
         fs::path dir = util::relative_to_dll_path("test_data/backward_compatibility");
-        fs::directory_iterator end;
         bool atLeastOneTested = false;
 
-        for (fs::directory_iterator itr(dir); itr != end; ++itr) {
+        for (fs::directory_iterator itr(dir), end; itr != end; ++itr) {
             if (fs::is_regular_file(*itr)) {
                 atLeastOneTested = true;
 
                 std::ifstream file(itr->path().generic_string(), std::ios::in | std::ios::binary);
+
+                tes_context context;
                 context.read_from_stream(file);
 
                 EXPECT_TRUE(context.object_count() > 100); // dumb assumption
