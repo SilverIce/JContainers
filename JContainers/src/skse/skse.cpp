@@ -158,7 +158,7 @@ namespace skse {
 
             bool try_retain_handle(FormId id) override {
                 auto handle = util::to_integral(collections::form_handling::form_id_to_handle(id));
-                if ((*g_objectHandlePolicy)->Resolve(TESObjectREFR::kTypeID, handle) != nullptr) {
+                if ((*g_objectHandlePolicy)->Resolve(TESForm::kTypeID, handle) != nullptr) {
                     (*g_objectHandlePolicy)->AddRef(handle);
                     return true;
                 }

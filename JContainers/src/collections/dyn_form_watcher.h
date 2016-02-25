@@ -62,10 +62,18 @@ namespace form_watching {
 
     public:
 
+        explicit form_ref(form_entry_ref&& entry) : _watched_form(std::move(entry)) {}
+
+        form_ref& operator = (form_ref&& entry) {
+            if (this != &entry) {
+                _watched_form = std::move(entry._watched_form);
+            }
+            return *this;
+        }
+
         form_ref() = default;
 
         explicit form_ref(const form_entry_ref& entry) : _watched_form(entry) {}
-        explicit form_ref(form_entry_ref&& entry) : _watched_form(std::move(entry)) {}
 
         form_ref(FormId id, form_observer& watcher);
         form_ref(const TESForm& form, form_observer& watcher);

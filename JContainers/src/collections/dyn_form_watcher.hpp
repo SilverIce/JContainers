@@ -29,7 +29,7 @@ namespace collections {
 
         template<class ...Params>
         inline void log(const char* fmt, Params&& ...ps) {
-            JC_log(fmt, std::forward<Params ...>(ps ...));
+            JC_log(fmt, std::forward<Params>(ps) ...);
         }
 
         class form_entry : public boost::noncopyable {
@@ -63,7 +63,7 @@ namespace collections {
             }
 
             ~form_entry() {
-                if (!is_deleted() && _is_handle_retained) {
+                if (!u_is_deleted() && _is_handle_retained) {
                     //log("form_entry releases %X", _handle);
                     skse::release_handle(_handle);
                 }
