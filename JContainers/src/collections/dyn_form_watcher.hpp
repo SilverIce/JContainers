@@ -118,6 +118,29 @@ namespace collections {
             });*/
         }
 
+        void form_observer::u_print_status() const
+        {
+            uint32_t count_of_one_user = 0;
+            uint32_t dyn_form_count = 0;
+
+            for (auto& pair : _watched_forms) {
+                if (!pair.second.expired()) {
+                    log("%" PRIX32 " : %u", pair.first, pair.second.use_count());
+                    if (pair.second.use_count() == 1) {
+                        ++count_of_one_user;
+                    }
+                    if (!fh::is_static(pair.first)) {
+                        ++dyn_form_count;
+                    }
+                }
+            }
+
+            log("total %u", _watched_forms.size());
+            log("count_of_one_user %u", count_of_one_user);
+            log("dyn_form_count %u", dyn_form_count);
+
+        }
+
         namespace {
 
             static boost::detail::spinlock & spinlock_for(FormId formId) {
@@ -360,6 +383,14 @@ namespace collections {
 
             namespace bs = boost;
 
+            TEST(form_entry_ref, _)
+            {
+                form_entry e;
+
+                e.set_deleted();
+                e.is_deleted();
+            }
+
             TEST(form_watching, perft){
 
                 form_observer watcher;
@@ -432,6 +463,7 @@ namespace collections {
                 return cnt.find(value) != cnt.end();
             }
 
+            // 
             TEST(form_watching, bug_2)
             {
                 const auto fid = util::to_enum<FormId>(0x14);

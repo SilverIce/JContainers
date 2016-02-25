@@ -24,7 +24,8 @@ if __name__ == '__main__':
     # location = sys.argv[1]
     # lib = JCLib(location)
     # lib.runTests()
-    args = '',
+        
+    args = ('', '--gtest_filter=form_entry_ref._',)
 
     try:
         print(sys.argv)

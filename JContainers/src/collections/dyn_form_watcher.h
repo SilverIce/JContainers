@@ -46,6 +46,7 @@ namespace form_watching {
 
         size_t u_forms_count() const { return _watched_forms.size(); }
         void u_remove_expired_forms();
+        void u_print_status() const;
 
         /////////////////////////
 

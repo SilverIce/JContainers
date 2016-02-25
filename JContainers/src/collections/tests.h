@@ -400,6 +400,7 @@ namespace collections { namespace {
 
                 tes_context context;
                 context.read_from_stream(file);
+                context._form_watcher.u_print_status();
 
                 EXPECT_TRUE(context.object_count() > 100); // dumb assumption
             }
