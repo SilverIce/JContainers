@@ -36,7 +36,8 @@ namespace collections {
 
             FormId _handle = FormId::Zero;
             std::atomic<bool> _deleted = false;
-            // to not release the handle if the handle wasn't be previously retained (for ex. handle's object was not loaded)
+            // remember whether a form handle was retained or not
+            // to not release it if the handle wasn't be previously retained (for ex. handle's object was not loaded)
             bool _is_handle_retained = false;
 
         public:

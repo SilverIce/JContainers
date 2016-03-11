@@ -5,12 +5,14 @@
 //#include <memory>
 #include <atomic>
 #include <tuple>
+#include <assert.h>
 #include "boost/shared_ptr.hpp"
 #include "boost/smart_ptr/weak_ptr.hpp"
 #include "boost/serialization/split_member.hpp"
 #include "boost/noncopyable.hpp"
 
 #include "util/spinlock.h"
+#include "util/stl_ext.h"
 
 #include "rw_mutex.h"
 #include "form_id.h"
@@ -91,22 +93,8 @@ namespace form_watching {
         FormId get() const;
         FormId get_raw() const;
 
-        bool operator!() const BOOST_NOEXCEPT{ return !is_not_expired(); }
+        bool operator!() const BOOST_NOEXCEPT { return is_expired(); }
         BOOST_EXPLICIT_OPERATOR_BOOL_NOEXCEPT()
-
-        // "Stupid" comparison operators, compare identifiers:
-        // the functions don't care whether the @form_refs are really equal or not -
-        // really equal form_refs have equal @_watched_form field
-        // The comparison is NOT stable
-        bool operator == (const form_ref& o) const {
-            return get() == o.get();
-        }
-        bool operator != (const form_ref& o) const {
-            return !(*this == o);
-        }
-        bool operator < (const form_ref& o) const {
-            return get() < o.get();
-        }
 
         // Implements stable 'less than' comparison
         struct stable_less_comparer;
@@ -119,15 +107,94 @@ namespace form_watching {
     };
 
     struct form_ref::stable_less_comparer {
-        bool operator () (const form_ref& left, const form_ref& right) const {
-            auto leftId = left.get_raw(), rightId = right.get_raw();
-            return std::tie(leftId, left._watched_form) < std::tie(rightId, right._watched_form);
+        template<class FormRef1, class FormRef2>
+        bool operator () (const FormRef1& left, const FormRef2& right) const {
+            return std::make_tuple(left.get_raw(), left.is_expired())
+                < std::make_tuple(right.get_raw(), right.is_expired());
         }
     };
+
+    // It's lightweight alternative to form_ref to temporarily hold forms
+    // why lightweight? form_ref constructor accesses form_observer, which is costly
+    class form_ref_lightweight {
+        FormId _formId = FormId::Zero;
+        form_observer* _observer = nullptr;
+
+    public:
+
+        form_ref_lightweight(FormId id, form_observer& watcher)
+            : _formId(id), _observer(&watcher) {}
+
+        // allow implicit conversion
+        form_ref_lightweight(const form_ref& ref)
+            : _formId(ref.get()) {}
+
+        form_ref_lightweight() = default;
+
+        form_ref to_form_ref() const {
+            return is_not_expired() ? (assert(_observer), form_ref(_formId, *_observer)) : form_ref();
+        }
+
+        // mimic form_ref interface
+        FormId get() const { return _formId; }
+        FormId get_raw() const { return _formId; }
+
+        bool operator!() BOOST_CONSTEXPR_OR_CONST BOOST_NOEXCEPT{ return is_expired(); }
+        BOOST_EXPLICIT_OPERATOR_BOOL_NOEXCEPT()
+
+        bool is_expired() BOOST_CONSTEXPR_OR_CONST{ return _formId == FormId::Zero; }
+        bool is_not_expired() BOOST_CONSTEXPR_OR_CONST{ return !is_expired(); }
+    };
+
+    // "Stupid" form_ref comparison functions:
+    // the functions don't care whether the @form_refs are really equal or not -
+    // really equal form_refs have equal @_watched_form field
+    // The comparison is NOT stable
+    namespace comp {
+        template<class FormRef1, class FormRef2>
+        inline bool equal(const FormRef1& left, const FormRef2& right) {
+            return left.get() == right.get();
+        }
+        template<class FormRef1, class FormRef2>
+        inline bool less(const FormRef1& left, const FormRef2& right) {
+            return left.get() < right.get();
+        }
+    }
+
+    template<class FormRef>
+    inline bool operator == (const form_ref_lightweight& left, const FormRef& right) {
+        return comp::equal(left, right);
+    }
+
+    template<class FormRef>
+    inline bool operator == (const form_ref& left, const FormRef& right) {
+        return comp::equal(left, right);
+    }
+
+    template<class FormRef>
+    inline bool operator != (const form_ref_lightweight& left, const FormRef& right) {
+        return !comp::equal(left, right);
+    }
+
+    template<class FormRef>
+    inline bool operator != (const form_ref& left, const FormRef& right) {
+        return !comp::equal(left, right);
+    }
+
+    template<class FormRef>
+    inline bool operator < (const form_ref_lightweight& left, const FormRef& right) {
+        return comp::less(left, right);
+    }
+
+    template<class FormRef>
+    inline bool operator < (const form_ref& left, const FormRef& right) {
+        return comp::less(left, right);
+    }
 
 }
 
     using form_watching::form_ref;
+    using form_watching::form_ref_lightweight;
 
     template<class Context>
     inline form_ref make_weak_form_id(FormId id, Context& context) {
@@ -135,7 +202,18 @@ namespace form_watching {
     }
 
     template<class Context>
-    inline form_ref make_weak_form_id(const TESForm* id, Context& context) {
-        return id ? form_ref(*id, context._form_watcher) : form_ref();
+    inline form_ref make_weak_form_id(const TESForm* form, Context& context) {
+        return form ? form_ref(*form, context._form_watcher) : form_ref();
     }
+
+    template<class Context>
+    inline form_ref_lightweight make_lightweight_form_ref(FormId id, Context& context) {
+        return form_ref_lightweight{ id, context._form_watcher };
+    }
+
+    template<class Context>
+    inline form_ref_lightweight make_lightweight_form_ref(const TESForm* form, Context& context) {
+        return form_ref_lightweight{ form ? util::to_enum<FormId>(form->formID) : FormId::Zero, context._form_watcher };
+    }
+
 }

@@ -99,6 +99,7 @@ namespace collections {
         static bool check(TESForm *f)  { return f != nullptr; }
         static bool check(FormId f)  { return f != FormId::Zero; }
         static bool check(const form_ref& f)  { return f.is_not_expired(); }
+        static bool check(const form_ref_lightweight& f)  { return f.is_not_expired(); }
         static bool check(int32_t)  { return true; }
     };
 
@@ -136,7 +137,7 @@ namespace collections {
         static void doWriteOp(T * obj, const key_type& key, Op& operation) {
             if (obj && key_checker::check(key)) {
                 object_lock g(obj);
-                item &itm = obj->u_container()[key];
+                item &itm = obj->u_get_or_create(key);
                 operation(itm);
             }
         }
@@ -159,26 +160,40 @@ namespace collections {
             }
         }
 
-        template<class KeyTypeIn>
-        static KeyTypeIn nextKey_forPapyrus(const T *obj, const KeyTypeIn& lastKey, const KeyTypeIn& endKey) {
+        struct equal_to {
+            template<class T, class D>
+            inline bool operator()(T& t, D& d) const {
+                return t == d;
+            }
+        };
+
+        template<class KeyTypeIn, class KeyComparer = equal_to>
+        static KeyTypeIn nextKey_forPapyrus(const T *obj, const KeyTypeIn& lastKey,
+            const KeyTypeIn& endKey, const KeyComparer key_equality = equal_to{})
+        {
             if (obj) {
                 object_lock g(obj);
                 auto& container = obj->u_container();
-                if (key_checker::check(lastKey)) {
-                    auto itr = container.find(lastKey);
-                    const auto end = container.end();
+
+                if (container.empty()) {
+                    return endKey;
+                }
+                else if (lastKey != endKey) {
+                    auto itr = obj->u_find_iterator(lastKey);
+                    const auto end = container.cend();
 
                     if (itr == end) {
                         return endKey;
                     }
 
                     while (++itr != end) {
-                        if (itr->first != endKey) {
+                        if (key_equality(itr->first, endKey) == false) {
                             return itr->first;
                         }
                     }
                 }
-                else if (container.empty() == false) {
+                // start iteration
+                else {
                     return container.begin()->first;
                 }
             }

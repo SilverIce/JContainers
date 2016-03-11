@@ -49,5 +49,9 @@ namespace util {
         return static_cast<Enum>(value);
     }
 
+    // Helps choose between const and non-const iterator
+    template<class ContainerType>
+    using choose_iterator = typename std::conditional< std::is_const<ContainerType>::value,
+        typename ContainerType::const_iterator, typename ContainerType::iterator>::type;
 
 }
