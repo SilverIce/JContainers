@@ -113,10 +113,14 @@ namespace collections {
         };
 
         void form_observer::u_remove_expired_forms() {
-/*
+            auto hashmap_eraser = [](watched_forms_t& cnt, const watched_forms_t::const_iterator& itr) {
+                return cnt.unsafe_erase(itr);
+            };
+
             util::tree_erase_if(_watched_forms, [](const watched_forms_t::value_type& pair) {
                 return pair.second.expired();
-            });*/
+            },
+                hashmap_eraser);
         }
 
         void form_observer::u_print_status() const
@@ -249,7 +253,7 @@ namespace collections {
                 return nullptr;
             }
 
-            log("watching form %X", fId);
+            log("querying form-entry %" PRIX32, fId);
 
             {
                 std::lock_guard<boost::detail::spinlock> guard{ spinlock_for(fId) };
@@ -297,11 +301,6 @@ namespace collections {
         {
         }
 
-        bool form_ref::is_not_expired() const
-        {
-            return _watched_form && !_watched_form->is_deleted();
-        }
-
         form_ref::form_ref(FormId oldId, form_observer& watcher, load_old_id_t)
             : _watched_form(watcher.watch_form(skse::resolve_handle(oldId)))
         {
@@ -313,6 +312,10 @@ namespace collections {
         }
 
         //////////////////
+
+        bool form_ref::is_not_expired() const {
+            return _watched_form && !_watched_form->is_deleted();
+        }
 
         FormId form_ref::get() const {
             return is_not_expired() ? _watched_form->id() : FormId::Zero;

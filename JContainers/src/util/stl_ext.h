@@ -4,11 +4,20 @@
 
 namespace util {
 
-    template<class TreeContainer, class Predicate>
-    void tree_erase_if(TreeContainer&& container, Predicate&& pred) {
+    namespace {
+        struct tree_erase_if_eraser {
+            template<class TreeContainer>
+            typename TreeContainer::iterator operator()(TreeContainer& cnt, typename TreeContainer::const_iterator itr) const {
+                return cnt.erase(itr);
+            }
+        };
+    }
+
+    template<class TreeContainer, class Predicate, class Eraser = tree_erase_if_eraser>
+    void tree_erase_if(TreeContainer&& container, Predicate&& pred, Eraser&& eraser = Eraser{}) {
         for (auto itr = container.begin(); itr != container.end();) {
             if (pred(*itr)) {
-                itr = container.erase(itr);
+                itr = eraser(container, itr);
             }
             else {
                 ++itr;
@@ -53,5 +62,4 @@ namespace util {
     template<class ContainerType>
     using choose_iterator = typename std::conditional< std::is_const<ContainerType>::value,
         typename ContainerType::const_iterator, typename ContainerType::iterator>::type;
-
 }
