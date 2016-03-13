@@ -56,19 +56,16 @@ namespace collections {
             }
         }
 
-        item() {}
+        item() = default;
+        item(const item& other) = default;
+        item& operator = (const item& other) = default;
+
         item(item&& other) : _var(std::move(other._var)) {}
-        item(const item& other) : _var(other._var) {}
 
         item& operator = (item&& other) {
             if (this != &other) {
                 _var = std::move(other._var);
             }
-            return *this;
-        }
-
-        item& operator = (const item& other) {
-            _var = other._var;
             return *this;
         }
 
@@ -85,7 +82,7 @@ namespace collections {
         }
 
         item_type type() const {
-            return item_type(_var.which() + 1);
+            return item_type(_var.which() + item_type::none);
         }
 
         template<class T> T* get() {
@@ -114,7 +111,6 @@ namespace collections {
         explicit item(SInt32 val) : _var(val) {}
         explicit item(int val) : _var((SInt32)val) {}
         explicit item(bool val) : _var((SInt32)val) {}
-//        explicit item(FormId id) : _var(weak_form_id(id)) {}
         explicit item(const form_ref& id) : _var(id) {}
         explicit item(form_ref&& id) : _var(std::move(id)) {}
 
@@ -124,10 +120,6 @@ namespace collections {
         explicit item(std::string&& val) : _var(std::move(val)) {}
 
         // the Item is none if the pointers below are zero:
-/*
-        explicit item(const TESForm *val) {
-            *this = val;
-        }*/
         explicit item(const char * val) {
             *this = val;
         }
@@ -140,10 +132,6 @@ namespace collections {
         explicit item(const object_stack_ref &val) {
             *this = val.get();
         }
-        /*
-        explicit Item(const BSFixedString& val) : _var(boost::blank()) {
-        *this = val.data;
-        }*/
 
         item& operator = (unsigned int val) { _var = (SInt32)val; return *this; }
         item& operator = (int val) { _var = (SInt32)val; return *this; }
@@ -156,18 +144,6 @@ namespace collections {
         item& operator = (boost::blank) { _var = boost::blank(); return *this; }
         item& operator = (boost::none_t) { _var = boost::blank(); return *this; }
         item& operator = (object_base& v) { _var = &v; return *this; }
-
-/*
-        item& operator = (FormId formId) {
-            // prevent zero FormId from being saved
-            if (formId != FormId::Zero) {
-                _var = weak_form_id{ formId };
-            }
-            else {
-                _var = blank();
-            }
-            return *this;
-        }*/
 
         template<class T>
         item& _assignPtr(T *ptr) {
@@ -193,17 +169,6 @@ namespace collections {
             return _assignPtr(val);
         }
 
-/*
-        item& operator = (const TESForm *val) {
-            if (val) {
-                _var = weak_form_id{ *val };
-            }
-            else {
-                _var = blank();
-            }
-            return *this;
-        }*/
-
         object_base *object() const {
             if (auto ref = boost::get<internal_object_ref>(&_var)) {
                 return ref->get();
@@ -218,7 +183,7 @@ namespace collections {
             else if (auto val = boost::get<SInt32>(&_var)) {
                 return *val;
             }
-            return 0;
+            return 0.f;
         }
 
         SInt32 intValue() const {
@@ -242,8 +207,7 @@ namespace collections {
         }
 
         TESForm * form() const {
-            auto frmId = formId();
-            return frmId != FormId::Zero ? skse::lookup_form(frmId) : nullptr;
+            return skse::lookup_form(formId());
         }
 
         FormId formId() const {

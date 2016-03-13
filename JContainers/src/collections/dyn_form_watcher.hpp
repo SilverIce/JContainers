@@ -171,18 +171,20 @@ namespace collections {
 
             auto formId = fh::form_handle_to_id(handle);
             {
+                // Since it's impossible that two threads will delete the same form simultaneosly
+                // we can skip some thread safe stuff
                 auto itr = _watched_forms.find(formId);
                 if (itr != _watched_forms.end()) {
-                    // read and write
 
                     std::lock_guard<boost::detail::spinlock> guard{ spinlock_for(formId) };
                     auto watched = itr->second.lock();
 
                     if (watched) {
                         watched->set_deleted();
-                        log("flag form-entry %" PRIX32 " as deleted", formId);
+                        itr->second.reset();
+
+                        log("flagged form-entry %" PRIX32 " as deleted", formId);
                     }
-                    itr->second.reset();
                 }
             }
         }
@@ -253,8 +255,6 @@ namespace collections {
                 return nullptr;
             }
 
-            log("querying form-entry %" PRIX32, fId);
-
             {
                 std::lock_guard<boost::detail::spinlock> guard{ spinlock_for(fId) };
 
@@ -262,15 +262,24 @@ namespace collections {
                 if (itr != _watched_forms.end()) {
                     auto watched = itr->second.lock();
                     if (!watched) {
-                        // what if two threads trying assign??
-                        // both threads are here or one is here and another performing @on_form_deleted func.
+                        // form-entry and real form has been deleted (recently)
+                        // watch the form again, create entry, assuming that a new form with such ID exists
+
+                        // this code assumes that @watch_form tries to watch real existing form
+                        // rather than the one from JSON
                         itr->second = watched = form_entry::make(fId);
+
+                        log("queried, re-created form-entry %" PRIX32, fId);
+                    }
+                    else {
+                        log("queried form-entry %" PRIX32, fId);
                     }
                     return watched;
                 }
                 else {
                     auto watched = form_entry::make(fId);
                     _watched_forms[fId] = watched;
+                    log("queried, created new form-entry %" PRIX32, fId);
                     return watched;
                 }
             }

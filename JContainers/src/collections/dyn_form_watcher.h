@@ -60,12 +60,12 @@ namespace form_watching {
     };
 
     class form_ref {
-
         form_entry_ref _watched_form;
 
     public:
 
         explicit form_ref(form_entry_ref&& entry) : _watched_form(std::move(entry)) {}
+        explicit form_ref(const form_entry_ref& entry) : _watched_form(entry) {}
 
         form_ref& operator = (form_ref&& entry) {
             if (this != &entry) {
@@ -75,8 +75,7 @@ namespace form_watching {
         }
 
         form_ref() = default;
-
-        explicit form_ref(const form_entry_ref& entry) : _watched_form(entry) {}
+        form_ref& operator = (const form_ref &) = default;
 
         form_ref(FormId id, form_observer& watcher);
         form_ref(const TESForm& form, form_observer& watcher);
@@ -154,7 +153,7 @@ namespace form_watching {
 
     // "Stupid" form_ref comparison functions:
     // the functions don't care whether the @form_refs are really equal or not -
-    // really equal form_refs have equal @_watched_form field
+    // really equal form_refs have equal @_watched_form fields
     // The comparison is NOT stable
     namespace comp {
         template<class FormRef1, class FormRef2>

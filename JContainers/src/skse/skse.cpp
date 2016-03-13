@@ -200,7 +200,7 @@ namespace skse {
     }
 
     TESForm* lookup_form(FormId handle) {
-        return g_current_api->lookup_form(handle);
+        return handle != FormId::Zero ? g_current_api->lookup_form(handle) : nullptr;
     }
 
     const char * modname_from_index(uint8_t idx) {
