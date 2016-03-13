@@ -94,7 +94,13 @@ namespace form_watching {
         FormId get_raw() const;
 
         bool operator!() const BOOST_NOEXCEPT { return is_expired(); }
-        BOOST_EXPLICIT_OPERATOR_BOOL_NOEXCEPT()
+        BOOST_EXPLICIT_OPERATOR_BOOL_NOEXCEPT();
+
+        void swap(form_ref& other) {
+            static_assert(sizeof(other) == sizeof(_watched_form),
+                "ensures that no additional fields were added");
+            _watched_form.swap(other._watched_form);
+        }
 
         // Implements stable 'less than' comparison
         struct stable_less_comparer;
@@ -216,4 +222,10 @@ namespace form_watching {
         return form_ref_lightweight{ form ? util::to_enum<FormId>(form->formID) : FormId::Zero, context._form_watcher };
     }
 
+}
+
+namespace std {
+    template<> inline void swap(collections::form_watching::form_ref& left, collections::form_watching::form_ref& right) {
+        left.swap(right);
+    }
 }

@@ -396,3 +396,11 @@ namespace collections {
     }
 
 }
+
+namespace std {
+    template<> inline void swap(collections::item& l, collections::item& r) {
+        static_assert(sizeof(decltype(l)) == sizeof(decltype(l.var())),
+            "ensures that no additional fields were added");
+        l.var().swap(r.var());
+    }
+}

@@ -190,7 +190,7 @@ NEGATIVE_IDX_COMMENT);
         template<class T>
         static void addItemAt(ref obj, T val, SInt32 addToIndex = -1) {
             doWriteOp(obj, addToIndex, [&](uint32_t idx) {
-                obj->_array.insert(obj->begin() + idx, item(val));
+                (void)obj->_array.emplace(obj->begin() + idx, val);
             });
         }
         REGISTERF(addItemAt<SInt32>, "addInt", "* value addToIndex=-1", "appends value/container to the end of array.\n\
