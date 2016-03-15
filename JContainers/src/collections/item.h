@@ -193,9 +193,10 @@ namespace collections {
             else if (auto val = boost::get<item::Real>(&_var)) {
                 return *val;
             }
-            else if (auto val = boost::get<form_ref>(&_var)) {
+            // ability to read forms as integer values. likely not needed anymore
+            /*else if (auto val = boost::get<form_ref>(&_var)) {
                 return static_cast<SInt32>(val->get_raw());
-            }
+            }*/
             return 0;
         }
 

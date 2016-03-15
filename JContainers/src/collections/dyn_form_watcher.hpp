@@ -176,13 +176,15 @@ namespace collections {
                 auto itr = _watched_forms.find(formId);
                 if (itr != _watched_forms.end()) {
 
-                    std::lock_guard<boost::detail::spinlock> guard{ spinlock_for(formId) };
                     auto watched = itr->second.lock();
 
                     if (watched) {
                         watched->set_deleted();
-                        itr->second.reset();
-
+                        {
+                            // the only unsafe piece of code here
+                            std::lock_guard<boost::detail::spinlock> guard{ spinlock_for(formId) };
+                            itr->second.reset();
+                        }
                         log("flagged form-entry %" PRIX32 " as deleted", formId);
                     }
                 }
@@ -256,12 +258,14 @@ namespace collections {
             }
 
             {
-                std::lock_guard<boost::detail::spinlock> guard{ spinlock_for(fId) };
 
                 auto itr = _watched_forms.find(fId);
+
+                std::lock_guard<boost::detail::spinlock> guard{ spinlock_for(fId) };
+
                 if (itr != _watched_forms.end()) {
                     auto watched = itr->second.lock();
-                    if (!watched) {
+                    if (!watched || watched->is_deleted()) {
                         // form-entry and real form has been deleted (recently)
                         // watch the form again, create entry, assuming that a new form with such ID exists
 
