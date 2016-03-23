@@ -82,6 +82,10 @@ namespace reflection {
 
         const char * _text = nullptr;
         text_generator _text_generator_func = nullptr;
+
+        std::string get_text() const {
+            return _text ? _text : _text_generator_func();
+        }
     };
 
     struct class_info {
@@ -157,31 +161,32 @@ namespace reflection {
             virtual void additionalSetup() {}
         };
 
-        template<class T>
+        template<class Derived>
         struct class_meta_mixin_t : class_meta_mixin  {
 
             static class_info metaInfoFunc() {
-                T t;
+                Derived t;
                 t.additionalSetup();
                 return t.metaInfo;
             }
         };
     }
-    template <class T>
-    using class_meta_mixin_t = _detail::class_meta_mixin_t<T>;
 
-    typedef class_info (*class_info_creator)();
+    template <class Derived>
+    using class_meta_mixin_t = _detail::class_meta_mixin_t<Derived>;
 
     const std::map<istring, class_info>& class_registry();
     const function_info* find_function_of_class(const char * functionName, const char *className);
 
     template<class T>
     inline void foreach_metaInfo_do(T&& func) {
-
         for (auto & pair : class_registry()) {
             func(pair.second);
         }
     }
+
+    // A function that creates meta info of Papyrus class. One function per class
+    typedef class_info (*class_info_creator)();
 
 #   define TES_META_INFO(Class)    \
         static const ::meta<::reflection::class_info_creator > g_tesMetaFunc_##Class ( &Class::metaInfoFunc );

@@ -47,11 +47,12 @@ namespace reflection {
             str += "\n/;\n";
         }
 
-        std::string function_string(const function_info& self) {
+        std::string function_to_string(const function_info& self) {
             std::string str;
-            auto types = self.param_list_func();
 
             _pushComment(self.comment(), str);
+
+            auto types = self.param_list_func();
 
             if (types[0]().tes_type_name != "void") {
                 str += types[0]().tes_type_name;
@@ -89,15 +90,13 @@ namespace reflection {
                 (str += " extends ") += self.extendsClass.c_str();
             }
 
-            str += " Hidden\n\n";
-
             for (auto& itm : self.methods) {
-                str += function_string(itm);
+                str += function_to_string(itm);
                 str += "\n";
             }
 
             for (auto& itm : self.text_blocks) {
-                str += (itm._text ? itm._text : itm._text_generator_func());
+                str += itm.get_text();
                 str += "\n";
             }
 

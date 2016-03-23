@@ -85,8 +85,6 @@ namespace reflection { namespace binding {
 
     //////////////////////////////////////////////////////////////////////////
 
-    template <typename T> struct proxy;
-
 
     template<size_t ParamCnt>
     struct native_function_selector;
@@ -115,6 +113,11 @@ namespace reflection { namespace binding {
     template<class T>
     using get_converter_tes_type = typename get_converter<T>::tes_type;
 
+    // Template monster, proxy class that:
+    // - adapts my internal types to native Papyrus types and vica versa
+    // - generates native Papyrus function
+    // - holds function meta-info, like @parameter_info
+    template <typename T> struct proxy;
 
     template <class R, class... Params>
     struct proxy<R (*)(Params ...)>
@@ -128,6 +131,7 @@ namespace reflection { namespace binding {
 
         using return_type = R;
 
+        // subtype @magick to workaround some msvc2013 bug
         template< R(*func)(Params ...) >
         struct magick {
 
@@ -206,7 +210,8 @@ namespace reflection { namespace binding {
         {
             using namespace ::reflection;
 
-            static_assert( false == std::is_same<Binder::base::return_type, const char *>::value, "a trap for 'const char *' return types" );
+            static_assert( false == std::is_same<Binder::base::return_type, const char *>::value,
+                "a trap for 'const char *' return types" );
 
             function_info metaF;
             metaF.registrator = &Binder::bind;

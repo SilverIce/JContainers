@@ -2,9 +2,8 @@
 
 #include <type_traits>
 #include <functional>
+#include <mutex>
 #include "boost/assert.hpp"
-
-#include "util/spinlock.h"
 
 namespace util {
 
@@ -17,7 +16,7 @@ namespace util {
     >
     struct singleton {
         std::atomic<T*> _si = nullptr;
-        spinlock _lock;
+        std::mutex _lock;
         std::function<T*()> _ctor;
 
         singleton() = delete;
@@ -35,7 +34,7 @@ namespace util {
         T& get() {
             T* tmp = _si.load(std::memory_order_acquire);
             if (tmp == nullptr) {
-                spinlock::guard g(_lock);
+                std::lock_guard<std::mutex> g(_lock);
                 tmp = _si.load(std::memory_order_relaxed);
                 if (tmp == nullptr) {
                     tmp = _ctor();
