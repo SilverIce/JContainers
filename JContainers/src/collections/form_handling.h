@@ -7,6 +7,7 @@
 #include "boost_extras.h"
 
 #include "skse/skse.h"
+#include "util/cstring.h"
 
 namespace collections {
 
@@ -74,7 +75,7 @@ namespace collections {
         }
 
         // TODO: rename me!
-        inline boost::optional<FormId> from_string(boost::iterator_range<const char*>& fstring) {
+        inline boost::optional<FormId> from_string(util::cstring& fstring) {
             namespace bs = boost;
             namespace ss = std;
 
@@ -138,8 +139,7 @@ namespace collections {
         }
 
         inline boost::optional<FormId> from_string(const char* source) {
-            auto fstring = boost::make_iterator_range(source, source + strnlen_s(source, 1024));
-            return from_string(fstring);
+            return from_string(util::make_cstring_safe(source, 1024));
         }
     }
 

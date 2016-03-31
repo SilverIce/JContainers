@@ -34,7 +34,7 @@ namespace collections
         }
     }
 
-    // ca - collection access
+    // ca - universal collection access
     namespace ca {
         namespace bs = boost;
 
@@ -69,6 +69,21 @@ namespace collections
         template<class Value>
         inline auto u_assign_value(object_base& collection, const key_variant& key, Value&& value) -> item* {
             return perform_on_object_and_return<item* >(collection, u_assign_value_helper<Value>(), key, std::forward<Value>(value));
+        }
+        //
+
+        struct u_erase_key_helper {
+            template<class T>
+            bool operator()(T& obj, const key_variant& key) {
+                if (auto idx = bs::get<typename T::key_type>(&key)) {
+                    return obj.u_erase(*idx);
+                }
+                return false;
+            }
+        };
+
+        inline auto u_erase_key(object_base& collection, const key_variant& key) -> bool {
+            return perform_on_object_and_return<bool >(collection, u_erase_key_helper(), key);
         }
 
         struct accesss_info {

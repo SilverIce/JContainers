@@ -199,6 +199,7 @@
     <ClInclude Include="src\skse\string.h" />
     <ClInclude Include="src\typedefs.h" />
     <ClInclude Include="src\util\atomic_serialization.h" />
+    <ClInclude Include="src\util\cstring.h" />
     <ClInclude Include="src\util\istring.h" />
     <ClInclude Include="src\util\istring_serialization.h" />
     <ClInclude Include="src\util\singleton.h" />

@@ -340,13 +340,18 @@ namespace collections
 
     namespace ca {
 
+        enum {
+            string_path_length_max = 1024,
+            string_number_length_max = 20,
+        };
+
         namespace bs = boost;
 
         using std::forward;
         using std::string;
 
         namespace {
-        using cstring = bs::iterator_range<const char*>;
+        using cstring = util::cstring;
         //using keys = std::vector<key_variant>;
 
         template<class R, class Arg, class F1, class ... F>
@@ -520,19 +525,15 @@ namespace collections
                 }
             }
         };
-
-        enum {
-            collection_path_limit = 1024,
-        };
         }
 
         bs::optional<accesss_info> access_constant(object_base& collection, const char* cpath) {
-            auto all_path = bs::make_iterator_range(cpath, cpath + strnlen_s(cpath, collection_path_limit));
+            auto all_path = util::make_cstring_safe(cpath, string_path_length_max);
             return last_kv_pair_retriever<constant_accessor>::retrieve(collection, all_path);
         }
 
         bs::optional<accesss_info> access_creative(object_base& collection, const char* cpath) {
-            auto all_path = bs::make_iterator_range(cpath, cpath + strnlen_s(cpath, collection_path_limit));
+            auto all_path = util::make_cstring_safe(cpath, string_path_length_max);
             return last_kv_pair_retriever<creative_accessor>::retrieve(collection, all_path);
         }
     }

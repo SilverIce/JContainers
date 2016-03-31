@@ -243,6 +243,9 @@
     <ClInclude Include="src\collections\default_value.h">
       <Filter>collections</Filter>
     </ClInclude>
+    <ClInclude Include="src\util\cstring.h">
+      <Filter>util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="JContainers.rc" />
