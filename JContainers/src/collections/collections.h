@@ -189,14 +189,13 @@ namespace collections {
             return const_cast<item*>( const_cast<const array*>(this)->u_get(index) );
         }
 
-        boost::optional<item> u_erase_and_return(int32_t index) {
+        bool u_erase(int32_t index) {
             auto idx = u_convertIndex(index);
             if (idx) {
-                boost::optional<item> var(std::move(_array[*idx]));
                 _array.erase(_array.begin() + *idx);
-                return var;
+                return true;
             }
-            return boost::none;
+            return false;
         }
 
         template<class T>

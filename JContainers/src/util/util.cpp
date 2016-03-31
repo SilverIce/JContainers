@@ -1,6 +1,9 @@
 #include <boost/filesystem/path.hpp>
 #include <windef.h>
 
+#include "gtest.h"
+#include "util/string_normalize.h"
+
 namespace util {
 
 #define countof(array) sizeof(array)/(sizeof(array[0]))
@@ -47,4 +50,26 @@ BOOL APIENTRY DllMain(HMODULE /* hModule */,
         break;
     }
     return TRUE;
+}
+
+namespace util {
+    namespace {
+
+        TEST(string_normalizer, _) {
+            // ensure that string_normalizer::normalize doesn't
+            // create gaps - zero bytes
+
+            for (uint32_t i = 1; i <= 0xff; ++i) {
+                auto norm = string_normalizer::normalize(i);
+                if (norm <= 0xff) {
+                    EXPECT_TRUE((uint8_t)norm != 0);
+                }
+                else {
+                    EXPECT_TRUE((uint8_t)norm != 0);
+                    EXPECT_TRUE((uint8_t)(norm >> 8) != 0);
+                }
+            }
+        }
+
+    }
 }

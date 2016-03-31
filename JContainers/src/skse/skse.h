@@ -16,6 +16,7 @@ namespace skse {
     // pass static form ids here only
     const char * modname_from_index(uint8_t idx);
     uint8_t modindex_from_name(const char * name);
+    bool is_plugin_loaded(const char * name);
 
     FormId resolve_handle(FormId handle);
     TESForm* lookup_form(FormId handle);

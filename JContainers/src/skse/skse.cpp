@@ -32,6 +32,7 @@ namespace skse {
         struct skse_api {
             virtual const char * modname_from_index(uint8_t idx) = 0;
             virtual uint8_t modindex_from_name(const char * name) = 0;
+            virtual bool is_plugin_loaded(const char * name) = 0;
 
             virtual FormId resolve_handle(FormId handle) = 0;
             virtual TESForm* lookup_form(FormId handle) = 0;
@@ -101,6 +102,10 @@ namespace skse {
                 return fake_skse::modindex_from_name(name);
             }
 
+            bool is_plugin_loaded(const char * name) override {
+                return true;
+            }
+
             FormId resolve_handle(FormId handle) override {
                 return handle;
             }
@@ -125,6 +130,7 @@ namespace skse {
         struct skse_silent_api : skse_api {
             const char * modname_from_index(uint8_t idx) override { return ""; }
             uint8_t modindex_from_name(const char * name) override { return 0; }
+            bool is_plugin_loaded(const char * name) override { return false; }
             FormId resolve_handle(FormId handle) override { return FormId::Zero; }
             TESForm* lookup_form(FormId handle) override { return nullptr; }
             bool try_retain_handle(FormId handle) override { return true; }
@@ -141,6 +147,10 @@ namespace skse {
 
             uint8_t modindex_from_name(const char * name) override {
                 return DataHandler::GetSingleton()->GetModIndex(name);
+            }
+
+            bool is_plugin_loaded(const char * name) override {
+                return name ? DataHandler::GetSingleton()->GetModIndex(name) != (UInt8)(-1) : false;
             }
 
             FormId resolve_handle(FormId handle) override {
@@ -208,6 +218,10 @@ namespace skse {
 
     uint8_t modindex_from_name(const char * name) {
         return g_current_api->modindex_from_name(name);
+    }
+
+    bool is_plugin_loaded(const char * name) {
+        return g_current_api->is_plugin_loaded(name);
     }
 
     void console_print(const char * fmt, const va_list& args) {

@@ -38,6 +38,7 @@
 
 #include "collections/context.hpp"
 #include "collections/dyn_form_watcher.hpp"
+#include "collections/autocleanup.hpp"
 
 BOOST_CLASS_EXPORT_GUID(collections::array, "kJArray");
 BOOST_CLASS_EXPORT_GUID(collections::map, "kJMap");

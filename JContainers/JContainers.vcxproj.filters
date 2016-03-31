@@ -243,7 +243,16 @@
     <ClInclude Include="src\collections\default_value.h">
       <Filter>collections</Filter>
     </ClInclude>
+    <ClInclude Include="src\collections\autocleanup.h">
+      <Filter>collections</Filter>
+    </ClInclude>
+    <ClInclude Include="src\collections\autocleanup.hpp">
+      <Filter>collections</Filter>
+    </ClInclude>
     <ClInclude Include="src\util\cstring.h">
+      <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="src\util\string_normalize.h">
       <Filter>util</Filter>
     </ClInclude>
   </ItemGroup>

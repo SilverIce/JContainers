@@ -1,3 +1,5 @@
+#include "collections/autocleanup.h"
+
 namespace tes_api_3 {
 
     using namespace collections;
@@ -87,6 +89,48 @@ for ex. JDB.setObj(\"frostfall\", frostFallInformation) will associate 'frostall
         REGISTERF2(readFromFile, "path",
 "DEPRECATED. Reads information from a JSON file at given path and replaces JDB content with the file content");
 
+        /*
+        autoremove - verb, bad idea?
+        setPathForAutoremoval 
+
+        {
+           "__autocleanup": {
+                "pathRemoval": {
+                    "MyPlugin.esp": {
+                        "paths": [".pathX", ".pathY"]
+                    }
+                }
+           }
+        }
+
+        v2
+        {
+           "__autocleanup": {
+                "pathRemoval": [
+                    {
+                        "plugin": "MyPlugin.esp",
+                        "paths": [".pathX", ".pathY"]
+                    },
+                    {
+                        "plugin": "MyPluginY.esp",
+                        "paths": [".pathXA", ".pathYA"]
+                    }
+                ]
+           }
+        }
+
+        */
+
+        REGISTERF2(setPathForAutoremoval, "pluginFileName path",
+            "The @path will be erased when specified plugin will be deactivated");
+        static void setPathForAutoremoval(const char* pluginNameUnsafe, const char* path) {
+            collections::autocleanup::setPathForAutoremoval(tes_context::instance(), pluginNameUnsafe, path);
+        }
+
+        REGISTERF2(unsetPathForAutoremoval, "pluginFileName path", "");
+        static void unsetPathForAutoremoval(const char* pluginNameUnsafe, const char* path) {
+            collections::autocleanup::unsetPathForAutoremoval(tes_context::instance(), pluginNameUnsafe, path);
+        }
     };
 
     TES_META_INFO(tes_db);

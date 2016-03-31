@@ -159,6 +159,8 @@
     <ClInclude Include="src\api_3\tes_map.h" />
     <ClInclude Include="src\api_3\tes_object.h" />
     <ClInclude Include="src\api_3\tes_string.h" />
+    <ClInclude Include="src\collections\autocleanup.h" />
+    <ClInclude Include="src\collections\autocleanup.hpp" />
     <ClInclude Include="src\collections\collections.h" />
     <ClInclude Include="src\collections\default_value.h" />
     <ClInclude Include="src\collections\dyn_form_watcher.h" />
@@ -205,6 +207,7 @@
     <ClInclude Include="src\util\singleton.h" />
     <ClInclude Include="src\util\spinlock.h" />
     <ClInclude Include="src\util\stl_ext.h" />
+    <ClInclude Include="src\util\string_normalize.h" />
     <ClInclude Include="src\util\util.h" />
   </ItemGroup>
   <ItemGroup>

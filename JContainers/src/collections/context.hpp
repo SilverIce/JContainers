@@ -3,6 +3,7 @@
 #include "util/singleton.h"
 
 #include "jansson.h"
+#include "collections/autocleanup.h"
 
 BOOST_CLASS_VERSION(collections::tes_context, 1);
 
@@ -111,6 +112,8 @@ namespace collections {
                     u_postLoadInitializations();
                     u_applyUpdates(hdr.commonVersion);
                     u_postLoadMaintenance(hdr.commonVersion);
+
+                    autocleanup::u_autocleanup(*this);
                 }
                 catch (const std::exception& exc) {
                     _FATALERROR("caught exception (%s) during archive load - '%s'",
