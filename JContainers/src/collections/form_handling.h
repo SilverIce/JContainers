@@ -81,13 +81,13 @@ namespace collections {
             auto pair1 = bs::half_split(fstring, kFormDataSeparator);
 
             if (pair1.second.empty() || !std::equal(pair1.first.begin(), pair1.first.end(), kFormData)) {
-                return boost::optional<FormId>(false, FormId::Zero);
+                return boost::none;
             }
 
             auto pair2 = bs::half_split(pair1.second, kFormDataSeparator);
             // pair2.first - modname part can be empty
             if (/*pair2.first.empty() || */pair2.second.empty()) {
-                return boost::optional<FormId>(false, FormId::Zero);
+                return boost::none;
             }
             
             auto& pluginName = pair2.first;

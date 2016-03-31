@@ -6,11 +6,12 @@
 #include <jansson.h>
 #include <memory>
 
+#include "boost/filesystem/path.hpp"
+#include "boost_extras.h"
+
 #include "collections/collections.h"
 #include "collections/form_handling.h"
-#include "boost_extras.h"
 #include "collections/access.h"
-#include "boost/filesystem/path.hpp"
 
 namespace collections {
 
@@ -336,27 +337,34 @@ namespace collections {
 
     class json_serializer {
 
-        typedef std::set<object_base*> collection_set;
-        typedef std::vector<std::pair<object_base*, json_ref> > objects_to_fill;
+        using object_cref = std::reference_wrapper<const object_base>;
+        struct object_cref_cmp {
+            bool operator()(const object_cref& l, const object_cref& r) {
+                return &l.get() < &r.get();
+            }
+        };
+
+        typedef std::set<object_cref, object_cref_cmp> collection_set;
+        typedef std::vector<std::pair<object_cref, json_ref> > objects_to_fill;
 
         const object_base& _root;
         collection_set _serializedObjects;
         objects_to_fill _toFill;
 
-        // contained - <container, key> relationship
-        typedef boost::variant<int32_t, std::string, form_ref> key_variant;
-        typedef std::map<const object_base*, std::pair<const object_base*, key_variant > > key_info_map;
+        typedef ca::key_variant key_variant;
+        // contained-object to <container-owner, key> relation
+        typedef std::map<object_cref, std::pair<object_cref, key_variant>, object_cref_cmp> key_info_map;
         key_info_map _keyInfo;
 
         explicit json_serializer(const object_base& root) : _root(root) {}
 
     public:
 
-        static json_unique_ref create_json_value(object_base &root) {
+        static json_unique_ref create_json_value(const object_base &root) {
             return make_unique_ptr( json_serializer(root)._write_json(root), &json_decref);
         }
 
-        static auto create_json_data(object_base &root) -> decltype(make_unique_ptr((char*)nullptr, free)) {
+        static auto create_json_data(const object_base &root) -> decltype(make_unique_ptr((char*)nullptr, free)) {
 
             auto jvalue = create_json_value(root);
 
@@ -369,7 +377,7 @@ namespace collections {
     private:
 
         // writes to json
-        json_ref _write_json(object_base &root) {
+        json_ref _write_json(const object_base &root) {
 
             auto root_value = create_placeholder(root);
 
@@ -379,49 +387,49 @@ namespace collections {
                 toFill.swap(_toFill);
 
                 for (auto& pair : toFill) {
-                    fill_json_object(*pair.first, pair.second);
+                    fill_json_object(pair.first, pair.second);
                 }
             }
 
             return root_value;
         }
 
-        json_ref create_placeholder(object_base& object) {
+        json_ref create_placeholder(const object_base& object) {
 
             json_ref placeholder = nullptr;
+            auto obj_cref = std::cref(object);
 
-            if (object.as<array>()) {
-                placeholder = json_array();
+            if (_serializedObjects.find(obj_cref) == _serializedObjects.end()) {
+                placeholder = object.as<array>() ? json_array() : json_object();
+                _toFill.push_back(objects_to_fill::value_type(obj_cref, placeholder));
+                _serializedObjects.insert(obj_cref);
             }
             else {
-                placeholder = json_object();
+                placeholder = json_string(path_to_object(object).c_str());
             }
-
-            _toFill.push_back( objects_to_fill::value_type(&object, placeholder) );
-            _serializedObjects.insert(&object);
 
             return placeholder;
         }
 
-        void fill_json_object(object_base& cnt, json_ref object) {
+        void fill_json_object(const object_base& cnt, json_ref object) {
             struct helper {
                 json_serializer * self;
                 json_ref object;
 
-                void operator () (array& cnt) {
+                void operator () (const array& cnt) {
                     size_t index = 0;
                     for (auto& itm : cnt.u_container()) {
                         self->fill_key_info(itm, cnt, index++);
                         json_array_append_new(object, self->create_value(itm));
                     }
                 }
-                void operator () (map& cnt) {
+                void operator () (const map& cnt) {
                     for (auto& pair : cnt.u_container()) {
                         self->fill_key_info(pair.second, cnt, pair.first);
                         json_object_set_new(object, pair.first.c_str(), self->create_value(pair.second));
                     }
                 }
-                void operator () (form_map& cnt) {
+                void operator () (const form_map& cnt) {
                     json_object_serialization_consts::put_metainfo<form_map>(object);
 
                     for (auto& pair : cnt.u_container()) {
@@ -432,11 +440,11 @@ namespace collections {
                         }
                     }
                 }
-                void operator () (integer_map& cnt) {
+                void operator () (const integer_map& cnt) {
 
                     json_object_serialization_consts::put_metainfo<integer_map>(object);
 
-                    char key_string[number_to_string_buffer_size] = { 0 };
+                    char key_string[number_to_string_buffer_size] = { '\0' };
 
                     for (auto& pair : cnt.u_container()) {
                         self->fill_key_info(pair.second, cnt, pair.first);
@@ -451,11 +459,9 @@ namespace collections {
         }
 
         template<class Key>
-        void fill_key_info(const item& itm, const object_base& in_object, const Key& key) {
-            if (auto obj = itm.object()) {
-                if (_keyInfo.find(obj) == _keyInfo.end()) {
-                    _keyInfo.insert(key_info_map::value_type(obj, std::make_pair(&in_object, key)));
-                }
+        void fill_key_info(const item& value, const object_base& in_object, const Key& key) {
+            if (auto obj = value.object()) {
+                _keyInfo.emplace(key_info_map::value_type{ std::cref(*obj), { std::cref(in_object), key } });
             }
         }
 
@@ -472,7 +478,7 @@ namespace collections {
                 }
 
                 json_ref operator()(const std::string & val) const {
-                    return json_string(val.c_str());
+                    return json_stringn(val.c_str(), val.size());
                 }
 
                 json_ref operator()(const boost::blank&) const {
@@ -499,17 +505,7 @@ namespace collections {
 
                 json_ref operator()(const internal_object_ref & val) const {
                     object_base *obj = val.get();
-
-                    if (!obj) {
-                        return null();
-                    }
-
-                    if (ser._serializedObjects.find(obj) != ser._serializedObjects.end()) {
-                        return json_string(ser.path_to_object(*obj).c_str());
-                    }
-
-                    json_ref node = ser.create_placeholder(*obj);
-                    return node;
+                    return obj ? ser.create_placeholder(*obj) : null();
                 }
 
             } item_visitor = { *this };
@@ -524,7 +520,6 @@ namespace collections {
 
         std::string path_to_object(const object_base& obj) const {
 
-            std::string path{ reference_serialization::prefix };
 
             struct path_appender : boost::static_visitor<> {
                 std::string& p;
@@ -537,7 +532,7 @@ namespace collections {
                 }
 
                 void operator()(const int32_t& idx) const {
-                    char data[number_to_string_buffer_size] = { 0 };
+                    char data[number_to_string_buffer_size] = { '\0' };
                     assert(-1 != sprintf_s(data, "[%d]", idx));
                     p.append(data);
                 }
@@ -547,28 +542,30 @@ namespace collections {
                     p.append(*form_handling::to_string(fid.get()));
                     p.append("]");
                 }
+            };
 
-            } path_appender = {path};
+            std::deque<std::reference_wrapper<const key_variant>> keys;
+            auto child = std::cref(obj);
 
-            std::deque<const key_variant*> keys;
-            const object_base *child = &obj;
-
-            while (child != &_root) {
+            while (&child.get() != &_root) {
 
                 auto itr = _keyInfo.find(child);
 
                 if (itr != _keyInfo.end()) {
                     auto& pair = itr->second;
                     child = pair.first;
-                    keys.push_front(&pair.second);
+                    keys.push_front(pair.second);
                 }
                 else {
                     break;
                 }
             }
 
+            std::string path{ reference_serialization::prefix };
+            path_appender pa = { path };
+
             for (auto& key_var : keys) {
-                boost::apply_visitor(path_appender, *key_var);
+                boost::apply_visitor(pa, key_var.get());
             }
 
             return path;
