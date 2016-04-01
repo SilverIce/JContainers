@@ -64,7 +64,7 @@ namespace tes_api_3 {
             }
         };
 
-        using key_cref = const form_ref&;
+        using key_cref = const form_ref_lightweight&;
 
         static form_map *makeFormStorage(const char *storageName) {
             if (!validate_storage_name(storageName)) {
@@ -239,7 +239,7 @@ namespace tes_api_3 {
         EXPECT_NOT_NIL(formStorage);
         EXPECT_EQ(formStorage, tes_form_db::makeFormStorage(storageName));
 
-        auto fakeForm = make_weak_form_id((FormId)0x14, tes_context::instance());
+        auto fakeForm = make_lightweight_form_ref((FormId)0x14, tes_context::instance());
 
         auto entry = tes_form_db::makeMapEntry(storageName, fakeForm);
         EXPECT_NOT_NIL(entry);
@@ -249,7 +249,7 @@ namespace tes_api_3 {
 
     TEST(tes_form_db, get_set)
     {
-        auto fakeForm = make_weak_form_id((FormId)0x14, tes_context::instance());
+        auto fakeForm = make_lightweight_form_ref((FormId)0x14, tes_context::instance());
 
         const char *path = ".forms.object";
 

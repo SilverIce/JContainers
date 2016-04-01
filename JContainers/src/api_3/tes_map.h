@@ -6,7 +6,7 @@ namespace tes_api_3 {
     template<class Key
         , class Cnt
         , class key_ref = Key &
-        , class key_cref = const Key &
+        , class key_cref = const key_ref
     >
     class tes_map_t : public class_meta< tes_map_t<Key, Cnt, key_ref, key_cref> > {
     public:
@@ -171,7 +171,7 @@ namespace tes_api_3 {
     };
 
     typedef tes_map_t<const char*, map, const char*, const char*> tes_map;
-    typedef tes_map_t<form_ref, form_map> tes_form_map;
+    typedef tes_map_t<form_ref_lightweight, form_map, form_ref_lightweight, form_ref_lightweight> tes_form_map;
     typedef tes_map_t<int32_t, integer_map, int32_t, int32_t> tes_integer_map;
 
     void tes_map::additionalSetup() {
@@ -193,12 +193,20 @@ namespace tes_api_3 {
     //////////////////////////////////////////////////////////////////////////
 
     const char *tes_map_nextKey_comment =
-        "Simplifies iteration over container's contents.\nIncrements and returns previous key, pass defaulf parameter to begin iteration. Usage:\n"
-        "string key = JMap.nextKey(map)\n"
-        "while key\n"
-        "  <retrieve values here>\n"
-        "  key = JMap.nextKey(map, key)\n"
-        "endwhile";
+R"===(Simplifies iteration over container's contents.
+Increments and returns previous key, pass default parameters to begin iteration.
+If @previousKey == @endKey the function returns first key.
+The function returns so-called 'valid' keys (the ones != @endKey).
+The function returns @endKey - so-called 'invalid' key to signal that iteration has reached its end.
+
+Usage:
+
+    string key = JMap.nextKey(map, previousKey="", endKey="")
+    while key != ""
+      <retrieve values here>
+      key = JMap.nextKey(map, key, endKey="")
+    endwhile
+)===";
 
     struct tes_map_ext : class_meta < tes_map_ext > {
         REGISTER_TES_NAME("JMap");
@@ -223,8 +231,24 @@ namespace tes_api_3 {
 
     struct tes_form_map_ext : class_meta < tes_form_map_ext > {
         REGISTER_TES_NAME("JFormMap");
-        REGISTERF(tes_form_map::nextKey, "nextKey", STR(* previousKey=None endKey=None), tes_map_nextKey_comment);
+        REGISTERF(tes_form_map_ext::nextKey, "nextKey", STR(* previousKey=None endKey=None), tes_map_nextKey_comment);
         REGISTERF(tes_form_map::getNthKey, "getNthKey", "* keyIndex", tes_map_ext::getNthKey_comment());
+
+        struct KeyCompareForNextKey {
+            template<class K1, class K2>
+            bool operator()(const K1& nKey, const K2& endKey) const {
+                return skse::lookup_form(nKey.get()) == skse::lookup_form(endKey.get());
+            }
+        };
+
+        static form_ref_lightweight nextKey(form_map* obj
+            , const form_ref_lightweight& previousKey
+            , const form_ref_lightweight& endKey)
+        {
+            // @KeyCompare predicate customizes @nextKey_forPapyrus function
+            // so that the function will not return unloaded (None) form keys at Papyrus level
+            return map_functions_templ < form_map >::nextKey_forPapyrus(obj, previousKey, endKey, KeyCompareForNextKey{});
+        }
     };
 
     struct tes_integer_map_ext : class_meta < tes_integer_map_ext > {
@@ -236,5 +260,35 @@ namespace tes_api_3 {
     TES_META_INFO(tes_map_ext);
     TES_META_INFO(tes_form_map_ext);
     TES_META_INFO(tes_integer_map_ext);
+
+    TEST(tes_form_map, next_key_iteration)
+    {
+        using namespace collections;
+
+        auto& ctx = tes_context::instance();
+        collections::form_map* fmap = tes_object::object<form_map>();
+        fmap->u_container()[make_weak_form_id(util::to_enum<FormId>(0x14), ctx)] = item{ 10 };
+        fmap->u_container()[make_weak_form_id(util::to_enum<FormId>(0x20), ctx)] = item{ 14 };
+
+        auto countIterations = [](collections::form_map* fmap) -> int {
+            int cycle_counter = 0;
+            const form_ref_lightweight endKey{};
+            form_ref_lightweight key = tes_form_map_ext::nextKey(fmap, endKey, endKey);
+            while (key) {
+                ++cycle_counter;
+                key = tes_form_map_ext::nextKey(fmap, key, endKey);
+            }
+            return cycle_counter;
+        };
+
+        EXPECT_EQ(fmap->s_count(), 2);
+        EXPECT_EQ(countIterations(fmap), 2);
+
+        fmap->u_container()[form_ref::make_expired(util::to_enum<FormId>(0x15))] = item{ "nill" };
+        fmap->u_container()[form_ref{}] = item{ "nill" };
+
+        EXPECT_EQ(fmap->s_count(), 4);
+        EXPECT_EQ(countIterations(fmap), 2);
+    }
 
 }

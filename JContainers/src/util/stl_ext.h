@@ -4,11 +4,20 @@
 
 namespace util {
 
-    template<class TreeContainer, class Predicate>
-    void tree_erase_if(TreeContainer&& container, Predicate&& pred) {
+    namespace aux {
+        struct tree_erase_if_eraser {
+            template<class TreeContainer>
+            typename TreeContainer::iterator operator()(TreeContainer& cnt, typename TreeContainer::const_iterator itr) const {
+                return cnt.erase(itr);
+            }
+        };
+    }
+
+    template<class TreeContainer, class Predicate, class Eraser = aux::tree_erase_if_eraser>
+    void tree_erase_if(TreeContainer&& container, Predicate&& pred, Eraser&& eraser = Eraser{}) {
         for (auto itr = container.begin(); itr != container.end();) {
             if (pred(*itr)) {
-                itr = container.erase(itr);
+                itr = eraser(container, itr);
             }
             else {
                 ++itr;
@@ -16,7 +25,7 @@ namespace util {
         }
     }
 
-    namespace {
+    namespace aux {
 
         template<typename S, typename D>
         struct copy_const_qual {
@@ -37,7 +46,7 @@ namespace util {
 
     template<
         typename Enum,
-        typename Number = typename copy_const_qual < Enum, typename std::underlying_type<Enum>::type >::type
+        typename Number = typename aux::copy_const_qual < Enum, typename std::underlying_type<Enum>::type >::type
     >
     inline auto to_integral_ref(Enum & e) -> Number & {
         return reinterpret_cast<Number &>(e);
@@ -49,5 +58,8 @@ namespace util {
         return static_cast<Enum>(value);
     }
 
-
+    // Helps choose between const and non-const iterator
+    template<class ContainerType>
+    using choose_iterator = typename std::conditional< std::is_const<ContainerType>::value,
+        typename ContainerType::const_iterator, typename ContainerType::iterator>::type;
 }

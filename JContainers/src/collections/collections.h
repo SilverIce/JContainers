@@ -189,14 +189,13 @@ namespace collections {
             return const_cast<item*>( const_cast<const array*>(this)->u_get(index) );
         }
 
-        boost::optional<item> u_erase_and_return(int32_t index) {
+        bool u_erase(int32_t index) {
             auto idx = u_convertIndex(index);
             if (idx) {
-                boost::optional<item> var(std::move(_array[*idx]));
                 _array.erase(_array.begin() + *idx);
-                return var;
+                return true;
             }
-            return boost::none;
+            return false;
         }
 
         template<class T>
@@ -247,11 +246,16 @@ namespace collections {
     template<class RealType, class ContainerType>
     class basic_map_collection : public collection_base< RealType > {
     public:
-        typedef ContainerType container_type;
-        typedef typename container_type::value_type value_type;
-        typedef typename ContainerType::key_type key_type;
+        using container_type = ContainerType;
+        using value_type = typename container_type::value_type;
+        using key_type = typename ContainerType::key_type;
+        using iterator = typename container_type::iterator;
+        using const_iterator = typename container_type::const_iterator;
     protected:
         ContainerType cnt;
+
+        template<class ContainerType>
+        static util::choose_iterator<ContainerType> _find(ContainerType& c, const key_type& k) { return c.find(k); }
 
     public:
 
@@ -263,39 +267,52 @@ namespace collections {
             return cnt;
         }
 
-        container_type container_copy() {
+        container_type container_copy() const {
             object_lock g(this);
             return cnt;
         }
 
-        item findOrDef(const key_type& key) const {
+        template<class Key>
+        item findOrDef(const Key& key) const {
             object_lock g(this);
             auto result = u_get(key);
             return result ? *result : item();
         }
 
-        boost::optional<item> get_item(const key_type& key) const {
+        template<class Key>
+        boost::optional<item> get_item(const Key& key) const {
             object_lock g(this);
             auto result = u_get(key);
             return result ? *result : boost::optional<item>();
         }
 
-        const item* u_get(const key_type& key) const {
-            auto itr = cnt.find(key);
+        item& u_get_or_create(const key_type& key) {
+            return cnt[key];
+        }
+
+        template<class Key>
+        const item* u_get(const Key& key) const {
+            auto itr = RealType::_find(cnt, key);
             return itr != cnt.end() ? &(itr->second) : nullptr;
         }
 
-        item* u_get(const key_type& key) {
+        template<class Key>
+        item* u_get(const Key& key) {
             return const_cast<item*>( const_cast<const basic_map_collection*>(this)->u_get(key) );
         }
 
-        bool erase(const key_type& key) {
+        template<class Key>
+        const_iterator u_find_iterator(const Key& k) const { return RealType::_find(cnt, k); }
+
+        template<class Key>
+        bool erase(const Key& key) {
             object_lock g(this);
             return u_erase(key);
         }
 
-        bool u_erase(const key_type& key) {
-            auto itr = cnt.find(key);
+        template<class Key>
+        bool u_erase(const Key& key) {
+            typename container_type::iterator itr = RealType::_find(cnt, key);
             return itr != cnt.end() ? (cnt.erase(itr), true) : false;
         }
 
@@ -303,11 +320,11 @@ namespace collections {
             cnt.clear();
         }
 
-        template<class T> item* u_set(const key_type& key, T&& value) {
+        template<class T, class Key> item* u_set(const Key& key, T&& value) {
             return &(cnt[key] = std::forward<T>(value));
         }
 
-        template<class T> void set(const key_type& key, T&& value) {
+        template<class T, class Key> void set(const Key& key, T&& value) {
             object_lock g(this);
             u_set(key, std::forward<T>(value));
         }
@@ -316,11 +333,13 @@ namespace collections {
             return cnt.size();
         }
 
-        item& operator [] (const key_type& key) {
+        template<class Key>
+        item& operator [] (const Key& key) {
             return const_cast<item&>(const_cast<const basic_map_collection&>(*this)[key]);
         }
 
-        const item& operator [] (const key_type& key) const {
+        template<class Key>
+        const item& operator [] (const Key& key) const {
             auto itm = u_get(key);
             assert(itm);
             return *itm;
@@ -361,9 +380,33 @@ namespace collections {
         void serialize(Archive & ar, const unsigned int version);
     };
 
-
     class form_map : public basic_map_collection< form_map, std::map<form_ref, item, form_ref::stable_less_comparer> >
     {
+    private:
+        using base = basic_map_collection< form_map, std::map<form_ref, item, form_ref::stable_less_comparer> >;
+
+    public:
+
+        // form_ref_lightweight support
+
+        using base::_find;
+        using base::u_get_or_create;
+
+        template<class ContainerType>
+        static util::choose_iterator<ContainerType> _find(ContainerType& c, const form_ref_lightweight& k) {
+            auto comparer = c.key_comp();
+            auto itr = std::lower_bound(c.begin(), c.end(), k,
+                [comparer](const form_map::value_type& pair, const form_ref_lightweight& k) {
+                    return comparer(pair.first, k);
+                }
+            );
+            return itr != c.end() && itr->first == k ? itr : c.end();
+        }
+
+        item& u_get_or_create(const form_ref_lightweight& key) {
+            return cnt[key.to_form_ref()];
+        }
+
     public:
         enum  {
             TypeId = CollectionType::FormMap,

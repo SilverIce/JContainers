@@ -24,7 +24,8 @@ if __name__ == '__main__':
     # location = sys.argv[1]
     # lib = JCLib(location)
     # lib.runTests()
-    args = '',
+        
+    args = ('', '--gtest_filter=*.*',)
 
     try:
         print(sys.argv)

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "util/stl_ext.h"
+#include "skse/skse.h"
 #include "reflection/tes_binding.h"
 #include "collections/collections.h"
 #include "collections/context.h"
@@ -55,12 +56,23 @@ namespace reflection { namespace binding {
 
     template<> struct GetConv < form_watching::form_ref > {
         typedef TESForm* tes_type;
-        static TESForm* convert2Tes(const form_ref& id) {
-            return LookupFormByID((uint32_t)id.get());
+        static TESForm* convert2Tes(const form_watching::form_ref& id) {
+            return skse::lookup_form(id.get());
         }
         static form_watching::form_ref convert2J(const TESForm* form) {
             return make_weak_form_id(form, tes_context::instance());
         }
     };
+
+    template<> struct GetConv < form_watching::form_ref_lightweight > {
+        typedef TESForm* tes_type;
+        static TESForm* convert2Tes(const form_watching::form_ref_lightweight& id) {
+            return skse::lookup_form(id.get());
+        }
+        static form_watching::form_ref_lightweight convert2J(const TESForm* form) {
+            return make_lightweight_form_ref(form, tes_context::instance());
+        }
+    };
+
 }
 }

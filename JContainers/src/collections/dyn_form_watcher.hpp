@@ -36,7 +36,8 @@ namespace collections {
 
             FormId _handle = FormId::Zero;
             std::atomic<bool> _deleted = false;
-            // to not release the handle if the handle wasn't be previously retained (for ex. handle's object was not loaded)
+            // remember whether a form handle was retained or not
+            // to not release it if the handle wasn't be previously retained (for ex. handle's object was not loaded)
             bool _is_handle_retained = false;
 
         public:
@@ -112,10 +113,37 @@ namespace collections {
         };
 
         void form_observer::u_remove_expired_forms() {
-/*
+            auto hashmap_eraser = [](watched_forms_t& cnt, const watched_forms_t::const_iterator& itr) {
+                return cnt.unsafe_erase(itr);
+            };
+
             util::tree_erase_if(_watched_forms, [](const watched_forms_t::value_type& pair) {
                 return pair.second.expired();
-            });*/
+            },
+                hashmap_eraser);
+        }
+
+        void form_observer::u_print_status() const
+        {
+            uint32_t count_of_one_user = 0;
+            uint32_t dyn_form_count = 0;
+
+            for (auto& pair : _watched_forms) {
+                if (!pair.second.expired()) {
+                    log("%" PRIX32 " : %u", pair.first, pair.second.use_count());
+                    if (pair.second.use_count() == 1) {
+                        ++count_of_one_user;
+                    }
+                    if (!fh::is_static(pair.first)) {
+                        ++dyn_form_count;
+                    }
+                }
+            }
+
+            log("total %u", _watched_forms.size());
+            log("count_of_one_user %u", count_of_one_user);
+            log("dyn_form_count %u", dyn_form_count);
+
         }
 
         namespace {
@@ -143,18 +171,22 @@ namespace collections {
 
             auto formId = fh::form_handle_to_id(handle);
             {
+                // Since it's impossible that two threads will delete the same form simultaneosly
+                // we can skip some thread safe stuff
                 auto itr = _watched_forms.find(formId);
                 if (itr != _watched_forms.end()) {
-                    // read and write
 
-                    std::lock_guard<boost::detail::spinlock> guard{ spinlock_for(formId) };
                     auto watched = itr->second.lock();
 
                     if (watched) {
                         watched->set_deleted();
-                        log("flag form-entry %" PRIX32 " as deleted", formId);
+                        {
+                            // the only unsafe piece of code here
+                            std::lock_guard<boost::detail::spinlock> guard{ spinlock_for(formId) };
+                            itr->second.reset();
+                        }
+                        log("flagged form-entry %" PRIX32 " as deleted", formId);
                     }
-                    itr->second.reset();
                 }
             }
         }
@@ -225,24 +257,33 @@ namespace collections {
                 return nullptr;
             }
 
-            log("watching form %X", fId);
-
             {
-                std::lock_guard<boost::detail::spinlock> guard{ spinlock_for(fId) };
 
                 auto itr = _watched_forms.find(fId);
+
+                std::lock_guard<boost::detail::spinlock> guard{ spinlock_for(fId) };
+
                 if (itr != _watched_forms.end()) {
                     auto watched = itr->second.lock();
-                    if (!watched) {
-                        // what if two threads trying assign??
-                        // both threads are here or one is here and another performing @on_form_deleted func.
+                    if (!watched || watched->is_deleted()) {
+                        // form-entry and real form has been deleted (recently)
+                        // watch the form again, create entry, assuming that a new form with such ID exists
+
+                        // this code assumes that @watch_form tries to watch real existing form
+                        // rather than the one from JSON
                         itr->second = watched = form_entry::make(fId);
+
+                        log("queried, re-created form-entry %" PRIX32, fId);
+                    }
+                    else {
+                        log("queried form-entry %" PRIX32, fId);
                     }
                     return watched;
                 }
                 else {
                     auto watched = form_entry::make(fId);
                     _watched_forms[fId] = watched;
+                    log("queried, created new form-entry %" PRIX32, fId);
                     return watched;
                 }
             }
@@ -273,11 +314,6 @@ namespace collections {
         {
         }
 
-        bool form_ref::is_not_expired() const
-        {
-            return _watched_form && !_watched_form->is_deleted();
-        }
-
         form_ref::form_ref(FormId oldId, form_observer& watcher, load_old_id_t)
             : _watched_form(watcher.watch_form(skse::resolve_handle(oldId)))
         {
@@ -289,6 +325,10 @@ namespace collections {
         }
 
         //////////////////
+
+        bool form_ref::is_not_expired() const {
+            return _watched_form && !_watched_form->is_deleted();
+        }
 
         FormId form_ref::get() const {
             return is_not_expired() ? _watched_form->id() : FormId::Zero;
@@ -359,6 +399,14 @@ namespace collections {
         namespace tests {
 
             namespace bs = boost;
+
+            TEST(form_entry_ref, _)
+            {
+                form_entry e;
+
+                e.set_deleted();
+                e.is_deleted();
+            }
 
             TEST(form_watching, perft){
 

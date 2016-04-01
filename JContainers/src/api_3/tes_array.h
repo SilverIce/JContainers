@@ -190,11 +190,11 @@ NEGATIVE_IDX_COMMENT);
         template<class T>
         static void addItemAt(ref obj, T val, SInt32 addToIndex = -1) {
             doWriteOp(obj, addToIndex, [&](uint32_t idx) {
-                obj->_array.insert(obj->begin() + idx, item(val));
+                (void)obj->_array.emplace(obj->begin() + idx, val);
             });
         }
         REGISTERF(addItemAt<SInt32>, "addInt", "* value addToIndex=-1", "appends value/container to the end of array.\n\
-if addToIndex >= 0 it inserts value at given index. "NEGATIVE_IDX_COMMENT);
+if addToIndex >= 0 it inserts value at given index. " NEGATIVE_IDX_COMMENT);
         REGISTERF(addItemAt<Float32>, "addFlt", "* value addToIndex=-1", "");
         REGISTERF(addItemAt<const char *>, "addStr", "* value addToIndex=-1", "");
         REGISTERF(addItemAt<object_base*>, "addObj", "* container addToIndex=-1", "");
@@ -285,7 +285,7 @@ if addToIndex >= 0 it inserts value at given index. "NEGATIVE_IDX_COMMENT);
                 , SInt32 py_writeAtIdx = 0         // start write at index of @targetArray
                 , SInt32 py_stopWriteAtIdx = -1    // stop writing at this last index of @targetArray
                 , SInt32 py_readIdx = 0
-                //, ValueType defaultRead = ValueType(0)
+                , ValueType defaultRead = default_value<ValueType>()
             )
         {
             if (!obj) {
@@ -316,12 +316,12 @@ if addToIndex >= 0 it inserts value at given index. "NEGATIVE_IDX_COMMENT);
             return true;
         }
 
-#define ARGNAMES "* targetArray writeAtIdx=0 stopWriteAtIdx=-1 readIdx=0"
-        REGISTERF(writeToPapyrusArray<SInt32>, "writeToIntegerPArray", ARGNAMES, "TOTOTO??");
-        REGISTERF(writeToPapyrusArray<Float32>, "writeToFloatPArray", ARGNAMES, "");
-        REGISTERF(writeToPapyrusArray<TESForm*>, "writeToFormPArray", ARGNAMES, "");
+#define ARGNAMES "* targetArray writeAtIdx=0 stopWriteAtIdx=-1 readIdx=0 defaultRead="
+        REGISTERF(writeToPapyrusArray<SInt32>, "writeToIntegerPArray", ARGNAMES "0", "TOTOTO??");
+        REGISTERF(writeToPapyrusArray<Float32>, "writeToFloatPArray", ARGNAMES "0.0", "");
+        REGISTERF(writeToPapyrusArray<TESForm*>, "writeToFormPArray", ARGNAMES "None", "");
         //REGISTERF(writeToPapyrusArray<bool>, "writeToBooleanPArray", ARGNAMES, "");
-        REGISTERF(writeToPapyrusArray<skse::string_ref>, "writeToStringPArray", ARGNAMES, "");
+        REGISTERF(writeToPapyrusArray<skse::string_ref>, "writeToStringPArray", ARGNAMES "\"\"", "");
 
 #undef ARGNAMES
 

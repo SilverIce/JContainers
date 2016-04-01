@@ -137,10 +137,14 @@ namespace collections {
 
         stream.flags(stream.flags() | std::ios::binary);
 
-        header::write_to_stream(stream);
-
         activity_stopper s{ *this };
         {
+            // we can also cleanup objects here
+            {
+                _form_watcher.u_remove_expired_forms();
+            }
+
+            header::write_to_stream(stream);
             boost::archive::binary_oarchive arch{ stream };
             arch << *this;
             u_print_stats();
