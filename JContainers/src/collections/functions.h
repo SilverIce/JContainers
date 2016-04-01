@@ -178,7 +178,7 @@ namespace collections {
                 if (container.empty()) {
                     return endKey;
                 }
-                else if (lastKey != endKey) {
+                else if (key_equality(lastKey, endKey) == false) { // keys aren't equal
                     auto itr = obj->u_find_iterator(lastKey);
                     const auto end = container.cend();
 
@@ -194,7 +194,15 @@ namespace collections {
                 }
                 // start iteration
                 else {
-                    return container.begin()->first;
+                    auto itr = container.begin();
+                    const auto end = container.cend();
+
+                    while (itr != end) {
+                        if (key_equality(itr->first, endKey) == false) {
+                            return itr->first;
+                        }
+                        ++itr;
+                    }
                 }
             }
 
