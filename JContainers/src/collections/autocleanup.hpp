@@ -2,6 +2,7 @@
 
 #include <type_traits>
 
+#include "boost/range/algorithm/remove_if.hpp"
 #include "util/string_normalize.h"
 #include "util/cstring.h"
 #include "skse/skse.h"
@@ -9,6 +10,7 @@
 #include "collections/collections.h"
 #include "collections/access.h"
 #include "collections/context.h"
+#include "collections/functions.h"
 
 namespace collections {
 
@@ -35,67 +37,100 @@ namespace collections {
             return Result{ std::forward<Func>(f) };
         }
 
-        void setPathForAutoremoval(tes_context& context, const char* pluginNameUnsafe, const char* path) {
+#define JC_AUTOCLEANUP_PATH ".__internals.pathRemoval" 
 
-            auto getPluginPaths = [](const std::string& plugin, tes_context& context)->array& {
-                array* paths = nullptr;
-                ca::visit_value(
-                    context.root(),
-                    (".__autocleanup.pathRemoval." + plugin + ".paths").c_str(),
-                    ca::creative,
-                    [&context, &paths](item& pathsValue) {
-                        paths = pathsValue.object()->as<array>();
-                        if (!paths) {
-                            paths = &array::object(context);
-                            pathsValue = paths;
-                        }
+        namespace Entry {
+            map& make(tes_context& ctx, const std::string& name) {
+                return map::objectWithInitializer([&](map& me){
+                    me.u_set("pluginName", name);
+                    me.u_set("paths", array::object(ctx));
+                },
+                    ctx);
+            }
+
+            array* get_paths(map& m) {
+                return ca::get(m, ".paths").get_value_or(item()).object()->as<array>();
+            }
+
+            std::string get_name(map& m) {
+                return ca::get<std::string>(m, ".pluginName").get_value_or(std::string());
+            }
+
+            void set_name(map& m, const std::string& name) {
+                ca::assign_creative(m, ".pluginName", name);// .get_value_or(std::string());
+            }
+        }
+
+        static array* pathRemovalEntries(tes_context& context) {
+            return ca::get(context.root(), JC_AUTOCLEANUP_PATH)
+                .get_value_or(item())
+                .object()->as<array>();
+        }
+
+        static map* findAutoCleanupEntry(tes_context& context, const char* pluginNameUnsafe) {
+            const array* entries = ca::get(context.root(), JC_AUTOCLEANUP_PATH)
+                .get_value_or(item())
+                .object()->as<array>();
+
+            if (entries) {
+                map* e = nullptr;
+
+                object_lock l{ entries };
+                auto itr = boost::find_if(entries->u_container(), [&pluginNameUnsafe](const item& itm) {
+                    auto m = itm.object()->as<map>();
+                    return m ? Entry::get_name(*m) == pluginNameUnsafe : false;
+                });
+
+                return itr != entries->u_container().cend() ? (*itr).object()->as<map>() : nullptr;
+            }
+
+            return nullptr;
+        }
+
+        static map& makeAutoCleanupEntry(tes_context& context, const char* pluginNameUnsafe) {
+            array* entries = nullptr;
+            ca::visit_value(
+                context.root(),
+                JC_AUTOCLEANUP_PATH,
+                ca::creative,
+                [&context, &entries](item& entriesVal) {
+                    entries = entriesVal.object()->as<array>();
+                    if (!entries) {
+                        entries = &array::object(context);
+                        entriesVal = entries;
                     }
-                );
-                assert(paths);
-                return *paths;
-            };
-
-            auto insertPath = [](item&& path, array& paths) {
-                object_lock g{ paths };
-                if (std::find(paths.u_container().begin(), paths.u_container().end(), path) == paths.u_container().end()) {
-                    paths.u_container().emplace_back(std::move(path));
                 }
-            };
+            );
 
-            auto const pluginname = util::normalize_string(util::make_cstring(pluginNameUnsafe));
+            map* e = nullptr;
 
-            insertPath(item{ path }, getPluginPaths(pluginname, context));
+            object_lock l{entries};
+            auto itr = boost::find_if(entries->u_container(), [&pluginNameUnsafe](const item& itm) {
+                auto m = itm.object()->as<map>();
+                return m ? Entry::get_name(*m) == pluginNameUnsafe : false;
+            });
 
-            ca::assign_creative(context.root(),
-                (".__autocleanup.pathRemoval." + pluginname + ".pluginName").c_str(),
-                item{ pluginNameUnsafe });
+            if (itr == entries->end()) {
+                e = &Entry::make(context, pluginNameUnsafe);
+                entries->u_push(e);
+            }
+            else {
+                e = (*itr).object()->as<map>();
+                assert(e);
+            }
+
+            return *e;
+        }
+
+        void setPathForAutoremoval(tes_context& context, const char* pluginNameUnsafe, const char* path) {
+            map& entry = makeAutoCleanupEntry(context, pluginNameUnsafe);
+            array_functions::uniqueInsert(item{ path }, Entry::get_paths(entry));
         }
 
         void unsetPathForAutoremoval(tes_context& context, const char* pluginNameUnsafe, const char* path) {
-
-            auto getPluginPaths = [](const std::string& plugin, tes_context& context)->array* {
-                return ca::get(context.root(),
-                    (".__autocleanup.pathRemoval." + plugin + ".paths").c_str()
-                ).get_value_or(item()).object()->as<array>();
-            };
-
-            auto removePath = [](const item& path, array* paths) -> bool {
-                if (!paths) {
-                    return true;
-                }
-                object_lock g{ paths };
-                auto& cnt = paths->u_container();
-                auto itr = std::remove(cnt.begin(), cnt.end(), path);
-                if (itr != cnt.end()) {
-                    cnt.erase(itr, cnt.end());
-                }
-                return cnt.empty();
-            };
-
-            auto const pluginname = util::normalize_string(util::make_cstring(pluginNameUnsafe));
-
-            bool isLastItemRemoved = removePath(item{ path }, getPluginPaths(pluginname.c_str(), context));
-
+            auto entry = findAutoCleanupEntry(context, pluginNameUnsafe);
+            auto paths = entry ? Entry::get_paths(*entry) : nullptr;
+            array_functions::uniqueRemove(item{ path }, paths);
             // Now remove the entry if there are no more members (except paths)
             // But we don't need to do this because we are free to remove the entry when plugin will be disabled
         }
@@ -130,18 +165,18 @@ namespace collections {
                 endwhile
                 */
 
-            map* pathRemoval = ca::get(context.root(), ".__autocleanup.pathRemoval").get_value_or(item()).object()->as<map>();
+            array* pathRemoval = pathRemovalEntries(context);
 
             if (pathRemoval) {
                 //DataHandler& dataHandler = *DataHandler::GetSingleton();
-                auto eraseCondition = [&context, &isPluginLoaded](const map::value_type& p) -> bool {
-                    if (auto entry = p.second.object()) {
-                        std::string pluginName = ca::get<std::string>(*entry, ".pluginName").get_value_or(std::string());
+                auto eraseCondition = [&context, &isPluginLoaded](const item& p) -> bool {
+                    if (auto entry = p.object()->as<map>()) {
+                        std::string pluginName = Entry::get_name(*entry);
                         if (isPluginLoaded(pluginName)) {
                             return false; // do not erase entry
                         }
 
-                        if (array* paths = ca::get(*entry, ".paths").get_value_or(item()).object()->as<array>()) {
+                        if (array* paths = Entry::get_paths(*entry)) {
                             for (item& val : paths->u_container()) {
                                 if (auto* path = val.strValue()) {
                                     auto accInfo = ca::access_constant(context.root(), path);
@@ -156,7 +191,10 @@ namespace collections {
                     return true;
                 };
 
-                util::tree_erase_if(pathRemoval->u_container(), eraseCondition);
+                auto itr = boost::remove_if(pathRemoval->u_container(), eraseCondition);
+                if (itr != pathRemoval->u_container().end()) {
+                    pathRemoval->u_container().erase(itr, pathRemoval->u_container().end());
+                }
             }
         }
 

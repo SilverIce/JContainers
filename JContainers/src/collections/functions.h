@@ -52,6 +52,31 @@ namespace collections {
             return indexes;
         }
 
+        template<class Value>
+        static void uniqueInsert(Value&& v, array* obj) {
+            if (!obj) {
+                return;
+            }
+            object_lock g{ obj };
+            auto& container = obj->u_container();
+            if (std::find(container.begin(), container.end(), v) == container.end()) {
+                container.emplace_back(std::forward<Value>(v));
+            }
+        }
+
+        template<class Value>
+        static void uniqueRemove(const Value& path, array* paths) {
+            if (!paths) {
+                return;
+            }
+            object_lock g{ paths };
+            auto& cnt = paths->u_container();
+            auto itr = std::remove(cnt.begin(), cnt.end(), path);
+            if (itr != cnt.end()) {
+                cnt.erase(itr, cnt.end());
+            }
+        };
+
         template<class Op>
         static void doReadOp(array * obj, index pyIndex, Op& operation) {
             if (!obj) {
