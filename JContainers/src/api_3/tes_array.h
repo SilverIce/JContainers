@@ -36,7 +36,7 @@ namespace tes_api_3 {
 
         REGISTERF(tes_object::object<array>, "object", "", kCommentObject);
 
-        static object_base* objectWithSize(SInt32 size) {
+        static object_base* objectWithSize(tes_context& ctx, SInt32 size) {
             if (size < 0) {
                 return nullptr;
             }
@@ -44,23 +44,23 @@ namespace tes_api_3 {
             auto& obj = array::objectWithInitializer([&](array &me) {
                 me._array.resize(size);
             },
-                tes_context::instance());
+                ctx);
 
             return &obj;
         }
         REGISTERF2(objectWithSize, "size", "creates array of given size, filled with empty items");
 
         template<class TesType, class JCType = TesType>
-        static object_base* fromArray(VMArray<TesType> arr) {
+        static object_base* fromArray(tes_context& ctx, VMArray<TesType> arr) {
             auto obj = &array::objectWithInitializer([&](array &me) {
                 me.u_container().reserve(arr.Length());
                 for (UInt32 i = 0; i < arr.Length(); ++i) {
                     TesType val;
                     arr.Get(&val, i);
-                    me.u_container().emplace_back(reflection::binding::get_converter<JCType>::convert2J(val));
+                    me.u_container().emplace_back(reflection::binding::get_converter<JCType>::convert2J(val, ctx));
                 }
             },
-                tes_context::instance());
+                ctx);
 
             return obj;
         }
@@ -72,7 +72,7 @@ objectWithBooleans converts booleans into integers");
         REGISTERF(fromArray<bool>, "objectWithBooleans",  "values", nullptr);
         REGISTERF(ARGS(fromArray<TESForm*, form_ref>), "objectWithForms", "values", nullptr);
 
-        static object_base* subArray(ref source, SInt32 startIndex, SInt32 endIndex) {
+        static object_base* subArray(tes_context& ctx, ref source, SInt32 startIndex, SInt32 endIndex) {
             if (!source) {
                 return nullptr;
             }
@@ -86,13 +86,13 @@ objectWithBooleans converts booleans into integers");
             auto obj = &array::objectWithInitializer([&](array &me) {
                 me._array.insert(me.begin(), source->begin() + startIndex, source->begin() + endIndex);
             },
-                tes_context::instance());
+                ctx);
 
             return obj;
         }
         REGISTERF2(subArray, "* startIndex endIndex", "creates new array containing all values from source array in range [startIndex, endIndex)");
 
-        static void addFromArray(ref obj, ref another, SInt32 insertAtIndex = -1) {
+        static void addFromArray(tes_context& ctx, ref obj, ref another, SInt32 insertAtIndex = -1) {
             if (!obj || !another || obj == another) {
                 return ;
             }
@@ -107,7 +107,7 @@ objectWithBooleans converts booleans into integers");
 "adds values from source array into this array. if insertAtIndex is -1 (default behaviour) it adds to the end.\n"
 NEGATIVE_IDX_COMMENT);
 
-        static void addFromFormList(ref obj, BGSListForm *formList, SInt32 insertAtIndex = -1) {
+        static void addFromFormList(tes_context& ctx, ref obj, BGSListForm *formList, SInt32 insertAtIndex = -1) {
             if (!obj || !formList) {
                 return;
             }
@@ -126,14 +126,14 @@ NEGATIVE_IDX_COMMENT);
                 inserter(array *obj, uint32_t insertAt, tes_context& c) : arr(obj), insertIdx(insertAt), context(c) {}
             };
 
-            doWriteOp(obj, insertAtIndex, [formList, &obj](uint32_t idx) {
-                formList->Visit(inserter{ obj, idx, tes_context::instance() });
+            doWriteOp(obj, insertAtIndex, [formList, &obj, &ctx](uint32_t idx) {
+                formList->Visit(inserter{ obj, idx, ctx });
             });
         }
         REGISTERF2(addFromFormList, "* source insertAtIndex=-1", nullptr);
 
         template<class T>
-        static T itemAtIndex(ref obj, Index index, T t = default_value<T>()) {
+        static T itemAtIndex(tes_context& ctx, ref obj, Index index, T t = default_value<T>()) {
             doReadOp(obj, index, [=, &t](uint32_t idx) {
                 t = obj->_array[idx].readAs<T>();
             });
@@ -148,7 +148,7 @@ NEGATIVE_IDX_COMMENT);
         REGISTERF(itemAtIndex<form_ref>, "getForm", "* index default=None", "");
 
         template<class T>
-        static SInt32 findVal(ref obj, T value, SInt32 pySearchStartIndex = 0) {
+        static SInt32 findVal(tes_context& ctx, ref obj, T value, SInt32 pySearchStartIndex = 0) {
 
             int result = -1;
 
@@ -175,7 +175,7 @@ NEGATIVE_IDX_COMMENT);
         REGISTERF(findVal<form_ref>, "findForm", "* value searchStartIndex=0", "");
 
         template<class T>
-        static void replaceItemAtIndex(ref obj, Index index, T val) {
+        static void replaceItemAtIndex(tes_context& ctx, ref obj, Index index, T val) {
             doReadOp(obj, index, [=](uint32_t idx) {
                 obj->_array[idx] = item(val);
             });
@@ -188,7 +188,7 @@ NEGATIVE_IDX_COMMENT);
         REGISTERF(replaceItemAtIndex<form_ref>, "setForm", "* index value", "");
 
         template<class T>
-        static void addItemAt(ref obj, T val, SInt32 addToIndex = -1) {
+        static void addItemAt(tes_context& ctx, ref obj, T val, SInt32 addToIndex = -1) {
             doWriteOp(obj, addToIndex, [&](uint32_t idx) {
                 (void)obj->_array.emplace(obj->begin() + idx, val);
             });
@@ -200,24 +200,24 @@ if addToIndex >= 0 it inserts value at given index. " NEGATIVE_IDX_COMMENT);
         REGISTERF(addItemAt<object_base*>, "addObj", "* container addToIndex=-1", "");
         REGISTERF(addItemAt<form_ref>, "addForm", "* value addToIndex=-1", "");
 
-        static Index count(ref obj) {
-            return tes_object::count(obj);
+        static Index count(tes_context& ctx, ref obj) {
+            return tes_object::count(ctx, obj);
         }
         REGISTERF2(count, "*", "returns number of items in array");
 
-        static void clear(ref obj) {
-            tes_object::clear(obj);
+        static void clear(tes_context& ctx, ref obj) {
+            tes_object::clear(ctx, obj);
         }
         REGISTERF2(clear, "*", "removes all items from array");
 
-        static void eraseIndex(ref obj, SInt32 index) {
+        static void eraseIndex(tes_context& ctx, ref obj, SInt32 index) {
             doReadOp(obj, index, [=](uint32_t idx) {
                 obj->_array.erase(obj->begin() + idx);
             });
         }
         REGISTERF2(eraseIndex, "* index", "erases item at index. "NEGATIVE_IDX_COMMENT);
 
-        static void eraseRange(ref obj, SInt32 first, SInt32 last) {
+        static void eraseRange(tes_context& ctx, ref obj, SInt32 first, SInt32 last) {
 
             // 0,1,2,3,4
             // b        e
@@ -233,7 +233,7 @@ if addToIndex >= 0 it inserts value at given index. " NEGATIVE_IDX_COMMENT);
         REGISTERF2(eraseRange, "* first last", "erases [first, last] range of items. "NEGATIVE_IDX_COMMENT
             "\nFor ex. with [1,-1] range it will erase everything except the first item");
 
-        static SInt32 valueType(ref obj, SInt32 index) {
+        static SInt32 valueType(tes_context& ctx, ref obj, SInt32 index) {
             SInt32 type = item_type::no_item;
             doReadOp(obj, index, [=, &type](uint32_t idx) {
                 type = obj->_array[idx].type();
@@ -243,7 +243,7 @@ if addToIndex >= 0 it inserts value at given index. " NEGATIVE_IDX_COMMENT);
         }
         REGISTERF2(valueType, "* index", "returns type of the value at index. "NEGATIVE_IDX_COMMENT"\n"VALUE_TYPE_COMMENT);
 
-        static void swapItems(ref obj, SInt32 idx, SInt32 idx2) {
+        static void swapItems(tes_context& ctx, ref obj, SInt32 idx, SInt32 idx2) {
 
             SInt32 pyIndexes[] = { idx, idx2 };
             doReadOp(obj, pyIndexes, [=](const std::array<uint32_t, 2>& indices) {
@@ -255,7 +255,7 @@ if addToIndex >= 0 it inserts value at given index. " NEGATIVE_IDX_COMMENT);
         }
         REGISTERF2(swapItems, "* index1 index2", "Exchanges the items at index1 and index2. "NEGATIVE_IDX_COMMENT);
 
-        static ref sort(ref obj) {
+        static ref sort(tes_context& ctx, ref obj) {
             if (obj) {
                 object_lock g(obj);
                 std::sort(obj->u_container().begin(), obj->u_container().end());
@@ -264,7 +264,7 @@ if addToIndex >= 0 it inserts value at given index. " NEGATIVE_IDX_COMMENT);
         }
         REGISTERF2(sort, "*", "Sorts the items into ascending order (none < int < float < form < object < string). Returns the array itself");
 
-        static ref unique(ref obj) {
+        static ref unique(tes_context& ctx, ref obj) {
             if (obj) {
                 object_lock g(obj);
                 std::sort(obj->u_container().begin(), obj->u_container().end());
@@ -280,7 +280,8 @@ if addToIndex >= 0 it inserts value at given index. " NEGATIVE_IDX_COMMENT);
             typename PArrayType = VMArray<ValueType>
         >
         static bool writeToPapyrusArray(
-                ref obj
+                tes_context& ctx
+                , ref obj
                 , PArrayType targetArray
                 , SInt32 py_writeAtIdx = 0         // start write at index of @targetArray
                 , SInt32 py_stopWriteAtIdx = -1    // stop writing at this last index of @targetArray

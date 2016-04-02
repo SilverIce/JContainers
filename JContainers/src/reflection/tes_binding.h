@@ -18,8 +18,7 @@ namespace reflection { namespace binding {
             return val;
         }
 
-        template<class State>
-        static const tes_type& convert2Tes(const tes_type& val, const State&) {
+        static const tes_type& convert2Tes(const tes_type& val) {
             return val;
         }
     };
@@ -28,7 +27,8 @@ namespace reflection { namespace binding {
     struct StaticCastValueConverter {
         typedef TesType tes_type;
 
-        static JType convert2J(const TesType& val) {
+        template<class State>
+        static JType convert2J(const TesType& val, const State&) {
             return static_cast<JType>(val);
         }
 
@@ -45,8 +45,8 @@ namespace reflection { namespace binding {
             return str.c_str();
         }
 
-        template<class AnyString, class State>
-        static skse::string_ref convert2Tes(const AnyString& str, const State&) {
+        template<class AnyString>
+        static skse::string_ref convert2Tes(const AnyString& str) {
             return skse::string_ref(str);
         }
     };
@@ -108,6 +108,7 @@ namespace reflection { namespace binding {
     template<size_t ParamCnt>
     struct state_native_function_selector;
 
+#undef MAKE_ME_HAPPY
 #define MAKE_ME_HAPPY(N)\
     template<> struct state_native_function_selector<N> {\
         template<class State, class... Params> using function = ::NativeFunctionWithState ## N <State, Params...>; \
@@ -163,12 +164,12 @@ namespace reflection { namespace binding {
 
             struct non_void_ret {
                 static convert_to_tes_type<R> tes_func(
-                    StaticFunctionTag* state,
+                    StaticFunctionTag* tag,
                     convert_to_tes_type<Params> ... params)
                 {
                     return GetConv<R>::convert2Tes(
                         func(
-                            get_converter<Params>::convert2J(params) ...
+                            get_converter<Params>::convert2J(params, tag) ...
                         )
                     );
                 }
@@ -176,10 +177,10 @@ namespace reflection { namespace binding {
 
             struct void_ret {
                 static void tes_func(
-                    StaticFunctionTag* state,
+                    StaticFunctionTag* tag,
                     convert_to_tes_type<Params> ... params)
                 {
-                    func(get_converter<Params>::convert2J(params) ...);
+                    func(get_converter<Params>::convert2J(params, tag) ...);
                 }
             };
 
@@ -222,7 +223,7 @@ namespace reflection { namespace binding {
         template< R(*func)(State&, Params ...) >
         struct magick {
 
-            using base = proxy;
+            using base = state_proxy;
 
             static auto func_ptr() -> decltype(func) {
                 return func;
@@ -236,7 +237,7 @@ namespace reflection { namespace binding {
                     return GetConv<R>::convert2Tes(
                         func(
                             state,
-                            get_converter<Params>::convert2J(params) ...
+                            get_converter<Params>::convert2J(params, state) ...
                         )
                     );
                 }
@@ -247,7 +248,7 @@ namespace reflection { namespace binding {
                     State& state,
                     convert_to_tes_type<Params> ... params)
                 {
-                    func(state, get_converter<Params>::convert2J(params) ...);
+                    func(state, get_converter<Params>::convert2J(params, state) ...);
                 }
             };
 
@@ -317,18 +318,20 @@ namespace reflection { namespace binding {
         }
     };
 
-#define REGISTERF(func, _funcname, _args, _comment)\
+#define REGISTERF REGISTERF_STATE
+#define REGISTERF_STATELESS(func, _funcname, _args, _comment)\
     ::reflection::binding::function_registree CONCAT(_func_registree_, __LINE__){ metaInfo,\
         ::reflection::binding::proxy<decltype(::reflection::binding::msvc_identity(&func))>::magick<&func>(), \
         _funcname, _args, _comment };
 
 #define REGISTERF2(func, args, comment)     REGISTERF(func, #func, args, comment)
+#define REGISTERF2_STATELESS(func, args, comment)     REGISTERF_STATELESS(func, #func, args, comment)
 
 #define REGISTERF_STATE(func, _funcname, _args, _comment)\
     ::reflection::binding::function_registree CONCAT(_func_registree_, __LINE__){ \
         metaInfo, \
         ::reflection::binding::state_proxy<decltype(::reflection::binding::msvc_identity(&func))>::magick<&func>(), \
-        _funcname, _args, _comment
+        _funcname, _args, _comment \
     };
 
     struct papyrus_textblock_setter {

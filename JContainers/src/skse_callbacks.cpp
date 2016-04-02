@@ -10,6 +10,7 @@
 
 //#include "gtest.h"
 #include "skse/skse.h"
+#include "skse/PapyrusVM.h"
 #include "util/util.h"
 #include "jc_interface.h"
 #include "reflection/reflection.h"
@@ -204,10 +205,10 @@ namespace {
                     info.visit_functions([&](const reflection::function_info& func) {
 
                         func.registrator(reflection::bind_args{
-                            registry, info.className().c_str(), func.name.c_str(),
-                            domain_master::master::instance().get_default_domain()
+                            *registry, info.className().c_str(), func.name.c_str(),
+                            &domain_master::master::instance().get_default_domain()
                         });
-                        registry.SetFunctionFlags(info.className().c_str(), func.name.c_str(), VMClassRegistry::kFunctionFlag_NoWait);
+                        registry->SetFunctionFlags(info.className().c_str(), func.name.c_str(), VMClassRegistry::kFunctionFlag_NoWait);
                     });
                 });
                 

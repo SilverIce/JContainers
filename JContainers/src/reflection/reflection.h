@@ -141,10 +141,8 @@ namespace reflection {
         }
 
         template<class Visitor>
-        void visit_functions(Visitor&& visitor) {
+        void visit_functions(Visitor&& visitor) const {
             assert(initialized());
-
-            auto clsName = className();
             for (const auto& itm : methods) {
                 visitor(itm);
             }

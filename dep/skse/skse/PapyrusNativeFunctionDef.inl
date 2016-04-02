@@ -5,6 +5,7 @@
 #define VOID_SPEC 1
 #include "PapyrusNativeFunctionDef_Base.inl"
 
+#undef CLASS_NAME
 #define CLASS_NAME __MACRO_JOIN__(NativeFunctionWithState, NUM_PARAMS)
 #define ACCEPTS_STATE
 

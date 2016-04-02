@@ -247,9 +247,9 @@ public:
 #endif
 			((CallbackType)m_callback)(
 #ifdef ACCEPTS_STATE
-            _state,
+            _state
 #else
-            base,
+            base
 #endif
 #if NUM_PARAMS >= 1
 			, arg0

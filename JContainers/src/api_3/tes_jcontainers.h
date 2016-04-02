@@ -14,12 +14,12 @@ namespace tes_api_3 {
         static bool __isInstalled() {
             return true;
         }
-        REGISTERF2(__isInstalled, nullptr, "NOT part of public API");
+        REGISTERF2_STATELESS(__isInstalled, nullptr, "NOT part of public API");
 
         static UInt32 APIVersion() {
             return (UInt32)consts::api_version;
         }
-        REGISTERF2(APIVersion, nullptr, []() {
+        REGISTERF2_STATELESS(APIVersion, nullptr, []() {
             std::stringstream comm;
             comm << "Version information.\n"
                 "It's a good practice to validate installed JContainers version with the following code:\n"
@@ -33,7 +33,7 @@ namespace tes_api_3 {
         static UInt32 featureVersion() {
             return (UInt32)consts::feature_version;
         }
-        REGISTERF2(featureVersion, nullptr, nullptr);
+        REGISTERF2_STATELESS(featureVersion, nullptr, nullptr);
 
         static bool fileExistsAtPath(const char *filename) {
             if (!filename) {
@@ -44,14 +44,14 @@ namespace tes_api_3 {
             int result = _stat(filename, &buf);
             return result == 0;
         }
-        REGISTERF2(fileExistsAtPath, "path", "Returns true if file at a specified path exists");
+        REGISTERF2_STATELESS(fileExistsAtPath, "path", "Returns true if file at a specified path exists");
 
         static void removeFileAtPath(const char *filename) {
             if (filename) {
                 boost::filesystem::remove_all(filename);
             }
         }
-        REGISTERF2(removeFileAtPath, "path", "Deletes the file or directory identified by a given path");
+        REGISTERF2_STATELESS(removeFileAtPath, "path", "Deletes the file or directory identified by a given path");
 
         static std::string userDirectory() {
             char path[MAX_PATH];
@@ -72,12 +72,12 @@ namespace tes_api_3 {
         static skse::string_ref _userDirectory() {
             return userDirectory().c_str();
         }
-        REGISTERF(_userDirectory, "userDirectory", "", "A path to user-specific directory - "JC_USER_FILES);
+        REGISTERF_STATELESS(_userDirectory, "userDirectory", "", "A path to user-specific directory - "JC_USER_FILES);
 
         static SInt32 lastError() {
             return 0;
         }
-        REGISTERF2(lastError, nullptr, []() {
+        REGISTERF2_STATELESS(lastError, nullptr, []() {
             std::stringstream comm;
             comm << "DEPRECATE. Returns last occured error (error code):";
             for (int i = 0; i < JErrorCount; ++i) {
@@ -89,7 +89,7 @@ namespace tes_api_3 {
         static skse::string_ref lastErrorString() {
             return "";
         }
-        REGISTERF2(lastErrorString, nullptr, "DEPRECATE. Returns string that describes last error");
+        REGISTERF2_STATELESS(lastErrorString, nullptr, "DEPRECATE. Returns string that describes last error");
 
         REGISTER_TEXT([]() {
             const char* fmt = R"===(
@@ -108,13 +108,15 @@ endfunction
 
     TEST(tes_jcontainers, userDirectory)
     {
+        auto& ctx = tes_context::instance();
+
         auto write_file = [&](const boost::filesystem::path& path) {
             boost::filesystem::remove_all(path);
 
             EXPECT_FALSE(boost::filesystem::is_regular(path));
 
-            object_stack_ref obj = tes_object::object<map>();
-            tes_object::writeToFile(obj.get(), path.string().c_str());
+            object_stack_ref obj = tes_object::object<map>(ctx);
+            tes_object::writeToFile(ctx, obj.get(), path.string().c_str());
 
             EXPECT_TRUE(boost::filesystem::is_regular(path));
 

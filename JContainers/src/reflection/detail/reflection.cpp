@@ -67,7 +67,7 @@ namespace reflection {
             }
 
             static void nothing() {}
-            REGISTERF2(nothing, "", "does absolutely nothing");
+            REGISTERF2_STATELESS(nothing, "", "does absolutely nothing");
         };
 
         TES_META_INFO(test_class);
