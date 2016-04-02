@@ -177,13 +177,13 @@ JValue.cleanPool(\"uniquePoolName\")"
         }
         REGISTERF2(clear, "*", "removes all items from container");
 
-        static object_base* readFromFile(const char *path) {
-            auto obj = json_deserializer::object_from_file(tes_context::instance(), path);
+        static object_base* readFromFile(tes_context& context, const char *path) {
+            auto obj = json_deserializer::object_from_file(context, path);
             return  obj;
         }
-        REGISTERF2(readFromFile, "filePath", "JSON serialization/deserialization:\n\ncreates and returns new container object containing contents of JSON file");
+        REGISTERF2_(readFromFile, "filePath", "JSON serialization/deserialization:\n\ncreates and returns new container object containing contents of JSON file");
 
-        static object_base* readFromDirectory(const char *dirPath, const char *extension = "")
+        static object_base* readFromDirectory(tes_context& context, const char *dirPath, const char *extension = "")
         {
             using namespace boost;
 
@@ -198,7 +198,7 @@ JValue.cleanPool(\"uniquePoolName\")"
             filesystem::directory_iterator end_itr;
             filesystem::path root(dirPath);
 
-            map &files = map::object(tes_context::instance()); 
+            map &files = map::object(context);
 
             for ( filesystem::directory_iterator itr( root ); itr != end_itr; ++itr ) {
 
@@ -215,7 +215,7 @@ JValue.cleanPool(\"uniquePoolName\")"
 
             return &files;
         }
-        REGISTERF2(readFromDirectory, "directoryPath extension=\"\"",
+        REGISTERF2_(readFromDirectory, "directoryPath extension=\"\"",
             "Parses JSON files in a directory (non recursive) and returns JMap containing {filename, container-object} pairs.\n"
             "Note: by default it does not filter files by extension and will try to parse everything");
 

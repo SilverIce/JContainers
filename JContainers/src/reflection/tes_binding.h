@@ -120,7 +120,7 @@ namespace reflection { namespace binding {
     template <typename T> struct proxy;
 
     template <class R, class... Params>
-    struct proxy<R (*)(Params ...)>
+    struct proxy<R(*)(Params ...)>
     {
         static std::vector<type_info_func> parameter_info() {
             return {
@@ -143,7 +143,7 @@ namespace reflection { namespace binding {
 
             struct non_void_ret {
                 static get_converter_tes_type<R> tes_func(
-                    StaticFunctionTag* tag,
+                    StaticFunctionTag* state,
                     get_converter_tes_type<Params> ... params)
                 {
                     return GetConv<R>::convert2Tes(
@@ -156,7 +156,7 @@ namespace reflection { namespace binding {
 
             struct void_ret {
                 static void tes_func(
-                    StaticFunctionTag* tag,
+                    StaticFunctionTag* state,
                     get_converter_tes_type<Params> ... params)
                 {
                     func(get_converter<Params>::convert2J(params) ...);
@@ -177,7 +177,8 @@ namespace reflection { namespace binding {
                             args.functionName,
                             args.className,
                             &tes_func_holder::tes_func,
-                            &args.registry
+                            &args.registry,
+                            args.shared_state
                         )
                 );
             }

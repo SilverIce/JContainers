@@ -18,6 +18,8 @@
 #include "collections/context.h"
 #include "collections/dyn_form_watcher.h"
 
+#include "context_master/domain_master.h"
+
 class VMClassRegistry;
 
 namespace jc {
@@ -31,6 +33,7 @@ static SKSEMessagingInterface       * g_messaging = nullptr;
 namespace {
 
     using namespace collections;
+    using namespace domain_master;
 
     static PluginHandle					g_pluginHandle = kPluginHandle_Invalid;
 
@@ -62,7 +65,7 @@ namespace {
         util::do_with_timing("Save", [intfc]() {
             if (intfc->OpenRecord((UInt32)consts::storage_chunk, (UInt32)serialization_version::current)) {
                 io::stream<skse_data_sink> stream(skse_data_sink{ intfc });
-                collections::tes_context::instance().write_to_stream(stream);
+                domain_master::master::instance().write_to_stream(stream);
                 //_DMESSAGE("%lu bytes saved", stream.tellp());
             }
             else {
@@ -93,7 +96,7 @@ namespace {
         util::do_with_timing("Load", [intfc]() {
 
             skse::set_silent_api();
-            collections::tes_context::instance().clearState();
+            domain_master::master::instance().clear_state();
             skse::set_real_api();
 
             UInt32 type = 0;
@@ -107,7 +110,7 @@ namespace {
             }
 
             io::stream<skse_data_source> stream(skse_data_source(static_cast<consts>(type) == consts::storage_chunk ? intfc : nullptr));
-            collections::tes_context::instance().read_from_stream(stream);
+            domain_master::master::instance().read_from_stream(stream);
         });
     }
 
@@ -168,10 +171,45 @@ namespace {
 
         bool registerAllFunctions(VMClassRegistry *registry) {
 
+            // One of the ways: temp. clone class meta infos, register them
+            // 2nd: pass each context into "info.bind(*registry, some-context);"
+
+            // Anyway, in a result we must construct plenty of SKSE native functors, each function will store a pointer
+            // to tes_context instance. The functions will be registered in Papyrus VM
+
+            // context_master should return tes_context's for us
+            // Here we should iterator over files in JCData/Contexts/ folder:
+            // for f in "./JCData/Contexts/*.json":
+            //   c = master.get_context(f)
+            //   for cls in metainfo:
+            //     cls.register(c,f)
+
+            // Need to enhance control over resulting function and class name
+            // E.g. turn JArray.addObj into PSM_JContainers.JArray_addObj
+
+            // Pitfall: since the functions registered only ONCE, we must 
+            // preserve context pointers during ALL gaming session
+
+            // Нужно понимать, что после этой фичи никто памятник тебе не поставит
+
             util::do_with_timing("Registering functions", [=]() {
+
                 reflection::foreach_metaInfo_do([=](const reflection::class_info& info) {
                     info.bind(*registry);
                 });
+
+                namespace fs = boost::filesystem;
+                fs::path dir = util::relative_to_dll_path("JCData/Domains/");
+                for (auto& domainName : domain_master::master::instance().active_domains()) {
+
+
+
+                    reflection::foreach_metaInfo_do([=](const reflection::class_info& info) {
+                        // modify class name & function names
+
+                        info.bind(*registry);
+                    });
+                }
             });
             return true;
         }
@@ -184,9 +222,8 @@ namespace {
             g_serialization->SetSaveCallback(g_pluginHandle, save);
             g_serialization->SetLoadCallback(g_pluginHandle, load);
 
-
             g_serialization->SetFormDeleteCallback(g_pluginHandle, [](UInt64 handle) {
-                tes_context::instance()._form_watcher.on_form_deleted((FormHandle)handle);
+                domain_master::master::instance().get_form_observer().on_form_deleted((FormHandle)handle);
             });
 
             g_papyrus->Register(registerAllFunctions);

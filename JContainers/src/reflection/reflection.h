@@ -33,6 +33,7 @@ namespace reflection {
         VMClassRegistry& registry;
         const char* className;
         const char* functionName;
+        void* shared_state;
     };
 
     struct function_info {
