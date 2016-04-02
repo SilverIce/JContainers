@@ -265,7 +265,7 @@ Usage:
     {
         using namespace collections;
 
-        auto& ctx = tes_context::instance();
+        tes_context ctx;
         collections::form_map* fmap = tes_object::object<form_map>(ctx);
         fmap->u_container()[make_weak_form_id(util::to_enum<FormId>(0x14), ctx)] = item{ 10 };
         fmap->u_container()[make_weak_form_id(util::to_enum<FormId>(0x20), ctx)] = item{ 14 };

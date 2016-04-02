@@ -73,6 +73,7 @@
     <ClCompile Include="src\util\logging.cpp">
       <Filter>util</Filter>
     </ClCompile>
+    <ClCompile Include="src\context_master\domain_master.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\gtest.h">

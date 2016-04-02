@@ -10,12 +10,15 @@
 #include "boost/smart_ptr/weak_ptr.hpp"
 #include "boost/serialization/split_member.hpp"
 #include "boost/noncopyable.hpp"
+#include "boost/core/explicit_operator_bool.hpp"
 
 #include "util/spinlock.h"
 #include "util/stl_ext.h"
 
 #include "rw_mutex.h"
 #include "form_id.h"
+
+class TESForm;
 
 namespace collections {
     

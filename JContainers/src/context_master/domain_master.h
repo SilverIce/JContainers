@@ -1,9 +1,13 @@
+#pragma once
+
 #include <string>
+#include "collections/dyn_form_watcher.h"
+#include "collections/context.h"
 
 namespace domain_master {
 
-    class context;
-    class form_observer;
+    using context = ::collections::tes_context;
+    using form_observer = ::collections::form_watching::form_observer;
 
     class master {
     public:
@@ -11,7 +15,7 @@ namespace domain_master {
         static const std::vector<std::string>& active_domain_names();
 
         // 
-        void initialize();
+        //void initialize();
 
         context& get_domain_with_name(const std::string& name);// or create if none
         context& get_default_domain();
@@ -28,7 +32,9 @@ namespace domain_master {
 
         // save from stream / load from stream
         // drop (or not save?) loaded contexts if no appropriate config files found?
+
+    private:
+        // Since it's not a real implementation yet:
+        context _context;
     };
-
-
 }

@@ -3,6 +3,7 @@
 #include <type_traits>
 #include <functional>
 #include <mutex>
+#include <atomic>
 #include "boost/assert.hpp"
 
 namespace util {

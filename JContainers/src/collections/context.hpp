@@ -151,6 +151,7 @@ namespace collections {
         }
     }
 
+/*
     namespace {
         util::singleton<tes_context, false> g_tes_context_singleton {
             []() { return new tes_context(); }
@@ -159,7 +160,7 @@ namespace collections {
 
     tes_context& tes_context::instance() {
         return g_tes_context_singleton.get();
-    }
+    }*/
 
     void tes_context::u_print_stats() const {
         base::u_print_stats();

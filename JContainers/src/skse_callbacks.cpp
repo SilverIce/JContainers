@@ -41,7 +41,7 @@ namespace {
     void revert(SKSESerializationInterface * intfc) {
         util::do_with_timing("Revert", []() {
             skse::set_silent_api();
-            collections::tes_context::instance().clearState();
+            domain_master::master::instance().clear_state();
             skse::set_real_api();
         });
     }

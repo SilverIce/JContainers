@@ -136,6 +136,7 @@
     <ClCompile Include="src\collections\collections.cpp" />
     <ClCompile Include="src\collections\lua_module.cpp" />
     <ClCompile Include="src\collections\access.cpp" />
+    <ClCompile Include="src\context_master\domain_master.cpp" />
     <ClCompile Include="src\object\object_module.cpp" />
     <ClCompile Include="src\reflection\detail\reflection.cpp" />
     <ClCompile Include="src\skse\skse.cpp" />

@@ -36,7 +36,7 @@ namespace collections
             shutdown();
         }
 
-        static tes_context& instance();
+        //static tes_context& instance();
 
     private:
 
