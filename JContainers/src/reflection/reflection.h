@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <stdint.h>
 
+#include "skse/PapyrusVM.h"
 #include "meta.h"
 #include "util/istring.h"
 
@@ -72,7 +73,10 @@ namespace reflection {
             _comment_str = comment;
         }
 
-        void bind(VMClassRegistry& registry, const istring& className) const;
+        void bind(VMClassRegistry& registry, const istring& className) const {
+            registrator(bind_args{ registry, className.c_str(), name.c_str() });
+            registry.SetFunctionFlags(className.c_str(), name.c_str(), VMClassRegistry::kFunctionFlag_NoWait);
+        }
     };
 
     struct papyrus_text_block {
@@ -133,6 +137,16 @@ namespace reflection {
             auto clsName = className();
             for (const auto& itm : methods) {
                 itm.bind(registry, clsName);
+            }
+        }
+
+        template<class Visitor>
+        void visit_functions(Visitor&& visitor) {
+            assert(initialized());
+
+            auto clsName = className();
+            for (const auto& itm : methods) {
+                visitor(itm);
             }
         }
 

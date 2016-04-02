@@ -194,13 +194,27 @@ namespace {
 
             util::do_with_timing("Registering functions", [=]() {
 
-                reflection::foreach_metaInfo_do([=](const reflection::class_info& info) {
-                    info.bind(*registry);
-                });
 
-                namespace fs = boost::filesystem;
-                fs::path dir = util::relative_to_dll_path("JCData/Domains/");
-                for (auto& domainName : domain_master::master::instance().active_domains()) {
+                // 1. classInfo[] domains[] -> [(registrator, fname, cls_name) ]
+                // 2. classInfo[] domains[] -> [(domain_name, [(registrator, fname)] ]
+                //   clsname -> fname -> fname
+                //   func cl fn  = cl ++ "_" ++ fname
+
+                reflection::foreach_metaInfo_do([=](const reflection::class_info& info) {
+                    info.visit_functions([&](const reflection::function_info& func) {
+
+                        func.registrator(reflection::bind_args{
+                            registry, info.className().c_str(), func.name.c_str(),
+                            domain_master::master::instance().get_default_domain()
+                        });
+                        registry.SetFunctionFlags(info.className().c_str(), func.name.c_str(), VMClassRegistry::kFunctionFlag_NoWait);
+                    });
+                });
+                
+                ///namespace fs = boost::filesystem;
+                //fs::path dir = util::relative_to_dll_path("JCData/Domains/");
+/*
+                for (auto& domain : domain_master::master::instance().active_domains()) {
 
 
 
@@ -209,7 +223,7 @@ namespace {
 
                         info.bind(*registry);
                     });
-                }
+                }*/
             });
             return true;
         }

@@ -11,11 +11,6 @@
 
 namespace reflection {
 
-    void function_info::bind(VMClassRegistry& registry, const istring& className) const {
-        registrator(bind_args{ registry, className.c_str(), name.c_str() });
-        registry.SetFunctionFlags(className.c_str(), name.c_str(), VMClassRegistry::kFunctionFlag_NoWait);
-    }
-
     static auto makeDB = []() {
         std::map<istring, class_info> classDB;
 

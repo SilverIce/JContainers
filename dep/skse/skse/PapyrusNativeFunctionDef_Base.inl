@@ -89,7 +89,12 @@ public:
 #else
 		T_Result
 #endif
-		(* CallbackType)(T_Base * base
+        (*CallbackType)(
+#ifdef ACCEPTS_STATE
+        T_Base & state
+#else
+        T_Base * base
+#endif
 #if NUM_PARAMS >= 1
 		, T_Arg0 arg0
 #endif
@@ -122,8 +127,14 @@ public:
 #endif
 		);
 
-	CLASS_NAME(const char * fnName, const char * className, CallbackType callback, VMClassRegistry * registry)
-		:NativeFunction(fnName, className, IsStaticType <T_Base>::value, NUM_PARAMS)
+#ifndef ACCEPTS_STATE
+    CLASS_NAME(const char * fnName, const char * className, CallbackType callback, VMClassRegistry * registry)
+        : NativeFunction(fnName, className, IsStaticType <T_Base>::value, NUM_PARAMS)
+#else
+    CLASS_NAME(const char * fnName, const char * className, CallbackType callback, VMClassRegistry * registry, T_Base& state)
+        : NativeFunction(fnName, className, true, NUM_PARAMS)
+        , _state(state)
+#endif
 	{
 		// store callback
 		m_callback = (void *)callback;
@@ -164,65 +175,6 @@ public:
 #else
 		m_retnType = GetTypeID <T_Result>(registry);
 #endif
-
-#ifdef _NATIVEDUMP
-		std::string functionOut;
-
-#if VOID_SPEC
-		functionOut += GetArgumentTypeName<void>(registry);
-		functionOut += " ";
-#else
-		functionOut += GetArgumentTypeName<T_Result>(registry);
-		functionOut += " ";
-#endif
-		functionOut += className;
-		functionOut += "::";
-		functionOut += fnName;
-		functionOut += "(";
-
-#if NUM_PARAMS >= 1
-		functionOut += GetArgumentTypeName<T_Arg0>(registry);
-#endif
-#if NUM_PARAMS >= 2
-		functionOut += ", ";
-		functionOut += GetArgumentTypeName<T_Arg1>(registry);
-#endif
-#if NUM_PARAMS >= 3
-		functionOut += ", ";
-		functionOut += GetArgumentTypeName<T_Arg2>(registry);
-#endif
-#if NUM_PARAMS >= 4
-		functionOut += ", ";
-		functionOut += GetArgumentTypeName<T_Arg3>(registry);
-#endif
-#if NUM_PARAMS >= 5
-		functionOut += ", ";
-		functionOut += GetArgumentTypeName<T_Arg4>(registry);
-#endif
-#if NUM_PARAMS >= 6
-		functionOut += ", ";
-		functionOut += GetArgumentTypeName<T_Arg5>(registry);
-#endif
-#if NUM_PARAMS >= 7
-		functionOut += ", ";
-		functionOut += GetArgumentTypeName<T_Arg6>(registry);
-#endif
-#if NUM_PARAMS >= 8
-		functionOut += ", ";
-		functionOut += GetArgumentTypeName<T_Arg7>(registry);
-#endif
-#if NUM_PARAMS >= 9
-		functionOut += ", ";
-		functionOut += GetArgumentTypeName<T_Arg8>(registry);
-#endif
-#if NUM_PARAMS >= 10
-		functionOut += ", ";
-		functionOut += GetArgumentTypeName<T_Arg9>(registry);
-#endif
-		functionOut += ")";
-
-		_MESSAGE("%s", functionOut.c_str());
-#endif
 	}
 
 	virtual ~CLASS_NAME()	{ }
@@ -236,6 +188,7 @@ public:
 		// get argument list
 		UInt32	argOffset = CALL_MEMBER_FN(state->argList, GetOffset)(state);
 
+#   ifndef ACCEPTS_STATE
 		T_Base	* base = NULL;
 
 		// extract base object pointer for non-static types
@@ -244,6 +197,7 @@ public:
 			UnpackValue(&base, baseValue);
 			if (!base) return false;
 		}
+#   endif
 
 		// extract parameters
 #if NUM_PARAMS >= 1
@@ -291,8 +245,12 @@ public:
 #if !VOID_SPEC
 		T_Result	result =
 #endif
-			((CallbackType)m_callback)(base
-
+			((CallbackType)m_callback)(
+#ifdef ACCEPTS_STATE
+            _state,
+#else
+            base,
+#endif
 #if NUM_PARAMS >= 1
 			, arg0
 #endif
@@ -339,6 +297,10 @@ public:
 private:
 	// hide
 	CLASS_NAME();
+
+#   ifdef ACCEPTS_STATE
+    T_Base& _state;
+#   endif
 };
 
 #undef VOID_SPEC

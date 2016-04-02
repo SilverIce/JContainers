@@ -13,7 +13,7 @@ namespace tes_api_3 {
 
         using map_functions = map_functions_templ < Cnt >;
         using map_type = Cnt;
-        using tes_key = reflection::binding::get_converter_tes_type<typename map_type::key_type>;
+        using tes_key = reflection::binding::convert_to_tes_type<typename map_type::key_type>;
 
         typedef typename Cnt* ref;
 
