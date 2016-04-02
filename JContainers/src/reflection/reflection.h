@@ -48,9 +48,12 @@ namespace reflection {
         c_function c_func = nullptr; // original function
         istring argument_names;
         istring name;
+        bool _stateless = true;
 
         comment_generator _comment_func = nullptr;
         const char *_comment_str = nullptr;
+
+        bool isStateless() const { return _stateless; }
 
         std::string comment() const {
             if (_comment_func) {
@@ -164,7 +167,7 @@ namespace reflection {
 
         std::string produceClassCode(const class_info& self);
         void produceClassToFile(const class_info& self, const std::string& directoryPath);
-
+        void produceAmalgamatedCodeToFile(const std::map<istring, class_info>& classes, const std::string& directoryPath);
     }
 
     namespace _detail {

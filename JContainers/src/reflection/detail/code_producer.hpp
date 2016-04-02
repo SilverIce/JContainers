@@ -50,8 +50,6 @@ namespace reflection {
         std::string function_to_string(const function_info& self) {
             std::string str;
 
-            _pushComment(self.comment(), str);
-
             auto types = self.param_list_func();
 
             if (types[0]().tes_type_name != "void") {
@@ -83,7 +81,7 @@ namespace reflection {
 
             _pushComment(self.comment, str);
 
-            str += "Scriptname ";
+            str += "ScriptName ";
             str += self.className().c_str();
 
             if (!self.extendsClass.empty()) {
@@ -91,6 +89,7 @@ namespace reflection {
             }
 
             for (auto& itm : self.methods) {
+                _pushComment(itm.comment(), str);
                 str += function_to_string(itm);
                 str += "\n";
             }
@@ -114,5 +113,34 @@ namespace reflection {
             file << produceClassCode(self);
         }
 
+        void produceAmalgamatedCodeToFile(const std::map<istring, class_info>& classes, const std::string& directoryPath) {
+            using std::endl;
+
+            auto fileName = "JContainers_DomainsExample";
+
+            boost::filesystem::path p(directoryPath);
+            p /= fileName;
+            p += ".psc";
+
+
+            std::ofstream file(p.generic_string());
+
+            file << "ScriptName " << fileName << endl;
+
+            function_info tmp;
+
+            for (auto& cls : classes) {
+                file << endl << "; " << cls.first.c_str() << endl << endl;
+
+                for (auto& func : cls.second.methods) {
+                    if (!func.isStateless()) {
+                        tmp = func;
+                        tmp.name = cls.first + '_' + tmp.name;
+
+                        file << function_to_string(tmp) << endl;
+                    }
+                }
+            }
+        }
     }
 }

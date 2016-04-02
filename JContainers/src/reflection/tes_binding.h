@@ -152,6 +152,8 @@ namespace reflection { namespace binding {
 
         using return_type = R;
 
+        static const bool is_stateless = true;
+
         // subtype @magick to workaround some msvc2013 bug
         template< R(*func)(Params ...) >
         struct magick {
@@ -218,6 +220,8 @@ namespace reflection { namespace binding {
         }
 
         using return_type = R;
+
+        static const bool is_stateless = false;
 
         // subtype @magick to workaround some msvc2013 bug
         template< R(*func)(State&, Params ...) >
@@ -313,6 +317,7 @@ namespace reflection { namespace binding {
             metaF.name = funcname;
             metaF.tes_func = &Binder::tes_func_holder::tes_func;
             metaF.c_func = static_cast<c_function>(Binder::func_ptr());
+            metaF._stateless = Binder::base::is_stateless;
 
             info.addFunction(metaF);
         }
