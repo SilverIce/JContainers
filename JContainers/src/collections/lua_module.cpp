@@ -261,7 +261,7 @@ namespace lua { namespace aux_wip {
         fixture() : pool(tc) {}
     };
 
-#if 0
+#if 1
 
     TEST_F(fixture, Lua_trtr)
     {
