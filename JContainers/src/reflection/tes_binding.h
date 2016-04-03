@@ -197,8 +197,8 @@ namespace reflection { namespace binding {
                     new typename native_function_selector<sizeof...(Params)>::function<
                         convert_to_tes_type<R>, convert_to_tes_type<Params> ...>
                         (
-                            args.functionName,
-                            args.className,
+                            args.functionName.c_str(),
+                            args.className.c_str(),
                             &tes_func_holder::tes_func,
                             &args.registry
                         )
@@ -267,8 +267,8 @@ namespace reflection { namespace binding {
                     new typename state_native_function_selector<sizeof...(Params)>::function<
                         State, convert_to_tes_type<R>, convert_to_tes_type<Params> ...>
                         (
-                            args.functionName,
-                            args.className,
+                            args.functionName.c_str(),
+                            args.className.c_str(),
                             &tes_func_holder::tes_func,
                             &args.registry,
                             (State&)args.shared_state

@@ -32,8 +32,8 @@ namespace reflection {
 
     struct bind_args {
         VMClassRegistry& registry;
-        const char* className;
-        const char* functionName;
+        istring className;
+        istring functionName;
         void* shared_state;
     };
 

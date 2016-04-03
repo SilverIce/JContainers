@@ -24,6 +24,10 @@ namespace collections
     void object_context::stop_activity() {
         aqueue->stop();
     }
+
+    void object_context::start_activity() {
+        aqueue->start();
+    }
     
     void object_context::u_clearState() {
         {

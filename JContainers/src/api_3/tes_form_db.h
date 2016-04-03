@@ -233,7 +233,7 @@ namespace tes_api_3 {
 
     TEST(tes_form_db, storage_and_entry)
     {
-        tes_context ctx;
+        tes_context_standalone ctx;
 
         const char *storageName = "forms";
 
@@ -251,7 +251,7 @@ namespace tes_api_3 {
 
     TEST(tes_form_db, get_set)
     {
-        tes_context ctx;
+        tes_context_standalone ctx;
 
         auto fakeForm = make_lightweight_form_ref((FormId)0x14, ctx);
 

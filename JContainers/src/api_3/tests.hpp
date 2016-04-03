@@ -86,7 +86,7 @@ namespace tes_api_3 {
 
     TEST(array, sort_and_unique)
     {
-        tes_context ctx; 
+        tes_context_standalone ctx;
         auto sort = [&](const char *jsonText) {
             auto& ar = tes_object::objectFromPrototype(ctx, jsonText)->as_link<array>();
             auto countBefore = ar.u_count();
@@ -110,7 +110,7 @@ namespace tes_api_3 {
 
     TEST(path_resolving, collections_operators)
     {
-        tes_context  ctx;
+        tes_context_standalone  ctx;
 
         auto shouldReturnNumber = [&](object_base *obj, const char *path, float value) {
             path_resolving::resolve(ctx, obj, path, [&](item * item) {
@@ -161,7 +161,7 @@ namespace tes_api_3 {
 
     TEST(path_resolving, explicit_key_construction)
     {
-        tes_context  ctx;
+        tes_context_standalone  ctx;
         object_base* obj = tes_object::object<map>(ctx);
 
         const char *path = ".keyA.keyB.keyC";
@@ -173,7 +173,7 @@ namespace tes_api_3 {
 
     TEST(tes_object, tag)
     {
-        tes_context  ctx;
+        tes_context_standalone  ctx;
         object_stack_ref obj = tes_object::object<map>(ctx);
 
         object_stack_ref obj2 = tes_object::object<map>(ctx);
@@ -194,7 +194,7 @@ namespace tes_api_3 {
 
     TEST(tes_map, nextKey)
     {
-        tes_context  ctx;
+        tes_context_standalone  ctx;
         map *m = json_deserializer::object_from_json_data(ctx, STR({ "A":0, "B" : 1, "Z" : 2 }))->as<map>();
 
         auto key = tes_map_ext::nextKey<std::string>(ctx, m);
@@ -209,7 +209,7 @@ namespace tes_api_3 {
 
     TEST(tes_object, pool)
     {
-        tes_context ctx;
+        tes_context_standalone ctx;
 
         object_base *obj = tes_object::object<map>(ctx);
         //obj->set_tag("temp_location_test");

@@ -211,6 +211,28 @@ namespace {
                         registry->SetFunctionFlags(info.className().c_str(), func.name.c_str(), VMClassRegistry::kFunctionFlag_NoWait);
                     });
                 });
+
+
+                auto registerDom = [&](domain_master::context& dom, const util::istring& domName) {
+                    reflection::foreach_metaInfo_do([&](const reflection::class_info& info) {
+                        info.visit_functions([&](const reflection::function_info& func) {
+
+                            func.registrator(reflection::bind_args{
+                                *registry,
+                                domName.c_str(),
+                                info.className() + "_" + func.name,
+                                &dom
+                            });
+                            registry->SetFunctionFlags(info.className().c_str(), func.name.c_str(), VMClassRegistry::kFunctionFlag_NoWait);
+                        });
+                    });
+                };
+
+
+                for (auto& domName : domain_master::master::instance().active_domain_names) {
+                    auto& dom = domain_master::master::instance().get_or_create_domain_with_name(domName);
+                    registerDom(dom, domName);
+                }
                 
                 ///namespace fs = boost::filesystem;
                 //fs::path dir = util::relative_to_dll_path("JCData/Domains/");

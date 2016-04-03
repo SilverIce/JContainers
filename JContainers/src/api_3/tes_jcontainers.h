@@ -108,7 +108,7 @@ endfunction
 
     TEST(tes_jcontainers, userDirectory)
     {
-        tes_context ctx;
+        tes_context_standalone ctx;
 
         auto write_file = [&](const boost::filesystem::path& path) {
             boost::filesystem::remove_all(path);

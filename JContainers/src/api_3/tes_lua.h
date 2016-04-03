@@ -67,7 +67,7 @@ Returns @transport)===");
 
     TEST(JLua, simple)
     {
-        tes_context ctx;
+        tes_context_standalone ctx;
 
         EXPECT_EQ(8, tes_lua::evalLua<float>(ctx, "return args.x * args.y", tes_lua::pushArg(ctx, "x", 2, tes_lua::pushArg(ctx, "y", 4)), 0.f));
 

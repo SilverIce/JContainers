@@ -62,7 +62,7 @@ Accepts ASCII and UTF-8 encoded strings only");
 
     TEST(tes_string, test)
     {
-        tes_context ctx;
+        tes_context_standalone ctx;
 
         auto testData = json_deserializer::json_from_file(
             util::relative_to_dll_path("test_data/tes_string/string_wrap.json").generic_string().c_str() );
