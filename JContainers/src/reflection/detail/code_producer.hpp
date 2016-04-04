@@ -113,10 +113,12 @@ namespace reflection {
             file << produceClassCode(self);
         }
 
-        void produceAmalgamatedCodeToFile(const std::map<istring, class_info>& classes, const std::string& directoryPath) {
+        void produceAmalgamatedCodeToFile(const std::map<istring, class_info>& classes,
+            const std::string& directoryPath, const std::string& scriptname)
+        {
             using std::endl;
 
-            auto fileName = "JContainers_DomainsExample";
+            auto fileName = scriptname;
 
             boost::filesystem::path p(directoryPath);
             p /= fileName;

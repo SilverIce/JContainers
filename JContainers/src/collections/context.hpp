@@ -4,7 +4,7 @@
 
 #include "jansson.h"
 
-BOOST_CLASS_VERSION(collections::tes_context, 1);
+BOOST_CLASS_VERSION(collections::tes_context, 2);
 
 namespace collections {
 
@@ -164,7 +164,6 @@ namespace collections {
 
     void tes_context::u_print_stats() const {
         base::u_print_stats();
-        JC_log("%lu forms being observed", _form_watcher.u_forms_count());
     }
 
     void tes_context::read_from_string(const std::string & data) {
@@ -187,16 +186,17 @@ namespace collections {
     template<class Archive> void tes_context::load(Archive & ar, unsigned int version) {
         ar >> static_cast<base&>(*this);
         boost::serialization::load_atomic(ar, _root_object_id);
+/*
 
-        if (version >= 1) {
+        if (version == 1) { // to support v3.3-testing-3
             ar >> _form_watcher;
-        }
+        }*/
     }
 
     template<class Archive> void tes_context::save(Archive & ar, unsigned int version) const {
         ar << static_cast<const base&>(*this);
         boost::serialization::save_atomic(ar, _root_object_id);
-        ar << _form_watcher;
+        //ar << _form_watcher;
     }
 
     ///////////////////////////

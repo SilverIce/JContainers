@@ -195,20 +195,25 @@ namespace {
 
             util::do_with_timing("Registering functions", [=]() {
 
-
                 // 1. classInfo[] domains[] -> [(registrator, fname, cls_name) ]
                 // 2. classInfo[] domains[] -> [(domain_name, [(registrator, fname)] ]
                 //   clsname -> fname -> fname
                 //   func cl fn  = cl ++ "_" ++ fname
 
-                reflection::foreach_metaInfo_do([=](const reflection::class_info& info) {
-                    info.visit_functions([&](const reflection::function_info& func) {
+                auto& default_domain = domain_master::master::instance().get_default_domain();
 
-                        func.registrator(reflection::bind_args{
-                            *registry, info.className().c_str(), func.name.c_str(),
-                            &domain_master::master::instance().get_default_domain()
-                        });
-                        registry->SetFunctionFlags(info.className().c_str(), func.name.c_str(), VMClassRegistry::kFunctionFlag_NoWait);
+                reflection::foreach_metaInfo_do([&](const reflection::class_info& info) {
+                    _MESSAGE("Def dom %p", &domain_master::master::instance().get_default_domain());
+                    info.visit_functions([&](const reflection::function_info& func) {
+                        reflection::bind_args args{
+                            *registry,
+                            info.className(),
+                            func.name,
+                            reinterpret_cast<reflection::bind_args::shared_state_t*>(&default_domain)
+                        };
+                        func.registrator(args);
+                        registry->SetFunctionFlags(args.className.c_str(),
+                            args.functionName.c_str(), VMClassRegistry::kFunctionFlag_NoWait);
                     });
                 });
 
@@ -216,14 +221,19 @@ namespace {
                 auto registerDom = [&](domain_master::context& dom, const util::istring& domName) {
                     reflection::foreach_metaInfo_do([&](const reflection::class_info& info) {
                         info.visit_functions([&](const reflection::function_info& func) {
+                            if (func.isStateless()) {
+                                return;
+                            }
 
-                            func.registrator(reflection::bind_args{
+                            reflection::bind_args args{
                                 *registry,
                                 domName.c_str(),
                                 info.className() + "_" + func.name,
-                                &dom
-                            });
-                            registry->SetFunctionFlags(info.className().c_str(), func.name.c_str(), VMClassRegistry::kFunctionFlag_NoWait);
+                                reinterpret_cast<reflection::bind_args::shared_state_t*>(&dom)
+                            };
+                            func.registrator(args);
+                            registry->SetFunctionFlags(args.className.c_str(),
+                                args.functionName.c_str(), VMClassRegistry::kFunctionFlag_NoWait);
                         });
                     });
                 };

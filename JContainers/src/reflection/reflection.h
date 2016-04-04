@@ -31,10 +31,11 @@ namespace reflection {
     typedef void* c_function;
 
     struct bind_args {
+        struct shared_state_t{};
         VMClassRegistry& registry;
         istring className;
         istring functionName;
-        void* shared_state;
+        shared_state_t* shared_state;
     };
 
     struct function_info {
@@ -167,7 +168,8 @@ namespace reflection {
 
         std::string produceClassCode(const class_info& self);
         void produceClassToFile(const class_info& self, const std::string& directoryPath);
-        void produceAmalgamatedCodeToFile(const std::map<istring, class_info>& classes, const std::string& directoryPath);
+        void produceAmalgamatedCodeToFile(const std::map<istring,
+            class_info>& classes, const std::string& directoryPathconst, const std::string& scriptname);
     }
 
     namespace _detail {

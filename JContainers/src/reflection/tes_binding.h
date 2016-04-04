@@ -271,7 +271,7 @@ namespace reflection { namespace binding {
                             args.className.c_str(),
                             &tes_func_holder::tes_func,
                             &args.registry,
-                            (State&)args.shared_state
+                            *reinterpret_cast<State*>(args.shared_state)
                         )
                 );
             }

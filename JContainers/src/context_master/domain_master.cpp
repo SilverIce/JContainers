@@ -7,31 +7,33 @@
 #include "boost/filesystem/path.hpp"
 #include "boost/filesystem/operations.hpp"
 #include "boost/archive/binary_oarchive.hpp"
+
 #include "jansson.h"
+#include "gtest/gtest.h"
 #include "common/IDebugLog.h"
 
 #include "util/singleton.h"
 #include "util/util.h"
 #include "util/istring.h"
-#include "util/istring_serialization.h"
 #include "iarchive_with_blob.h"
 
 #include "object/object_context.h"
 #include "domain_master.h"
+
+
+#include "domain_master_serialization.h"
 
 namespace domain_master {
 
 
     namespace {
 
-
-
         auto get_domains_from_fs() -> std::set<util::istring> {
             namespace fs = boost::filesystem;
             std::set<util::istring> domains;
             fs::path dir = util::relative_to_dll_path("JCData/Domains/");
             for (fs::directory_iterator itr(dir), end; itr != end; ++itr) {
-               // domains.insert(itr->path().filename().generic_string().c_str());
+               domains.insert(itr->path().filename().generic_string().c_str());
             }
             return domains;
         }
@@ -194,18 +196,12 @@ namespace domain_master {
 
                             // (stream) -> [(name,context)]
 
-                            archive >> self.get_default_domain();
-                            uint32_t domain_count = 0;
-                            archive >> domain_count;
-
-                            for (uint32_t i = 0; i < domain_count; ++i) {
-                                util::istring dom_name;
-                                archive >> dom_name;
-                                auto& dom = self.get_or_create_domain_with_name(dom_name);
-                                archive >> dom;
+                            if (hdr.commonVersion <= serialization_version::pre_dyn_form_watcher) {
+                                self.get_default_domain().load_data_in_old_way(archive);
                             }
-
-                            archive >> self.get_form_observer();
+                            else {
+                                archive >> self;
+                            }
                         }
 
                         u_erase_inactive_domains(self);
@@ -251,18 +247,7 @@ namespace domain_master {
 
                 // [(name, domain)] -> stream
 
-                arch << self.get_default_domain();
-
-                uint32_t domain_count = self.active_domains_map().size();
-                arch << domain_count;
-
-                for (auto& pair : self.active_domains_map()) {
-                    util::istring dom_name;
-                    arch << pair.first;
-                    arch << *pair.second;
-                }
-
-                arch << self.get_form_observer();
+                arch << self;
 
                 u_print_stats(self);
             }
@@ -291,6 +276,7 @@ namespace domain_master {
         }
 
         auto dom = std::make_shared<context>(this->get_form_observer());
+        _VMESSAGE("Created domain %s %p", name.c_str(), dom.get());
         _domains.emplace(DomainsMap::value_type{ name, dom });
         return *dom;
     }
@@ -312,7 +298,11 @@ namespace domain_master {
 
     namespace {
         util::singleton<master, false> g_domain_master_singleton{
-            []() { return new master(); }
+            []() {
+                auto m = new master();
+                m->initialize_from_fs();
+                return m;
+            }
         };
     }
 
@@ -330,9 +320,61 @@ namespace domain_master {
         domain_master::read_from_stream(*this, s);
     }
 
-
     void master::write_to_stream(std::ostream& s) {
         domain_master::write_to_stream(*this, s);
+    }
+
+    namespace testing {
+
+        TEST(master, initialize_from_fs)
+        {
+            ::domain_master::master m;
+            m.initialize_from_fs();
+
+            EXPECT_NE(m.active_domain_names.find("JContainers_DomainExample"), m.active_domain_names.end());
+        }
+
+        TEST(master, get_or_create_domain_with_name)
+        {
+            ::domain_master::master m;
+            EXPECT_TRUE(m.active_domains_map().empty());
+            m.get_or_create_domain_with_name("help");
+            EXPECT_FALSE(m.active_domains_map().empty());
+        }
+
+
+        TEST(master, backward_compatibility)
+        {
+            namespace fs = boost::filesystem;
+
+            fs::path dir = util::relative_to_dll_path("test_data/backward_compatibility");
+            bool atLeastOneTested = false;
+
+            for (fs::directory_iterator itr(dir), end; itr != end; ++itr) {
+                if (fs::is_regular_file(*itr)) {
+                    atLeastOneTested = true;
+
+                    std::ifstream file(itr->path().generic_string(), std::ios::in | std::ios::binary);
+
+                    ::domain_master::master m;
+                    m.read_from_stream(file);
+
+                    EXPECT_TRUE(m.get_default_domain().object_count() > 100); // dumb assumption
+
+                    std::stringstream stream;
+                    m.write_to_stream(stream);
+
+                    std::stringstream n{ stream.str() };
+                    m.read_from_stream(n);
+
+                    //abort()
+
+                    EXPECT_TRUE(m.get_default_domain().object_count() > 100);
+                }
+            }
+
+            EXPECT_TRUE(atLeastOneTested);
+        }
     }
 
 }

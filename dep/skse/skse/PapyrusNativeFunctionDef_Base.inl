@@ -127,17 +127,32 @@ public:
 #endif
 		);
 
+#   ifdef ACCEPTS_STATE
+
+    struct shit {
+        CallbackType callback;
+        T_Base & state;
+    };
+
+#   endif
+
+
 #ifndef ACCEPTS_STATE
     CLASS_NAME(const char * fnName, const char * className, CallbackType callback, VMClassRegistry * registry)
         : NativeFunction(fnName, className, IsStaticType <T_Base>::value, NUM_PARAMS)
 #else
     CLASS_NAME(const char * fnName, const char * className, CallbackType callback, VMClassRegistry * registry, T_Base& state)
-        : NativeFunction(fnName, className, true, NUM_PARAMS)
-        , _state(state)
+        : NativeFunction(fnName, className, IsStaticType <StaticFunctionTag>::value, NUM_PARAMS)
 #endif
 	{
 		// store callback
+#   ifdef ACCEPTS_STATE
+        m_callback = new shit{ callback, state };
+        _VMESSAGE("NativeFunction.Ctor %s state %p %p", fnName, &state, &((shit*)m_callback)->state);
+#   else
 		m_callback = (void *)callback;
+#   endif
+
 
 #if NUM_PARAMS >= 1
 		m_params.data[0].type = GetTypeID <T_Arg0>(registry);
@@ -184,7 +199,6 @@ public:
 #if _DEBUG
 		DebugRunHook(baseValue, registry, unk2, resultValue, state);
 #endif
-
 		// get argument list
 		UInt32	argOffset = CALL_MEMBER_FN(state->argList, GetOffset)(state);
 
@@ -197,6 +211,8 @@ public:
 			UnpackValue(&base, baseValue);
 			if (!base) return false;
 		}
+#   else
+        //_VMESSAGE("NativeFunction.Run state %p", &((shit*)m_callback)->state);
 #   endif
 
 		// extract parameters
@@ -245,11 +261,11 @@ public:
 #if !VOID_SPEC
 		T_Result	result =
 #endif
-			((CallbackType)m_callback)(
 #ifdef ACCEPTS_STATE
-            _state
+        (((shit*)m_callback)->callback)(
+            ((shit*)m_callback)->state
 #else
-            base
+        ((CallbackType)m_callback)(base
 #endif
 #if NUM_PARAMS >= 1
 			, arg0
@@ -297,10 +313,6 @@ public:
 private:
 	// hide
 	CLASS_NAME();
-
-#   ifdef ACCEPTS_STATE
-    T_Base& _state;
-#   endif
 };
 
 #undef VOID_SPEC

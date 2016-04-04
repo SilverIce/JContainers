@@ -23,7 +23,6 @@
 #include "collections/dyn_form_watcher.h"
 
 BOOST_CLASS_VERSION(collections::form_watching::form_ref, 2);
-BOOST_CLASS_VERSION(collections::form_watching::form_observer, 3);
 
 namespace collections {
 
@@ -214,12 +213,12 @@ namespace collections {
             }
         }
 
-        template<class Archive>
-        void form_observer::load(Archive & ar, const unsigned int version) {
+        template<>
+        void form_observer::load(boost::archive::binary_iarchive & ar, const unsigned int version) {
 
             switch (version) {
             case 3:
-                load_collection(ar, _watched_forms, [&ar](Archive& ar, decltype(_watched_forms)& collection) {
+                load_collection(ar, _watched_forms, [&ar](boost::archive::binary_iarchive& ar, decltype(_watched_forms)& collection) {
                     form_entry_ref entry;
                     ar >> entry;
 
@@ -246,10 +245,10 @@ namespace collections {
             }
         }
 
-        template<class Archive>
-        void form_observer::save(Archive & ar, const unsigned int version) const {
+        template<>
+        void form_observer::save(boost::archive::binary_oarchive & ar, const unsigned int version) const {
 
-            save_collection(ar, _watched_forms, [&ar](Archive& ar, const decltype(_watched_forms)::value_type& pair) {
+            save_collection(ar, _watched_forms, [&ar](boost::archive::binary_oarchive& ar, const decltype(_watched_forms)::value_type& pair) {
                 auto entry = pair.second.lock();
                 ar << entry;
             });

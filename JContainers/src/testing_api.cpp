@@ -18,7 +18,7 @@ extern "C" {
             code_producer::produceClassToFile(info, path);
         });
 
-        code_producer::produceAmalgamatedCodeToFile(reflection::class_registry(), path);
+        code_producer::produceAmalgamatedCodeToFile(reflection::class_registry(), path, "JContainers_DomainExample");
     }
 
     __declspec(dllexport) bool JC_runTests(int argc, const char** argv) {

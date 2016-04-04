@@ -9,6 +9,7 @@
 #include "boost/shared_ptr.hpp"
 #include "boost/smart_ptr/weak_ptr.hpp"
 #include "boost/serialization/split_member.hpp"
+#include "boost/serialization/version.hpp"
 #include "boost/noncopyable.hpp"
 #include "boost/core/explicit_operator_bool.hpp"
 
@@ -231,3 +232,5 @@ namespace std {
         left.swap(right);
     }
 }
+
+BOOST_CLASS_VERSION(collections::form_watching::form_observer, 3);
