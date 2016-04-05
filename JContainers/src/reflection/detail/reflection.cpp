@@ -54,6 +54,23 @@ namespace reflection {
         return fInfo;
     }
 
+    class_info amalgamate_classes(const std::string& amalgName, const std::map<istring, class_info>& classes) {
+        class_info amalgam{ amalgName.c_str() };
+
+        for (const auto& cls : classes) {
+            for (const auto& func : cls.second.methods) {
+                if (!func.isStateless()) {
+                    function_info info{ func };
+                    info.setComment(nullptr);
+                    info.name = cls.second.className() + '_' + func.name;
+                    amalgam.addFunction(std::move(info));
+                }
+            }
+        }
+
+        return amalgam;
+    }
+
     TEST(reflection, _)
     {
 

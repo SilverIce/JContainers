@@ -256,18 +256,6 @@ namespace domain_master {
 
     }
 
-/*
-    master::master()
-    {
-
-    }*/
-
-    void master::initialize_from_fs()
-    {
-        active_domain_names = get_domains_from_fs();
-        //active_domain_names.insert("Default");
-    }
-
     context& master::get_or_create_domain_with_name(const util::istring& name)
     {
         auto itr = _domains.find(name);
@@ -300,7 +288,7 @@ namespace domain_master {
         util::singleton<master, false> g_domain_master_singleton{
             []() {
                 auto m = new master();
-                m->initialize_from_fs();
+                m->active_domain_names = get_domains_from_fs();
                 return m;
             }
         };
@@ -326,14 +314,6 @@ namespace domain_master {
 
     namespace testing {
 
-        TEST(master, initialize_from_fs)
-        {
-            ::domain_master::master m;
-            m.initialize_from_fs();
-
-            EXPECT_NE(m.active_domain_names.find("JContainers_DomainExample"), m.active_domain_names.end());
-        }
-
         TEST(master, get_or_create_domain_with_name)
         {
             ::domain_master::master m;
@@ -342,6 +322,16 @@ namespace domain_master {
             EXPECT_FALSE(m.active_domains_map().empty());
         }
 
+        TEST(master, u_erase_inactive_domains)
+        {
+            ::domain_master::master m;
+            EXPECT_TRUE(m.active_domains_map().empty());
+            m.get_or_create_domain_with_name("help");
+            EXPECT_FALSE(m.active_domains_map().empty());
+
+            u_erase_inactive_domains(m);
+            EXPECT_TRUE(m.active_domains_map().empty());
+        }
 
         TEST(master, backward_compatibility)
         {

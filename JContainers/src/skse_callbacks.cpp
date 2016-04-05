@@ -172,6 +172,8 @@ namespace {
 
         bool registerAllFunctions(VMClassRegistry *registry) {
 
+            jc_assert(registry);
+
             // One of the ways: temp. clone class meta infos, register them
             // 2nd: pass each context into "info.bind(*registry, some-context);"
 
@@ -195,69 +197,36 @@ namespace {
 
             util::do_with_timing("Registering functions", [=]() {
 
-                // 1. classInfo[] domains[] -> [(registrator, fname, cls_name) ]
-                // 2. classInfo[] domains[] -> [(domain_name, [(registrator, fname)] ]
-                //   clsname -> fname -> fname
-                //   func cl fn  = cl ++ "_" ++ fname
+                auto& master = domain_master::master::instance();
 
-                auto& default_domain = domain_master::master::instance().get_default_domain();
-
-                reflection::foreach_metaInfo_do([&](const reflection::class_info& info) {
-                    _MESSAGE("Def dom %p", &domain_master::master::instance().get_default_domain());
+                auto registerDom = [&](const reflection::class_info& info, domain_master::context& dom) {
                     info.visit_functions([&](const reflection::function_info& func) {
+                        if (&dom != &master.get_default_domain() && func.isStateless()) {
+                            return;
+                        }
                         reflection::bind_args args{
                             *registry,
                             info.className(),
                             func.name,
-                            reinterpret_cast<reflection::bind_args::shared_state_t*>(&default_domain)
+                            reinterpret_cast<reflection::bind_args::shared_state_t*>(&dom)
                         };
                         func.registrator(args);
                         registry->SetFunctionFlags(args.className.c_str(),
                             args.functionName.c_str(), VMClassRegistry::kFunctionFlag_NoWait);
                     });
-                });
-
-
-                auto registerDom = [&](domain_master::context& dom, const util::istring& domName) {
-                    reflection::foreach_metaInfo_do([&](const reflection::class_info& info) {
-                        info.visit_functions([&](const reflection::function_info& func) {
-                            if (func.isStateless()) {
-                                return;
-                            }
-
-                            reflection::bind_args args{
-                                *registry,
-                                domName.c_str(),
-                                info.className() + "_" + func.name,
-                                reinterpret_cast<reflection::bind_args::shared_state_t*>(&dom)
-                            };
-                            func.registrator(args);
-                            registry->SetFunctionFlags(args.className.c_str(),
-                                args.functionName.c_str(), VMClassRegistry::kFunctionFlag_NoWait);
-                        });
-                    });
                 };
 
+                reflection::foreach_metaInfo_do(reflection::class_registry(), registerDom, master.get_default_domain());
 
-                for (auto& domName : domain_master::master::instance().active_domain_names) {
-                    auto& dom = domain_master::master::instance().get_or_create_domain_with_name(domName);
-                    registerDom(dom, domName);
+                reflection::class_info amalgam = reflection::amalgamate_classes("dummy", reflection::class_registry());
+
+                for (auto& domName : master.active_domain_names) {
+                    auto& dom = master.get_or_create_domain_with_name(domName);
+                    amalgam._className = domName;
+                    registerDom(amalgam, dom);
                 }
-                
-                ///namespace fs = boost::filesystem;
-                //fs::path dir = util::relative_to_dll_path("JCData/Domains/");
-/*
-                for (auto& domain : domain_master::master::instance().active_domains()) {
-
-
-
-                    reflection::foreach_metaInfo_do([=](const reflection::class_info& info) {
-                        // modify class name & function names
-
-                        info.bind(*registry);
-                    });
-                }*/
             });
+
             return true;
         }
 

@@ -22,9 +22,6 @@ namespace domain_master {
 
         std::set<util::istring> active_domain_names;
 
-        // 
-        void initialize_from_fs();
-
         context& get_or_create_domain_with_name(const util::istring& name);// or create if none
         context& get_default_domain();
         //std::vector<std::reference_wrapper<context>> active_domains();
