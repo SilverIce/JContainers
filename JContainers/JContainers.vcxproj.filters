@@ -31,6 +31,9 @@
     <Filter Include="tes_api_3">
       <UniqueIdentifier>{a481ff76-9ab2-4bb4-91f6-f5d5e21c603c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="domain_master">
+      <UniqueIdentifier>{a22f0f99-31ac-4eed-88d1-cdcf01afcfa1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\jcontainers_pch.cpp" />
@@ -72,6 +75,9 @@
     </ClCompile>
     <ClCompile Include="src\util\logging.cpp">
       <Filter>util</Filter>
+    </ClCompile>
+    <ClCompile Include="src\context_master\domain_master.cpp">
+      <Filter>domain_master</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -245,6 +251,12 @@
     </ClInclude>
     <ClInclude Include="src\util\cstring.h">
       <Filter>util</Filter>
+    </ClInclude>
+    <ClInclude Include="src\context_master\domain_master.h">
+      <Filter>domain_master</Filter>
+    </ClInclude>
+    <ClInclude Include="src\context_master\domain_master_serialization.h">
+      <Filter>domain_master</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

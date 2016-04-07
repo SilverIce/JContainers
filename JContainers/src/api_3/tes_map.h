@@ -13,7 +13,7 @@ namespace tes_api_3 {
 
         using map_functions = map_functions_templ < Cnt >;
         using map_type = Cnt;
-        using tes_key = reflection::binding::get_converter_tes_type<typename map_type::key_type>;
+        using tes_key = reflection::binding::convert_to_tes_type<typename map_type::key_type>;
 
         typedef typename Cnt* ref;
 
@@ -25,7 +25,7 @@ namespace tes_api_3 {
         REGISTERF(tes_object::object<Cnt>, "object", "", kCommentObject);
 
         template<class T>
-        static T getItem(Cnt *obj, key_cref key, T def = default_value<T>()) {
+        static T getItem(tes_context& ctx, ref obj, key_cref key, T def = default_value<T>()) {
             map_functions::doReadOp(obj, key, [&](item& itm) { def = itm.readAs<T>(); });
             return def;
         }
@@ -36,7 +36,7 @@ namespace tes_api_3 {
         REGISTERF(getItem<form_ref>, "getForm", "object key default=None", "");
 
         template<class T>
-        static void setItem(Cnt *obj, key_cref key, T val) {
+        static void setItem(tes_context& ctx, ref obj, key_cref key, T val) {
             map_functions::doWriteOp(obj, key, [&](item& itm) { itm = val; });
         }
         REGISTERF(setItem<SInt32>, "setInt", "* key value", "creates key-value association. replaces existing value if any");
@@ -45,19 +45,19 @@ namespace tes_api_3 {
         REGISTERF(setItem<object_base*>, "setObj", "* key container", "");
         REGISTERF(setItem<form_ref>, "setForm", "* key value", "");
 
-        static bool hasKey(ref obj, key_cref key) {
-            return valueType(obj, key) != 0;
+        static bool hasKey(tes_context& ctx, ref obj, key_cref key) {
+            return valueType(ctx, obj, key) != 0;
         }
         REGISTERF2(hasKey, "* key", "returns true, if something associated with key");
 
-        static SInt32 valueType(ref obj, key_cref key) {
+        static SInt32 valueType(tes_context& ctx, ref obj, key_cref key) {
             auto type = item_type::no_item;
             map_functions::doReadOp(obj, key, [&](item& itm) { type = itm.type(); });
             return (SInt32)type;
         }
         REGISTERF2(valueType, "* key", "returns type of the value associated with key.\n"VALUE_TYPE_COMMENT);
 
-        static object_base* allKeys(Cnt* obj) {
+        static object_base* allKeys(tes_context& ctx, ref obj) {
             if (!obj) {
                 return nullptr;
             }
@@ -70,11 +70,11 @@ namespace tes_api_3 {
                     arr.u_container().emplace_back(pair.first);
                 }
             },
-                tes_context::instance());
+                ctx);
         }
         REGISTERF(allKeys, "allKeys", "*", "returns new array containing all keys");
 
-        static VMResultArray<tes_key> allKeysPArray(Cnt* obj) {
+        static VMResultArray<tes_key> allKeysPArray(tes_context& ctx, ref obj) {
             if (!obj) {
                 return VMResultArray<tes_key>();
             }
@@ -84,7 +84,7 @@ namespace tes_api_3 {
             keys.reserve(obj->u_count());
             std::transform(obj->u_container().begin(), obj->u_container().end(),
                 std::back_inserter(keys),
-                [](const typename map_type::value_type& p) {
+                [&ctx](const typename map_type::value_type& p) {
                     return reflection::binding::get_converter<typename map_type::key_type>::convert2Tes(p.first);
                 }
             );
@@ -93,7 +93,7 @@ namespace tes_api_3 {
         }
         REGISTERF2(allKeysPArray, "*", "");
 
-        static object_base* allValues(Cnt *obj) {
+        static object_base* allValues(tes_context& ctx, ref obj) {
             if (!obj) {
                 return nullptr;
             }
@@ -106,11 +106,11 @@ namespace tes_api_3 {
                     arr._array.push_back(pair.second);
                 }
             },
-                tes_context::instance());
+                ctx);
         }
         REGISTERF(allValues, "allValues", "*", "returns new array containing all values");
 
-        static bool removeKey(Cnt *obj, key_cref key) {
+        static bool removeKey(tes_context& ctx, ref obj, key_cref key) {
             if (obj) {
                 return obj->erase(key);
             }
@@ -118,7 +118,7 @@ namespace tes_api_3 {
         }
         REGISTERF(removeKey, "removeKey", "* key", "destroys key-value association");
 
-        static SInt32 count(ref obj) {
+        static SInt32 count(tes_context& ctx, ref obj) {
             if (!obj) {
                 return 0;
             }
@@ -127,7 +127,7 @@ namespace tes_api_3 {
         }
         REGISTERF2(count, "*", "returns count of items/associations");
 
-        static void clear(ref obj) {
+        static void clear(tes_context& ctx, ref obj) {
             if (!obj) {
                 return;
             }
@@ -136,7 +136,7 @@ namespace tes_api_3 {
         }
         REGISTERF2(clear, "*", "removes all items from container");
 
-        static void addPairs(ref obj, const ref source, bool overrideDuplicates) {
+        static void addPairs(tes_context& ctx, ref obj, const ref source, bool overrideDuplicates) {
             if (!obj || !source || source == obj) {
                 return;
             }
@@ -159,11 +159,11 @@ namespace tes_api_3 {
 
         //////////////////////////////////////////////////////////////////////////
 
-        static Key nextKey(ref obj, key_cref previousKey, key_ref endKey) {
+        static Key nextKey(tes_context& ctx, ref obj, key_cref previousKey, key_ref endKey) {
             return map_functions::nextKey_forPapyrus(obj, previousKey, endKey);
         }
 
-        static Key getNthKey(ref obj, SInt32 keyIndex) {
+        static Key getNthKey(tes_context& ctx, ref obj, SInt32 keyIndex) {
             Key ith;
             map_functions::getNthKey(obj, keyIndex, [&](const typename Cnt::key_type& key) { ith = key; });
             return ith;
@@ -211,7 +211,7 @@ Usage:
     struct tes_map_ext : class_meta < tes_map_ext > {
         REGISTER_TES_NAME("JMap");
         template<class Key>
-        static Key nextKey(map* obj, const char* previousKey = "", const char * endKey = "") {
+        static Key nextKey(tes_context& ctx, map* obj, const char* previousKey = "", const char * endKey = "") {
             Key str(endKey);
             map_functions::nextKey(obj, previousKey, [&](const std::string& key) { str = key.c_str(); });
             return str;
@@ -221,7 +221,7 @@ Usage:
         static const char * getNthKey_comment() { return "Retrieves N-th key. " NEGATIVE_IDX_COMMENT "\nWorst complexity is O(n/2)"; }
 
         template<class Key>
-        static Key getNthKey(map* obj, SInt32 keyIndex) {
+        static Key getNthKey(tes_context& ctx, map* obj, SInt32 keyIndex) {
             Key ith;
             map_functions::getNthKey(obj, keyIndex, [&](const std::string& key) { ith = key.c_str(); });
             return ith;
@@ -241,7 +241,7 @@ Usage:
             }
         };
 
-        static form_ref_lightweight nextKey(form_map* obj
+        static form_ref_lightweight nextKey(tes_context& ctx, form_map* obj
             , const form_ref_lightweight& previousKey
             , const form_ref_lightweight& endKey)
         {
@@ -265,18 +265,18 @@ Usage:
     {
         using namespace collections;
 
-        auto& ctx = tes_context::instance();
-        collections::form_map* fmap = tes_object::object<form_map>();
+        tes_context_standalone ctx;
+        collections::form_map* fmap = tes_object::object<form_map>(ctx);
         fmap->u_container()[make_weak_form_id(util::to_enum<FormId>(0x14), ctx)] = item{ 10 };
         fmap->u_container()[make_weak_form_id(util::to_enum<FormId>(0x20), ctx)] = item{ 14 };
 
-        auto countIterations = [](collections::form_map* fmap) -> int {
+        auto countIterations = [&](collections::form_map* fmap) -> int {
             int cycle_counter = 0;
             const form_ref_lightweight endKey{};
-            form_ref_lightweight key = tes_form_map_ext::nextKey(fmap, endKey, endKey);
+            form_ref_lightweight key = tes_form_map_ext::nextKey(ctx, fmap, endKey, endKey);
             while (key) {
                 ++cycle_counter;
-                key = tes_form_map_ext::nextKey(fmap, key, endKey);
+                key = tes_form_map_ext::nextKey(ctx, fmap, key, endKey);
             }
             return cycle_counter;
         };

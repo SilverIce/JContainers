@@ -136,6 +136,7 @@
     <ClCompile Include="src\collections\collections.cpp" />
     <ClCompile Include="src\collections\lua_module.cpp" />
     <ClCompile Include="src\collections\access.cpp" />
+    <ClCompile Include="src\context_master\domain_master.cpp" />
     <ClCompile Include="src\object\object_module.cpp" />
     <ClCompile Include="src\reflection\detail\reflection.cpp" />
     <ClCompile Include="src\skse\skse.cpp" />
@@ -177,6 +178,8 @@
     <ClInclude Include="src\collections\context.h" />
     <ClInclude Include="src\collections\context.hpp" />
     <ClInclude Include="src\collections\error_code.h" />
+    <ClInclude Include="src\context_master\domain_master.h" />
+    <ClInclude Include="src\context_master\domain_master_serialization.h" />
     <ClInclude Include="src\form_id.h" />
     <ClInclude Include="src\iarchive_with_blob.h" />
     <ClInclude Include="src\jc_interface.h" />

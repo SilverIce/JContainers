@@ -48,7 +48,7 @@ end
 
 local function getNativeFunction(className, funcName, returnType, argTypes)
   local funcPtr = jclib.JC_get_c_function(funcName, className)
-  local signature = returnType .. '(__cdecl *)(' .. (argTypes or '') .. ')'
+  local signature = returnType .. '(__cdecl *)(void*' .. (argTypes and (', ' .. argTypes) or '') .. ')'
   --print('retrieving', funcName)
   return ffi.cast(signature, funcPtr)
 end
@@ -153,7 +153,7 @@ local JCObject_common_properties = {
   typeOf = function(optr) return JCTypeList[jclib.JValue_typeId(optr.___id)] end,
 
   __gc = function(optr) jclib.JValue_release(optr.___id) end,
-  __len = function(optr) return JValueNativeFuncs.count(optr.___id) end,
+  __len = function(optr) return JValueNativeFuncs.count(jc_context, optr.___id) end,
   __eq = function(l, r) return (l and r) and l.___id == r.___id or false end,
 }
 
@@ -270,27 +270,27 @@ end
 
 -- JValue
 function JValue.readFromFile (path)
-  return wrapJCHandle(JValueNativeFuncs.readFromFile(path))
+  return wrapJCHandle(JValueNativeFuncs.readFromFile(jc_context, path))
 end
 
 function JValue.writeToFile  ( optr, path )
-  JValueNativeFuncs.writeToFile(optr.___id, path)
+  JValueNativeFuncs.writeToFile(jc_context, optr.___id, path)
 end
 
 function JValue.objectFromPrototype(json_proto)
-  return wrapJCHandle( JValueNativeFuncs.objectFromPrototype(json_proto) )
+  return wrapJCHandle( JValueNativeFuncs.objectFromPrototype(jc_context, json_proto) )
 end
 
 function JValue.clear (optr)
-  JValueNativeFuncs.clear(optr.___id)
+  JValueNativeFuncs.clear(jc_context, optr.___id)
 end
 
 function JValue.shallowCopy (optr)
-  return wrapJCHandle(JValueNativeFuncs.shallowCopy(optr.___id))
+  return wrapJCHandle(JValueNativeFuncs.shallowCopy(jc_context, optr.___id))
 end
 
 function JValue.deepCopy (optr)
-  return wrapJCHandle(JValueNativeFuncs.deepCopy(optr.___id))
+  return wrapJCHandle(JValueNativeFuncs.deepCopy(jc_context, optr.___id))
 end
 
 function JValue.solvePath(optr, path)
@@ -303,11 +303,11 @@ do
   local function convertIndex(idx) return idx >= 0 and idx - 1 or idx end 
 
   function JArray.object()
-    return wrapJCHandle(JArrayNativeFuncs.object())
+    return wrapJCHandle(JArrayNativeFuncs.object(jc_context))
   end
 
   function JArray.objectWithSize(size)
-    return wrapJCHandle(JArrayNativeFuncs.objectWithSize(size))
+    return wrapJCHandle(JArrayNativeFuncs.objectWithSize(jc_context, size))
   end
 
   function JArray.objectWithArray (array)
@@ -347,7 +347,7 @@ end
 -- JMap stuff
 do
   function JMap.object (optr)
-    return wrapJCHandle(JMapNativeFuncs.object())
+    return wrapJCHandle(JMapNativeFuncs.object(jc_context))
   end
 
   function JMap.objectWithTable (t)
@@ -366,7 +366,7 @@ do
     if value then
       jclib.JMap_setValue(optr.___id, key, returnJCValue(value))
     else
-      JMapNativeFuncs.removeKey(optr.___id, key)
+      JMapNativeFuncs.removeKey(jc_context, optr.___id, key)
     end
   end
 
@@ -385,18 +385,18 @@ do
   end
 
   function JMap.allKeys(optr)
-    return wrapJCHandle(JMapNativeFuncs.allKeys(optr.___id))
+    return wrapJCHandle(JMapNativeFuncs.allKeys(jc_context, optr.___id))
   end
 
   function JMap.allValues(optr)
-    return wrapJCHandle(JMapNativeFuncs.allValues(optr.___id))
+    return wrapJCHandle(JMapNativeFuncs.allValues(jc_context, optr.___id))
   end
 end
 ---------------------------------------
 -- FormMap stuff
 do
   function JFormMap.object (optr)
-    return wrapJCHandle(JFormMapNativeFuncs.object())
+    return wrapJCHandle(JFormMapNativeFuncs.object(jc_context))
   end
 
   function JFormMap.objectWithTable (table)
@@ -431,11 +431,11 @@ do
   end
 
   function JFormMap.allKeys(optr)
-    return wrapJCHandle(JFormMapNativeFuncs.allKeys(optr.___id))
+    return wrapJCHandle(JFormMapNativeFuncs.allKeys(jc_context, optr.___id))
   end
 
   function JFormMap.allValues(optr)
-    return wrapJCHandle(JFormMapNativeFuncs.allValues(optr.___id))
+    return wrapJCHandle(JFormMapNativeFuncs.allValues(jc_context, optr.___id))
   end
 end
 --------------------------------------- 

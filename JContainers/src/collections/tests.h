@@ -3,7 +3,7 @@
 namespace collections {
 
     struct JCFixture : public ::testing::Test {
-        tes_context context;
+        tes_context_standalone context;
 
 /*
         void SetUpTestCase(){}
@@ -253,7 +253,7 @@ namespace collections { namespace {
 
             auto jsonOut = make_unique_ptr((json_t*)nullptr, &json_decref);
             {
-                tes_context ctx;
+                tes_context_standalone ctx;
                 auto root = json_deserializer::object_from_file(ctx, file_path);
                 EXPECT_NOT_NIL(root);
                 jsonOut = json_serializer::create_json_value(*root);
@@ -273,7 +273,7 @@ namespace collections { namespace {
 
             auto jsonOut = make_unique_ptr((json_t*)nullptr, &json_decref);
             {
-                tes_context ctx;
+                tes_context_standalone ctx;
 
                 Handle rootId = Handle::Null;
                 {
@@ -398,7 +398,7 @@ namespace collections { namespace {
 
                 std::ifstream file(itr->path().generic_string(), std::ios::in | std::ios::binary);
 
-                tes_context context;
+                tes_context_standalone context;
                 context.read_from_stream(file);
                 context._form_watcher.u_print_status();
 

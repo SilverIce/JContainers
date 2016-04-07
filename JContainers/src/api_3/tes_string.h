@@ -15,7 +15,7 @@ namespace collections {
             metaInfo.comment = "various string utility methods";
         }
 
-        static object_base * wrap(const char* source, SInt32 charsPerLine) {
+        static object_base * wrap(tes_context& ctx, const char* source, SInt32 charsPerLine) {
 
 			auto strings = wrap_string(source, charsPerLine);
 
@@ -29,7 +29,7 @@ namespace collections {
                     obj._array.push_back(item(str));
                 }
             },
-                tes_context::instance());
+                ctx);
         }
         REGISTERF2(wrap, "sourceText charactersPerLine=60",
 "Breaks source text onto set of lines of almost equal size.\n\
@@ -49,10 +49,10 @@ Accepts ASCII and UTF-8 encoded strings only");
             return encodeFormToString( util::to_enum<FormId>(id) );
         }
 
-        REGISTERF2(decodeFormStringToFormId, "formString", "FormId|Form <-> \"__formData|<pluginName>|<lowFormId>\"-string converisons");
-        REGISTERF2(decodeFormStringToForm, "formString", "");
-        REGISTERF2(encodeFormToString, "value", "");
-        REGISTERF2(encodeFormIdToString, "formId", "");
+        REGISTERF2_STATELESS(decodeFormStringToFormId, "formString", "FormId|Form <-> \"__formData|<pluginName>|<lowFormId>\"-string converisons");
+        REGISTERF2_STATELESS(decodeFormStringToForm, "formString", "");
+        REGISTERF2_STATELESS(encodeFormToString, "value", "");
+        REGISTERF2_STATELESS(encodeFormIdToString, "formId", "");
     };
 
     TES_META_INFO(tes_string);
@@ -62,12 +62,14 @@ Accepts ASCII and UTF-8 encoded strings only");
 
     TEST(tes_string, test)
     {
+        tes_context_standalone ctx;
+
         auto testData = json_deserializer::json_from_file(
             util::relative_to_dll_path("test_data/tes_string/string_wrap.json").generic_string().c_str() );
         EXPECT_TRUE( json_is_array(testData.get()) );
 
 		auto testWrap = [&](const char *string, int linesCount, int charsPerLine) {
-            auto obj = tes_string::wrap(string, charsPerLine);
+            auto obj = tes_string::wrap(ctx, string, charsPerLine);
             if (linesCount == -1) {
                 EXPECT_NIL(obj);
             }

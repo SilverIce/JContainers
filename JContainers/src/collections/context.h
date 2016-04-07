@@ -19,14 +19,17 @@ namespace collections
     {
         using base = object_context;
 
+    public:
+
         void u_print_stats() const;
         void u_applyUpdates(const serialization_version saveVersion);
 
-    public:
 
         using post_init = ::meta<void(*)(tes_context&)>;
 
-        tes_context() {
+        tes_context(form_watching::form_observer& form_watcher)
+            : _form_watcher(form_watcher)
+        {
             for (auto& init : post_init::getListConst()) {
                 init(*this);
             }
@@ -36,7 +39,7 @@ namespace collections
             shutdown();
         }
 
-        static tes_context& instance();
+        //static tes_context& instance();
 
     private:
 
@@ -64,7 +67,7 @@ namespace collections
         // to attach lua context
         std::shared_ptr<dependent_context>     lua_context;
 
-        form_watching::form_observer _form_watcher;
+        form_watching::form_observer& _form_watcher;
 
         //////
     public:
@@ -86,16 +89,24 @@ namespace collections
         friend class boost::serialization::access;
         BOOST_SERIALIZATION_SPLIT_MEMBER();
 
-    protected:
+    //protected:
 
         void u_clearState() {
             _root_object_id.store(Handle::Null, std::memory_order_relaxed);
             _cached_root = nullptr;
-            _form_watcher.u_clearState();
+            //_form_watcher.u_clearState();
 
             base::u_clearState();
         }
 
+    };
+
+    class tes_context_standalone : public tes_context {
+        form_watching::form_observer _observer;
+
+    public:
+
+        tes_context_standalone() : tes_context(_observer) {} // not safe to pass uninitialized yet memory
     };
 
     // so that this won't be lost or hidden

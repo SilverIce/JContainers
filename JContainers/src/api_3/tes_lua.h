@@ -34,8 +34,8 @@ Usage example:
 #undef ARGNAMES_2
 
         template<class ResultType>
-        static ResultType evalLua(const char* luaCode, object_base* transport, ResultType def, bool minimizeLifetime = true) {
-            auto result = lua::eval_lua_function(tes_context::instance(), transport, luaCode);
+        static ResultType evalLua(tes_context& ctx, const char* luaCode, object_base* transport, ResultType def, bool minimizeLifetime = true) {
+            auto result = lua::eval_lua_function(ctx, transport, luaCode);
             if (transport && minimizeLifetime) {
                 transport->zero_lifetime();
             }
@@ -53,12 +53,12 @@ Returns @transport)===");
 #undef ARGNAMES
 
         template<class ArgType>
-        static map* pushArg(const char* key, ArgType arg, map* transport = nullptr) {
+        static map* pushArg(tes_context& ctx, const char* key, ArgType arg, map* transport = nullptr) {
             if (!transport) {
-                transport = &map::object(tes_context::instance());
+                transport = &map::object(ctx);
             }
 
-            tes_map::setItem<ArgType>(transport, key, arg);
+            tes_map::setItem<ArgType>(ctx, transport, key, arg);
             return transport;
         }
 
@@ -67,9 +67,11 @@ Returns @transport)===");
 
     TEST(JLua, simple)
     {
-        EXPECT_EQ( 8, tes_lua::evalLua<float>("return args.x * args.y", tes_lua::pushArg("x", 2, tes_lua::pushArg("y", 4)), 0.f) );
+        tes_context_standalone ctx;
 
-        EXPECT_EQ(1, tes_lua::evalLua<SInt32>("return jobject ~= nil", tes_lua::pushArg("garbage", 4), -1))
+        EXPECT_EQ(8, tes_lua::evalLua<float>(ctx, "return args.x * args.y", tes_lua::pushArg(ctx, "x", 2, tes_lua::pushArg(ctx, "y", 4)), 0.f));
+
+        EXPECT_EQ(1, tes_lua::evalLua<SInt32>(ctx, "return jobject ~= nil", tes_lua::pushArg(ctx, "garbage", 4), -1))
             << "@jobject (@args alias) isn't supported";
     }
     TES_META_INFO(tes_lua);

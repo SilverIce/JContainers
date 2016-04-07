@@ -36,6 +36,7 @@ extern "C" {
 
 namespace lua {
     using tes_context = collections::tes_context;
+    using tes_context_standalone = collections::tes_context_standalone;
 
     using object_base = collections::object_base;
 
@@ -256,7 +257,7 @@ namespace lua { namespace aux_wip {
 
 
     struct fixture : public ::testing::Test {
-        tes_context tc;
+        tes_context_standalone tc;
         context_pool pool;
         fixture() : pool(tc) {}
     };

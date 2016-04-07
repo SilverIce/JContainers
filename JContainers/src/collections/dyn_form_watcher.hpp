@@ -1,16 +1,20 @@
 #pragma once
 
-#include <boost/smart_ptr/make_shared_object.hpp>
-#include <boost/range.hpp>
-//#include <boost/algorithm/string/join.hpp>
 #include <assert.h>
 #include <inttypes.h>
 #include <map>
 #include <tuple>
 #include <mutex>
 
-//#include "skse/GameForms.h"
-//#include "skse/PapyrusVM.h"
+#include <boost/smart_ptr/make_shared_object.hpp>
+#include <boost/range.hpp>
+
+#include "boost/serialization/version.hpp"
+#include "boost/serialization/split_member.hpp"
+#include <boost/serialization/shared_ptr.hpp>
+#include <boost/serialization/weak_ptr.hpp>
+#include <boost/serialization/hash_map.hpp>
+
 #include "skse/skse.h"
 #include "util/stl_ext.h"
 #include "util/util.h"
@@ -19,7 +23,6 @@
 #include "collections/dyn_form_watcher.h"
 
 BOOST_CLASS_VERSION(collections::form_watching::form_ref, 2);
-BOOST_CLASS_VERSION(collections::form_watching::form_observer, 3);
 
 namespace collections {
 
@@ -29,7 +32,7 @@ namespace collections {
 
         template<class ...Params>
         inline void log(const char* fmt, Params&& ...ps) {
-            JC_log(fmt, std::forward<Params>(ps) ...);
+            //JC_log(fmt, std::forward<Params>(ps) ...);
         }
 
         class form_entry : public boost::noncopyable {
@@ -210,12 +213,12 @@ namespace collections {
             }
         }
 
-        template<class Archive>
-        void form_observer::load(Archive & ar, const unsigned int version) {
+        template<>
+        void form_observer::load(boost::archive::binary_iarchive & ar, const unsigned int version) {
 
             switch (version) {
             case 3:
-                load_collection(ar, _watched_forms, [&ar](Archive& ar, decltype(_watched_forms)& collection) {
+                load_collection(ar, _watched_forms, [&ar](boost::archive::binary_iarchive& ar, decltype(_watched_forms)& collection) {
                     form_entry_ref entry;
                     ar >> entry;
 
@@ -242,10 +245,10 @@ namespace collections {
             }
         }
 
-        template<class Archive>
-        void form_observer::save(Archive & ar, const unsigned int version) const {
+        template<>
+        void form_observer::save(boost::archive::binary_oarchive & ar, const unsigned int version) const {
 
-            save_collection(ar, _watched_forms, [&ar](Archive& ar, const decltype(_watched_forms)::value_type& pair) {
+            save_collection(ar, _watched_forms, [&ar](boost::archive::binary_oarchive& ar, const decltype(_watched_forms)::value_type& pair) {
                 auto entry = pair.second.lock();
                 ar << entry;
             });

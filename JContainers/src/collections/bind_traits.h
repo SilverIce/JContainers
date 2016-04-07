@@ -19,8 +19,8 @@ namespace reflection { namespace binding {
             return (HandleT)(obj ? obj->uid() : Handle::Null);
         }
 
-        static object_stack_ref_template<T> convert2J(HandleT hdl) {
-            auto ref = tes_context::instance().getObjectRefOfType<T>((Handle)hdl);
+        static object_stack_ref_template<T> convert2J(HandleT hdl, tes_context& ctx) {
+            auto ref = ctx.getObjectRefOfType<T>((Handle)hdl);
             if (!ref && hdl != util::to_integral(Handle::Null)) {
                 JC_log("Warning: access to non-existing object with id 0x%X", hdl);
             }
@@ -47,7 +47,8 @@ namespace reflection { namespace binding {
         static TESForm* convert2Tes(FormId id) {
             return LookupFormByID((uint32_t)id);
         }
-        static FormId convert2J(const TESForm* form) {
+        template<class Any>
+        static FormId convert2J(const TESForm* form, const Any&) {
             return form ? (FormId)form->formID : FormId::Zero;
         }
     };
@@ -59,8 +60,8 @@ namespace reflection { namespace binding {
         static TESForm* convert2Tes(const form_watching::form_ref& id) {
             return skse::lookup_form(id.get());
         }
-        static form_watching::form_ref convert2J(const TESForm* form) {
-            return make_weak_form_id(form, tes_context::instance());
+        static form_watching::form_ref convert2J(const TESForm* form, tes_context& ctx) {
+            return make_weak_form_id(form, ctx);
         }
     };
 
@@ -69,8 +70,8 @@ namespace reflection { namespace binding {
         static TESForm* convert2Tes(const form_watching::form_ref_lightweight& id) {
             return skse::lookup_form(id.get());
         }
-        static form_watching::form_ref_lightweight convert2J(const TESForm* form) {
-            return make_lightweight_form_ref(form, tes_context::instance());
+        static form_watching::form_ref_lightweight convert2J(const TESForm* form ,tes_context& ctx) {
+            return make_lightweight_form_ref(form, ctx);
         }
     };
 

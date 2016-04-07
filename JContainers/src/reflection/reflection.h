@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <stdint.h>
 
+#include "skse/PapyrusVM.h"
 #include "meta.h"
 #include "util/istring.h"
 
@@ -30,9 +31,11 @@ namespace reflection {
     typedef void* c_function;
 
     struct bind_args {
+        struct shared_state_t{};
         VMClassRegistry& registry;
-        const char* className;
-        const char* functionName;
+        istring className;
+        istring functionName;
+        shared_state_t* shared_state;
     };
 
     struct function_info {
@@ -46,9 +49,12 @@ namespace reflection {
         c_function c_func = nullptr; // original function
         istring argument_names;
         istring name;
+        bool _stateless = true;
 
         comment_generator _comment_func = nullptr;
         const char *_comment_str = nullptr;
+
+        bool isStateless() const { return _stateless; }
 
         std::string comment() const {
             if (_comment_func) {
@@ -71,7 +77,10 @@ namespace reflection {
             _comment_str = comment;
         }
 
-        void bind(VMClassRegistry& registry, const istring& className) const;
+        void bind(VMClassRegistry& registry, const istring& className) const {
+            registrator(bind_args{ registry, className.c_str(), name.c_str() });
+            registry.SetFunctionFlags(className.c_str(), name.c_str(), VMClassRegistry::kFunctionFlag_NoWait);
+        }
     };
 
     struct papyrus_text_block {
@@ -96,20 +105,16 @@ namespace reflection {
         std::string comment;
         uint32_t version = 0;
 
-        class_info() {
-            _className = "NoClassName";
-        }
+        class_info() = default;
+        class_info(const istring& name) : _className(name)
+        {}
 
         bool initialized() const {
             return !_className.empty();
         }
 
-        istring className() const {
-#   if 0
-            return _className + '_' + (char)((uint32_t)'0' + version);
-#   else
+        const istring& className() const {
             return _className;
-#   endif
         }
 
         void add_text_block(const papyrus_text_block& tb) {
@@ -121,7 +126,8 @@ namespace reflection {
             return itr != methods.end() ? &*itr : nullptr;
         }
 
-        void addFunction(const function_info& info) {
+        template<class function_info>
+        void addFunction(function_info&& info) {
             assert(find_function(info.name.c_str()) == nullptr);
             methods.push_back(info);
         }
@@ -132,6 +138,14 @@ namespace reflection {
             auto clsName = className();
             for (const auto& itm : methods) {
                 itm.bind(registry, clsName);
+            }
+        }
+
+        template<class Visitor>
+        void visit_functions(Visitor&& visitor) const {
+            assert(initialized());
+            for (const auto& itm : methods) {
+                visitor(itm);
             }
         }
 
@@ -146,12 +160,15 @@ namespace reflection {
         }
     };
 
+    class_info amalgamate_classes(const std::string& amalgName, const std::map<istring, class_info>& classes);
+
     // Produces script files using meta class information
     namespace code_producer {
 
         std::string produceClassCode(const class_info& self);
         void produceClassToFile(const class_info& self, const std::string& directoryPath);
-
+        void produceAmalgamatedCodeToFile(const std::map<istring,
+            class_info>& classes, const std::string& directoryPath, const std::string& scriptname);
     }
 
     namespace _detail {
@@ -175,13 +192,15 @@ namespace reflection {
     template <class Derived>
     using class_meta_mixin_t = _detail::class_meta_mixin_t<Derived>;
 
-    const std::map<istring, class_info>& class_registry();
+    using name2class_map = std::map<istring, class_info>;
+
+    const name2class_map& class_registry();
     const function_info* find_function_of_class(const char * functionName, const char *className);
 
-    template<class T>
-    inline void foreach_metaInfo_do(T&& func) {
-        for (auto & pair : class_registry()) {
-            func(pair.second);
+    template<class T, class... Params>
+    inline void foreach_metaInfo_do(const name2class_map& m, T&& func, Params&& ...ps) {
+        for (auto & pair : m) {
+            func(pair.second, std::forward<Params>(ps) ...);
         }
     }
 

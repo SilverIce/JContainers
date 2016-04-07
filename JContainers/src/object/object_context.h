@@ -47,7 +47,7 @@ namespace collections {
 
     class object_context {
 
-    protected:
+    public:
         void u_postLoadInitializations();
         void u_postLoadMaintenance(const serialization_version saveVersion);
         void u_print_stats() const;
@@ -91,6 +91,7 @@ namespace collections {
         };
 
         void stop_activity();
+        void start_activity();
         void u_clearState();
 
     public:
