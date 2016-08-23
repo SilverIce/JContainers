@@ -12,16 +12,17 @@
 #include "gtest/gtest.h"
 #include "common/IDebugLog.h"
 
+#include "jcontainers_constants.h"
 #include "util/singleton.h"
 #include "util/util.h"
 #include "util/istring.h"
 #include "iarchive_with_blob.h"
 
 #include "object/object_context.h"
-#include "domain_master.h"
+#include "domains/domain_master.h"
 
 
-#include "domain_master_serialization.h"
+#include "domains/domain_master_serialization.h"
 
 namespace domain_master {
 
@@ -31,14 +32,14 @@ namespace domain_master {
         auto get_domains_from_fs() -> std::set<util::istring> {
             namespace fs = boost::filesystem;
             std::set<util::istring> domains;
-            fs::path dir = util::relative_to_dll_path("JCData/Domains/");
+            fs::path dir = util::relative_to_dll_path(JC_DATA_FILES "Domains/");
             for (fs::directory_iterator itr(dir), end; itr != end; ++itr) {
                domains.insert(itr->path().filename().generic_string().c_str());
             }
             return domains;
         }
 
-        template<class List>
+        /*template<class List>
         auto construct_domains(List&& list) -> std::map<util::istring, context*> {
             std::map<util::istring, context*> contexts;
 
@@ -46,7 +47,7 @@ namespace domain_master {
                 contexts[name.c_str()] = new context();
             }
             return contexts;
-        }
+        }*/
 
         template<class Func, class ...Args>
         auto invoke_for_all(master& ths, Func&& f, Args && ...args) -> void {

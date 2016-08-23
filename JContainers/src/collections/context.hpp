@@ -151,17 +151,6 @@ namespace collections {
         }
     }
 
-/*
-    namespace {
-        util::singleton<tes_context, false> g_tes_context_singleton {
-            []() { return new tes_context(); }
-        };
-    }
-
-    tes_context& tes_context::instance() {
-        return g_tes_context_singleton.get();
-    }*/
-
     void tes_context::u_print_stats() const {
         base::u_print_stats();
     }
@@ -188,7 +177,7 @@ namespace collections {
         boost::serialization::load_atomic(ar, _root_object_id);
 /*
 
-        if (version == 1) { // to support v3.3-testing-3
+        if (version == 1) { // to support v3.3-testing-3,
             ar >> _form_watcher;
         }*/
     }

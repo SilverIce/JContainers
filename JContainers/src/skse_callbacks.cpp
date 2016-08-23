@@ -19,7 +19,7 @@
 #include "collections/context.h"
 #include "collections/dyn_form_watcher.h"
 
-#include "context_master/domain_master.h"
+#include "domains/domain_master.h"
 
 class VMClassRegistry;
 

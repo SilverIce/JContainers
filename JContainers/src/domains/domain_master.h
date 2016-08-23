@@ -1,12 +1,14 @@
 #pragma once
 
 #include <string>
+#include <set>
+#include <map>
+#include <iosfwd>
+#include <memory>
+
 #include "collections/dyn_form_watcher.h"
 #include "collections/context.h"
-#include <vector>
-#include <map>
 #include "util/istring.h"
-#include <set>
 
 namespace domain_master {
 
@@ -24,7 +26,6 @@ namespace domain_master {
 
         context& get_or_create_domain_with_name(const util::istring& name);// or create if none
         context& get_default_domain();
-        //std::vector<std::reference_wrapper<context>> active_domains();
 
         using DomainsMap = std::map<util::istring, std::shared_ptr<context>>;
 

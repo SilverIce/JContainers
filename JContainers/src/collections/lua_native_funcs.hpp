@@ -66,7 +66,6 @@ namespace lua { namespace api {
         return{ string, length };
     }
 
-
     CString CString_copy(const std::string& origin) {
         return CString_copy(origin.c_str(), origin.size());
     }

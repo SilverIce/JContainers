@@ -58,7 +58,7 @@ namespace collections
             }
         }
 
-        // it's possible that release from queue will happen just before public id will be exposed?
+        // it's possible that release from AQueue will happen just before public id will be exposed?
         return id;
     }
 
@@ -122,7 +122,7 @@ namespace collections
                 // (immediately if the object is not exposed to Skyrim, i.e. has no public ID)
 
                 // Note that this function sometimes being called during loading (deserialization)
-                // We can't delete object during loading even if noOwners() is true - more owners may be loaded later
+                // We can't delete objects during loading even if noOwners() is true - more owners may be loaded later
                 try_prolong_lifetime();
             }
         }

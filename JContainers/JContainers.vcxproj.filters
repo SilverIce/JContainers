@@ -76,7 +76,7 @@
     <ClCompile Include="src\util\logging.cpp">
       <Filter>util</Filter>
     </ClCompile>
-    <ClCompile Include="src\context_master\domain_master.cpp">
+    <ClCompile Include="src\domains\domain_master.cpp">
       <Filter>domain_master</Filter>
     </ClCompile>
   </ItemGroup>
@@ -252,10 +252,10 @@
     <ClInclude Include="src\util\cstring.h">
       <Filter>util</Filter>
     </ClInclude>
-    <ClInclude Include="src\context_master\domain_master.h">
+    <ClInclude Include="src\domains\domain_master.h">
       <Filter>domain_master</Filter>
     </ClInclude>
-    <ClInclude Include="src\context_master\domain_master_serialization.h">
+    <ClInclude Include="src\domains\domain_master_serialization.h">
       <Filter>domain_master</Filter>
     </ClInclude>
   </ItemGroup>

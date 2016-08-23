@@ -6,7 +6,7 @@
 
 #include "util/istring_serialization.h"
 
-#include "context_master/domain_master.h"
+#include "domains/domain_master.h"
 
 namespace boost {
     namespace serialization {
