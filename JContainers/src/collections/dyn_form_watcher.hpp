@@ -284,10 +284,10 @@ namespace collections {
                     return watched;
                 }
                 else {
-                    auto watched = form_entry::make(fId);
-                    _watched_forms[fId] = watched;
+                    auto entry_ref = form_entry::make(fId);
+                    std::pair<watched_forms_t::iterator, bool> pair = _watched_forms.insert(watched_forms_t::value_type{ fId, entry_ref });
                     log("queried, created new form-entry %" PRIX32, fId);
-                    return watched;
+                    return pair.first->second.lock();
                 }
             }
         }
