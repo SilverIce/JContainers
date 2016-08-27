@@ -8,7 +8,7 @@ namespace tes_api_3 {
     public:
 
         void additionalSetup() {
-            metaInfo.comment = "Evaluates Lua code";
+            metaInfo.comment = "Evaluates Lua code. Unstable API - I'm free to change or remove it anytime";
         }
 
 #define ARGNAMES "luaCode transport default="
@@ -17,13 +17,14 @@ namespace tes_api_3 {
 R"===(Evaluates piece of Lua code. The arguments are carried by @transport object.
 The @transport is any kind of object, not just JMap.
 If @minimizeLifetime is True the function will invoke JValue.zeroLifetime on the @transport object.
+It is more than wise to re-use @transport when evaluating lot of lua code at once.
 Returns @default value if evaluation fails.
 Usage example:
 
     ; 7 from the end until 9 from the end. Returns "Lua" string
     string input = "Hello Lua user"
     string s = JLua.evaLuaStr("return string.sub(args.string, args.low, args.high)",\
-        JLua.setObj("string",input, JLua.setInt("low",7, JLua.setInt("high",9 )))\
+        JLua.setStr("string",input, JLua.setInt("low",7, JLua.setInt("high",9 )))\
     )
 )===");
         REGISTERF(evalLua<SInt32>, "evalLuaInt", ARGNAMES "0" ARGNAMES_2, nullptr);

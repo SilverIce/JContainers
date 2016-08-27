@@ -8,13 +8,13 @@ namespace tes_api_3 {
         REGISTER_TES_NAME("JContainers");
 
         void additionalSetup() {
-            metaInfo.comment = "Various utility methods";
+            metaInfo.comment = "Utility functionality";
         }
 
         static bool __isInstalled() {
             return true;
         }
-        REGISTERF2_STATELESS(__isInstalled, nullptr, "NOT part of public API");
+        REGISTERF2_STATELESS(__isInstalled, nullptr, "It's NOT part of public API");
 
         static UInt32 APIVersion() {
             return (UInt32)consts::api_version;
@@ -92,13 +92,13 @@ namespace tes_api_3 {
         REGISTERF2_STATELESS(lastErrorString, nullptr, "DEPRECATE. Returns string that describes last error");
 
         REGISTER_TEXT([]() {
-            const char* fmt = R"===(
+            const char fmt[] = R"===(
 ; Returns true if JContainers plugin installed properly
 bool function isInstalled() global
     return __isInstalled() && %u == APIVersion() && %u == featureVersion()
 endfunction
 )===";
-            char buff[1024] = { 0 };
+            char buff[sizeof(fmt) * 3 / 2] = { '\0' };
             assert(-1 != sprintf_s(buff, fmt, consts::api_version, consts::feature_version));
             return std::string(buff);
         });

@@ -497,7 +497,7 @@ namespace collections {
                 EXPECT_FALSE( contains(forms, non_expired) ); // had to be EXPECT_FALSE
             }
 
-            // lookup with a expired form-ref ID 0x14 (key) to a map containing non-expired form-ref key (0x14) should fail
+            // lookup with an expired form-ref ID 0x14 (key) to a map containing non-expired form-ref key (0x14) should fail
             TEST(form_watching, bug_3)
             {
                 const auto fid = util::to_enum<FormId>(0x14);
