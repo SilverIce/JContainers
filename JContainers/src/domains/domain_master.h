@@ -6,14 +6,14 @@
 #include <iosfwd>
 #include <memory>
 
-#include "collections/dyn_form_watcher.h"
+#include "forms/form_observer.h"
 #include "collections/context.h"
 #include "util/istring.h"
 
 namespace domain_master {
 
     using context = ::collections::tes_context;
-    using form_observer = ::collections::form_watching::form_observer;
+    using form_observer = ::forms::form_observer;
 
     class master {
     public:
@@ -25,6 +25,7 @@ namespace domain_master {
         std::set<util::istring> active_domain_names;
 
         context& get_or_create_domain_with_name(const util::istring& name);// or create if none
+        context* get_domain_with_name(const util::istring& name);// or create if none
         context& get_default_domain();
 
         using DomainsMap = std::map<util::istring, std::shared_ptr<context>>;

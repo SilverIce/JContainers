@@ -17,7 +17,7 @@
 #include "jcontainers_constants.h"
 
 #include "collections/context.h"
-#include "collections/dyn_form_watcher.h"
+#include "forms/form_observer.h"
 
 #include "domains/domain_master.h"
 
@@ -239,7 +239,7 @@ namespace {
             g_serialization->SetLoadCallback(g_pluginHandle, load);
 
             g_serialization->SetFormDeleteCallback(g_pluginHandle, [](UInt64 handle) {
-                domain_master::master::instance().get_form_observer().on_form_deleted((FormHandle)handle);
+                domain_master::master::instance().get_form_observer().on_form_deleted((forms::FormHandle)handle);
             });
 
             g_papyrus->Register(registerAllFunctions);

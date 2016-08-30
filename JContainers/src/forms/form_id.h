@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace collections {
+namespace forms {
 
     using FormIdUnredlying = uint32_t;
 

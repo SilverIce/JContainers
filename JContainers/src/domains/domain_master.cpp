@@ -270,6 +270,15 @@ namespace domain_master {
         return *dom;
     }
 
+    context* master::get_domain_with_name(const util::istring& name)
+    {
+        auto itr = _domains.find(name);
+        if (itr != _domains.cend()) {
+            return itr->second.get();
+        }
+        return nullptr;
+    }
+
     context& master::get_default_domain()
     {
         return _default_domain;

@@ -40,4 +40,18 @@ namespace jc {
 
         void * (*tes_function_of_class)(const char *function_name, const char *class_name);
     };
+
+    struct domain_interface {
+
+        enum {
+            type_id = 2,
+            version = 1,
+        };
+
+        uint32_t current_version;
+
+        void * (*get_default_domain)();
+        void * (*get_domain_with_name)(const char *domain_name);
+
+    };
 }

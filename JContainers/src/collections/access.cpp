@@ -7,8 +7,8 @@
 
 #include <functional>
 
+#include "forms/form_handling.h"
 #include "collections/collections.h"
-#include "collections/form_handling.h"
 #include "collections/context.h"
 
 #include "collections/operators.h"
@@ -256,7 +256,7 @@ namespace collections
                 int32_t indexOrFormId = 0;
                 FormId frmId = FormId::Zero;
 
-                if (!form_handling::is_form_string(indexRange.begin())) {
+                if (!forms::is_form_string(indexRange.begin())) {
                     try {
                         indexOrFormId = std::stoi(ss::string(indexRange.begin(), indexRange.end()), nullptr, 0);
                     }
@@ -268,7 +268,7 @@ namespace collections
                     }
                 }
                 else {
-                    auto fId = form_handling::from_string(indexRange);
+                    auto fId = forms::from_string(indexRange);
                     if (!fId) {
                         return state(false, st);
                     }
@@ -413,7 +413,7 @@ namespace collections
                     return bs::none;
                 }
 
-                if (!form_handling::is_form_string(indexRange.begin())) {
+                if (!forms::is_form_string(indexRange.begin())) {
                     int32_t index = 0;
                     try {
                         index = std::stoi(string(indexRange.begin(), indexRange.end()), nullptr, 0);
@@ -428,7 +428,7 @@ namespace collections
                     return key_and_rest{ index, cstring(end + 1, path.end()) };
                 }
                 else {
-                    auto fId = form_handling::from_string(indexRange);
+                    auto fId = forms::from_string(indexRange);
                     if (!fId) {
                         return bs::none;
                     }

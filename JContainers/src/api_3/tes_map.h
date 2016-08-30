@@ -261,22 +261,21 @@ Usage:
     TES_META_INFO(tes_form_map_ext);
     TES_META_INFO(tes_integer_map_ext);
 
-    TEST(tes_form_map, next_key_iteration)
+    JC_TEST(tes_form_map, next_key_iteration)
     {
         using namespace collections;
 
-        tes_context_standalone ctx;
-        collections::form_map* fmap = tes_object::object<form_map>(ctx);
-        fmap->u_container()[make_weak_form_id(util::to_enum<FormId>(0x14), ctx)] = item{ 10 };
-        fmap->u_container()[make_weak_form_id(util::to_enum<FormId>(0x20), ctx)] = item{ 14 };
+        collections::form_map* fmap = tes_object::object<form_map>(context);
+        fmap->u_container()[make_weak_form_id(util::to_enum<FormId>(0x14), context)] = item{ 10 };
+        fmap->u_container()[make_weak_form_id(util::to_enum<FormId>(0x20), context)] = item{ 14 };
 
         auto countIterations = [&](collections::form_map* fmap) -> int {
             int cycle_counter = 0;
             const form_ref_lightweight endKey{};
-            form_ref_lightweight key = tes_form_map_ext::nextKey(ctx, fmap, endKey, endKey);
+            form_ref_lightweight key = tes_form_map_ext::nextKey(context, fmap, endKey, endKey);
             while (key) {
                 ++cycle_counter;
-                key = tes_form_map_ext::nextKey(ctx, fmap, key, endKey);
+                key = tes_form_map_ext::nextKey(context, fmap, key, endKey);
             }
             return cycle_counter;
         };

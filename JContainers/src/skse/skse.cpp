@@ -17,7 +17,7 @@
 #include "util/stl_ext.h"
 #include "gtest.h"
 
-#include "collections/form_handling.h"
+#include "forms/form_handling.h"
 //#include "util/util.h"
 //#include "jc_interface.h"
 //#include "reflection/reflection.h"
@@ -29,6 +29,10 @@ extern SKSESerializationInterface	* g_serialization;
 namespace skse {
 
     namespace {
+
+        using forms::FormId;
+        using forms::FormIdUnredlying;
+
         struct skse_api {
             virtual const char * modname_from_index(uint8_t idx) = 0;
             virtual uint8_t modindex_from_name(const char * name) = 0;
@@ -157,7 +161,7 @@ namespace skse {
             }
 
             bool try_retain_handle(FormId id) override {
-                auto handle = util::to_integral(collections::form_handling::form_id_to_handle(id));
+                auto handle = util::to_integral(forms::form_id_to_handle(id));
                 TESForm* form = reinterpret_cast<TESForm*>((*g_objectHandlePolicy)->Resolve(TESForm::kTypeID, handle));
                 if (form) {
                     (*g_objectHandlePolicy)->AddRef(handle);
@@ -166,7 +170,7 @@ namespace skse {
                 return false;
             }
             void release_handle(FormId handle) override {
-                (*g_objectHandlePolicy)->Release(util::to_integral(collections::form_handling::form_id_to_handle(handle)));
+                (*g_objectHandlePolicy)->Release(util::to_integral(forms::form_id_to_handle(handle)));
             }
 
             void console_print(const char * fmt, const va_list& args) override {

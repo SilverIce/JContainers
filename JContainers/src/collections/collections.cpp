@@ -32,12 +32,13 @@
 
 #include "object/object_base_serialization.h"
 
+#include "forms/form_handling.h"
+
 #include "collections/collections.h"
 #include "collections/context.h"
-#include "collections/form_handling.h"
 
 #include "collections/context.hpp"
-#include "collections/dyn_form_watcher.hpp"
+#include "forms/form_observer.hpp"
 
 BOOST_CLASS_EXPORT_GUID(collections::array, "kJArray");
 BOOST_CLASS_EXPORT_GUID(collections::map, "kJMap");

@@ -10,9 +10,9 @@ namespace lua {
     using array_functions = collections::array_functions;
     using CollectionType = collections::CollectionType;
 
-    using collections::form_ref;
-    using collections::FormId;
-    using collections::FormIdUnredlying;
+    using forms::form_ref;
+    using forms::FormId;
+    using forms::FormIdUnredlying;
     using collections::HACK_get_tcontext;
 }
 

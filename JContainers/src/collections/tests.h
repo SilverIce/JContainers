@@ -100,9 +100,9 @@ namespace collections { namespace {
         EXPECT_TRUE(item("A") < item("b"));
     }
 
-    TEST(form_handling, test)
+    TEST(forms, test)
     {
-        namespace fh = form_handling;
+        namespace fh = forms;
 
         EXPECT_TRUE(fh::is_form_string("__formData|Skyrim.esm|0x1"));
         EXPECT_FALSE(fh::is_form_string("__formDatttt"));
@@ -127,10 +127,10 @@ namespace collections { namespace {
 
         // test global (0xFF*) form ids
         {
-            const FormId form = (FormId)(FormGlobalPrefix << 24 | 0x14);
+            const FormId form = (FormId)(fh::FormGlobalPrefix << 24 | 0x14);
 
             EXPECT_TRUE(!fh::is_static(form));
-            EXPECT_EQ(form, fh::construct(FormGlobalPrefix, 0x14));
+            EXPECT_EQ(form, fh::construct(fh::FormGlobalPrefix, 0x14));
 
             std::string formString = *fh::to_string(form);
 

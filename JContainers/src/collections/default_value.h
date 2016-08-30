@@ -1,6 +1,6 @@
 #pragma once
 
-#include "dyn_form_watcher.h"
+#include "forms/form_observer.h"
 
 namespace collections {
 
@@ -8,7 +8,7 @@ namespace collections {
         return static_cast<T>(0);
     };
 
-    template<> inline form_ref default_value<form_ref>() {
-        return form_ref{};
+    template<> inline forms::form_ref default_value<forms::form_ref>() {
+        return forms::form_ref{};
     };
 }

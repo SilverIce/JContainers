@@ -29,6 +29,10 @@ static SKSEMessagingInterface       *g_messaging = nullptr;
 
 
 namespace {
+
+    // 
+    void * default_domain = nullptr;
+
     // function pointers which will be obtained:
     SInt32(*JArray_size)(void*, SInt32 obj) = nullptr;
     TESForm* (*JArray_getForm)(void*, SInt32 obj, SInt32 idx, TESForm* def) = nullptr;
@@ -52,16 +56,18 @@ namespace {
         obtain_func(refl, "count", "JArray", JArray_size);
         obtain_func(refl, "getForm", "JArray", JArray_getForm);
         obtain_func(refl, "swapItems", "JArray", JArray_swap);
+
+        default_domain = root->query_interface<jc::domain_interface>()->get_default_domain();
     }
 
     void sortByName(StaticFunctionTag*, SInt32 obj) {
 
-        auto array_size = JArray_size(nullptr, obj);
+        auto array_size = JArray_size(default_domain, obj);
 
         // >
         auto compare = [obj](int idx, int idx2) {
-            auto n1 = papyrusForm::GetName(JArray_getForm(nullptr, obj, idx, nullptr));
-            auto n2 = papyrusForm::GetName(JArray_getForm(nullptr, obj, idx2, nullptr));
+            auto n1 = papyrusForm::GetName(JArray_getForm(default_domain, obj, idx, nullptr));
+            auto n2 = papyrusForm::GetName(JArray_getForm(default_domain, obj, idx2, nullptr));
 
             return n1.data && n2.data && _stricmp(n1.data, n2.data) > 0;
         };
@@ -70,7 +76,7 @@ namespace {
         for (int passes = 0; passes < array_size - 1; passes++) {
             for (int j = 0; j < array_size - passes - 1; j++) {
                 if (compare(j, j + 1)) {
-                    JArray_swap(nullptr, obj, j, j + 1);
+                    JArray_swap(default_domain, obj, j, j + 1);
                 }
             }
         }  //Bubble Sorting finished

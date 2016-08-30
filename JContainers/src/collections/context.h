@@ -7,9 +7,8 @@
 #include "object/object_base.h"
 #include "object/object_context.h"
 
-//#include "collections/error_code.h"
+#include "forms/form_observer.h"
 #include "collections/collections.h"
-#include "collections/dyn_form_watcher.h"
 
 namespace collections
 {
@@ -27,7 +26,7 @@ namespace collections
 
         using post_init = ::meta<void(*)(tes_context&)>;
 
-        tes_context(form_watching::form_observer& form_watcher)
+        tes_context(forms::form_observer& form_watcher)
             : _form_watcher(form_watcher)
         {
             for (auto& init : post_init::getListConst()) {
@@ -67,7 +66,7 @@ namespace collections
         // to attach lua context
         std::shared_ptr<dependent_context>     lua_context;
 
-        form_watching::form_observer& _form_watcher;
+        forms::form_observer& _form_watcher;
 
         //////
     public:
@@ -102,7 +101,7 @@ namespace collections
     };
 
     class tes_context_standalone : public tes_context {
-        form_watching::form_observer _observer;
+        forms::form_observer _observer;
 
     public:
 

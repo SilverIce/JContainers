@@ -21,9 +21,7 @@
 
 class TESForm;
 
-namespace collections {
-    
-namespace form_watching {
+namespace forms {
 
     class form_observer;
     class form_entry;
@@ -202,8 +200,11 @@ namespace form_watching {
 
 }
 
-    using form_watching::form_ref;
-    using form_watching::form_ref_lightweight;
+namespace collections {
+
+    using forms::form_ref;
+    using forms::form_ref_lightweight;
+    using forms::FormId;
 
     template<class Context>
     inline form_ref make_weak_form_id(FormId id, Context& context) {
@@ -228,9 +229,9 @@ namespace form_watching {
 }
 
 namespace std {
-    template<> inline void swap(collections::form_watching::form_ref& left, collections::form_watching::form_ref& right) {
+    template<> inline void swap(forms::form_ref& left, forms::form_ref& right) {
         left.swap(right);
     }
 }
 
-BOOST_CLASS_VERSION(collections::form_watching::form_observer, 3);
+BOOST_CLASS_VERSION(forms::form_observer, 3);

@@ -9,9 +9,9 @@
 #include "skse/skse.h"
 #include "skse/string.h"
 
-#include "form_id.h"
+#include "forms/form_id.h"
+#include "forms/form_observer.h"
 #include "collections/collections.h"
-#include "collections/dyn_form_watcher.h"
 
 
 namespace collections {
@@ -25,6 +25,8 @@ namespace collections {
         object,
         string,
     };
+
+    using ::forms::FormId;
 
     class item {
     public:

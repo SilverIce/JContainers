@@ -9,8 +9,8 @@
 #include "boost/filesystem/path.hpp"
 #include "boost_extras.h"
 
+#include "forms/form_handling.h"
 #include "collections/collections.h"
-#include "collections/form_handling.h"
 #include "collections/access.h"
 
 namespace collections {
@@ -198,7 +198,7 @@ namespace collections {
                     const char *key;
                     json_t *value;
                     json_object_foreach(val, key, value) {
-                        auto fkey = form_handling::from_string(key);
+                        auto fkey = forms::from_string(key);
                         if (fkey) {
                             form_ref weak_key = make_weak_form_id(*fkey, self->_context);
                             cnt.u_set(weak_key, self->make_item(value, cnt, weak_key));
@@ -297,13 +297,13 @@ namespace collections {
                 if (!reference_serialization::is_special_string(string)) {
                     item = string;
                 } else {
-                    if (form_handling::is_form_string(string)) {
+                    if (forms::is_form_string(string)) {
                         /*  having dilemma here:
                             if the string looks like form-string and plugin name can't be resolved:
                             a. lost info and convert it to FormZero
                             b. save info and convert it to string
                         */
-                        item = make_weak_form_id(form_handling::from_string(string).get_value_or(FormId::Zero), _context);
+                        item = make_weak_form_id(forms::from_string(string).get_value_or(FormId::Zero), _context);
                     }
                     else if (schedule_ref_resolving(string, container, item_key)) { // otherwise it's reference string?
                         ;
@@ -433,7 +433,7 @@ namespace collections {
                     json_object_serialization_consts::put_metainfo<form_map>(object);
 
                     for (auto& pair : cnt.u_container()) {
-                        auto key = form_handling::to_string(pair.first.get());
+                        auto key = forms::to_string(pair.first.get());
                         if (key) {
                             self->fill_key_info(pair.second, cnt, pair.first);
                             json_object_set_new(object, (*key).c_str(), self->create_value(pair.second));
@@ -494,7 +494,7 @@ namespace collections {
                 }
 
                 json_ref operator()(const form_ref& val) const {
-                    auto formStr = form_handling::to_string(val.get());
+                    auto formStr = forms::to_string(val.get());
                     if (formStr) {
                         return (*this)(*formStr);
                     }
@@ -539,7 +539,7 @@ namespace collections {
 
                 void operator()(const form_ref& fid) const {
                     p.append("[");
-                    p.append(*form_handling::to_string(fid.get()));
+                    p.append(*forms::to_string(fid.get()));
                     p.append("]");
                 }
             };

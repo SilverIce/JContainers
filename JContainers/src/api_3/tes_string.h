@@ -40,10 +40,10 @@ Accepts ASCII and UTF-8 encoded strings only");
             return util::to_integral(decodeFormStringToForm(form_string));
         }
         static FormId decodeFormStringToForm(const char* form_string) {
-            return boost::get_optional_value_or(form_handling::from_string(form_string), FormId::Zero);
+            return boost::get_optional_value_or(forms::from_string(form_string), FormId::Zero);
         }
         static skse::string_ref encodeFormToString(FormId id) {
-            return skse::string_ref{ boost::get_optional_value_or(form_handling::to_string(id), "") };
+            return skse::string_ref{ boost::get_optional_value_or(forms::to_string(id), "") };
         }
         static skse::string_ref encodeFormIdToString(UInt32 id) {
             return encodeFormToString( util::to_enum<FormId>(id) );

@@ -162,8 +162,8 @@
     <ClInclude Include="src\api_3\tes_string.h" />
     <ClInclude Include="src\collections\collections.h" />
     <ClInclude Include="src\collections\default_value.h" />
-    <ClInclude Include="src\collections\dyn_form_watcher.h" />
-    <ClInclude Include="src\collections\dyn_form_watcher.hpp" />
+    <ClInclude Include="src\collections\form_observer.h" />
+    <ClInclude Include="src\collections\form_observer.hpp" />
     <ClInclude Include="src\collections\tests.h" />
     <ClInclude Include="src\collections\bind_traits.h" />
     <ClInclude Include="src\collections\copying.h" />
@@ -180,6 +180,10 @@
     <ClInclude Include="src\collections\error_code.h" />
     <ClInclude Include="src\domains\domain_master.h" />
     <ClInclude Include="src\domains\domain_master_serialization.h" />
+    <ClInclude Include="src\forms\form_handling.h" />
+    <ClInclude Include="src\forms\form_id.h" />
+    <ClInclude Include="src\forms\form_observer.h" />
+    <ClInclude Include="src\forms\form_observer.hpp" />
     <ClInclude Include="src\form_id.h" />
     <ClInclude Include="src\iarchive_with_blob.h" />
     <ClInclude Include="src\jc_interface.h" />

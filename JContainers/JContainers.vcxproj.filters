@@ -34,6 +34,9 @@
     <Filter Include="domain_master">
       <UniqueIdentifier>{a22f0f99-31ac-4eed-88d1-cdcf01afcfa1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="forms">
+      <UniqueIdentifier>{5f4b521c-d0a3-4821-85a6-08e5a243800f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\jcontainers_pch.cpp" />
@@ -226,16 +229,10 @@
     <ClInclude Include="src\reflection\detail\type_traits.hpp">
       <Filter>reflection\detail</Filter>
     </ClInclude>
-    <ClInclude Include="src\collections\dyn_form_watcher.h">
-      <Filter>collections</Filter>
-    </ClInclude>
     <ClInclude Include="src\util\atomic_serialization.h">
       <Filter>util</Filter>
     </ClInclude>
     <ClInclude Include="src\form_id.h" />
-    <ClInclude Include="src\collections\dyn_form_watcher.hpp">
-      <Filter>collections</Filter>
-    </ClInclude>
     <ClInclude Include="src\util\singleton.h">
       <Filter>util</Filter>
     </ClInclude>
@@ -257,6 +254,24 @@
     </ClInclude>
     <ClInclude Include="src\domains\domain_master_serialization.h">
       <Filter>domain_master</Filter>
+    </ClInclude>
+    <ClInclude Include="src\collections\form_observer.h">
+      <Filter>collections</Filter>
+    </ClInclude>
+    <ClInclude Include="src\collections\form_observer.hpp">
+      <Filter>collections</Filter>
+    </ClInclude>
+    <ClInclude Include="src\forms\form_handling.h">
+      <Filter>forms</Filter>
+    </ClInclude>
+    <ClInclude Include="src\forms\form_id.h">
+      <Filter>forms</Filter>
+    </ClInclude>
+    <ClInclude Include="src\forms\form_observer.h">
+      <Filter>forms</Filter>
+    </ClInclude>
+    <ClInclude Include="src\forms\form_observer.hpp">
+      <Filter>forms</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
