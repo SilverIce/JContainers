@@ -25,7 +25,7 @@ namespace domain_master {
         std::set<util::istring> active_domain_names;
 
         context& get_or_create_domain_with_name(const util::istring& name);// or create if none
-        context* get_domain_with_name(const util::istring& name);// or create if none
+        context* get_domain_if_active(const util::istring& name);
         context& get_default_domain();
 
         using DomainsMap = std::map<util::istring, std::shared_ptr<context>>;

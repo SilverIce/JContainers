@@ -50,6 +50,7 @@ namespace jc {
 
         uint32_t current_version;
 
+        // it's safe to cache a pointer to the defaut domain
         void * (*get_default_domain)();
         void * (*get_domain_with_name)(const char *domain_name);
 

@@ -21,7 +21,7 @@ namespace jc { namespace {
         },
         [](const char *domain_name) -> void* {
             return domain_name
-                ? domain_master::master::instance().get_domain_with_name(util::istring{ domain_name })
+                ? domain_master::master::instance().get_domain_if_active(util::istring{ domain_name })
                 : nullptr;
         }
     };

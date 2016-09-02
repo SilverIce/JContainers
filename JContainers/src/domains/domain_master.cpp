@@ -90,7 +90,7 @@ namespace domain_master {
             }
         }
 
-        auto u_erase_inactive_domains(master& self) -> void {
+        auto u_delete_inactive_domains(master& self) -> void {
             util::tree_erase_if(self.active_domains_map(), [&](const master::DomainsMap::value_type& p) {
                 return self.active_domain_names.find(p.first) == self.active_domain_names.end();
             });
@@ -205,7 +205,7 @@ namespace domain_master {
                             }
                         }
 
-                        u_erase_inactive_domains(self);
+                        u_delete_inactive_domains(self);
 
                         invoke_for_all(self, std::mem_fn(&context::u_postLoadInitializations));
                         invoke_for_all(self, std::mem_fn(&context::u_applyUpdates), hdr.commonVersion);
@@ -270,13 +270,10 @@ namespace domain_master {
         return *dom;
     }
 
-    context* master::get_domain_with_name(const util::istring& name)
+    context* master::get_domain_if_active(const util::istring& name)
     {
-        auto itr = _domains.find(name);
-        if (itr != _domains.cend()) {
-            return itr->second.get();
-        }
-        return nullptr;
+        return active_domain_names.find(name) != active_domain_names.end()
+            ? &get_or_create_domain_with_name(name) : nullptr;
     }
 
     context& master::get_default_domain()
@@ -311,7 +308,7 @@ namespace domain_master {
     void master::clear_state() {
         activity_stopper s{ *this };
         u_clearState(*this);
-        u_erase_inactive_domains(*this);
+        u_delete_inactive_domains(*this);
     }
 
     void master::read_from_stream(std::istream& s) {
@@ -332,14 +329,14 @@ namespace domain_master {
             EXPECT_FALSE(m.active_domains_map().empty());
         }
 
-        TEST(master, u_erase_inactive_domains)
+        TEST(master, u_delete_inactive_domains)
         {
             ::domain_master::master m;
             EXPECT_TRUE(m.active_domains_map().empty());
             m.get_or_create_domain_with_name("help");
             EXPECT_FALSE(m.active_domains_map().empty());
 
-            u_erase_inactive_domains(m);
+            u_delete_inactive_domains(m);
             EXPECT_TRUE(m.active_domains_map().empty());
         }
 
