@@ -29,7 +29,7 @@ namespace tes_api_3 {
             map_functions::doReadOp(obj, key, [&](item& itm) { def = itm.readAs<T>(); });
             return def;
         }
-        REGISTERF(getItem<SInt32>, "getInt", "object key default=0", "returns value associated with key");
+        REGISTERF(getItem<SInt32>, "getInt", "object key default=0", "Returns the value associated with the @key. If not, returns @default value");
         REGISTERF(getItem<Float32>, "getFlt", "object key default=0.0", "");
         REGISTERF(getItem<skse::string_ref>, "getStr", "object key default=\"\"", "");
         REGISTERF(getItem<object_base*>, "getObj", "object key default=0", "");
@@ -39,7 +39,7 @@ namespace tes_api_3 {
         static void setItem(tes_context& ctx, ref obj, key_cref key, T val) {
             map_functions::doWriteOp(obj, key, [&](item& itm) { itm = val; });
         }
-        REGISTERF(setItem<SInt32>, "setInt", "* key value", "creates key-value association. replaces existing value if any");
+        REGISTERF(setItem<SInt32>, "setInt", "* key value", "Inserts @key: @value pair. Replaces existing pair with the same @key");
         REGISTERF(setItem<Float32>, "setFlt", "* key value", "");
         REGISTERF(setItem<const char *>, "setStr", "* key value", "");
         REGISTERF(setItem<object_base*>, "setObj", "* key container", "");
@@ -48,14 +48,14 @@ namespace tes_api_3 {
         static bool hasKey(tes_context& ctx, ref obj, key_cref key) {
             return valueType(ctx, obj, key) != 0;
         }
-        REGISTERF2(hasKey, "* key", "returns true, if something associated with key");
+        REGISTERF2(hasKey, "* key", "Returns true, if the container has @key: value pair");
 
         static SInt32 valueType(tes_context& ctx, ref obj, key_cref key) {
             auto type = item_type::no_item;
             map_functions::doReadOp(obj, key, [&](item& itm) { type = itm.type(); });
             return (SInt32)type;
         }
-        REGISTERF2(valueType, "* key", "returns type of the value associated with key.\n"VALUE_TYPE_COMMENT);
+        REGISTERF2(valueType, "* key", "Returns type of the value associated with the @key.\n"VALUE_TYPE_COMMENT);
 
         static object_base* allKeys(tes_context& ctx, ref obj) {
             if (!obj) {
@@ -72,7 +72,7 @@ namespace tes_api_3 {
             },
                 ctx);
         }
-        REGISTERF(allKeys, "allKeys", "*", "returns new array containing all keys");
+        REGISTERF(allKeys, "allKeys", "*", "Returns a new array containing all keys");
 
         static VMResultArray<tes_key> allKeysPArray(tes_context& ctx, ref obj) {
             if (!obj) {
@@ -108,7 +108,7 @@ namespace tes_api_3 {
             },
                 ctx);
         }
-        REGISTERF(allValues, "allValues", "*", "returns new array containing all values");
+        REGISTERF(allValues, "allValues", "*", "Returns a new array containing all values");
 
         static bool removeKey(tes_context& ctx, ref obj, key_cref key) {
             if (obj) {
@@ -116,7 +116,7 @@ namespace tes_api_3 {
             }
             return false;
         }
-        REGISTERF(removeKey, "removeKey", "* key", "destroys key-value association");
+        REGISTERF(removeKey, "removeKey", "* key", "Removes the pair from the container where the key equals to the @key");
 
         static SInt32 count(tes_context& ctx, ref obj) {
             if (!obj) {
@@ -125,7 +125,7 @@ namespace tes_api_3 {
 
             return obj->s_count();
         }
-        REGISTERF2(count, "*", "returns count of items/associations");
+        REGISTERF2(count, "*", "Returns count of pairs in the conainer");
 
         static void clear(tes_context& ctx, ref obj) {
             if (!obj) {
@@ -134,7 +134,7 @@ namespace tes_api_3 {
 
             obj->s_clear();
         }
-        REGISTERF2(clear, "*", "removes all items from container");
+        REGISTERF2(clear, "*", "Removes all pairs from the container");
 
         static void addPairs(tes_context& ctx, ref obj, const ref source, bool overrideDuplicates) {
             if (!obj || !source || source == obj) {
@@ -153,7 +153,7 @@ namespace tes_api_3 {
                 obj->u_container().insert(source->u_container().begin(), source->u_container().end());
             }
         }
-        REGISTERF2(addPairs, "* source overrideDuplicates", "inserts key-value pairs from the source map");
+        REGISTERF2(addPairs, "* source overrideDuplicates", "Inserts key-value pairs from the source container");
 
         void additionalSetup();
 
