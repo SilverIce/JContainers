@@ -48,7 +48,7 @@ namespace tes_api_3 {
 
             return &obj;
         }
-        REGISTERF2(objectWithSize, "size", "creates array of given size, filled with empty items");
+        REGISTERF2(objectWithSize, "size", "Creates a new array of given size, filled with empty (None) items");
 
         template<class TesType, class JCType = TesType>
         static object_base* fromArray(tes_context& ctx, VMArray<TesType> arr) {
@@ -65,7 +65,7 @@ namespace tes_api_3 {
             return obj;
         }
         REGISTERF(fromArray<SInt32>, "objectWithInts", "values",
-"creates new array that contains given values\n\
+"Creates a new array that contains given values\n\
 objectWithBooleans converts booleans into integers");
         REGISTERF(fromArray<skse::string_ref>, "objectWithStrings",  "values", nullptr);
         REGISTERF(fromArray<Float32>, "objectWithFloats",  "values", nullptr);
@@ -90,7 +90,7 @@ objectWithBooleans converts booleans into integers");
 
             return obj;
         }
-        REGISTERF2(subArray, "* startIndex endIndex", "creates new array containing all values from source array in range [startIndex, endIndex)");
+        REGISTERF2(subArray, "* startIndex endIndex", "Creates a new array containing all the values from the source array in range [startIndex, endIndex)");
 
         static void addFromArray(tes_context& ctx, ref obj, ref another, SInt32 insertAtIndex = -1) {
             if (!obj || !another || obj == another) {
@@ -104,7 +104,7 @@ objectWithBooleans converts booleans into integers");
             });
         }
         REGISTERF2(addFromArray, "* source insertAtIndex=-1",
-"adds values from source array into this array. if insertAtIndex is -1 (default behaviour) it adds to the end.\n"
+"Inserts the values from the source array into this array. If insertAtIndex is -1 (default behaviour) it appends to the end.\n"
 NEGATIVE_IDX_COMMENT);
 
         static void addFromFormList(tes_context& ctx, ref obj, BGSListForm *formList, SInt32 insertAtIndex = -1) {
@@ -140,7 +140,7 @@ NEGATIVE_IDX_COMMENT);
 
             return t;
         }
-        REGISTERF(itemAtIndex<SInt32>, "getInt", "* index default=0", "returns item at index. getObj function returns container.\n"
+        REGISTERF(itemAtIndex<SInt32>, "getInt", "* index default=0", "Returns the item at the index of the array.\n"
             NEGATIVE_IDX_COMMENT);
         REGISTERF(itemAtIndex<Float32>, "getFlt", "* index default=0.0", "");
         REGISTERF(itemAtIndex<skse::string_ref>, "getStr", "* index default=\"\"", "");
@@ -165,9 +165,9 @@ NEGATIVE_IDX_COMMENT);
             return result;
         }
         REGISTERF(findVal<SInt32>, "findInt", "* value searchStartIndex=0",
-"returns index of the first found value/container that equals to given value/container (default behaviour if searchStartIndex is 0).\n\
-if found nothing returns -1.\n\
-searchStartIndex - array index where to start search\n"
+"Returns the index of the first found value/container that equals to given the value/container (default behaviour if searchStartIndex is 0).\n\
+If nothing was found it returns -1.\n\
+@searchStartIndex - index of the array where to start search\n"
 NEGATIVE_IDX_COMMENT);
         REGISTERF(findVal<Float32>, "findFlt", "* value searchStartIndex=0", "");
         REGISTERF(findVal<const char *>, "findStr", "* value searchStartIndex=0", "");
@@ -180,7 +180,7 @@ NEGATIVE_IDX_COMMENT);
                 obj->_array[idx] = item(val);
             });
         }
-        REGISTERF(replaceItemAtIndex<SInt32>, "setInt", "* index value", "replaces existing value/container at index with new value.\n"
+        REGISTERF(replaceItemAtIndex<SInt32>, "setInt", "* index value", "Replaces existing value at the @index of the array with the new @value.\n"
                                                                          NEGATIVE_IDX_COMMENT);
         REGISTERF(replaceItemAtIndex<Float32>, "setFlt", "* index value", "");
         REGISTERF(replaceItemAtIndex<const char *>, "setStr", "* index value", "");
@@ -193,8 +193,8 @@ NEGATIVE_IDX_COMMENT);
                 (void)obj->_array.emplace(obj->begin() + idx, val);
             });
         }
-        REGISTERF(addItemAt<SInt32>, "addInt", "* value addToIndex=-1", "appends value/container to the end of array.\n\
-if addToIndex >= 0 it inserts value at given index. " NEGATIVE_IDX_COMMENT);
+        REGISTERF(addItemAt<SInt32>, "addInt", "* value addToIndex=-1", "Appends the @value/@container to the end of the array.\n\
+If @addToIndex >= 0 it inserts value at given index. " NEGATIVE_IDX_COMMENT);
         REGISTERF(addItemAt<Float32>, "addFlt", "* value addToIndex=-1", "");
         REGISTERF(addItemAt<const char *>, "addStr", "* value addToIndex=-1", "");
         REGISTERF(addItemAt<object_base*>, "addObj", "* container addToIndex=-1", "");
@@ -203,19 +203,19 @@ if addToIndex >= 0 it inserts value at given index. " NEGATIVE_IDX_COMMENT);
         static Index count(tes_context& ctx, ref obj) {
             return tes_object::count(ctx, obj);
         }
-        REGISTERF2(count, "*", "returns number of items in array");
+        REGISTERF2(count, "*", "Returns count of the items in the array");
 
         static void clear(tes_context& ctx, ref obj) {
             tes_object::clear(ctx, obj);
         }
-        REGISTERF2(clear, "*", "removes all items from array");
+        REGISTERF2(clear, "*", "Removes all the items from the array");
 
         static void eraseIndex(tes_context& ctx, ref obj, SInt32 index) {
             doReadOp(obj, index, [=](uint32_t idx) {
                 obj->_array.erase(obj->begin() + idx);
             });
         }
-        REGISTERF2(eraseIndex, "* index", "erases item at index. "NEGATIVE_IDX_COMMENT);
+        REGISTERF2(eraseIndex, "* index", "Erases the item at the index. "NEGATIVE_IDX_COMMENT);
 
         static void eraseRange(tes_context& ctx, ref obj, SInt32 first, SInt32 last) {
 
@@ -230,7 +230,7 @@ if addToIndex >= 0 it inserts value at given index. " NEGATIVE_IDX_COMMENT);
                 }
             });
         }
-        REGISTERF2(eraseRange, "* first last", "erases [first, last] range of items. "NEGATIVE_IDX_COMMENT
+        REGISTERF2(eraseRange, "* first last", "Erases [first, last] index range of the items. "NEGATIVE_IDX_COMMENT
             "\nFor ex. with [1,-1] range it will erase everything except the first item");
 
         static SInt32 valueType(tes_context& ctx, ref obj, SInt32 index) {
@@ -241,7 +241,7 @@ if addToIndex >= 0 it inserts value at given index. " NEGATIVE_IDX_COMMENT);
 
             return type;
         }
-        REGISTERF2(valueType, "* index", "returns type of the value at index. "NEGATIVE_IDX_COMMENT"\n"VALUE_TYPE_COMMENT);
+        REGISTERF2(valueType, "* index", "Returns type of the value at the @index. "NEGATIVE_IDX_COMMENT"\n"VALUE_TYPE_COMMENT);
 
         static void swapItems(tes_context& ctx, ref obj, SInt32 idx, SInt32 idx2) {
 
@@ -253,7 +253,7 @@ if addToIndex >= 0 it inserts value at given index. " NEGATIVE_IDX_COMMENT);
                 }
             });
         }
-        REGISTERF2(swapItems, "* index1 index2", "Exchanges the items at index1 and index2. "NEGATIVE_IDX_COMMENT);
+        REGISTERF2(swapItems, "* index1 index2", "Exchanges the items at @index1 and @index2. "NEGATIVE_IDX_COMMENT);
 
         static ref sort(tes_context& ctx, ref obj) {
             if (obj) {
