@@ -103,7 +103,6 @@ namespace forms {
             _watched_form.swap(other._watched_form);
         }
 
-        // Implements stable 'less than' comparison
         struct stable_less_comparer;
 
         friend class boost::serialization::access;
@@ -113,6 +112,11 @@ namespace forms {
         template<class Archive> void load(Archive & ar, const unsigned int version);
     };
 
+    // Implements stable 'less than' form_ref comparison
+    // Note that the comparison is not as stable as before - due to is_expired() function which
+    // may start returning False once a form_ref gets expired.
+    // And in a result of this a map container of <form_ref, value> keys containing expired and non-expired form_ref-keys 
+    // (with equal raw form ids) may start contain equal two keys and may act weird
     struct form_ref::stable_less_comparer {
         template<class FormRef1, class FormRef2>
         bool operator () (const FormRef1& left, const FormRef2& right) const {

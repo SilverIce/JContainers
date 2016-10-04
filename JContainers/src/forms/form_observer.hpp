@@ -524,8 +524,34 @@ namespace forms {
 
             EXPECT_TRUE(forms.size() == 2);
             // one of the keys should be non-expired
-            EXPECT_TRUE(forms.begin()->first.is_not_expired() != (++forms.begin())->first.is_not_expired());
+            EXPECT_TRUE(forms.begin()->first.is_not_expired() != forms.rbegin()->first.is_not_expired());
         }
+
+        TEST(forms, bug_5)
+        {
+            const auto fid = util::to_enum<FormId>(0xff000014);
+            const auto fhid = fh::form_id_to_handle(fid);
+
+            form_observer watcher;
+
+            const std::map<form_ref, int> forms = {
+                { form_ref::make_expired(fid), 0 },
+                { form_ref{ fid, watcher }, 0 },
+            };
+
+            EXPECT_EQ(forms.size(), 2);
+
+            watcher.on_form_deleted(fhid);
+
+            // Now forms will contain 2 equal keys!
+            EXPECT_EQ(forms.size(), 2);
+
+            // which is funny
+
+            EXPECT_TRUE(forms.begin()->first.is_expired());
+            EXPECT_TRUE(forms.rbegin()->first.is_expired());
+        }
+
 
         // both form refs (ID 0xff000014) should expire in the same moment of time, should point to the same form-entry
         TEST(forms, dynamic_form_id){

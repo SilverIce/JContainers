@@ -7,6 +7,7 @@ class JCLib(object):
         from ctypes import cdll
         print('loading JCLib at:', location)
         self.lib = cdll.LoadLibrary(location)
+        print('loaded JCLib at:', location)
 
     def runTests(self, args):
         print(len(args))
