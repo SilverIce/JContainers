@@ -62,7 +62,7 @@ Retains and returns the object.)==="
             return newObject;
         }
         REGISTERF2(releaseAndRetain, "previousObject newObject tag=\"\"",
-"Just a union of retain-release calls. Releases previousObject, retains and returns newObject.");
+"Just a union of retain-release calls. Releases @previousObject, retains and returns @newObject.");
 
         static void releaseObjectsWithTag(tes_context& ctx, const char *tag) {
             if (!tag) {
@@ -80,8 +80,8 @@ Retains and returns the object.)==="
             }
         }
         REGISTERF2(releaseObjectsWithTag, "tag",
-"For cleanup purpose only - releases all objects with given tag.\n"
-"Complements all retain calls the objects with given tag received with release calls.");
+"For cleanup purposes only - releases all objects tagged with the @tag.\n"
+"Internally invokes JValue.release on the objects the same amount of times the objects were retained.");
 
         static ref zeroLifetime(tes_context& ctx, ref obj) {
             if (obj) {
@@ -90,7 +90,8 @@ Retains and returns the object.)==="
             return obj;
         }
         REGISTERF2(zeroLifetime, "*", "Minimizes the time JC temporarily owns the object, returns the object.\n\
-By using this function you help JC to delete unused object as soon as possible (the object won't be deleted if something retains or contains it)");
+By using this function you help JC to delete unused objects as soon as possible.\n\
+Has zero effect if the object is being retained or if another object contains/references it.");
 
 #       define JC_OBJECT_POOL_KEY   "__tempPools"
 
@@ -119,10 +120,11 @@ By using this function you help JC to delete unused object as soon as possible (
             return obj;
         }
         REGISTERF2(addToPool, "* poolName",
-"Handly for temporary objects (objects with no owners) - pool 'locationName' owns any amount of objects, preventing their destuction, extends lifetime.\n\
-Do not forget to clean location later! Typical use:\n\
-int tempMap = JValue.addToPool(JMap.object(), \"uniquePoolName\")\n\
-anywhere later:\n\
+"Handly for temporary objects (objects with no owners) - the pool 'locationName' owns any amount of objects, preventing their destuction, extends lifetime.\n\
+Do not forget to clean the pool later! Typical use:\n\
+int jTempMap = JValue.addToPool(JMap.object(), \"uniquePoolName\")\n\
+int jKeys = JValue.addToPool(JMap.allKeys(someJMap), \"uniquePoolName\")\n\
+and anywhere later:\n\
 JValue.cleanPool(\"uniquePoolName\")"
 );
 
@@ -155,7 +157,7 @@ JValue.cleanPool(\"uniquePoolName\")"
             return obj->as<T>() != nullptr;
         }
 
-        REGISTERF(isCast<array>, "isArray", "*", "returns true if object is map, array or formmap container");
+        REGISTERF(isCast<array>, "isArray", "*", "Returns true if the object is map, array or formmap container");
         REGISTERF(isCast<map>, "isMap", "*", nullptr);
         REGISTERF(isCast<form_map>, "isFormMap", "*", nullptr);
         REGISTERF(isCast<integer_map>, "isIntegerMap", "*", nullptr);
@@ -163,25 +165,25 @@ JValue.cleanPool(\"uniquePoolName\")"
         static bool empty(tes_context& ctx, ref obj) {
             return count(ctx, obj) == 0;
         }
-        REGISTERF2(empty, "*", "returns true, if container is empty");
+        REGISTERF2(empty, "*", "Returns true, if the container is empty");
 
         static SInt32 count(tes_context& ctx, ref obj) {
             return obj ? obj->s_count() : 0;
         }
-        REGISTERF2(count, "*", "returns amount of items in container");
+        REGISTERF2(count, "*", "Returns amount of items in the container");
 
         static void clear(tes_context& ctx, ref obj) {
             if (obj) {
                 obj->s_clear();
             }
         }
-        REGISTERF2(clear, "*", "removes all items from container");
+        REGISTERF2(clear, "*", "Removes all items from the container");
 
         static object_base* readFromFile(tes_context& context, const char *path) {
             auto obj = json_deserializer::object_from_file(context, path);
             return  obj;
         }
-        REGISTERF2(readFromFile, "filePath", "JSON serialization/deserialization:\n\ncreates and returns new container object containing contents of JSON file");
+        REGISTERF2(readFromFile, "filePath", "JSON serialization/deserialization:\n\nCreates and returns a new container object containing contents of JSON file");
 
         static object_base* readFromDirectory(tes_context& context, const char *dirPath, const char *extension = "")
         {
@@ -223,7 +225,7 @@ JValue.cleanPool(\"uniquePoolName\")"
             auto obj = json_deserializer::object_from_json_data( ctx, prototype);
             return obj;
         }
-        REGISTERF2(objectFromPrototype, "prototype", "creates new container object using given JSON string-prototype");
+        REGISTERF2(objectFromPrototype, "prototype", "Creates a new container object using given JSON string-prototype");
 
         static void writeToFile(tes_context& ctx, object_base *obj, const char * cpath) {
             if (!cpath || !obj) {
@@ -243,7 +245,7 @@ JValue.cleanPool(\"uniquePoolName\")"
                 json_dump_file(json.get(), cpath, JSON_INDENT(2));
             }
         }
-        REGISTERF(writeToFile, "writeToFile", "* filePath", "writes object into JSON file");
+        REGISTERF(writeToFile, "writeToFile", "* filePath", "Writes the object into JSON file");
 
         static SInt32 solvedValueType(tes_context& ctx, object_base* obj, const char *path) {
             SInt32 type = item_type::no_item;
@@ -262,9 +264,9 @@ JValue.cleanPool(\"uniquePoolName\")"
         }
         REGISTERF(hasPath, "hasPath", "* path",
 "Path resolving:\n\n\
-returns true, if it's possible to resolve given path.\n\
-for ex. JValue.hasPath(container, \".player.health\") will check if given container has 'player' which has 'health' information"
-                                      );
+Returns true, if it's possible to resolve given path, i.e. if it's possible to retrieve the value at the path.\n\
+For ex. JValue.hasPath(container, \".player.health\") will test whether @container structure close to this one - {'player': {'health': health_value}}
+);
 
         REGISTERF(solvedValueType, "solvedValueType", "* path", "Returns type of resolved value. "VALUE_TYPE_COMMENT);
 
@@ -281,7 +283,7 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
 
             return val;
         }
-        REGISTERF(resolveGetter<Float32>, "solveFlt", "* path default=0.0", "attempts to get value at given path.\nJValue.solveInt(container, \".player.mood\") will return player's mood");
+        REGISTERF(resolveGetter<Float32>, "solveFlt", "* path default=0.0", "Attempts to retrieve value at given path. If fails, returns @default value");
         REGISTERF(resolveGetter<SInt32>, "solveInt", "* path default=0", nullptr);
         REGISTERF(resolveGetter<skse::string_ref>, "solveStr", "* path default=\"\"", nullptr);
         REGISTERF(resolveGetter<Handle>, "solveObj", "* path default=0", nullptr);
@@ -296,7 +298,7 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
             return succeed;
         }
         REGISTERF(solveSetter<Float32>, "solveFltSetter", "* path value createMissingKeys=false",
-            "Attempts to assign value. Returns false if no such path\n"
+            "Attempts to assign the value. If @createMissingKeys is False it may fail to assign - if no such path exist.\n"
             "With 'createMissingKeys=true' it creates any missing path element: solveIntSetter(map, \".keyA.keyB\", 10, true) on empty JMap creates {keyA: {keyB: 10}} structure"
             );
         REGISTERF(solveSetter<SInt32>, "solveIntSetter", "* path value createMissingKeys=false", nullptr);

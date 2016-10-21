@@ -18,8 +18,8 @@ Manages keys and values associations (like JMap)";
             return tes_object::resolveGetter<T>(ctx, &ctx.root(), path, t);
         }
         REGISTERF(solveGetter<Float32>, "solveFlt", "path default=0.0",
-"attempts to get value associated with path.\n\
-for ex. following information associated with 'frosfall' key:\n\
+"Attempts to retrieve the value associated with the @path.\n\
+For ex. the following information associated with 'frosfall' key:\n\
 \n\
 \"frostfall\" : {\n\
     \"exposureRate\" : 0.5,\n\
@@ -27,7 +27,7 @@ for ex. following information associated with 'frosfall' key:\n\
 }\n\
 \n\
 then JDB.solveFlt(\".frostfall.exposureRate\") will return 0.5 and\n\
-JDB.solveObj(\".frostfall.arrayC\") will return array containing [\"stringValue\", 1.5, 10, 1.14] values");
+JDB.solveObj(\".frostfall.arrayC\") will return the array containing [\"stringValue\", 1.5, 10, 1.14] values");
 
         REGISTERF(solveGetter<SInt32>, "solveInt", "path default=0", nullptr);
         REGISTERF(solveGetter<skse::string_ref>, "solveStr", "path default=\"\"", nullptr);
@@ -39,8 +39,8 @@ JDB.solveObj(\".frostfall.arrayC\") will return array containing [\"stringValue\
             return tes_object::solveSetter(ctx, &ctx.root(), path, value, createMissingKeys);
         }
         REGISTERF(solveSetter<Float32>, "solveFltSetter", "path value createMissingKeys=false",
-            "Attempts to assign value. Returns false if no such path\n"
-            "With 'createMissingKeys=true' it creates any missing path elements: JDB.solveIntSetter(\".frostfall.keyB\", 10, true) creates {frostfall: {keyB: 10}} structure");
+            "Attempts to assign the @value. Returns false if no such path.\n"
+            "If 'createMissingKeys=true' it creates any missing path elements: JDB.solveIntSetter(\".frostfall.keyB\", 10, true) creates {frostfall: {keyB: 10}} structure");
         REGISTERF(solveSetter<SInt32>, "solveIntSetter", "path value createMissingKeys=false", nullptr);
         REGISTERF(solveSetter<const char*>, "solveStrSetter", "path value createMissingKeys=false", nullptr);
         REGISTERF(solveSetter<object_base*>, "solveObjSetter", "path value createMissingKeys=false", nullptr);
@@ -65,7 +65,7 @@ for ex. JDB.setObj(\"frostfall\", frostFallInformation) will associate 'frostall
         static bool hasPath(tes_context& ctx, const char* path) {
             return tes_object::hasPath(ctx, &ctx.root(), path);
         }
-        REGISTERF2(hasPath, "path", "returns true, if DB capable resolve given path, e.g. it able to execute solve* or solver*Setter functions successfully");
+        REGISTERF2(hasPath, "path", "Returns true, if JDB capable resolve given @path, i.e. if it able to execute solve* or solver*Setter functions successfully");
 
         static object_base* allKeys(tes_context& ctx) {
             return tes_map::allKeys(ctx, &ctx.root());

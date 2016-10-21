@@ -44,14 +44,14 @@ namespace tes_api_3 {
             int result = _stat(filename, &buf);
             return result == 0;
         }
-        REGISTERF2_STATELESS(fileExistsAtPath, "path", "Returns true if file at a specified path exists");
+        REGISTERF2_STATELESS(fileExistsAtPath, "path", "Returns true if the file at a specified @path exists");
 
         static void removeFileAtPath(const char *filename) {
             if (filename) {
                 boost::filesystem::remove_all(filename);
             }
         }
-        REGISTERF2_STATELESS(removeFileAtPath, "path", "Deletes the file or directory identified by a given path");
+        REGISTERF2_STATELESS(removeFileAtPath, "path", "Deletes the file or directory identified by the @path");
 
         static std::string userDirectory() {
             char path[MAX_PATH];
@@ -79,7 +79,7 @@ namespace tes_api_3 {
         }
         REGISTERF2_STATELESS(lastError, nullptr, []() {
             std::stringstream comm;
-            comm << "DEPRECATE. Returns last occured error (error code):";
+            comm << "DEPRECATED. Returns last occured error (error code):";
             for (int i = 0; i < JErrorCount; ++i) {
                comm << std::endl << i << " - " << JErrorCodeToString((JErrorCode)i);
             }
@@ -89,7 +89,7 @@ namespace tes_api_3 {
         static skse::string_ref lastErrorString() {
             return "";
         }
-        REGISTERF2_STATELESS(lastErrorString, nullptr, "DEPRECATE. Returns string that describes last error");
+        REGISTERF2_STATELESS(lastErrorString, nullptr, "DEPRECATED. Returns string that describes last error");
 
         REGISTER_TEXT([]() {
             const char fmt[] = R"===(
