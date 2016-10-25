@@ -194,10 +194,12 @@ namespace tes_api_3 {
 
     const char *tes_map_nextKey_comment =
 R"===(Simplifies iteration over container's contents.
-Increments and returns previous key, pass default parameters to begin iteration.
-If @previousKey == @endKey the function returns first key.
-The function returns so-called 'valid' keys (the ones != @endKey).
-The function returns @endKey - so-called 'invalid' key to signal that iteration has reached its end.
+Accepts the @previousKey, returns the next key.
+If @previousKey == @endKey the function returns the first key.
+The function always returns so-called 'valid' keys (the ones != @endKey).
+The function returns @endKey ('invalid' key) only once to signal that iteration has reached its end.
+In most cases, if the map doesn't contain an invalid key ("" for JMap, None form-key for JFormMap)
+it's ok to omit the @endKey.
 
 Usage:
 
