@@ -265,7 +265,7 @@ JValue.cleanPool(\"uniquePoolName\")"
         REGISTERF(hasPath, "hasPath", "* path",
 "Path resolving:\n\n\
 Returns true, if it's possible to resolve given path, i.e. if it's possible to retrieve the value at the path.\n\
-For ex. JValue.hasPath(container, \".player.health\") will test whether @container structure close to this one - {'player': {'health': health_value}}
+For ex. JValue.hasPath(container, \".player.health\") will test whether @container structure close to this one - {'player': {'health': health_value}}"
 );
 
         REGISTERF(solvedValueType, "solvedValueType", "* path", "Returns type of resolved value. "VALUE_TYPE_COMMENT);

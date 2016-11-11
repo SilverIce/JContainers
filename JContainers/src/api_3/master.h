@@ -12,6 +12,7 @@ namespace tes_api_3 {
 }
 
 #include "api_3/tes_object.h"
+#include "api_3/tes_atomic.h"
 #include "api_3/tes_array.h"
 #include "api_3/tes_map.h"
 #include "api_3/tes_db.h"

@@ -143,6 +143,7 @@ namespace collections {
         item& operator = (double val) { _var = (Real)val; return *this; }
         item& operator = (const std::string& val) { _var = val; return *this; }
         item& operator = (std::string&& val) { _var = val; return *this; }
+        item& operator = (const skse::string_ref& val) { return *this = val.c_str(); }
         item& operator = (boost::blank) { _var = boost::blank(); return *this; }
         item& operator = (boost::none_t) { _var = boost::blank(); return *this; }
         item& operator = (object_base& v) { _var = &v; return *this; }
@@ -253,7 +254,7 @@ namespace collections {
         template<class T> T readAs() const;
 
         //////////////////////////////////////////////////////////////////////////
-    private:
+    public:
         static_assert(std::is_same<
             boost::variant<boost::blank, SInt32, Real, form_ref, internal_object_ref, std::string>,
             variant
@@ -273,6 +274,7 @@ namespace collections {
         template<size_t N> struct _user2variant<char[N]> : _variant_type<std::string>{};
         template<> struct _user2variant<char[]> : _variant_type<std::string>{};
 
+        template<> struct _user2variant<object_base*> : _variant_type<internal_object_ref>{};
         template<> struct _user2variant<const object_base*> : _variant_type<internal_object_ref>{};
 
     public:
