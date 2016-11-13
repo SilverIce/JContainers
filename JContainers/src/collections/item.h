@@ -142,7 +142,7 @@ namespace collections {
         item& operator = (Real val) { _var = val; return *this; }
         item& operator = (double val) { _var = (Real)val; return *this; }
         item& operator = (const std::string& val) { _var = val; return *this; }
-        item& operator = (std::string&& val) { _var = val; return *this; }
+        item& operator = (std::string&& val) { _var = std::move(val); return *this; }
         item& operator = (boost::blank) { _var = boost::blank(); return *this; }
         item& operator = (boost::none_t) { _var = boost::blank(); return *this; }
         item& operator = (object_base& v) { _var = &v; return *this; }

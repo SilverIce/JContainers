@@ -26,7 +26,7 @@ namespace collections {
             return &array::objectWithInitializer([&](array &obj) {
 
                 for (auto& str : *strings) {
-                    obj._array.push_back(item(str));
+                    obj.u_container().emplace_back(std::move(str));
                 }
             },
                 ctx);

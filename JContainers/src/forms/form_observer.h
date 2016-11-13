@@ -66,7 +66,7 @@ namespace forms {
 
     public:
 
-        explicit form_ref(form_entry_ref&& entry) : _watched_form(std::move(entry)) {}
+        form_ref(form_entry_ref&& entry) : _watched_form(std::move(entry)) {}
         explicit form_ref(const form_entry_ref& entry) : _watched_form(entry) {}
 
         form_ref& operator = (form_ref&& entry) {
