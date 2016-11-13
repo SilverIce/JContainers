@@ -181,7 +181,7 @@ JValue.cleanPool(\"uniquePoolName\")"
 
         static object_base* readFromFile(tes_context& context, const char *path) {
             auto obj = json_deserializer::object_from_file(context, path);
-            return  obj;
+            return obj;
         }
         REGISTERF2(readFromFile, "filePath", "JSON serialization/deserialization:\n\nCreates and returns a new container object containing contents of JSON file");
 
@@ -189,7 +189,7 @@ JValue.cleanPool(\"uniquePoolName\")"
         {
             using namespace boost;
 
-            if (!dirPath || !filesystem::exists( dirPath )) {
+            if (!dirPath) {
                 return nullptr;
             }
 
@@ -197,25 +197,30 @@ JValue.cleanPool(\"uniquePoolName\")"
                 extension = "";
             }
 
-            filesystem::directory_iterator end_itr;
-            filesystem::path root(dirPath);
+            map *files = nullptr;
 
-            map &files = map::object(context);
+            try {
+                filesystem::path root(dirPath);
 
-            for ( filesystem::directory_iterator itr( root ); itr != end_itr; ++itr ) {
+                files = &map::object(context);
 
-                if ( filesystem::is_regular_file( *itr ) &&
-                     (!*extension || itr->path().extension().generic_string().compare(extension) == 0) ) {
-                    auto asniString = itr->path().generic_string();
-                    auto jsonObject = tes_object::readFromFile(context, asniString.c_str());
+                for (filesystem::directory_iterator itr(root), end_itr; itr != end_itr; ++itr) {
 
-                    if (jsonObject) {
-                        files.set(itr->path().filename().generic_string(), item(jsonObject));
-                    }  
+                    if (!*extension || itr->path().extension().generic_string().compare(extension) == 0) {
+                        auto asniString = itr->path().generic_string();
+                        auto jsonObject = tes_object::readFromFile(context, asniString.c_str());
+
+                        if (jsonObject) {
+                            files->set(itr->path().filename().generic_string(), item(jsonObject));
+                        }
+                    }
                 }
             }
+            catch (const boost::filesystem::filesystem_error& exc) {
+                JC_LOG_TES_API_ERROR(JValue, readFromDirectory, "throws '%s'", exc.what());
+            }
 
-            return &files;
+            return files;
         }
         REGISTERF2(readFromDirectory, "directoryPath extension=\"\"",
             "Parses JSON files in a directory (non recursive) and returns JMap containing {filename, container-object} pairs.\n"

@@ -94,6 +94,11 @@ namespace collections {
                     return data ? fread(buffer, 1, buflen, reinterpret_cast<FILE*>(data)) : 0;
                 };
                 ref = json_load_callback(cb, file.get(), 0, &error);
+
+                if (!ref) {
+                    JC_LOG_ERROR("Can't parse JSON file at '%s' at line %u:%u - %s",
+                        path, error.line, error.column, error.text);
+                }
             }
             return make_unique_ptr(ref, json_decref);
         }

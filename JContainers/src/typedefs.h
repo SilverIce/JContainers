@@ -11,6 +11,13 @@
 extern void JC_log(const char * fmt, ...);
 extern void JC_log(const char* fmt, va_list& args);
 
+
+#   define JC_LOG_TES_API_ERROR(Class, function, message, ...) \
+        JC_log("[Error] " STR(Class) "." STR(function) " " message, __VA_ARGS__);
+
+#   define JC_LOG_ERROR(message, ...) \
+        JC_log("[Error] " message, __VA_ARGS__);
+
 #   ifdef NO_JC_DEBUG
 #       define jc_assert(expr)
 #       define jc_debug(message, ...)
