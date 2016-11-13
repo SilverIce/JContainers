@@ -71,7 +71,7 @@ namespace collections {
         virtual ~object_base() {}
 
     public:
-        typedef std::lock_guard<spinlock> lock;
+        using lock = std::lock_guard<spinlock>;
         mutable spinlock _mutex;
 
         explicit object_base(CollectionType type)
@@ -91,6 +91,8 @@ namespace collections {
         bool is_public() const {
             return _uid() != Handle::Null;
         }
+
+        spinlock& mutex() const { return _mutex; }
 
         template<class T> T* as() {
             return const_cast<T*>(const_cast<const object_base*>(this)->as<T>());

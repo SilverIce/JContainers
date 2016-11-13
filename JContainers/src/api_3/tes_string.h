@@ -1,5 +1,8 @@
 ﻿#pragma once
 
+#include <boost/uuid/random_generator.hpp>
+#include <boost/uuid/uuid_io.hpp>
+
 #include "util/util.h"
 #include "util/stl_ext.h"
 
@@ -53,14 +56,28 @@ Accepts ASCII and UTF-8 encoded strings only");
         REGISTERF2_STATELESS(decodeFormStringToForm, "formString", "");
         REGISTERF2_STATELESS(encodeFormToString, "value", "");
         REGISTERF2_STATELESS(encodeFormIdToString, "formId", "");
+
+    private:
+        static boost::uuids::random_generator generateUUID_gen;
+        static util::spinlock generateUUID_lock;
+
+    public:
+        static std::string generateUUID() {
+            return boost::uuids::to_string(
+                util::perform_while_locked(generateUUID_lock, [](){ return generateUUID_gen(); })
+            );
+        }
+        REGISTERF2_STATELESS(generateUUID, "", "Generates random uuid-string like 2e80251a-ab22-4ad8-928c-2d1c9561270e");
+
     };
+
+    boost::uuids::random_generator  tes_string::generateUUID_gen;
+    util::spinlock                  tes_string::generateUUID_lock;
+
 
     TES_META_INFO(tes_string);
 
-
-#ifndef TEST_COMPILATION_DISABLED
-
-    TEST(tes_string, test)
+    TEST(tes_string, wrap)
     {
         tes_context_standalone ctx;
 
@@ -95,6 +112,12 @@ Accepts ASCII and UTF-8 encoded strings only");
         }
     }
 
-#endif
+    TEST(tes_string, generateUUID)
+    {
+        auto uidString = tes_string::generateUUID();
+        EXPECT_FALSE(uidString.empty());
 
+        auto uidString2 = tes_string::generateUUID();
+        EXPECT_NE(uidString, uidString2);
+    }
 }
