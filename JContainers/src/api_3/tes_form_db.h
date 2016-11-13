@@ -145,7 +145,7 @@ namespace tes_api_3 {
         template<class T>
         static bool solveSetter(tes_context& ctx, key_cref form, const char* path, T value, bool createMissingKeys = false) {
             subpath_extractor sub(path, is_path);
-            return tes_object::solveSetter(ctx, findEntry(ctx, sub.storageName(), form), sub.rest(), value, createMissingKeys);
+            return tes_object::solveSetter(ctx, makeMapEntry(ctx, sub.storageName(), form), sub.rest(), value, createMissingKeys);
         }
         REGISTERF(solveSetter<Float32>, "solveFltSetter", "fKey path value createMissingKeys=false",
             "Attempts to assign value. Returns false if no such path\n"
@@ -255,14 +255,24 @@ namespace tes_api_3 {
 
         auto fakeForm = make_lightweight_form_ref((FormId)0x14, ctx);
 
-        const char *path = ".forms.object";
+        {
+            const char *path = ".forms.object";
 
-        auto ar = tes_array::objectWithSize(ctx, 0);
-        EXPECT_NOT_NIL(ar);
-        tes_form_db::setItem(ctx, fakeForm, path, ar);
+            auto ar = tes_array::objectWithSize(ctx, 0);
+            EXPECT_NOT_NIL(ar);
+            tes_form_db::setItem(ctx, fakeForm, path, ar);
 
-        EXPECT_TRUE(ar == tes_form_db::getItem<object_base*>(ctx, fakeForm, path));
-        EXPECT_TRUE(ar == tes_form_db::solveGetter<object_base*>(ctx, fakeForm, path));
+            EXPECT_TRUE(ar == tes_form_db::getItem<object_base*>(ctx, fakeForm, path));
+            EXPECT_TRUE(ar == tes_form_db::solveGetter<object_base*>(ctx, fakeForm, path));
+        }
+        {
+            const char *path = ".forms.object2.key1";
+
+            auto ar = tes_array::objectWithSize(ctx, 0);
+            EXPECT_NOT_NIL(ar);
+            EXPECT_TRUE(tes_form_db::solveSetter<object_base*>(ctx, fakeForm, path, ar, true));
+            EXPECT_TRUE(ar == tes_form_db::solveGetter<object_base*>(ctx, fakeForm, path));
+        }
     }
 
 
