@@ -6,12 +6,10 @@ namespace tes_api_3 {
     class tes_atomic : public class_meta< tes_atomic > {
     public:
 
-        typedef object_base* ref;
-
         REGISTER_TES_NAME("JAtomic");
 
         void additionalSetup() {
-            metaInfo.comment = "uu";
+            metaInfo.comment = "";
         }
 
         
@@ -26,8 +24,8 @@ Int function atomicFetchDiv(int object, string path, int value, bool createMissi
 */
         template<class T, class F>
         static T performAtomicFunction_(
-            tes_context& ctx, object_base* obj, const char* path, F&& func, T inputValue,
-            T initialValue, bool createMissingKeys, T onError)
+            tes_context& ctx, object_base* obj, const char* path, F&& func, const T& inputValue,
+            const T& initialValue, bool createMissingKeys, const T& onError)
         {
             if (!obj || !path)
                 return onError;
@@ -35,16 +33,17 @@ Int function atomicFetchDiv(int object, string path, int value, bool createMissi
             T previousVal = default_value<T>();
             bool assing_succeed = true;
 
-            using internal_item_type = typename item::_user2variant<T>::variant_type;
+            using internal_item_type = typename item::user2variant_t<T>;
 
             bool succeed = ca::visit_value(
                 *obj, path,
                 createMissingKeys ? ca::creative : ca::constant,
-                [&previousVal, &inputValue, &func, &initialValue, &assing_succeed](item& value) {
+                [&](item& value) {
                     if (value.isNull()) {
                         value = initialValue;
                     }
-                    else if (internal_item_type *asT = value.get<internal_item_type>()) {
+                     
+                    if (internal_item_type *asT = value.get<internal_item_type>()) {
                         previousVal = const_cast<const internal_item_type&>(*asT);
                         *asT = func(const_cast<const internal_item_type&>(*asT), inputValue);
                     }
@@ -65,7 +64,8 @@ Int function atomicFetchDiv(int object, string path, int value, bool createMissi
 
         template<class T>
         static T exchange(
-            tes_context& ctx, object_base* obj, const char* path, T inputValue, bool createMissingKeys, T onError)
+            tes_context& ctx, object_base* obj, const char* path,
+            T inputValue, bool createMissingKeys, T onError)
         {
             return performAtomicFunction_(ctx, obj, path, ignore_first{}, inputValue, inputValue, createMissingKeys, onError);
         }
@@ -78,42 +78,119 @@ Int function atomicFetchDiv(int object, string path, int value, bool createMissi
             return performAtomicFunction_(ctx, obj, path, F{}, inputValue, initialValue, createMissingKeys, onError);
         }
 
-#   define PARAMSSSS   "object path value initialValue=0 createMissingKeys=false onErrorReturn=0"
+#   define PARAMS_INT   "object path value initialValue=0 createMissingKeys=false onErrorReturn=0"
+#   define PARAMS_FLT   "object path value initialValue=0.0 createMissingKeys=false onErrorReturn=0.0"
 
-        REGISTERF(ARGS(performAtomicFunction<SInt32, std::plus<SInt32>>), "fetchAddInt", PARAMSSSS,
+        REGISTERF(ARGS(performAtomicFunction<SInt32, std::plus<SInt32>>), "fetchAddInt", PARAMS_INT,
 "Performs:\n\
     T previous = value.at.path\n\
     value.at.path = value.at.path + value\n\
     return previous"
 );
-        REGISTERF(ARGS(performAtomicFunction<Float32, std::plus<Float32>>), "fetchAddFlt", PARAMSSSS, nullptr);
+        REGISTERF(ARGS(performAtomicFunction<Float32, std::plus<Float32>>), "fetchAddFlt", PARAMS_FLT, nullptr);
 
-        REGISTERF(ARGS(performAtomicFunction<SInt32, std::multiplies<SInt32>>), "fetchMultInt", PARAMSSSS, "x *= v");
-        REGISTERF(ARGS(performAtomicFunction<Float32, std::multiplies<Float32>>), "fetchMultFlt", PARAMSSSS, nullptr);
+        REGISTERF(ARGS(performAtomicFunction<SInt32, std::multiplies<SInt32>>), "fetchMultInt", PARAMS_INT, "x *= v");
+        REGISTERF(ARGS(performAtomicFunction<Float32, std::multiplies<Float32>>), "fetchMultFlt", PARAMS_FLT, nullptr);
 
-        REGISTERF(ARGS(performAtomicFunction<uint32_t, std::modulus<int32_t>>), "fetchModInt", PARAMSSSS, "x %= v");
+        REGISTERF(ARGS(performAtomicFunction<int32_t, std::modulus<int32_t>>), "fetchModInt", PARAMS_INT, "x %= v");
 
-        REGISTERF(ARGS(performAtomicFunction<SInt32, std::divides<SInt32>>), "fetchDivInt", PARAMSSSS, "x /= v");
-        REGISTERF(ARGS(performAtomicFunction<Float32, std::divides<Float32>>), "fetchDivFlt", PARAMSSSS, nullptr);
+        REGISTERF(ARGS(performAtomicFunction<SInt32, std::divides<SInt32>>), "fetchDivInt", PARAMS_INT, "x /= v");
+        REGISTERF(ARGS(performAtomicFunction<Float32, std::divides<Float32>>), "fetchDivFlt", PARAMS_FLT, nullptr);
 
-        REGISTERF(ARGS(performAtomicFunction<uint32_t, std::bit_and<uint32_t>>), "fetchAndInt", PARAMSSSS, "x &= v");
-        REGISTERF(ARGS(performAtomicFunction<uint32_t, std::bit_xor<uint32_t>>), "fetchXorInt", PARAMSSSS, "x ^= v");
-        REGISTERF(ARGS(performAtomicFunction<uint32_t, std::bit_or<uint32_t>>), "fetchOrInt", PARAMSSSS, "x |= v");
+        REGISTERF(ARGS(performAtomicFunction<uint32_t, std::bit_and<uint32_t>>), "fetchAndInt", PARAMS_INT, "x &= v");
+        REGISTERF(ARGS(performAtomicFunction<uint32_t, std::bit_xor<uint32_t>>), "fetchXorInt", PARAMS_INT, "x ^= v");
+        REGISTERF(ARGS(performAtomicFunction<uint32_t, std::bit_or<uint32_t>>), "fetchOrInt", PARAMS_INT, "x |= v");
 
-#   undef PARAMSSSS
+#   undef PARAMS_INT
+#   undef PARAMS_FLT
 
+#   define PARAMS_INT   "object path value createMissingKeys=false onErrorReturn="
+        REGISTERF(exchange<SInt32>, "exchangeInt", PARAMS_INT "0", "u");
+        REGISTERF(exchange<Float32>, "exchangeFlt", PARAMS_INT "0.0", nullptr);
+        REGISTERF(exchange<std::string>, "exchangeStr", PARAMS_INT "\"\"", nullptr);
 
-#   define PARAMSSSS   "object path value createMissingKeys=false onErrorReturn=0"
+        REGISTERF(exchange<form_ref>, "exchangeForm", PARAMS_INT "None", nullptr);
+        REGISTERF(exchange<object_base*>, "exchangeObj", PARAMS_INT "0", nullptr);
+#   undef PARAMS_INT
 
-        REGISTERF(exchange<SInt32>, "exchangeInt", PARAMSSSS, "u");
-        REGISTERF(exchange<Float32>, "exchangeFlt", PARAMSSSS, nullptr);
-        REGISTERF(exchange<std::string>, "exchangeStr", PARAMSSSS, nullptr);
-
-        REGISTERF(exchange<form_ref>, "exchangeForm", PARAMSSSS, nullptr);
-        REGISTERF(exchange<object_base*>, "exchangeObj", PARAMSSSS, nullptr);
-
-#   undef PARAMSSSS
     };
 
     TES_META_INFO(tes_atomic);
+
+    namespace tes_atomic_testing {
+
+        template<class T>
+        struct input
+        {
+            T on_error, expect_return, expect_new_value, initial_value, value;
+        };
+
+        template<class T, class F>
+        inline void test_func(
+            tes_context& ctx, object_base& obj, const input<T>& value)
+        {
+            const auto path = "[0]";
+
+            boost::optional<item> previosValue = ca::get(obj, path);
+
+            T realPrevious = tes_atomic::performAtomicFunction_(
+                ctx, &obj, path, F{}, value.value, value.initial_value, false, value.on_error);
+
+            using internal_item_type = item::user2variant_t<T>;
+
+            if (!previosValue) {
+                EXPECT_EQ(realPrevious, default_value<T>());
+            }
+            else if (previosValue->get<internal_item_type>()) {
+                EXPECT_EQ(realPrevious, *previosValue->get<internal_item_type>());
+            }
+            else {
+                EXPECT_EQ(realPrevious, default_value<T>());
+            }
+
+            boost::optional<item> newValue = ca::get(obj, path);
+            EXPECT_NE(newValue, boost::none);
+            EXPECT_NOT_NIL(newValue->get<internal_item_type>());
+            EXPECT_EQ(value.expect_return, *newValue->get<internal_item_type>());
+
+            if (previosValue && previosValue->get<internal_item_type>()
+                && newValue && newValue->get<internal_item_type>())
+            {
+                T functorResult = F{}(*previosValue->get<internal_item_type>(), value.value);
+                EXPECT_EQ(*newValue->get<internal_item_type>(), functorResult);
+            }
+        }
+
+        TEST(tes_atomic, _)
+        {
+            tes_context_standalone context;
+            array& obj = array::make(context);
+            obj.u_container().resize(1);
+
+            input<int32_t> inp;
+            inp.expect_new_value = 1;
+            inp.expect_return = 0;
+            inp.value = 1;
+            inp.initial_value = 0;
+
+            test_func<int32_t, std::plus<int32_t>>(context, obj, inp);
+
+            inp.expect_new_value = 2;
+            inp.expect_return = 1;
+            inp.value = 1;
+            inp.initial_value = 0;
+
+            test_func<int32_t, std::plus<int32_t>>(context, obj, inp);
+
+    /*
+            inp.expect_new_value = 2;
+            inp.expect_return = 1;
+            inp.value = 1;
+            inp.initial_value = 0;
+
+            test_func<int32_t, std::plus<int32_t>>(context, obj, inp);
+    */
+
+        }
+    }
 }
