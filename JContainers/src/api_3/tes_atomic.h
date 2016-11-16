@@ -131,32 +131,24 @@ Int function atomicFetchDiv(int object, string path, int value, bool createMissi
         {
             const auto path = "[0]";
 
-            boost::optional<item> previosValue = ca::get(obj, path);
+            boost::optional<item> previousValue = ca::get(obj, path);
 
-            T realPrevious = tes_atomic::performAtomicFunction_(
+            T result = tes_atomic::performAtomicFunction_(
                 ctx, &obj, path, F{}, value.value, value.initial_value, false, value.on_error);
 
             using internal_item_type = item::user2variant_t<T>;
 
-            if (!previosValue) {
-                EXPECT_EQ(realPrevious, default_value<T>());
-            }
-            else if (previosValue->get<internal_item_type>()) {
-                EXPECT_EQ(realPrevious, *previosValue->get<internal_item_type>());
-            }
-            else {
-                EXPECT_EQ(realPrevious, default_value<T>());
-            }
+            EXPECT_EQ(result, value.expect_return);
 
             boost::optional<item> newValue = ca::get(obj, path);
             EXPECT_NE(newValue, boost::none);
             EXPECT_NOT_NIL(newValue->get<internal_item_type>());
-            EXPECT_EQ(value.expect_return, *newValue->get<internal_item_type>());
+            EXPECT_EQ(value.expect_new_value, *newValue->get<internal_item_type>());
 
-            if (previosValue && previosValue->get<internal_item_type>()
+            if (previousValue && previousValue->get<internal_item_type>()
                 && newValue && newValue->get<internal_item_type>())
             {
-                T functorResult = F{}(*previosValue->get<internal_item_type>(), value.value);
+                T functorResult = F{}(*previousValue->get<internal_item_type>(), value.value);
                 EXPECT_EQ(*newValue->get<internal_item_type>(), functorResult);
             }
         }
@@ -165,7 +157,7 @@ Int function atomicFetchDiv(int object, string path, int value, bool createMissi
         {
             tes_context_standalone context;
             array& obj = array::make(context);
-            obj.u_container().resize(1);
+            obj.u_container().resize(4);
 
             input<int32_t> inp;
             inp.expect_new_value = 1;
@@ -181,6 +173,10 @@ Int function atomicFetchDiv(int object, string path, int value, bool createMissi
             inp.initial_value = 0;
 
             test_func<int32_t, std::plus<int32_t>>(context, obj, inp);
+
+            auto ss = default_value<std::string>();
+
+            EXPECT_EQ("", tes_atomic::exchange<std::string>(context, &obj, "[1]", "new-str", false, ""));
 
     /*
             inp.expect_new_value = 2;
