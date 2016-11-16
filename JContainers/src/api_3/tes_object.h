@@ -270,7 +270,7 @@ JValue.cleanPool(\"uniquePoolName\")"
         REGISTERF(hasPath, "hasPath", "* path",
 "Path resolving:\n\n\
 Returns true, if it's possible to resolve given path, i.e. if it's possible to retrieve the value at the path.\n\
-For ex. JValue.hasPath(container, \".player.health\") will test whether @container structure close to this one - {'player': {'health': health_value}}
+For ex. JValue.hasPath(container, \".player.health\") will test whether @container structure close to this one - {'player': {'health': health_value}}"
 );
 
         REGISTERF(solvedValueType, "solvedValueType", "* path", "Returns type of resolved value. "VALUE_TYPE_COMMENT);
@@ -310,7 +310,44 @@ For ex. JValue.hasPath(container, \".player.health\") will test whether @contain
         REGISTERF(solveSetter<const char*>, "solveStrSetter", "* path value createMissingKeys=false", nullptr);
         REGISTERF(solveSetter<ref>, "solveObjSetter", "* path value createMissingKeys=false", nullptr);
         REGISTERF(solveSetter<form_ref>, "solveFormSetter", "* path value createMissingKeys=false", nullptr);
+        
+/*
+Int function atomicFetchAdd(int object, string path, int value, bool createMissingKeys=false, int initialValue=0, int onErrorReturn=0) Global Native
 
+Int function atomicFetchAnd(int object, string path, int value, bool createMissingKeys=false, int initialValue=0, int onErrorReturn=0) Global Native
+Int function atomicFetchXOR(int object, string path, int value, bool createMissingKeys=false, int initialValue=0, int onErrorReturn=0) Global Native
+Int function atomicFetchOr(int object, string path, int value, bool createMissingKeys=false, int initialValue=0, int onErrorReturn=0) Global Native
+Int function atomicFetchMul(int object, string path, int value, bool createMissingKeys=false, int initialValue=0, int onErrorReturn=0) Global Native
+Int function atomicFetchDiv(int object, string path, int value, bool createMissingKeys=false, int initialValue=0, int onErrorReturn=0) Global Native
+*/
+        template<class T>
+        static T incrementByInt(
+            tes_context& ctx, object_base* obj, const char* path, T value,
+            T&& initialValue = default_value<T>(), bool createMissingKeys = false,
+            T&& onError = default_value<T>())
+        {
+            if (!obj || !path)
+                return false;
+
+            T previousVal = default_value<T>();
+
+            bool succeed = ca::visit_value(*obj, path, ca::access_way::creative, [&previousVal](item& value) {
+                if (value.isNull()) {
+                    value = initialValue;
+                }
+                else if (auto *asInt = value.get<SInt32>()) {
+                    previousVal = *asInt;
+                    *asInt += value;
+                }
+                else if (auto *asInt = value.get<Float32>()) {
+                    previousVal = *asInt;
+                    *asInt += value;
+                }
+            });
+
+            return succeed ? previousVal : onError;
+        }
+        
         template<class T>
         static T evalLua(tes_context& ctx, ref obj, const char* luaCode, T def = default_value<T>()) {
             auto result = lua::eval_lua_function(ctx, obj, luaCode);

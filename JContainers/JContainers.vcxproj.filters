@@ -273,6 +273,9 @@
     <ClInclude Include="src\forms\form_observer.hpp">
       <Filter>forms</Filter>
     </ClInclude>
+    <ClInclude Include="src\api_3\tes_atomic.h">
+      <Filter>tes_api_3</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="JContainers.rc" />

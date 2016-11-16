@@ -88,6 +88,8 @@ namespace reflection {
                 (str += " extends ") += self.extendsClass.c_str();
             }
 
+            str += "\n";
+
             for (auto& itm : self.methods) {
                 _pushComment(itm.comment(), str);
                 str += function_to_string(itm);

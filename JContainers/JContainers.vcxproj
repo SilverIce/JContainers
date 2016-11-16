@@ -153,6 +153,7 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\api_3\master.h" />
     <ClInclude Include="src\api_3\tes_array.h" />
+    <ClInclude Include="src\api_3\tes_atomic.h" />
     <ClInclude Include="src\api_3\tes_db.h" />
     <ClInclude Include="src\api_3\tes_form_db.h" />
     <ClInclude Include="src\api_3\tes_jcontainers.h" />
