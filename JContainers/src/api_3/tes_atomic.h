@@ -38,12 +38,11 @@ Int function atomicFetchDiv(int object, string path, int value, bool createMissi
             bool succeed = ca::visit_value(
                 *obj, path,
                 createMissingKeys ? ca::creative : ca::constant,
-                [&](item& value) {
-                    if (value.isNull()) {
-                        value = initialValue;
+                [&](item& item_value) {
+                    if (item_value.isNull()) {
+                        item_value = func(initialValue, inputValue);
                     }
-                     
-                    if (internal_item_type *asT = value.get<internal_item_type>()) {
+                    else if (internal_item_type *asT = item_value.get<internal_item_type>()) {
                         previousVal = const_cast<const internal_item_type&>(*asT);
                         *asT = func(const_cast<const internal_item_type&>(*asT), inputValue);
                     }

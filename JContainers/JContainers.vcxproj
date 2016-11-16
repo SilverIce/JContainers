@@ -163,15 +163,12 @@
     <ClInclude Include="src\api_3\tes_string.h" />
     <ClInclude Include="src\collections\collections.h" />
     <ClInclude Include="src\collections\default_value.h" />
-    <ClInclude Include="src\collections\form_observer.h" />
-    <ClInclude Include="src\collections\form_observer.hpp" />
     <ClInclude Include="src\collections\tests.h" />
     <ClInclude Include="src\collections\bind_traits.h" />
     <ClInclude Include="src\collections\copying.h" />
     <ClInclude Include="src\collections\functions.h" />
     <ClInclude Include="src\collections\item.h" />
     <ClInclude Include="src\collections\operators.h" />
-    <ClInclude Include="src\collections\form_handling.h" />
     <ClInclude Include="src\collections\json_serialization.h" />
     <ClInclude Include="src\collections\lua_module.h" />
     <ClInclude Include="src\collections\lua_native_funcs.hpp" />
