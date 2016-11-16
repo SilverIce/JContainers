@@ -46,6 +46,43 @@ namespace tes_api_3 {
         }
         REGISTERF2_STATELESS(fileExistsAtPath, "path", "Returns true if the file at a specified @path exists");
 
+        template<class StringList>
+        static StringList contentsOfDirectoryAtPath(
+            const char *directoryPath
+            ,const char *nameEndsWith = "")
+        {
+            if (!directoryPath) {
+                return StringList{};
+            }
+
+            if (!nameEndsWith) {
+                nameEndsWith = "";
+            }
+
+            StringList result{};
+            namespace fs = boost::filesystem;
+
+            try {
+                fs::path root(directoryPath);
+                for (fs::directory_iterator itr(root), end_itr; itr != end_itr; ++itr) {
+                    const fs::path& path = itr->path();
+                    if (!*nameEndsWith ||
+                        path.extension().generic_string().compare(nameEndsWith) == 0)
+                    {
+                        result.emplace_back(itr->path().generic_string());
+                    }
+                }
+            }
+            catch (const boost::filesystem::filesystem_error& exc) {
+                JC_LOG_TES_API_ERROR(JContainsers, contentsOfDirectoryAtPath, "throws '%s'", exc.what());
+            }
+
+            return result;
+        }
+        REGISTERF_STATELESS(
+            contentsOfDirectoryAtPath<VMResultArray<skse::string_ref>>, "contentsOfDirectoryAtPath",
+            "directoryPath extension=\"\"", nullptr);
+
         static void removeFileAtPath(const char *filename) {
             if (filename) {
                 boost::filesystem::remove_all(filename);
@@ -135,5 +172,12 @@ endfunction
         write_file("/path2/obj3");
         write_file("path3\\obj3");
         write_file("\\path4\\obj3");
+    }
+
+    TEST(tes_jcontainers, contentsOfDirectoryAtPath)
+    {
+        std::vector<std::string> vec;
+        EXPECT_NO_THROW(vec = tes_jcontainers::contentsOfDirectoryAtPath<decltype(vec)>(":invaliddir"));
+        EXPECT_TRUE(vec.empty());
     }
 }
