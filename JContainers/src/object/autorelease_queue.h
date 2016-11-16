@@ -5,8 +5,50 @@
 #include <boost\serialization\version.hpp>
 #include <boost\asio\io_service.hpp>
 #include <boost\asio\deadline_timer.hpp>
+#include "common\IThread.h"
+#include "util\util.h"
+#include "util\singleton.h"
 
 namespace collections {
+
+
+    namespace detail {
+
+#   define WINE_SUPPORT 1
+
+        struct background_worker {
+            boost::asio::io_service _io;
+            boost::asio::io_service::work _work;
+#   if WINE_SUPPORT
+            IThread _thread;
+#   else
+            std::thread _thread;
+#   endif
+
+            background_worker() : _io(), _work(_io) {
+#   if WINE_SUPPORT
+                using io_ptr_type = decltype(_io);
+                _thread.Start([](void *io_ptr) { reinterpret_cast<io_ptr_type*>(io_ptr)->run(); }, &_io);
+#   else
+                _thread = std::thread([&]() { _io.run(); });
+#   endif
+            }
+
+            ~background_worker() {
+#   if WINE_SUPPORT
+                _thread.Stop();
+                WaitForSingleObject(_thread.GetHandle(), INFINITE);
+#   else
+                if (_thread.joinable()) {
+                    _thread.join();
+                }
+#   endif
+            }
+        };
+
+        util::singleton<background_worker> g_background_worker{ [](){ return new background_worker(); } };
+    }
+
 
     class object_registry;
 
@@ -34,16 +76,11 @@ namespace collections {
         object_registry& _registry;
         queue _queue;
         time_point _tickCounter;
-
         spinlock _queue_mutex;
-        spinlock _timer_mutex;
         
-        // it's not overkill to use asio?
-        boost::asio::io_service _io;
-        boost::asio::io_service::work _work;
         boost::asio::deadline_timer _timer;
-        std::thread _thread;
-
+        std::mutex _timer_mutex;
+        bool _timer_stopped = true;
         // reusable array for temp objects
         std::vector<queue_object_ref> _toRelease;
 
@@ -108,16 +145,13 @@ namespace collections {
         }
 
         explicit autorelease_queue(object_registry& registry) 
-            : _tickCounter(0)
-            , _registry(registry)
-            // lot of dependencies :(
-            , _io()
-            , _work(_io)
-            , _timer(_io)
+            : _registry(registry)
+            , _queue()
+            , _tickCounter(0)
+            , _timer(detail::g_background_worker.get()._io)
         {
-            _thread = std::thread([&]() { _io.run(); });
             start();
-            jc_debug("aqueue created")
+            //jc_debug("aqueue created")
         }
 
         // prolongs object lifetime for ~10 seconds
@@ -133,7 +167,7 @@ namespace collections {
 
         void not_prolong_lifetime(object_base& object) {
             if (object.is_in_aqueue()) {
-                jc_debug("aqueue: removed id - %u", object._uid());
+                //jc_debug("aqueue: removed id - %u", object._uid());
                 spinlock::guard g(_queue_mutex);
                 object._aqueue_push_time = time_subtract(_tickCounter, obj_lifeInTicks);
             }
@@ -155,14 +189,21 @@ namespace collections {
 
         // starts asynchronouos aqueue run, asynchronouosly releases objects when their time comes, starts timers, 
         void start() {
-            restartTimer();
+            std::lock_guard<std::mutex> g(_timer_mutex);
+            if (_timer_stopped) {
+                _timer_stopped = false;
+                u_startTimer();
+            }
         }
 
-        // stops async. processes launched by @start function
+        // stops async. processes launched by @start function,
         void stop() {
-            // will wait for @tick function execution completion
-            spinlock::guard g(_timer_mutex);
-            _timer.cancel();
+            // with _timer_mutex locked it will wait for @tick function execution completion
+            // the point is to execute @stop after @tick (so @tick will not auto-restart the timer)
+            std::lock_guard<std::mutex> g(_timer_mutex);
+            _timer_stopped = true;
+            auto callbacks_cancelled = _timer.cancel();
+            jc_assert(callbacks_cancelled <= 1);
         }
 
         void u_nullify() {
@@ -176,11 +217,7 @@ namespace collections {
             // if aqueue is not empty -> object_base::release_from_queue -> accesses died object_registry::removeObject -> crash
 
             stop();
-            _io.stop();
-            if (_thread.joinable()) {
-                _thread.join();
-            }
-            jc_debug("aqueue destroyed")
+            //jc_debug("aqueue destroyed")
         }
 
     public:
@@ -223,30 +260,26 @@ namespace collections {
 
     private:
 
-        void restartTimer() {
-            spinlock::guard g(_timer_mutex);
-            u_startTimer();
-        }
-
         void u_startTimer() {
+
             boost::system::error_code code;
             _timer.expires_from_now(boost::posix_time::seconds(tick_duration), code);
             assert(!code);
 
-            _timer.async_wait([&](const boost::system::error_code& e) {
-                //jc_debug("aqueue code: %s - %u", e.message().c_str(), e.value());
-                if (!e) { // i.e. means no error, successful completion
-                    tick();
-				}
-				else {
-					jc_debug("aqueue timer was cancelled");
+            _timer.async_wait([this](const boost::system::error_code& error) {
+                if (error) {// !e means error or cancel, or unsuccessful completion
+                    return;
+                }
+
+                std::lock_guard<std::mutex> g(this->_timer_mutex);
+                if (!this->_timer_stopped) { 
+                    this->tick();
+                    this->u_startTimer();
 				}
             });
         }
 
         void tick() {
-            spinlock::guard g(_timer_mutex);
-            
             {
                 spinlock::guard g(_queue_mutex);
                 _queue.erase(
@@ -275,8 +308,6 @@ namespace collections {
             // tes ..
             // Item..
             _toRelease.clear();
-
-            u_startTimer();
         }
     };
 

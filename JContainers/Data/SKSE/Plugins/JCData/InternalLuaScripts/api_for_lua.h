@@ -68,5 +68,6 @@ CString JMap_nextKey(handle, cstring lastKey);
 CForm JFormMap_nextKey(handle obj, CForm lastKey);
 void JFormMap_setValue(handle obj, CForm key, const JCValue* val);
 JCToLuaValue JFormMap_getValue(handle obj, CForm key);
+void JFormMap_removeKey(handle obj, CForm key);
 
 handle JDB_instance(handle jc_context);

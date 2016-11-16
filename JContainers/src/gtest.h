@@ -1,8 +1,14 @@
 #pragma once
 
-//#include "typedefs.h"
-#include "meta.h"
+#include "../dep/googletest/googletest/googletest/include/gtest/gtest.h"
+//#include "meta.h"
 
+
+#define EXPECT_NOT_NIL(expr) EXPECT_NE((expr), nullptr)
+#define EXPECT_NIL(expr) EXPECT_EQ((expr), nullptr)
+
+
+/*
 namespace testing
 {
     struct State;
@@ -74,21 +80,23 @@ namespace testing
 
 #   define TEST_DISABLED(name, name2) TEST(name, DISABLED_##name2)
 
-#   define EXPECT_TRUE(expression) ::testing::check(testState, expression, __FUNCTION__, #expression " is false");
-#   define EXPECT_FALSE(expression)  ::testing::check(testState, !(expression), __FUNCTION__, #expression " is true");
-#   define EXPECT_EQ(a, b) ::testing::check(testState, (a) == (b), __FUNCTION__, #a " != " #b);
+#   define _LOCATION  __FUNCTION__ " line " STR(__LINE__)
 
-#   define EXPECT_NOT_NIL(expression) ::testing::check(testState, (expression) != nullptr, __FUNCTION__, #expression " is null ");
-#   define EXPECT_NIL(expression) ::testing::check(testState, (expression) == nullptr, __FUNCTION__, #expression " is not null ");
+#   define EXPECT_TRUE(expression) ::testing::check(testState, expression, _LOCATION, #expression " is false");
+#   define EXPECT_FALSE(expression)  ::testing::check(testState, !(expression), _LOCATION, #expression " is true");
+#   define EXPECT_EQ(a, b) ::testing::check(testState, (a) == (b), _LOCATION, #a " != " #b);
+
+#   define EXPECT_NOT_NIL(expression) ::testing::check(testState, (expression) != nullptr, _LOCATION, #expression " is null ");
+#   define EXPECT_NIL(expression) ::testing::check(testState, (expression) == nullptr, _LOCATION, #expression " is not null ");
 
 #   define EXPECT_THROW(expression, exception) \
         try { \
             expression; \
-            ::testing::check(testState, false, __FUNCTION__, "'" #expression "' does not throws nor '" #exception "' nor any other exception"); \
+            ::testing::check(testState, false, _LOCATION, "'" #expression "' does not throws nor '" #exception "' nor any other exception"); \
         } \
         catch( const exception& ) {;} \
         catch(...) { \
-            ::testing::check(testState, false, __FUNCTION__,  "'" #expression "' does not throws '" #exception "' exception, but throws unknown exception"); \
+            ::testing::check(testState, false, _LOCATION,  "'" #expression "' does not throws '" #exception "' exception, but throws unknown exception"); \
             throw; \
         }
 
@@ -96,6 +104,7 @@ namespace testing
         try { \
             expression; \
         } catch(...) { \
-            ::testing::check(testState, false, __FUNCTION__, "'" #expression "' throws exception"); \
+            ::testing::check(testState, false, _LOCATION, "'" #expression "' throws exception"); \
         }
 }
+*/

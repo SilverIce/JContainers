@@ -1,8 +1,5 @@
 #pragma once
 
-// Класс, содержащий мета-информацию определенного типа в виде списка.
-// Может содержать, например, списки укаазателей на функции
-// Предполагается, что класс будет создаваться только в статической памяти
 // Class that contains meta-info
 // Meta-info gets gathered during dynamic initialization and gets pushed into list
 // It's assumed that meta class instance will reside in static memory only!

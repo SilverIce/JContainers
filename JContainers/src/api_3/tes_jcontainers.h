@@ -8,18 +8,18 @@ namespace tes_api_3 {
         REGISTER_TES_NAME("JContainers");
 
         void additionalSetup() {
-            metaInfo.comment = "Various utility methods";
+            metaInfo.comment = "Utility functionality";
         }
 
         static bool __isInstalled() {
             return true;
         }
-        REGISTERF2(__isInstalled, nullptr, "NOT part of public API");
+        REGISTERF2_STATELESS(__isInstalled, nullptr, "It's NOT part of public API");
 
         static UInt32 APIVersion() {
             return (UInt32)consts::api_version;
         }
-        REGISTERF2(APIVersion, nullptr, []() {
+        REGISTERF2_STATELESS(APIVersion, nullptr, []() {
             std::stringstream comm;
             comm << "Version information.\n"
                 "It's a good practice to validate installed JContainers version with the following code:\n"
@@ -33,7 +33,7 @@ namespace tes_api_3 {
         static UInt32 featureVersion() {
             return (UInt32)consts::feature_version;
         }
-        REGISTERF2(featureVersion, nullptr, nullptr);
+        REGISTERF2_STATELESS(featureVersion, nullptr, nullptr);
 
         static bool fileExistsAtPath(const char *filename) {
             if (!filename) {
@@ -44,14 +44,51 @@ namespace tes_api_3 {
             int result = _stat(filename, &buf);
             return result == 0;
         }
-        REGISTERF2(fileExistsAtPath, "path", "Returns true if file at a specified path exists");
+        REGISTERF2_STATELESS(fileExistsAtPath, "path", "Returns true if the file at a specified @path exists");
+
+        template<class StringList>
+        static StringList contentsOfDirectoryAtPath(
+            const char *directoryPath
+            ,const char *nameEndsWith = "")
+        {
+            if (!directoryPath) {
+                return StringList{};
+            }
+
+            if (!nameEndsWith) {
+                nameEndsWith = "";
+            }
+
+            StringList result{};
+            namespace fs = boost::filesystem;
+
+            try {
+                fs::path root(directoryPath);
+                for (fs::directory_iterator itr(root), end_itr; itr != end_itr; ++itr) {
+                    const fs::path& path = itr->path();
+                    if (!*nameEndsWith ||
+                        path.extension().generic_string().compare(nameEndsWith) == 0)
+                    {
+                        result.emplace_back(itr->path().generic_string());
+                    }
+                }
+            }
+            catch (const boost::filesystem::filesystem_error& exc) {
+                JC_LOG_TES_API_ERROR(JContainsers, contentsOfDirectoryAtPath, "throws '%s'", exc.what());
+            }
+
+            return result;
+        }
+        REGISTERF_STATELESS(
+            contentsOfDirectoryAtPath<VMResultArray<skse::string_ref>>, "contentsOfDirectoryAtPath",
+            "directoryPath extension=\"\"", nullptr);
 
         static void removeFileAtPath(const char *filename) {
             if (filename) {
                 boost::filesystem::remove_all(filename);
             }
         }
-        REGISTERF2(removeFileAtPath, "path", "Deletes the file or directory identified by a given path");
+        REGISTERF2_STATELESS(removeFileAtPath, "path", "Deletes the file or directory identified by the @path");
 
         static std::string userDirectory() {
             char path[MAX_PATH];
@@ -72,14 +109,14 @@ namespace tes_api_3 {
         static skse::string_ref _userDirectory() {
             return userDirectory().c_str();
         }
-        REGISTERF(_userDirectory, "userDirectory", "", "A path to user-specific directory - "JC_USER_FILES);
+        REGISTERF_STATELESS(_userDirectory, "userDirectory", "", "A path to user-specific directory - "JC_USER_FILES);
 
         static SInt32 lastError() {
             return 0;
         }
-        REGISTERF2(lastError, nullptr, []() {
+        REGISTERF2_STATELESS(lastError, nullptr, []() {
             std::stringstream comm;
-            comm << "DEPRECATE. Returns last occured error (error code):";
+            comm << "DEPRECATED. Returns last occured error (error code):";
             for (int i = 0; i < JErrorCount; ++i) {
                comm << std::endl << i << " - " << JErrorCodeToString((JErrorCode)i);
             }
@@ -89,16 +126,16 @@ namespace tes_api_3 {
         static skse::string_ref lastErrorString() {
             return "";
         }
-        REGISTERF2(lastErrorString, nullptr, "DEPRECATE. Returns string that describes last error");
+        REGISTERF2_STATELESS(lastErrorString, nullptr, "DEPRECATED. Returns string that describes last error");
 
         REGISTER_TEXT([]() {
-            const char* fmt = R"===(
+            const char fmt[] = R"===(
 ; Returns true if JContainers plugin installed properly
 bool function isInstalled() global
     return __isInstalled() && %u == APIVersion() && %u == featureVersion()
 endfunction
 )===";
-            char buff[1024] = { 0 };
+            char buff[sizeof(fmt) * 3 / 2] = { '\0' };
             assert(-1 != sprintf_s(buff, fmt, consts::api_version, consts::feature_version));
             return std::string(buff);
         });
@@ -108,13 +145,15 @@ endfunction
 
     TEST(tes_jcontainers, userDirectory)
     {
+        tes_context_standalone ctx;
+
         auto write_file = [&](const boost::filesystem::path& path) {
             boost::filesystem::remove_all(path);
 
             EXPECT_FALSE(boost::filesystem::is_regular(path));
 
-            object_stack_ref obj = tes_object::object<map>();
-            tes_object::writeToFile(obj.get(), path.string().c_str());
+            object_stack_ref obj = tes_object::object<map>(ctx);
+            tes_object::writeToFile(ctx, obj.get(), path.string().c_str());
 
             EXPECT_TRUE(boost::filesystem::is_regular(path));
 
@@ -133,5 +172,12 @@ endfunction
         write_file("/path2/obj3");
         write_file("path3\\obj3");
         write_file("\\path4\\obj3");
+    }
+
+    TEST(tes_jcontainers, contentsOfDirectoryAtPath)
+    {
+        std::vector<std::string> vec;
+        EXPECT_NO_THROW(vec = tes_jcontainers::contentsOfDirectoryAtPath<decltype(vec)>(":invaliddir"));
+        EXPECT_TRUE(vec.empty());
     }
 }

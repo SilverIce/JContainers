@@ -7,7 +7,7 @@ namespace collections
     {
     public:
         typedef std::hash_set<object_base *> all_objects_set;
-        typedef std::hash_map<HandleT, object_base *> registry_container;
+        typedef std::hash_map<Handle, object_base *> registry_container;
 
     private:
 
@@ -35,15 +35,15 @@ namespace collections
             _all_objects.insert(&obj);
         }
 
-        void registerNewObjectId(object_base& obj) {
-            jc_assert(obj._uid() == HandleNull);
+        Handle registerNewObjectId(object_base& obj) {
+            //jc_assert(obj._uid() == Handle::Null);
 
             write_lock g(_mutex);
 
-            auto id = _idGen.new_id();
+            auto id = (Handle)_idGen.new_id();
             jc_assert(_map.find(id) == _map.end());
             _map.insert(registry_container::value_type(id, &obj));
-            obj._id = (Handle)id;
+            return id;
         }
 
         void removeObject(object_base& obj) {
@@ -53,9 +53,9 @@ namespace collections
 
         void u_removeObject(object_base& obj) {
             auto id = obj._uid();
-            if (id != HandleNull) {
+            if (id != Handle::Null) {
                 _map.erase(id);
-                _idGen.reuse_id(id);
+                _idGen.reuse_id((HandleT)id);
             }
 
             auto itr = _all_objects.find(&obj);
@@ -64,7 +64,7 @@ namespace collections
         }
 
         object_base *getObject(Handle hdl) const {
-            if (!hdl) {
+            if (hdl == Handle::Null) {
                 return nullptr;
             }
             
@@ -88,7 +88,7 @@ namespace collections
 
         object_stack_ref getObjectRef(Handle hdl) const {
             // had to copy&paste getObject function as we really must own an object BEFORE read lock will be released
-            if (!hdl) {
+            if (hdl == Handle::Null) {
                 return nullptr;
             }
             read_lock g(_mutex);
@@ -96,7 +96,7 @@ namespace collections
         }
 
         object_base *u_getObject(Handle hdl) const {
-            if (!hdl) {
+            if (hdl == Handle::Null) {
                 return nullptr;
             }
 
@@ -119,6 +119,11 @@ namespace collections
 
         size_t u_public_object_count() const {
             return _map.size();
+        }
+
+        size_t object_count() const {
+            read_lock guard(_mutex);
+            return _all_objects.size();
         }
 
         friend class boost::serialization::access;
@@ -148,7 +153,7 @@ namespace collections
 
                 break;
             case 0: {
-                typedef std::map<HandleT, object_base *> registry_container_old;
+                typedef std::map<Handle, object_base *> registry_container_old;
                 registry_container_old oldCnt;
                 ar >> oldCnt >> _idGen;
 
