@@ -50,6 +50,36 @@ namespace collections {
 
         static_assert(type2index<Real>::index > type2index<SInt32>::index, "Item::type2index works incorrectly");
 
+    private:
+        static_assert(std::is_same<
+            boost::variant<boost::blank, SInt32, Real, form_ref, internal_object_ref, std::string>,
+            variant
+        >::value, "update _user2variant code below");
+
+        // maps input user type to variant type:
+        template<class T> struct _user2variant { using variant_type = T; };
+        template<class V> struct _variant_type { using variant_type = V; };
+
+        template<> struct _user2variant<uint32_t> : _variant_type<SInt32>{};
+        template<> struct _user2variant<int32_t> : _variant_type<SInt32>{};
+        template<> struct _user2variant<bool> : _variant_type<SInt32>{};
+
+        template<> struct _user2variant<float> : _variant_type<Real>{};
+        template<> struct _user2variant<double> : _variant_type<Real>{};
+
+        template<> struct _user2variant<skse::string_ref> : _variant_type<std::string>{};
+        template<> struct _user2variant<char*> : _variant_type<std::string>{};
+        template<size_t N> struct _user2variant<char[N]> : _variant_type<std::string>{};
+        template<> struct _user2variant<char[]> : _variant_type<std::string>{};
+
+        template<> struct _user2variant<object_base*> : _variant_type<internal_object_ref>{};
+        template<> struct _user2variant<const object_base*> : _variant_type<internal_object_ref>{};
+
+    public:
+        template<class T>
+        using user2variant_t = typename _user2variant<
+            std::remove_const_t< std::remove_reference_t<T> > >::variant_type;
+
     public:
 
         void u_nullifyObject() {
@@ -87,12 +117,12 @@ namespace collections {
             return item_type(_var.which() + item_type::none);
         }
 
-        template<class T> T* get() {
-            return boost::get<T>(&_var);
+        template<class T> user2variant_t<T>* get() {
+            return boost::get<user2variant_t<T>>(&_var);
         }
 
-        template<class T> const T* get() const {
-            return boost::get<T>(&_var);
+        template<class T> const user2variant_t<T>* get() const {
+            return boost::get<user2variant_t<T>>(&_var);
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -253,36 +283,6 @@ namespace collections {
 
         template<class T> T readAs() const;
 
-        //////////////////////////////////////////////////////////////////////////
-    public:
-        static_assert(std::is_same<
-            boost::variant<boost::blank, SInt32, Real, form_ref, internal_object_ref, std::string>,
-            variant
-        >::value, "update _user2variant code below");
-
-        // maps input user type to variant type:
-        template<class T> struct _user2variant { using variant_type = T; };
-        template<class V> struct _variant_type { using variant_type = V; };
-
-        template<> struct _user2variant<uint32_t> : _variant_type<SInt32>{};
-        template<> struct _user2variant<int32_t> : _variant_type<SInt32>{};
-        template<> struct _user2variant<bool> : _variant_type<SInt32>{};
-
-        template<> struct _user2variant<float> : _variant_type<Real>{};
-        template<> struct _user2variant<double> : _variant_type<Real>{};
-
-        template<> struct _user2variant<skse::string_ref> : _variant_type<std::string>{};
-        template<> struct _user2variant<char*> : _variant_type<std::string>{};
-        template<size_t N> struct _user2variant<char[N]> : _variant_type<std::string>{};
-        template<> struct _user2variant<char[]> : _variant_type<std::string>{};
-
-        template<> struct _user2variant<object_base*> : _variant_type<internal_object_ref>{};
-        template<> struct _user2variant<const object_base*> : _variant_type<internal_object_ref>{};
-
-        template<class T>
-        using user2variant_t = typename _user2variant<
-            std::remove_const_t< std::remove_reference_t<T> > >::variant_type;
-
     public:
 
         bool operator == (const item& other) const { return isEqual(other); }
@@ -291,7 +291,7 @@ namespace collections {
 
         template<class T>
         bool operator == (const T& v) const {
-            auto thisV = boost::get<typename _user2variant<std::remove_const<T>::type>::variant_type>(&_var);
+            auto thisV = get<T>();
             return thisV && *thisV == v;
         }
 
