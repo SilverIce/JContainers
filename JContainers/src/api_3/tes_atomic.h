@@ -153,12 +153,12 @@ If @createMissingKeys is True, the function attemps to create missing @path elem
         REGISTERF(exchange<object_base*>, "exchangeObj", PARAMS_INT "0", nullptr);
 #   undef PARAMS_INT
 
-#   define PARAMS_INT   "object path value comparand createMissingKeys=false onErrorReturn="
+#   define PARAMS_INT   "object path desired expected createMissingKeys=false onErrorReturn="
         REGISTERF(compareExchange<SInt32>, "compareExchangeInt", PARAMS_INT "0",
-"Compares the value at the @path with the @comparand and, if they are equal, exchanges the value at the @path with the @value. Returns previous value.");
+"Compares the value at the @path with the @expected and, if they are equal, exchanges the value at the @path with the @desired values.\nReturns previous value.");
 
         REGISTERF(compareExchange<Float32>, "compareExchangeFlt", PARAMS_INT "0.0", nullptr);
-        //REGISTERF(compareExchange<std::string>, "compareExchangeStr", PARAMS_INT "\"\"", nullptr);
+        REGISTERF(compareExchange<std::string>, "compareExchangeStr", PARAMS_INT "\"\"", nullptr);
 
         REGISTERF(compareExchange<form_ref>, "compareExchangeForm", PARAMS_INT "None", nullptr);
         REGISTERF(compareExchange<object_base*>, "compareExchangeObj", PARAMS_INT "0", nullptr);
