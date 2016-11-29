@@ -4,7 +4,7 @@ local JCTypeList = {JArray, JMap, JFormMap}
 local function print( ... )
 end
 
-return function()
+local basicTest = function()
   
   do
     assert(Form(1) == Form(1))
@@ -66,7 +66,7 @@ return function()
     
     local function expectSize2(o, size)
       local s = JValue.typeOf(o).typeName
-      assert(size == 0 or #o > 0, s)
+      assert(size == 0 or #o > 0, string.format('the size of container of type %s should be 0 or %u', s, #o))
     end
 
     type2Func[JMap] = function ( )
@@ -215,3 +215,4 @@ return function()
   --]]
 end
 
+return {basicTest = basicTest}

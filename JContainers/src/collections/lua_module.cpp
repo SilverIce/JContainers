@@ -57,7 +57,7 @@ namespace lua { namespace aux_wip {
         LUA_OK = 0,
     };
 
-    class context : public boost::noncopyable {
+    class context final : public boost::noncopyable {
 
         lua_State *_lua = nullptr;
         tes_context& _context;
@@ -95,7 +95,7 @@ namespace lua { namespace aux_wip {
             }
             else {
                 item result;
-                JCValue *val = (JCValue *)lua_topointer(_lua, -1);
+                auto val = reinterpret_cast<const JCValue *>(lua_topointer(_lua, -1));
                 JCValue_fillItem(_context, val, result);
                 return result;
             }
@@ -179,7 +179,7 @@ namespace lua { namespace aux_wip {
     // just a pool, factory of contexts.
     // any thead can obtain free (or newly created), initialized lua-context
     // the tread have to return it back via @release
-    class context_pool : public collections::dependent_context, boost::noncopyable {
+    class context_pool final : public collections::dependent_context, boost::noncopyable {
         static const uint32_t queue_capacity = 16;
 
         boost::lockfree::queue<context*> _queue = queue_capacity;
@@ -238,7 +238,7 @@ namespace lua { namespace aux_wip {
     };
 
     // aquires a context from context_pool and releases it when destroyed
-    class autofreed_context : boost::noncopyable {
+    class autofreed_context final : boost::noncopyable {
         context_pool& _pool;
         context& _context;
     public:

@@ -84,9 +84,9 @@ namespace collections {
     public:
 
         // stops object_context's activity, until destroyed and then restarts it 
-        struct activity_stopper {
+        struct activity_stopper final {
             object_context& context;
-            activity_stopper(object_context& context);
+            explicit activity_stopper(object_context& context);
             ~activity_stopper();
         };
 
