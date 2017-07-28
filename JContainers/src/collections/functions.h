@@ -40,7 +40,7 @@ namespace collections {
                 return boost::none;
             }
 
-            std::array<uint32_t, N> indexes;
+            std::array<uint32_t, N> indexes = { 0 };
             for (size_t i = 0; i < N; ++i) {
                 indexes[i] = (pyIndexes[i] >= 0 ? pyIndexes[i] : (count + pyIndexes[i]));
 
