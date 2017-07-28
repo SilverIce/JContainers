@@ -400,7 +400,7 @@ namespace collections {
                     return comparer(pair.first, k);
                 }
             );
-            return itr != c.end() && itr->first == k ? itr : c.end();
+            return itr != c.end() && forms::form_ref::stable_equal_comparer{}(itr->first, k) ? itr : c.end();
         }
 
         item& u_get_or_create(const form_ref_lightweight& key) {

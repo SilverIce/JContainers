@@ -104,6 +104,7 @@ namespace forms {
         }
 
         struct stable_less_comparer;
+        struct stable_equal_comparer;
 
         friend class boost::serialization::access;
         BOOST_SERIALIZATION_SPLIT_MEMBER();
@@ -115,8 +116,15 @@ namespace forms {
     // Implements stable 'less than' form_ref comparison
     // Note that the comparison is not as stable as before - due to is_expired() function which
     // may start returning False once a form_ref gets expired.
-    // And in a result of this a map container of <form_ref, value> keys containing expired and non-expired form_ref-keys 
-    // (with equal raw form ids) may start contain equal two keys and may act weird
+    // And in a result of this a map container of <form_ref, value> pairs containing expired and non-expired form_ref-keys 
+    // (with equal raw form ids) may start contain two equal keys and may act weird
+
+    // And now the question: why we need this, why not simply compare form_refs by form IDs?
+    // Imagine the following situation - a map contains <form_ref, value> pairs {0xff000001, 10}
+    // Then the form with ID 0xff000001 gets destroyed
+    // After some moment of time the ID 0xff000001 is re-used and a new form with the same ID being created
+    // The new form is inserted into the map container OR the container is simply tested whether it contains a new form as a key
+    // In both cases the new form should not be equal to the old, already deleted form
     struct form_ref::stable_less_comparer {
         template<class FormRef1, class FormRef2>
         bool operator () (const FormRef1& left, const FormRef2& right) const {
@@ -125,20 +133,29 @@ namespace forms {
         }
     };
 
+    struct form_ref::stable_equal_comparer {
+        template<class FormRef1, class FormRef2>
+        bool operator () (const FormRef1& left, const FormRef2& right) const {
+            return left.get_raw() == right.get_raw()
+                && left.is_expired() == right.is_expired();
+        }
+    };
+
     // It's lightweight alternative to form_ref to temporarily hold forms
     // why lightweight? form_ref constructor accesses form_observer, which is costly
     class form_ref_lightweight {
         FormId _formId = FormId::Zero;
         form_observer* _observer = nullptr;
+        bool _is_expired = true;
 
     public:
 
         form_ref_lightweight(FormId id, form_observer& watcher)
-            : _formId(id), _observer(&watcher) {}
+            : _formId(id), _observer(&watcher), _is_expired(id == FormId::Zero) {}
 
         // allow implicit conversion
         form_ref_lightweight(const form_ref& ref)
-            : _formId(ref.get()) {}
+            : _formId(ref.get_raw()), _is_expired(ref.is_expired()) {}
 
         form_ref_lightweight() = default;
 
@@ -147,13 +164,13 @@ namespace forms {
         }
 
         // mimic form_ref interface
-        FormId get() const { return _formId; }
+        FormId get() const { return is_not_expired() ? _formId : FormId::Zero; }
         FormId get_raw() const { return _formId; }
 
         bool operator!() BOOST_CONSTEXPR_OR_CONST BOOST_NOEXCEPT{ return is_expired(); }
         BOOST_EXPLICIT_OPERATOR_BOOL_NOEXCEPT()
 
-        bool is_expired() BOOST_CONSTEXPR_OR_CONST{ return _formId == FormId::Zero; }
+        bool is_expired() BOOST_CONSTEXPR_OR_CONST{ return _is_expired; }
         bool is_not_expired() BOOST_CONSTEXPR_OR_CONST{ return !is_expired(); }
     };
 
