@@ -6,8 +6,8 @@ namespace collections
     class object_registry
     {
     public:
-        typedef std::hash_set<object_base *> all_objects_set;
-        typedef std::hash_map<Handle, object_base *> registry_container;
+        typedef std::unordered_set<object_base *> all_objects_set;
+        typedef std::unordered_map<Handle, object_base *> registry_container;
 
     private:
 

@@ -1,3 +1,5 @@
+# Ignore as too big, basically unpack there a release of Boost
+dep/boost
 
 #################
 ## Visual Studio

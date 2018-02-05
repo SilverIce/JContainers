@@ -17,6 +17,7 @@
 #include <boost/detail/workaround.hpp>
 #include <boost/smart_ptr/detail/sp_convertible.hpp>
 #include <boost/smart_ptr/detail/sp_nullptr_t.hpp>
+#include <boost/smart_ptr/detail/sp_noexcept.hpp>
 
 #include <boost/config/no_tr1/functional.hpp>           // for std::less
 

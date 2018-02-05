@@ -8,7 +8,6 @@
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/weak_ptr.hpp>
-#include <boost/serialization/hash_map.hpp>
 
 #include <boost/serialization/split_member.hpp>
 #include <boost/serialization/split_free.hpp>
