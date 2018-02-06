@@ -1,4 +1,5 @@
 # Ignore as too big, basically unpack there a release of Boost
+# There is one single batch file, for build settings.
 dep/boost
 
 #################
@@ -15,7 +16,8 @@ dep/boost
 
 # Build results
 
-
+Debug/
+Release/
 x64/
 [Bb]in/
 [Oo]bj/
@@ -49,6 +51,7 @@ x64/
 *.scc
 
 # Visual C++ cache files
+.vs/
 ipch/
 *.aps
 *.ncb

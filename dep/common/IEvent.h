@@ -20,18 +20,3 @@ class IEvent
 		HANDLE				theEvent;
 		IInterlockedLong	blockCount;
 };
-
-class IAutoEvent
-{
-	public:
-		static const UInt32 kDefaultTimeout = 1000 * 10;
-
-		IAutoEvent()	{ ASSERT(theEvent = CreateEvent(NULL, false, true, NULL)); }
-		~IAutoEvent()	{ CloseHandle(theEvent); }
-
-		void	Pulse(void)	{ PulseEvent(theEvent); }
-		bool	Wait(UInt32 timeout = kDefaultTimeout);
-
-	private:
-		HANDLE	theEvent;
-};

@@ -330,9 +330,6 @@
     <ProjectReference Include="..\dep\luajit\luajit.vcxproj">
       <Project>{7d8b3c09-a91e-4c14-93af-059f314c601f}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\dep\skse\skse\skse.vcxproj">
-      <Project>{aa0365ec-47ea-45aa-bb1f-ebbcccc466f2}</Project>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="JContainers.rc" />

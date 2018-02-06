@@ -279,10 +279,9 @@ public:
 
 		PoolItem	* item = reinterpret_cast <PoolItem *>(obj);
 
-		item->next = m_free;
-
 		m_mutex.Enter();
 
+		item->next = m_free;
 		m_free = item;
 
 		m_mutex.Leave();

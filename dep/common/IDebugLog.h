@@ -18,7 +18,7 @@ class IDebugLog
 		static void			Open(const char * path);
 		static void			OpenRelative(int folderID, const char * relPath);
 
-		static void			Message(const char * message, const char * source = NULL);
+		static void			Message(const char * message, const char * source = NULL, bool newLine = true);
 		static void			FormattedMessage(const char * fmt, ...);
 		static void			FormattedMessage(const char * fmt, va_list args);
 
@@ -33,6 +33,7 @@ class IDebugLog
 		};
 
 		static void			Log(LogLevel level, const char * fmt, va_list args);
+		static void			LogNNL(LogLevel level, const char * fmt, va_list args); // No new line
 
 		static void			SetSource(const char * source);
 		static void			ClearSource(void);

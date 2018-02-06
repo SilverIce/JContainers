@@ -56,7 +56,12 @@ void IDebugLog::OpenRelative(int folderID, const char * relPath)
 {
 	char	path[MAX_PATH];
 
-	ASSERT(SUCCEEDED(SHGetFolderPath(NULL, folderID, NULL, SHGFP_TYPE_CURRENT, path)));
+	HRESULT err = SHGetFolderPath(NULL, folderID | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, path);
+	if(!SUCCEEDED(err))
+	{
+		_FATALERROR("SHGetFolderPath %08X failed (result = %08X lasterr = %08X)", folderID, err, GetLastError());
+	}
+	ASSERT_CODE(SUCCEEDED(err), err);
 
 	strcat_s(path, sizeof(path), relPath);
 
@@ -71,7 +76,7 @@ void IDebugLog::OpenRelative(int folderID, const char * relPath)
  *	@param message the message
  *	@param source the source of the message, or NULL to use the previous source
  */
-void IDebugLog::Message(const char * message, const char * source)
+void IDebugLog::Message(const char * message, const char * source, bool newLine)
 {
 	if(source)
 		SetSource(source);
@@ -88,7 +93,9 @@ void IDebugLog::Message(const char * message, const char * source)
 	}
 
 	PrintText(message);
-	NewLine();
+
+	if(newLine)
+		NewLine();
 }
 
 /**
@@ -132,6 +139,21 @@ void IDebugLog::Log(LogLevel level, const char * fmt, va_list args)
 	
 	if(print)
 		printf("%s\n", formatBuf);
+}
+
+void IDebugLog::LogNNL(LogLevel level, const char * fmt, va_list args)
+{
+	bool	log = (level <= logLevel);
+	bool	print = (level <= printLevel);
+
+	if(log || print)
+		vsprintf_s(formatBuf, sizeof(formatBuf), fmt, args);
+
+	if(log)
+		Message(formatBuf, NULL, false);
+	
+	if(print)
+		printf("%s", formatBuf);
 }
 
 /**

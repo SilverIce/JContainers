@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include "skse/Utilities.h"
+#include "skse64_common/Utilities.h"
 
 namespace skse {
     
