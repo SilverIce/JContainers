@@ -12,11 +12,11 @@
 
 #include "jc_interface.h"
 
-#include "skse/PluginAPI.h"
-#include "skse/skse_version.h"
-#include "skse/GameForms.h"
-#include "skse/PapyrusNativeFunctions.h"
-#include "skse/PapyrusForm.h"
+#include "skse64/PluginAPI.h"
+#include "skse64_common/skse_version.h"
+#include "skse64/GameForms.h"
+#include "skse64/PapyrusNativeFunctions.h"
+#include "skse64/PapyrusForm.h"
 
 class VMClassRegistry;
 
@@ -118,7 +118,7 @@ extern "C" {
             _MESSAGE("loaded in editor, marking as incompatible");
             return false;
         }
-        else if (skse->runtimeVersion != RUNTIME_VERSION_1_9_32_0) {
+        else if (skse->runtimeVersion != RUNTIME_VERSION_1_5_23) {
             _MESSAGE("unsupported runtime version %08X", skse->runtimeVersion);
             return false;
         }

@@ -153,7 +153,7 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <PreBuildEvent>
-      <Command>python.exe install_Local.py $(Configuration) "C:\\Games\\Nexus Mod Manager\\SkyrimSE\\JContainers-v3.3A\\JContainers-v3.3A"</Command>
+      <Command>python.exe install_Local.py $(Configuration)  "C:\\Program Files\\Mod Organizer\\mods\\JContainers-v3.3A"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Distrib|Win32'">

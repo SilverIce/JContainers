@@ -12,6 +12,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "json_validator", "json_validator\json_validator.vcxproj", "{CAA7D417-1B58-48AB-A226-C7E69141772C}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "API_example", "api_usage_example\api_usage_example.vcxproj", "{6A52E028-EA40-467A-9055-6C7320B2746D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{7028B79C-06E3-4D9A-B38C-1DC3680B1BDB} = {7028B79C-06E3-4D9A-B38C-1DC3680B1BDB}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "post-build", "post-build\post-build.vcxproj", "{7A9BC6AF-C4C0-48EB-AE58-C64270A6823D}"
 EndProject
@@ -52,7 +55,8 @@ Global
 		{C7305D8C-5514-4C58-9ED7-04D1D7A53D8D}.SKSE|x64.Build.0 = Release|x64
 		{20C6411C-596F-4B85-BE4E-8BC91F59D8A6}.Debug|Win32.ActiveCfg = Debug|Win32
 		{20C6411C-596F-4B85-BE4E-8BC91F59D8A6}.Debug|Win32.Build.0 = Debug|Win32
-		{20C6411C-596F-4B85-BE4E-8BC91F59D8A6}.Debug|x64.ActiveCfg = Debug|Win32
+		{20C6411C-596F-4B85-BE4E-8BC91F59D8A6}.Debug|x64.ActiveCfg = Debug|x64
+		{20C6411C-596F-4B85-BE4E-8BC91F59D8A6}.Debug|x64.Build.0 = Debug|x64
 		{20C6411C-596F-4B85-BE4E-8BC91F59D8A6}.Distrib|Win32.ActiveCfg = Release|Win32
 		{20C6411C-596F-4B85-BE4E-8BC91F59D8A6}.Distrib|Win32.Build.0 = Release|Win32
 		{20C6411C-596F-4B85-BE4E-8BC91F59D8A6}.Distrib|x64.ActiveCfg = Release|Win32
@@ -61,6 +65,7 @@ Global
 		{20C6411C-596F-4B85-BE4E-8BC91F59D8A6}.Release|Win32.ActiveCfg = Release|Win32
 		{20C6411C-596F-4B85-BE4E-8BC91F59D8A6}.Release|Win32.Build.0 = Release|Win32
 		{20C6411C-596F-4B85-BE4E-8BC91F59D8A6}.Release|x64.ActiveCfg = Release|x64
+		{20C6411C-596F-4B85-BE4E-8BC91F59D8A6}.Release|x64.Build.0 = Release|x64
 		{20C6411C-596F-4B85-BE4E-8BC91F59D8A6}.SKSE|Win32.ActiveCfg = Release|Win32
 		{20C6411C-596F-4B85-BE4E-8BC91F59D8A6}.SKSE|Win32.Build.0 = Release|Win32
 		{20C6411C-596F-4B85-BE4E-8BC91F59D8A6}.SKSE|x64.ActiveCfg = Release|Win32
