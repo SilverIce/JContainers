@@ -112,7 +112,7 @@ namespace reflection { namespace binding {
 #undef MAKE_ME_HAPPY
 #define MAKE_ME_HAPPY(N)\
     template<> struct state_native_function_selector<N> {\
-        template<class State, class... Params> using function = ::LatentNativeFunction ## N <State, Params...>; \
+        template<class State, class... Params> using function = ::NativeFunctionWithState ## N <State, Params...>; \
     };
 
     MAKE_ME_HAPPY(0);

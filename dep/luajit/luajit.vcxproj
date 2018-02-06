@@ -126,6 +126,10 @@
     <PreBuildEvent>
       <Command>cd "luajit-2.0\src" &amp;&amp; msvcbuild.bat static</Command>
     </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>copy /B /Y $(ProjectDir)luajit-2.0\src\lua51.lib $(OutDir)$(TargetName)$(TargetExt)</Command>
+      <Message>Copying the library to the solution configuration folder</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

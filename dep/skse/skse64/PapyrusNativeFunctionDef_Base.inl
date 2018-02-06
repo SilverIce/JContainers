@@ -93,7 +93,12 @@ public:
 #else
 		T_Result
 #endif
-		(* CallbackType)(T_Base * base
+		(* CallbackType)(
+#if ACCEPTS_STATE
+        T_Base & state
+#else
+        T_Base * base
+#endif
 #if NUM_PARAMS >= 1
 		, T_Arg0 arg0
 #endif
@@ -135,7 +140,12 @@ public:
 #else
 		T_Result
 #endif
-		(* CallbackType_LongSig)(VMClassRegistry* registry, UInt32 stackId, T_Base * base
+		(* CallbackType_LongSig)(VMClassRegistry* registry, UInt32 stackId
+#if ACCEPTS_STATE
+        , T_Base & state
+#else
+        , T_Base * base
+#endif
 #if NUM_PARAMS >= 1
 		, T_Arg0 arg0
 #endif
@@ -168,12 +178,29 @@ public:
 #endif
 		);
 
+#if ACCEPTS_STATE
+    struct shit {
+        void* callback;
+        T_Base & state;
+    };
+#endif
+
 	// Short signature
+#if ACCEPTS_STATE
+	CLASS_NAME(const char * fnName, const char * className, CallbackType callback, VMClassRegistry * registry, T_Base& state)
+		:NativeFunction(fnName, className, IsStaticType <StaticFunctionTag>::value, NUM_PARAMS)
+#else
 	CLASS_NAME(const char * fnName, const char * className, CallbackType callback, VMClassRegistry * registry)
 		:NativeFunction(fnName, className, IsStaticType <T_Base>::value, NUM_PARAMS)
+#endif
 	{
 		// store callback
+#if ACCEPTS_STATE
+        m_callback = new shit { (void*) callback, state };
+        _VMESSAGE ("NativeFunction.Ctor %s state %p %p", fnName, &state, &((shit*) m_callback)->state);
+#else
 		m_callback = (void *)callback;
+#endif
 
 		m_bUseLongSignature = false;
 
@@ -181,11 +208,21 @@ public:
 	}
 
 	// Long signature
+#if ACCEPTS_STATE
+	CLASS_NAME(const char * fnName, const char * className, CallbackType_LongSig callback, VMClassRegistry * registry, T_Base& state)
+		:NativeFunction(fnName, className, IsStaticType <StaticFunctionTag>::value, NUM_PARAMS)
+#else
 	CLASS_NAME(const char * fnName, const char * className, CallbackType_LongSig callback, VMClassRegistry * registry)
 		:NativeFunction(fnName, className, IsStaticType <T_Base>::value, NUM_PARAMS)
+#endif
 	{
 		// store callback
+#if ACCEPTS_STATE
+        m_callback = new shit { (void*) callback, state };
+        _VMESSAGE ("NativeFunction.Ctor %s state %p %p", fnName, &state, &((shit*) m_callback)->state);
+#else
 		m_callback = (void *)callback;
+#endif
 
 		m_bUseLongSignature = true;
 
@@ -247,6 +284,7 @@ public:
 		// get argument list
 		UInt32	argOffset = CALL_MEMBER_FN(state->argList, GetOffset)(state);
 
+#if !ACCEPTS_STATE
 		T_Base	* base = NULL;
 
 		// extract base object pointer for non-static types
@@ -255,6 +293,7 @@ public:
 			UnpackValue(&base, baseValue);
 			if (!base) return false;
 		}
+#endif
 
 		// extract parameters
 #if NUM_PARAMS >= 1
@@ -307,7 +346,12 @@ public:
 #elif !VOID_SPEC
 			T_Result	result =
 #endif
+#if ACCEPTS_STATE
+                ((CallbackType_LongSig)(((shit*)m_callback)->callback))(registry, stackId,
+                    ((shit*)m_callback)->state
+#else
 				((CallbackType_LongSig)m_callback)(registry, stackId, base
+#endif
 #if NUM_PARAMS >= 1
 				, arg0
 #endif
@@ -359,7 +403,12 @@ public:
 #elif !VOID_SPEC
 			T_Result	result =
 #endif
-				((CallbackType)m_callback)(base
+#if ACCEPTS_STATE
+                ((CallbackType)(((shit*)m_callback)->callback))(
+                    ((shit*)m_callback)->state
+#else
+                ((CallbackType)m_callback)(base
+#endif
 #if NUM_PARAMS >= 1
 				, arg0
 #endif
