@@ -118,16 +118,16 @@ def makeScripts(lib, sourceDir, compiledDir):
 
 
 # def moveTree(root_src_dir, root_dst_dir):
-# 	for src_dir, dirs, files in os.walk(root_src_dir):
-# 	    dst_dir = src_dir.replace(root_src_dir, root_dst_dir)
-# 	    if not os.path.exists(dst_dir):
-# 	        os.makedirs(dst_dir)
-# 	    for file_ in files:
-# 	        src_file = os.path.join(src_dir, file_)
-# 	        dst_file = os.path.join(dst_dir, file_)
-# 	        if os.path.exists(dst_file):
-# 	            os.remove(dst_file)
-# 	        shutil.move(src_file, dst_dir)
+#  for src_dir, dirs, files in os.walk(root_src_dir):
+#	  dst_dir = src_dir.replace(root_src_dir, root_dst_dir)
+#	  if not os.path.exists(dst_dir):
+#		  os.makedirs(dst_dir)
+#	  for file_ in files:
+#		  src_file = os.path.join(src_dir, file_)
+#		  dst_file = os.path.join(dst_dir, file_)
+#		  if os.path.exists(dst_file):
+#			  os.remove(dst_file)
+#		  shutil.move(src_file, dst_dir)
 
 
 def copyTree(root_src_dir, root_dst_dir):
@@ -188,7 +188,7 @@ def bundleDevResources(mode):
     cleanCopyTree(os.path.join(ROOT, 'api_usage_example'), devr, ignore = lambda x,y: ['Release', 'Debug'])
     shutil.copy2(os.path.join(ROOT, 'JContainers/src/jc_interface.h'), os.path.join(devr, 'api_usage_example'))
 
-    shutil.copy2(os.path.join(ROOT, 'Release', 'json_validator.exe'), devr)
+    shutil.copy2(os.path.join(ROOT, 'x64', 'Release', 'json_validator.exe'), devr)
 
     shutil.make_archive(devr, 'zip', devr)
     shutil.rmtree(devr, ignore_errors = True)

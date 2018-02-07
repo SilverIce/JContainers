@@ -159,6 +159,9 @@
       <Command>
       </Command>
     </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>copy /B /Y $(OutDir)$(TargetName)$(TargetExt) $(ProjectDir)Data\SKSE\Plugins\$(TargetName)$(TargetExt)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -199,8 +202,8 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>src;$(SolutionDir)\dep\boost;$(SolutionDir)\dep;$(SolutionDir)\dep\skse;$(SolutionDir)\dep\googletest\googletest\googletest\include;$(SolutionDir)\dep\jansson\jansson\src;$(SolutionDir)\dep\jansson;$(SolutionDir)\dep\luajit\luajit-2.0\src;$(ProjectDir)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;BOOST_HAS_HASH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;BOOST_HAS_HASH;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
@@ -229,6 +232,9 @@
       <Command>
       </Command>
     </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>copy /B /Y $(OutDir)$(TargetName)$(TargetExt) $(ProjectDir)Data\SKSE\Plugins\$(TargetName)$(TargetExt)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\api_3\string_wrapper.cpp" />
