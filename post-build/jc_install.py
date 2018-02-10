@@ -136,7 +136,7 @@ def copyTree(root_src_dir, root_dst_dir):
 
 def setupSkyrimTree(config):
     copyTree('../JContainers/Data', config.dataDir)
-    makepath(os.path.join (config.pluginDir, "JCData/Domains"))
+
 
 def recreatePath(*args):
     path = os.path.join(*args)

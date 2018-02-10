@@ -34,7 +34,9 @@ namespace domain_master {
             std::set<util::istring> domains;
             fs::path dir = util::relative_to_dll_path(JC_DATA_FILES "Domains/");
             for (fs::directory_iterator itr(dir), end; itr != end; ++itr) {
-               domains.insert(itr->path().filename().generic_string().c_str());
+                auto f = itr->path ().filename ().generic_string ();
+                if (f != ".force-install")
+                    domains.insert(f.c_str());
             }
             return domains;
         }
