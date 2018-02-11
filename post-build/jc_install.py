@@ -24,6 +24,10 @@ def cleanCopyTree(src, dst, **kwargs):
     shutil.copytree(src, dest, **kwargs)
 
 
+def make_archive (dst, src):
+    systemCall('7za a -mx9 "{}.7z" "{}" > nul'.format(dst, src))
+
+
 ROOT = '..\\'
 DIST_DIR = makepath(ROOT + 'dist\\')
 
@@ -173,7 +177,7 @@ def bundlePlugin(mode):
 
     installDir = recreatePath(DIST_DIR, mode)
     shutil.copytree(config.dataDir, os.path.join(installDir, 'Data'), ignore = shutil.ignore_patterns('*.exp', '*.lib', 'test_data'))
-    shutil.make_archive(os.path.join(DIST_DIR, 'JContainers.' + config.jcLib.versionString()), 'zip', installDir)
+    make_archive(os.path.join(DIST_DIR, 'JContainers.' + config.jcLib.versionString()), installDir + "\*")
     shutil.rmtree(installDir, ignore_errors = True)
 
 
@@ -190,6 +194,6 @@ def bundleDevResources(mode):
 
     shutil.copy2(os.path.join(ROOT, 'x64', 'Release', 'json_validator.exe'), devr)
 
-    shutil.make_archive(devr, 'zip', devr)
+    make_archive(devr, devr + "\*")
     shutil.rmtree(devr, ignore_errors = True)
 
