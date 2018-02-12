@@ -87,9 +87,13 @@ class Config(object):
         return os.path.join(self.origin, 'Data\SKSE\Plugins')
 
     @property
+    def jcLibPath(self):
+        return os.path.join(self.pluginDir, JCLib.dllName())
+
+    @property
     def jcLib(self):
         if not self._jcLib:
-            self._jcLib = JCLib(os.path.join(self.pluginDir, JCLib.dllName()))
+            self._jcLib = JCLib(self.jcLibPath)
 
         return self._jcLib
 
@@ -140,6 +144,7 @@ def copyTree(root_src_dir, root_dst_dir):
 
 def setupSkyrimTree(config):
     copyTree('../JContainers/Data', config.dataDir)
+    shutil.copy2 (os.path.join (config.origin, JCLib.dllName ()), config.jcLibPath)
 
 
 def recreatePath(*args):
@@ -192,7 +197,7 @@ def bundleDevResources(mode):
     cleanCopyTree(os.path.join(ROOT, 'api_usage_example'), devr, ignore = lambda x,y: ['Release', 'Debug'])
     shutil.copy2(os.path.join(ROOT, 'JContainers/src/jc_interface.h'), os.path.join(devr, 'api_usage_example'))
 
-    shutil.copy2(os.path.join(ROOT, 'x64', 'Release', 'json_validator.exe'), devr)
+    shutil.copy2(os.path.join(ROOT, mode, 'json_validator.exe'), devr)
 
     make_archive(devr, devr + "\*")
     shutil.rmtree(devr, ignore_errors = True)
