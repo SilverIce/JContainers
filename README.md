@@ -1,7 +1,5 @@
 # JContainers
 
-## Summary
-
 A project to extend [Skyrim's Papyrus
 scripting](https://www.creationkit.com/index.php?title=Category:Papyrus) with
 [JSON formatted](https://json.org/) data structures (arrays and maps).
@@ -17,13 +15,13 @@ There is no way to:
 - Have associative containers 
 - Be able to load or save a data into a file
 
-### A solution
+### Solution
 
 Since there is no source code of the Papyrus virtual machine, it is tricky and no easy to extend the
 existing Papyrus Array type or add new data structure type. Thus JContainers implements it's own
 data structures, garbage collector and other infernal stuff from scratch. Features offered:
 
-- Data structures: arrays and associative containers (a.k.a. dictionaries)
+- Data structures: arrays and associative containers (a.k.a. maps or dictionaries)
 - Import and export data to and from JSON files
 - Embedded, lightweight scripting - [Lua](https://www.lua.org/)
 - Interaction with JContainers via C++ interface.
@@ -37,7 +35,7 @@ data structures, garbage collector and other infernal stuff from scratch. Featur
 Sure! Feel free to do whatever you think is good - post feature requests, report bugs, improve Wiki
 or source code.
 
-## Building from source
+# Building from source
 
 ### Prerequisites
 
