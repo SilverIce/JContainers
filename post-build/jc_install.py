@@ -197,7 +197,7 @@ def bundleDevResources(mode):
     cleanCopyTree(os.path.join(ROOT, 'api_usage_example'), devr, ignore = lambda x,y: ['Release', 'Debug'])
     shutil.copy2(os.path.join(ROOT, 'JContainers/src/jc_interface.h'), os.path.join(devr, 'api_usage_example'))
 
-    shutil.copy2(os.path.join(ROOT, mode, 'json_validator.exe'), devr)
+    shutil.copy2(os.path.join(ROOT, 'x64', 'Release', 'json_validator.exe'), devr)
 
     make_archive(devr, devr + "\*")
     shutil.rmtree(devr, ignore_errors = True)
