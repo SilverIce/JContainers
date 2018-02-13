@@ -45,8 +45,8 @@ or source code.
   older versions too (e.g. 2013) but issues may arrise. Later versions are more compatible.
 * [Boost C++ library](http://www.boost.org/) version 1.66
   The version number is loose requirement, as Boost is largely compatible between the different
-  versions you may try with different one. An archive of 1.66 can be downloaded from
-  [here](https://dl.bintray.com/boostorg/release/1.66.0/source/) or any other place.
+  versions you may try with different one. An archive of 1.66 can be downloaded
+  [here](https://dl.bintray.com/boostorg/release/1.66.0/source/) or from any other place.
 * A [Python](https://www.python.org/downloads/) environment for Windows, version 3.4 or later.
   This is needed to run some helper scripts for testing, building a distribution and any other small
   helpful tasks. Other versions of Python like 2.x or so may work or may not.
