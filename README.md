@@ -28,7 +28,7 @@ data structures, garbage collector and other infernal stuff from scratch. Featur
 
 ### In depth documentation
 
-[Latest documentation](https://github.com/SilverIce/JContainers/wiki)
+[Latest documentation](https://github.com/ryobg/jcontainers/wiki)
 
 ### Can I help?
 
