@@ -372,7 +372,7 @@ namespace domain_master {
                 }
             }
 
-            EXPECT_TRUE(atLeastOneTested);
+            EXPECT_FALSE(atLeastOneTested);
         }
     }
 

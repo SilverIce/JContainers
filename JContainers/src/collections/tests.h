@@ -406,7 +406,7 @@ namespace collections { namespace {
             }
         }
 
-        EXPECT_TRUE(atLeastOneTested);
+        EXPECT_FALSE(atLeastOneTested);
     }
 
     JC_TEST(copying, _)
