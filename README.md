@@ -2,11 +2,11 @@
 
 A project to extend [Skyrim's Papyrus
 scripting](https://www.creationkit.com/index.php?title=Category:Papyrus) with
-[JSON formatted](https://json.org/) data structures (arrays and maps).
+[JSON formatted](https://json.org/) serializable data structures.
 
-**This project is fork of the original [JContainers](https://github.com/SilverIce/JContainers). This
-one here strives to convert it to the new Skyrim Special 64-bit edition. Cudos to the
-original author and all of its supporters!**
+*This project is fork of the original [JContainers](https://github.com/SilverIce/JContainers). It
+strives to convert and mash it up to the new Skyrim Special 64-bit edition. Cudos to the original
+author and all of its supporters!*
 
 ### Why?
 
