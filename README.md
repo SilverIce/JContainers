@@ -45,21 +45,18 @@ or source code.
   older versions too (e.g. 2013) but issues may arrise. Later versions are more compatible.
 * [Boost C++ library](http://www.boost.org/) version 1.66
   The version number is loose requirement, as Boost is largely compatible between the different
-  versions you may try with different one. An archive of 1.66 can be downloaded
+  versions, so you may try with different one. An archive of 1.66 can be downloaded
   [here](https://dl.bintray.com/boostorg/release/1.66.0/source/) or from any other place.
 * A [Python](https://www.python.org/downloads/) environment for Windows, version 3.4 or later.
-  This is needed to run some helper scripts for testing, building a distribution and any other small
-  helpful tasks. Other versions of Python like 2.x or so may work or may not.
+  This is needed to run some helper scripts for testing, building distributions and any other small
+  helpful tasks. Other versions of Python like 2.x may work or may not.
 * The GIT revisioning system and/or GitHub account may help if you want to contribute or work more
   easily with the public repository of this project.
 
 ### First time setup
 
-Some care was taken to easy the process, and later these tasks may be somewhat automated, but as
-this is mostly one-time endeavor it is with low priority.
-
-1. Unpack or place somewhat the Boost root folder (the one containing bootstrap.bat) into the
-   JContainer's `dep/boost` folder. For example you should have the following path available:
+1. Unpack or place somehow the Boost root folder (the one containing `bootstrap.bat`) into the
+   JContainer's `dep/boost` folder i.e. you should have the following path available:
    `dep/boost/bootstrap.bat`.
 2. Run from the JContainer's root folder the `build_boost.bat` file. It will bootstrap and build the
    neccessary libraries from Boost.
