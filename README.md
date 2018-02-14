@@ -4,6 +4,10 @@ A project to extend [Skyrim's Papyrus
 scripting](https://www.creationkit.com/index.php?title=Category:Papyrus) with
 [JSON formatted](https://json.org/) data structures (arrays and maps).
 
+**This project is fork of the original [JContainers](https://github.com/SilverIce/JContainers). This
+one here strives to convert it to the new Skyrim Special 64-bit edition. Cudos to the
+original author and all of its supporters!**
+
 ### Why?
 
 If you are programmer, sooner or later you'll notice the lack of many useful features in Papyrus.
@@ -26,7 +30,7 @@ data structures, garbage collector and other infernal stuff from scratch. Featur
 - Embedded, lightweight scripting - [Lua](https://www.lua.org/)
 - Interaction with JContainers via C++ interface.
 
-### In depth documentation
+### Full documentation
 
 [Latest documentation](https://github.com/ryobg/jcontainers/wiki)
 
