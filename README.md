@@ -4,9 +4,11 @@ A project to extend [Skyrim's Papyrus
 scripting](https://www.creationkit.com/index.php?title=Category:Papyrus) with
 [JSON formatted](https://json.org/) serializable data structures.
 
-*This project is fork of the original [JContainers](https://github.com/SilverIce/JContainers). It
-strives to convert and mash it up to the new Skyrim Special 64-bit edition. Cudos to the original
-author and all of its supporters!*
+> **Important**
+>
+> This project is fork of the original [JContainers](https://github.com/SilverIce/JContainers). It
+> strives to convert and mash it up to the new Skyrim Special 64-bit edition. Cudos to the original
+> author and all of its supporters!
 
 ### Why?
 
@@ -62,8 +64,8 @@ or source code.
 1. Unpack or place somehow the Boost root folder (the one containing `bootstrap.bat`) into the
    JContainer's `dep/boost` folder i.e. you should have the following path available:
    `dep/boost/bootstrap.bat`.
-2. Run from the JContainer's root folder the `build_boost.bat` file. It will bootstrap and build the
-   neccessary libraries from Boost.
+2. Run from the JContainer's tools folder the `build_boost.bat` file. It will bootstrap and build
+   the neccessary libraries from Boost.
 3. Open the `JContainers.sln` file with Visual Studio and Rebuild the whole solution. It will take
    some time.
 
