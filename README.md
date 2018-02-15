@@ -8,7 +8,7 @@ scripting](https://www.creationkit.com/index.php?title=Category:Papyrus) with
 >
 > This project is fork of the original [JContainers](https://github.com/SilverIce/JContainers). It
 > strives to convert and mash it up to the new Skyrim Special 64-bit edition. Cudos to the original
-> author and all of its supporters!
+> author and all of his supporters!
 
 ### Why?
 
