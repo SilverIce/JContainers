@@ -4,9 +4,6 @@
 [submodule "dep/luajit/luajit-2.0"]
 	path = dep/luajit/luajit-2.0
 	url = http://luajit.org/git/luajit-2.0.git
-[submodule "doc/wiki"]
-	path = doc/wiki
-	url = https://github.com/ryobg/JContainers.wiki.git
 [submodule "dep/googletest/googletest"]
 	path = dep/googletest/googletest
 	url = https://github.com/google/googletest.git
