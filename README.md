@@ -1,4 +1,4 @@
-# JContainers
+# JContainers (64-bit)
 
 A project to extend [Skyrim's Papyrus
 scripting](https://www.creationkit.com/index.php?title=Category:Papyrus) with
