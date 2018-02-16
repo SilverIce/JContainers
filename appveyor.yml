@@ -4,7 +4,7 @@ configuration: Release
 platform: x64
 branches:
     only:
-        - port64
+        - master
 
 environment:
     matrix:
