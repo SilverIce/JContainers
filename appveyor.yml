@@ -1,11 +1,10 @@
 image: Visual Studio 2017
-version: '3.0.64.{build}'
+version: '4.0.0.{build}'
 configuration: Release
 platform: x64
 branches:
     only:
         - port64
-        - ci
 
 environment:
     matrix:
@@ -25,7 +24,8 @@ after_build:
     - cmd: python tools\\install.py x64\\Release
 
 test_script:
-    - cmd: python tools\\test.py x64\\Release\\Data\\SKSE\\Plugins\\JContainers.dll
+    - cmd: python tools\\test.py x64\\Release\\Data\\SKSE\\Plugins\\JContainers64.dll
 
 artifacts:
     - path: dist\*
+      name: jcdistro
