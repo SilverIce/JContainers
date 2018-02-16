@@ -5,14 +5,14 @@
 //#include <ShlObj.h>
 
 //#include "skse/PluginAPI.h"
-#include "skse/skse_version.h"
-#include "skse/GameData.h"
+#include "skse64_common/skse_version.h"
+#include "skse64/GameData.h"
 //#include "skse/PapyrusVM.h"
-#include "skse/GameForms.h"
-#include "skse/GameData.h"
-#include "skse/InternalSerialization.h"
-#include "skse/PluginAPI.h"
-#include "skse/PapyrusVM.h"
+#include "skse64/GameForms.h"
+#include "skse64/GameData.h"
+#include "skse64/InternalSerialization.h"
+#include "skse64/PluginAPI.h"
+#include "skse64/PapyrusVM.h"
 
 #include "util/stl_ext.h"
 #include "gtest.h"
@@ -139,7 +139,7 @@ namespace skse {
         struct skse_real_api : skse_api {
             const char * modname_from_index(uint8_t idx) override {
                 DataHandler * dhand = DataHandler::GetSingleton();
-                ModInfo * modInfo = idx < _countof(dhand->modList.loadedMods) ? dhand->modList.loadedMods[idx] : nullptr;
+                ModInfo * modInfo = idx < dhand->modList.loadedMods.count ? dhand->modList.loadedMods[idx] : nullptr;
                 return modInfo ? modInfo->name : nullptr;
             }
 
@@ -174,9 +174,9 @@ namespace skse {
             }
 
             void console_print(const char * fmt, const va_list& args) override {
-                ConsoleManager	* mgr = ConsoleManager::GetSingleton();
+                ConsoleManager * mgr = *g_console;
                 if (mgr) {
-                    CALL_MEMBER_FN(mgr, Print)(fmt, args);
+                    CALL_MEMBER_FN (mgr, VPrint)(fmt, args);
                 }
             }
         };

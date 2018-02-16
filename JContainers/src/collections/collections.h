@@ -9,7 +9,7 @@
 
 #include "common/ITypes.h"
 #include "common/IDebugLog.h"
-#include "skse/GameForms.h"
+#include "skse64/GameForms.h"
 #include "skse/skse.h"
 
 #include "object/object_base.h"

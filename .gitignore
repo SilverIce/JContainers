@@ -1,3 +1,5 @@
+# Ignore the downloaded artifact
+tools/boost.7z
 
 #################
 ## Visual Studio
@@ -13,7 +15,8 @@
 
 # Build results
 
-
+Debug/
+Release/
 x64/
 [Bb]in/
 [Oo]bj/
@@ -47,6 +50,7 @@ x64/
 *.scc
 
 # Visual C++ cache files
+.vs/
 ipch/
 *.aps
 *.ncb
@@ -118,6 +122,7 @@ ClientBin/
 *.[Pp]ublish.xml
 *.pfx
 *.publishsettings
+*.swp
 
 # RIA/Silverlight projects
 Generated_Code/

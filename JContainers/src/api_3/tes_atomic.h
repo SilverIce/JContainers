@@ -9,19 +9,11 @@ namespace tes_api_3 {
         REGISTER_TES_NAME("JAtomic");
 
         void additionalSetup() {
-            metaInfo.comment = "";
+            metaInfo.comment =
+                ""
+                "\nThis way you can even, probably, implement true locks and etc";
         }
 
-        
-/*
-Int function atomicFetchAdd(int object, string path, int value, bool createMissingKeys=false, int initialValue=0, int onErrorReturn=0) Global Native
-
-Int function atomicFetchAnd(int object, string path, int value, bool createMissingKeys=false, int initialValue=0, int onErrorReturn=0) Global Native
-Int function atomicFetchXOR(int object, string path, int value, bool createMissingKeys=false, int initialValue=0, int onErrorReturn=0) Global Native
-Int function atomicFetchOr(int object, string path, int value, bool createMissingKeys=false, int initialValue=0, int onErrorReturn=0) Global Native
-Int function atomicFetchMul(int object, string path, int value, bool createMissingKeys=false, int initialValue=0, int onErrorReturn=0) Global Native
-Int function atomicFetchDiv(int object, string path, int value, bool createMissingKeys=false, int initialValue=0, int onErrorReturn=0) Global Native
-*/
         template<class T, class F>
         static T performAtomicFunction_(
             tes_context& ctx, object_base* obj, const char* path, F&& func, const T& inputValue,
@@ -62,11 +54,54 @@ Int function atomicFetchDiv(int object, string path, int value, bool createMissi
         };
 
         template<class T>
+        struct compare_exchange_func {
+            T& newValue;
+
+            T& operator()(T& oldValue, T& comparer) const {
+                if (d != comparer)
+                    return newValue;
+                return oldValue;
+            }
+        };
+
+        template<class T>
         static T exchange(
             tes_context& ctx, object_base* obj, const char* path,
             T inputValue, bool createMissingKeys, T onError)
         {
             return performAtomicFunction_(ctx, obj, path, ignore_first{}, inputValue, inputValue, createMissingKeys, onError);
+        }
+
+        template<class T>
+        static T compareExchange(
+            tes_context& ctx, object_base* obj, const char* path,
+            T newValue, T comparer, bool createMissingKeys, T onError)
+        {
+            if (!obj || !path)
+                return onError;
+
+            T previousVal = default_value<T>();
+            bool succeed = ca::visit_value(
+                *obj, path,
+                createMissingKeys ? ca::creative : ca::constant,
+                [&](item& itemValue) {
+                    if (itemValue == comparer) {
+
+                        if (auto* valuePtr = itemValue.get<T>()) {
+                            previousVal = std::move(*valuePtr);
+                        }
+
+                        itemValue = std::move(newValue);
+                    } else {
+
+                        if (const auto* valuePtr = itemValue.get<T>()) {
+                            previousVal = *valuePtr;
+                        }
+
+                    }
+                });
+
+            return succeed ? previousVal : onError;
         }
 
         template<class T, class F>
@@ -81,10 +116,14 @@ Int function atomicFetchDiv(int object, string path, int value, bool createMissi
 #   define PARAMS_FLT   "object path value initialValue=0.0 createMissingKeys=false onErrorReturn=0.0"
 
         REGISTERF(ARGS(performAtomicFunction<SInt32, std::plus<SInt32>>), "fetchAddInt", PARAMS_INT,
-"Performs:\n\
-    T previous = value.at.path\n\
-    value.at.path = value.at.path + value\n\
-    return previous"
+"A group of the functions that perform various math on the value at the @path of the container. Returns previos value:\n\
+\n\
+    T previousValue = container.path\n\
+    container.path = someMathFunction(container.path, value)\n\
+    return previousValue\n\
+\n\
+If the value at the @path is None, then the @initialValue being read and passed into math function instead of None.\n\
+If @createMissingKeys is True, the function attemps to create missing @path elements."
 );
         REGISTERF(ARGS(performAtomicFunction<Float32, std::plus<Float32>>), "fetchAddFlt", PARAMS_FLT, nullptr);
 
@@ -104,12 +143,25 @@ Int function atomicFetchDiv(int object, string path, int value, bool createMissi
 #   undef PARAMS_FLT
 
 #   define PARAMS_INT   "object path value createMissingKeys=false onErrorReturn="
-        REGISTERF(exchange<SInt32>, "exchangeInt", PARAMS_INT "0", "u");
+        REGISTERF(exchange<SInt32>, "exchangeInt", PARAMS_INT "0",
+"Exchanges the value at the @path with the @value. Returns previous value.");
+
         REGISTERF(exchange<Float32>, "exchangeFlt", PARAMS_INT "0.0", nullptr);
         REGISTERF(exchange<std::string>, "exchangeStr", PARAMS_INT "\"\"", nullptr);
 
         REGISTERF(exchange<form_ref>, "exchangeForm", PARAMS_INT "None", nullptr);
         REGISTERF(exchange<object_base*>, "exchangeObj", PARAMS_INT "0", nullptr);
+#   undef PARAMS_INT
+
+#   define PARAMS_INT   "object path desired expected createMissingKeys=false onErrorReturn="
+        REGISTERF(compareExchange<SInt32>, "compareExchangeInt", PARAMS_INT "0",
+"Compares the value at the @path with the @expected and, if they are equal, exchanges the value at the @path with the @desired values.\nReturns previous value.");
+
+        REGISTERF(compareExchange<Float32>, "compareExchangeFlt", PARAMS_INT "0.0", nullptr);
+        REGISTERF(compareExchange<std::string>, "compareExchangeStr", PARAMS_INT "\"\"", nullptr);
+
+        REGISTERF(compareExchange<form_ref>, "compareExchangeForm", PARAMS_INT "None", nullptr);
+        REGISTERF(compareExchange<object_base*>, "compareExchangeObj", PARAMS_INT "0", nullptr);
 #   undef PARAMS_INT
 
     };

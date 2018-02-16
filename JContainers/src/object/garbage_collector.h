@@ -7,7 +7,7 @@ namespace collections
     public:
 
         typedef std::deque<object_base* > object_list;
-        typedef std::hash_set<object_base *> object_set;
+        typedef std::unordered_set<object_base *> object_set;
 
         struct result
         {

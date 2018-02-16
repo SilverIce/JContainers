@@ -13,7 +13,7 @@
 #include "boost/serialization/split_member.hpp"
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/weak_ptr.hpp>
-#include <boost/serialization/hash_map.hpp>
+#include <boost/serialization/unordered_map.hpp>
 
 #include "skse/skse.h"
 #include "util/stl_ext.h"
@@ -226,7 +226,7 @@ namespace forms {
             });
             break;
         case 2:{
-            std::hash_map<FormId, boost::weak_ptr<form_entry> > oldCnt;
+            std::unordered_map<FormId, boost::weak_ptr<form_entry> > oldCnt;
             ar >> oldCnt;
 
             for (auto& pair : oldCnt) {

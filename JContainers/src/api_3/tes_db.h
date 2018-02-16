@@ -87,6 +87,10 @@ for ex. JDB.setObj(\"frostfall\", frostFallInformation) will associate 'frostall
         REGISTERF2(readFromFile, "path",
 "DEPRECATED. Reads information from a JSON file at given path and replaces JDB content with the file content");
 
+        static object_base* root(tes_context& ctx) {
+            return &ctx.root();
+        }
+        REGISTERF2(root, "", "Returns underlying JDB's container - an instance of JMap.\nThe object being owned (retained) internally, so you don't have to (but can) retain or release it.")
     };
 
     TES_META_INFO(tes_db);

@@ -1,16 +1,16 @@
 #include <boost/iostreams/stream.hpp>
 #include <ShlObj.h>
 
-#include "skse/PluginAPI.h"
-#include "skse/skse_version.h"
-#include "skse/GameData.h"
+#include "skse64/PluginAPI.h"
+#include "skse64_common/skse_version.h"
+#include "skse64/GameData.h"
 //#include "skse/PapyrusVM.h"
-#include "skse/GameForms.h"
-#include "skse/GameData.h"
+#include "skse64/GameForms.h"
+#include "skse64/GameData.h"
 
 //#include "gtest.h"
 #include "skse/skse.h"
-#include "skse/PapyrusVM.h"
+#include "skse64/PapyrusVM.h"
 #include "util/util.h"
 #include "jc_interface.h"
 #include "reflection/reflection.h"
@@ -118,7 +118,7 @@ namespace {
     extern "C" {
 
         __declspec(dllexport) bool SKSEPlugin_Query(const SKSEInterface * skse, PluginInfo * info) {
-            gLog.OpenRelative(CSIDL_MYDOCUMENTS, "\\My Games\\Skyrim\\SKSE\\" JC_PLUGIN_NAME ".log");
+            gLog.OpenRelative(CSIDL_MYDOCUMENTS, "\\My Games\\Skyrim Special Edition\\SKSE\\" JC_PLUGIN_NAME ".log");
             gLog.SetPrintLevel(IDebugLog::kLevel_Error);
             gLog.SetLogLevel(IDebugLog::kLevel_DebugMessage);
 
@@ -136,7 +136,7 @@ namespace {
                 JC_log("loaded in editor, marking as incompatible");
                 return false;
             }
-            else if (skse->runtimeVersion != RUNTIME_VERSION_1_9_32_0) {
+            else if (skse->runtimeVersion != RUNTIME_VERSION_1_5_23) {
                 JC_log("unsupported runtime version %08X", skse->runtimeVersion);
                 return false;
             }

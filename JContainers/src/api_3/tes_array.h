@@ -277,7 +277,8 @@ If @addToIndex >= 0 it inserts value at given index. " NEGATIVE_IDX_COMMENT);
 
         template<
             typename ValueType,
-            typename PArrayType = VMArray<ValueType>
+            typename TesValueType = reflection::binding::convert_to_tes_type<ValueType>,
+            typename PArrayType = VMArray<TesValueType>
         >
         static bool writeToPapyrusArray(
                 tes_context& ctx
@@ -309,20 +310,37 @@ If @addToIndex >= 0 it inserts value at given index. " NEGATIVE_IDX_COMMENT);
                 return false;
             }
 
+            using converter_t = reflection::binding::get_converter<ValueType>;
+            auto tesValueDefault = converter_t::convert2Tes(defaultRead);
+
             for (int32_t i = 0; i < countToRead; ++i) {
-                ValueType value = (*obj)[i + *readIdx].readAs<ValueType>();
-                targetArray.Set(&value, i + *fstIdx);
+
+                const item& itemVal = (*obj)[i + *readIdx];
+                auto *valuePtr = itemVal.get<ValueType>();
+
+                if (valuePtr) {
+                    auto tesValue = converter_t::convert2Tes(*valuePtr);
+                    targetArray.Set(&tesValue, i + *fstIdx);
+                } else {
+                    targetArray.Set(&tesValueDefault, i + *fstIdx);
+                }
             }
 
             return true;
         }
 
 #define ARGNAMES "* targetArray writeAtIdx=0 stopWriteAtIdx=-1 readIdx=0 defaultRead="
-        REGISTERF(writeToPapyrusArray<SInt32>, "writeToIntegerPArray", ARGNAMES "0", "TOTOTO??");
+        REGISTERF(writeToPapyrusArray<SInt32>, "writeToIntegerPArray", ARGNAMES "0",
+ "Writes the array's items into the @targetArray array starting at @destIndex\n\
+ @writeAtIdx - \
+   [-1, 0] - writes all the items in reverse order\n\
+   [0, -1] - writes all the items in straight order\n\
+   [1, 3] - writes 3 items in straight order"
+ );
         REGISTERF(writeToPapyrusArray<Float32>, "writeToFloatPArray", ARGNAMES "0.0", "");
-        REGISTERF(writeToPapyrusArray<TESForm*>, "writeToFormPArray", ARGNAMES "None", "");
+        REGISTERF(writeToPapyrusArray<form_ref>, "writeToFormPArray", ARGNAMES "None", "");
         //REGISTERF(writeToPapyrusArray<bool>, "writeToBooleanPArray", ARGNAMES, "");
-        REGISTERF(writeToPapyrusArray<skse::string_ref>, "writeToStringPArray", ARGNAMES "\"\"", "");
+        REGISTERF(writeToPapyrusArray<std::string>, "writeToStringPArray", ARGNAMES "\"\"", "");
 
 #undef ARGNAMES
 

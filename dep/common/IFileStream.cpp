@@ -4,13 +4,13 @@
 #include <direct.h>
 
 IFileStream::IFileStream()
-:theFile(NULL)
+:theFile(INVALID_HANDLE_VALUE)
 {
 	
 }
 
 IFileStream::IFileStream(const char * name)
-:theFile(NULL)
+:theFile(INVALID_HANDLE_VALUE)
 {
 	Open(name);
 }
@@ -150,7 +150,7 @@ void IFileStream::Close(void)
 	if(theFile)
 	{
 		CloseHandle(theFile);
-		theFile = NULL;
+		theFile = INVALID_HANDLE_VALUE;
 	}
 }
 
@@ -187,6 +187,14 @@ void IFileStream::SetOffset(SInt64 inOffset)
 
 	SetFilePointerEx(theFile, temp, NULL, FILE_BEGIN);
 	streamOffset = inOffset;
+}
+
+void IFileStream::SetLength(UInt64 length)
+{
+	SetOffset(length);
+	SetEndOfFile(theFile);
+
+	streamLength = length;
 }
 
 // ### TODO: get rid of buf

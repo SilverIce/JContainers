@@ -77,6 +77,7 @@ namespace forms {
         }
 
         form_ref() = default;
+        form_ref(const form_ref &) = default;
         form_ref& operator = (const form_ref &) = default;
 
         form_ref(FormId id, form_observer& watcher);
@@ -150,11 +151,11 @@ namespace forms {
         FormId get() const { return _formId; }
         FormId get_raw() const { return _formId; }
 
-        bool operator!() BOOST_CONSTEXPR_OR_CONST BOOST_NOEXCEPT{ return is_expired(); }
+        bool operator!() const BOOST_NOEXCEPT{ return is_expired(); }
         BOOST_EXPLICIT_OPERATOR_BOOL_NOEXCEPT()
 
-        bool is_expired() BOOST_CONSTEXPR_OR_CONST{ return _formId == FormId::Zero; }
-        bool is_not_expired() BOOST_CONSTEXPR_OR_CONST{ return !is_expired(); }
+        bool is_expired() const { return _formId == FormId::Zero; }
+        bool is_not_expired() const { return !is_expired(); }
     };
 
     // "Stupid" form_ref comparison functions:

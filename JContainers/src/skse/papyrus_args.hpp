@@ -1,11 +1,11 @@
 #pragma once
 
-#include "skse/PapyrusArgs.h"
-#include "skse/string.h"
+#include "skse64/PapyrusArgs.h"
+#include "skse64/PapyrusStringUtil.h"
 
-template <> inline UInt32 GetTypeID <skse::string_ref>(VMClassRegistry * registry)                        { return VMValue::kType_String; }
-template <> inline UInt32 GetTypeID <VMArray<skse::string_ref>>(VMClassRegistry * registry)       { return VMValue::kType_StringArray; }
-template <> inline UInt32 GetTypeID <VMResultArray<skse::string_ref>>(VMClassRegistry * registry) { return VMValue::kType_StringArray; }
+template <> inline UInt64 GetTypeID <skse::string_ref>(VMClassRegistry * registry)                        { return VMValue::kType_String; }
+template <> inline UInt64 GetTypeID <VMArray<skse::string_ref>>(VMClassRegistry * registry)       { return VMValue::kType_StringArray; }
+template <> inline UInt64 GetTypeID <VMResultArray<skse::string_ref>>(VMClassRegistry * registry) { return VMValue::kType_StringArray; }
 
 
 template <> inline void PackValue <skse::string_ref>(VMValue * dst, skse::string_ref * src, VMClassRegistry * registry)

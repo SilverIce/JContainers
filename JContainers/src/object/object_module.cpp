@@ -9,6 +9,8 @@
 
 #include <jansson.h>
 
+#define _SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS
+
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/export.hpp>
 
@@ -16,8 +18,8 @@
 #include <boost/serialization/map.hpp>
 #include <boost/serialization/set.hpp>
 #include <boost/serialization/deque.hpp>
-#include <boost/serialization/hash_set.hpp>
-#include <boost/serialization/hash_map.hpp>
+#include <boost/serialization/unordered_set.hpp>
+#include <boost/serialization/unordered_map.hpp>
 
 #include <boost/serialization/split_member.hpp>
 #include <boost/serialization/version.hpp>

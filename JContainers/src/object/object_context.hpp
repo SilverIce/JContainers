@@ -18,7 +18,7 @@ namespace collections
     }
 
     object_context::activity_stopper::~activity_stopper() {
-        context.aqueue->start();
+        context.start_activity();
     }
 
     void object_context::stop_activity() {

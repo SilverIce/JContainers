@@ -17,7 +17,7 @@ bool is_likely_utf8_bom(FILE *file) {
         return false; // error occured, so unk
     }
 
-    const char utf8_BOM[4] = { 0xEF, 0xBB, 0xBF, 0};
+    const char utf8_BOM[4] = { '\xEF', '\xBB', '\xBF', '\x00' };
     char bytes[4] = { 0, 0, 0, 0 };
     size_t bytes_read = fread_s(bytes, 3, 1, 3, file);
 

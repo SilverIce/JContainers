@@ -385,6 +385,7 @@ namespace collections { namespace {
         validateGraph(root2);
     }
 
+    /*
     TEST(tes_context, backward_compatibility)
     {
         namespace fs = boost::filesystem;
@@ -408,6 +409,7 @@ namespace collections { namespace {
 
         EXPECT_TRUE(atLeastOneTested);
     }
+    */
 
     JC_TEST(copying, _)
     {
@@ -587,7 +589,7 @@ namespace collections { namespace {
             for (auto id : identifiers) {
                 cntEx += (context.getObject(id) ? 1 : 0);
             }
-            jc_debug("%u exist of %u", cntEx, identifiers.size());
+            jc_debug("%zu exist of %zu", cntEx, identifiers.size());
             return cntEx == identifiers.size();
         };
 
@@ -596,7 +598,7 @@ namespace collections { namespace {
             for (auto id : identifiers) {
                 cntDestr += (context.getObject(id) ? 0 : 1);
             }
-            jc_debug("%u destroyed of %u", cntDestr, identifiers.size());
+            jc_debug("%zu destroyed of %zu", cntDestr, identifiers.size());
             return cntDestr == identifiers.size();
         };
 

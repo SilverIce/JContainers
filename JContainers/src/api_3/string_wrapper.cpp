@@ -23,9 +23,14 @@ namespace {
 
     typedef basic_string<char32_t, char_traits<char32_t>, allocator<char32_t>> wide_string;
     //typedef std::codecvt<char32_t, char, std::mbstate_t> wide_string_codec;
-    typedef std::codecvt_utf8 < char32_t > wide_string_codec;
-    typedef std::wstring_convert<wide_string_codec, char32_t > wide_string_converter;
-    typedef bs::iterator_range<const char32_t *> wstring_range;
+    typedef std::codecvt_utf8 < int32_t > wide_string_codec;
+    typedef std::wstring_convert<wide_string_codec, int32_t > wide_string_converter;
+    typedef bs::iterator_range<const int32_t *> wstring_range;
+
+    // All char32_t were converted to int32_t
+    // See https://stackoverflow.com/questions/32055357/visual-studio-c-2015-stdcodecvt-with-char16-t-or-char32-t
+    // See https://social.msdn.microsoft.com/Forums/en-US/8f40dcd8-c67f-4eba-9134-a19b9178e481/vs-2015-rc-linker-stdcodecvt-error?forum=vcgeneral
+    static_assert (sizeof (int32_t) == sizeof (char32_t), "Required to fix a bug in MSVC");
 
     float charactersPerLine(int total, int maxCharsPerLine) {
         jc_assert(maxCharsPerLine > 0);
@@ -51,7 +56,7 @@ namespace {
         string toUTF8String(wide_string_converter& conv) const {
             std::string result;
             for (const auto& str : words) {
-                result.append(conv.to_bytes(str.begin(), str.end()));
+                result.append(conv.to_bytes((int32_t*) str.begin(), (int32_t*) str.end()));
                 result += ' ';
             }
 

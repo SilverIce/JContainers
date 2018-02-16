@@ -26,6 +26,9 @@ class IFileStream : public IDataStream
 		virtual void	WriteBuf(const void * buf, UInt32 inLength);
 		virtual void	SetOffset(SInt64 inOffset);
 
+		// can truncate. implicitly seeks to the end of the file
+		void	SetLength(UInt64 length);
+
 		static void	MakeAllDirs(const char * path);
 		static char * ExtractFileName(char * path);
 

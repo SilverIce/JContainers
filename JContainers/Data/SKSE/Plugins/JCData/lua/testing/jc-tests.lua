@@ -2,22 +2,21 @@
 local jc = jrequire 'jc'
 local misc = jrequire 'testing.misc'
 
-return function()
+return {
 
-  return misc.performTest('accumulateValues', function()
+  accumulateValues = function()
     local obj = JArray.objectWithArray({1,1,2,3,5,8,13})
     assert(obj ~= nil)
     assert(jc.accumulateValues(obj, function(a,b) return a+b end) == 33)
-  end)
+  end,
 
-  and misc.performTest('accumulateKeys', function()
+  accumulateKeys = function()
     local obj = JArray.objectWithArray({1,1,2,3,5,8,13})
     assert(obj ~= nil)
     assert(jc.accumulateKeys(obj, math.max) == #obj)
-  end)
+  end,
 
-
-  and misc.performTest('accumulateValues + pathResolving', function()
+  ['accumulateValues + pathResolving'] = function()
 
     assert( 2 == JValue.solvePath(JValue.objectFromPrototype('[2]'), '[0]') )
 
@@ -35,6 +34,6 @@ return function()
 
     assert(jc.accumulateValues(obj, math.max, '.magnitude') == 11)
     assert(jc.accumulateValues(obj, function(a,b) return a + b end, '.magnitude') == 5)
-  end)
+  end
 
-end
+}

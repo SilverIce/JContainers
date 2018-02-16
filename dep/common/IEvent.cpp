@@ -46,21 +46,3 @@ bool IEvent::Wait(UInt32 timeout)
 			return false;
 	}
 }
-
-bool IAutoEvent::Wait(UInt32 timeout)
-{
-	switch(WaitForSingleObject(theEvent, timeout))
-	{
-		case WAIT_ABANDONED:
-			HALT("IAutoEvent::Wait: got abandoned event");
-			return false;
-
-		case WAIT_OBJECT_0:
-			return true;
-
-		default:
-		case WAIT_TIMEOUT:
-			gLog.FormattedMessage("IAutoEvent::Wait: timeout");
-			return false;
-	}
-}

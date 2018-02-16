@@ -344,7 +344,7 @@ namespace collections {
 
         using object_cref = std::reference_wrapper<const object_base>;
         struct object_cref_cmp {
-            bool operator()(const object_cref& l, const object_cref& r) {
+            bool operator()(const object_cref& l, const object_cref& r) const {
                 return &l.get() < &r.get();
             }
         };
