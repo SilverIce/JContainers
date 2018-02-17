@@ -109,24 +109,7 @@ namespace tes_api_3 {
         static skse::string_ref _userDirectory() {
             return userDirectory().c_str();
         }
-        REGISTERF_STATELESS(_userDirectory, "userDirectory", "", "A path to user-specific directory - "JC_USER_FILES);
-
-        static SInt32 lastError() {
-            return 0;
-        }
-        REGISTERF2_STATELESS(lastError, nullptr, []() {
-            std::stringstream comm;
-            comm << "DEPRECATED. Returns last occured error (error code):";
-            for (int i = 0; i < JErrorCount; ++i) {
-               comm << std::endl << i << " - " << JErrorCodeToString((JErrorCode)i);
-            }
-            return comm.str();
-        });
-
-        static skse::string_ref lastErrorString() {
-            return "";
-        }
-        REGISTERF2_STATELESS(lastErrorString, nullptr, "DEPRECATED. Returns string that describes last error");
+        REGISTERF_STATELESS(_userDirectory, "userDirectory", "", "A path to user-specific directory - " JC_USER_FILES);
 
         REGISTER_TEXT([]() {
             const char fmt[] = R"===(

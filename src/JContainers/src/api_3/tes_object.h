@@ -31,7 +31,7 @@ namespace tes_api_3 {
         }
         REGISTERF2(retain, "* tag=\"\"",
 R"===(--- Lifetime management functionality.
-Read this https://github.com/SilverIce/JContainers/wiki/Lifetime-Management before using any of lifetime management functions
+Read this https://github.com/ryobg/JContainers/wiki/Lifetime-Management before using any of lifetime management functions
 
 Retains and returns the object.)==="
             );

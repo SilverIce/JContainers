@@ -30,7 +30,7 @@ static SKSEMessagingInterface       *g_messaging = nullptr;
 
 namespace {
 
-    // 
+    //
     void * default_domain = nullptr;
 
     // function pointers which will be obtained:
@@ -148,7 +148,7 @@ extern "C" {
 
             if (msg && msg->type == SKSEMessagingInterface::kMessage_PostLoad) {
 
-                auto loaded = g_messaging->RegisterListener(g_pluginHandle, "JContainers", [](SKSEMessagingInterface::Message* msg) {
+                auto loaded = g_messaging->RegisterListener(g_pluginHandle, "JContainers64", [](SKSEMessagingInterface::Message* msg) {
 
                     // JC publishes its API:
                     if (msg && msg->type == jc::message_root_interface) {

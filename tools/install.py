@@ -121,7 +121,7 @@ if __name__ == '__main__':
     config = Config (sys.argv[1])
 
     print ("Setup Skyrim Mod tree...")
-    srcdata = os.path.join (ROOT, 'JContainers', 'Data')
+    srcdata = os.path.join (ROOT, 'src', 'Data')
     shutil.rmtree (config.dataDir, ignore_errors=True)
     shutil.copytree (srcdata, config.dataDir)
     shutil.copy2 (os.path.join (config.origin, JCLib.name), config.jcLibPath)
