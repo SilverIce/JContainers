@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27004.2005
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JContainers", "JContainers\JContainers.vcxproj", "{C7305D8C-5514-4C58-9ED7-04D1D7A53D8D}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JContainers", "src\JContainers\JContainers.vcxproj", "{C7305D8C-5514-4C58-9ED7-04D1D7A53D8D}"
 	ProjectSection(ProjectDependencies) = postProject
 		{7028B79C-06E3-4D9A-B38C-1DC3680B1BDB} = {7028B79C-06E3-4D9A-B38C-1DC3680B1BDB}
 	EndProjectSection
@@ -12,9 +12,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "common", "dep\common\common
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "jansson", "dep\jansson\jansson.vcxproj", "{F9EF3CA7-06A8-4BB2-9232-C4251E65829B}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "json_validator", "json_validator\json_validator.vcxproj", "{CAA7D417-1B58-48AB-A226-C7E69141772C}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "json_validator", "src\json_validator\json_validator.vcxproj", "{CAA7D417-1B58-48AB-A226-C7E69141772C}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "API_example", "api_usage_example\api_usage_example.vcxproj", "{6A52E028-EA40-467A-9055-6C7320B2746D}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "API_example", "src\api_usage_example\api_usage_example.vcxproj", "{6A52E028-EA40-467A-9055-6C7320B2746D}"
 	ProjectSection(ProjectDependencies) = postProject
 		{7028B79C-06E3-4D9A-B38C-1DC3680B1BDB} = {7028B79C-06E3-4D9A-B38C-1DC3680B1BDB}
 	EndProjectSection

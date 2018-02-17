@@ -182,7 +182,7 @@
     <ClCompile Include="stdafx.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\dep\jansson\jansson.vcxproj">
+    <ProjectReference Include="$(SolutionDir)\dep\jansson\jansson.vcxproj">
       <Project>{f9ef3ca7-06a8-4bb2-9232-c4251e65829b}</Project>
     </ProjectReference>
   </ItemGroup>
