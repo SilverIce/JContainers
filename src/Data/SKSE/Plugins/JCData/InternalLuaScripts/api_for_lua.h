@@ -9,7 +9,6 @@ typedef int32_t index;
 typedef struct _CForm { uint32_t ___id;} CForm;
 
 typedef void * handle;
-//typedef struct _JCObject { handle id; } JCObject;
 
 typedef struct _CString {
     const char* str;

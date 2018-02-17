@@ -82,11 +82,6 @@ for ex. JDB.setObj(\"frostfall\", frostFallInformation) will associate 'frostall
         }
         REGISTERF2(writeToFile, "path", "writes storage data into JSON file at given path");
 
-        static void readFromFile(tes_context& ctx, const char *path) {
-        }
-        REGISTERF2(readFromFile, "path",
-"DEPRECATED. Reads information from a JSON file at given path and replaces JDB content with the file content");
-
         static object_base* root(tes_context& ctx) {
             return &ctx.root();
         }
