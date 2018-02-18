@@ -1,5 +1,7 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/r8kex3xnxmktn1sq?svg=true)](https://ci.appveyor.com/project/ryobg/jcontainers)
 
+![JC logo](logo.png?raw=true)
+
 # JContainers (64-bit)
 
 A project to extend [Skyrim's Papyrus
