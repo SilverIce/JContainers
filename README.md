@@ -1,6 +1,6 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/r8kex3xnxmktn1sq?svg=true)](https://ci.appveyor.com/project/ryobg/jcontainers)
-[![Latest release](https://img.shields.io/github/release/ryobg/jcontainers.svg)](https://github.com/ryobg/jcontainers/releases)
-[![Latest pre-release](https://img.shields.io/github/release/ryobg/jcontainers/all.svg?style=social)](https://github.com/ryobg/jcontainers/releases)
+[![Latest release](https://img.shields.io/github/release/ryobg/jcontainers/all.svg)](https://github.com/ryobg/jcontainers/releases)
+
 <img src="logo.png?raw=true" height="256">
 
 # JContainers (64-bit)
