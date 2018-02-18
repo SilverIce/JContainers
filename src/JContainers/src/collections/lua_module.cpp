@@ -53,10 +53,6 @@ namespace lua { namespace aux_wip {
 
     using namespace api;
 
-    enum  {
-        LUA_OK = 0,
-    };
-
     class context final : public boost::noncopyable {
 
         lua_State *_lua = nullptr;
