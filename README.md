@@ -1,6 +1,6 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/r8kex3xnxmktn1sq?svg=true)](https://ci.appveyor.com/project/ryobg/jcontainers)
 
-![JC logo](logo.png?raw=true)
+![](logo.png?raw=true){:height="256px" width="256px"}
 
 # JContainers (64-bit)
 
