@@ -72,7 +72,7 @@ or source code.
    Eventually swap `Release` for `Debug` - depending on what kind of distribution was build and
    actually is wanted in the `dist\` folder.
 5. Optionaly, run `python tools\test.py x64\Release\Data\SKSE\Plugins\JContainers64.dll`. Again it
-   depends whether `Release` or `Debug` builds should be tested. Note however that step 3, must be
+   depends whether `Release` or `Debug` builds should be tested. Note however that step 4, must be
    ran first!
 
 That's it!
