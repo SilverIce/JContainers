@@ -17,6 +17,7 @@ install:
 
 before_build:
     - cmd: tools\\build_boost.bat
+    - cmd: tools\\merge_skse.bat
 
 build:
     project: JContainers.sln
