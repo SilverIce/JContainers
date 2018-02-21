@@ -64,13 +64,15 @@ or source code.
 
 1. Run the JContainer's `tools\build_boost.bat` file. It should manage to download, unpack,
    bootstrap and build the neccessary libraries from Boost (version 1.66 currently).
-2. Open the `JContainers.sln` file with Visual Studio and Rebuild the whole solution. It will take
+2. Run also the `tools\merge_skse.bat` file. It should extract the stripped down and bundled SKSE64
+   distribution into the local source tree.
+3. Open the `JContainers.sln` file with Visual Studio and Rebuild the whole solution. It will take
    some time.
-3. After successfull build, run from the command line `python tools\install.py x64\Release`.
+4. After successfull build, run from the command line `python tools\install.py x64\Release`.
    Eventually swap `Release` for `Debug` - depending on what kind of distribution was build and
    actually is wanted in the `dist\` folder.
-4. Optionaly, run `python tools\test.py x64\Release\Data\SKSE\Plugins\JContainers64.dll`. Again it
-   depends whether `Release` or `Debug` builds should be tested. Note however that step 3, must be
+5. Optionaly, run `python tools\test.py x64\Release\Data\SKSE\Plugins\JContainers64.dll`. Again it
+   depends whether `Release` or `Debug` builds should be tested. Note however that step 4, must be
    ran first!
 
 That's it!
