@@ -2,6 +2,8 @@
 
 The main goal of the project is to extend Papyrus with JSON-based data structures (arrays and maps).
 
+### Skyrim SE port (by @ryobg) of the project located [here](https://github.com/ryobg/JContainers). 
+
 ### Why bother?
 
 If you are programmer, sooner or later you'll notice the lack of many, many must-have features in Papyrus. First of all, the only data structure in Papyrus is Array. There is no way to:
@@ -14,7 +16,7 @@ And I didn't mentioned the lack of associative containers or impossibility to lo
 
 ### The solution
 
-There is no easy way to extend existing Array (which would require to change Papyrus VM, which is tricky since we have no source code) or add new data structures into VM, thus JContainers implements it's own data structures, garbage collector and other infernal stuff from scratch. Features, offered by JContainers:
+There is no easy way to extend existing Array (which would require to change Papyrus VM, which is tricky since we have no source code) or add new data structures into VM, thus JContainers implements its own data structures, garbage collector and other infernal stuff from scratch. Features, offered by JContainers:
 
 - Data structures (arrays, dictionaries)
 - Import and export data to and from JSON files
