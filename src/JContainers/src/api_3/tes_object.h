@@ -64,10 +64,10 @@ Retains and returns the object.)==="
         REGISTERF2(releaseAndRetain, "previousObject newObject tag=\"\"",
 "Just a union of retain-release calls. Releases @previousObject, retains and returns @newObject.");
 
-        static void releaseObjectsWithTag(tes_context& ctx, const char *tag) {
-            if (!tag) {
+        static void releaseObjectsWithTag (tes_context& ctx, const char *tag) 
+        {
+            if (!tag || !*tag)
                 return;
-            }
 
             auto objects = ctx.filter_objects([tag](const object_base& obj) {
                 return obj.has_equal_tag(tag);
@@ -80,8 +80,8 @@ Retains and returns the object.)==="
             }
         }
         REGISTERF2(releaseObjectsWithTag, "tag",
-"For cleanup purposes only - releases all objects tagged with the @tag.\n"
-"Internally invokes JValue.release on the objects the same amount of times the objects were retained.");
+"Releases all objects tagged with @tag.\n"
+"Internally invokes JValue.release on each object same amount of times it has been retained.");
 
         static ref zeroLifetime(tes_context& ctx, ref obj) {
             if (obj) {

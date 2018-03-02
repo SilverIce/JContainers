@@ -267,6 +267,9 @@
     <ClInclude Include="src\api_3\tes_atomic.h">
       <Filter>tes_api_3</Filter>
     </ClInclude>
+    <ClInclude Include="src\api_3\tests.hpp">
+      <Filter>tes_api_3</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="JContainers.rc" />

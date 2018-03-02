@@ -58,7 +58,7 @@ namespace collections {
         time_point _aqueue_push_time            = 0;
 
         CollectionType                          _type = CollectionType::None;
-        boost::optional<util::istring>          _tag;
+        util::istring                           _tag;
     private:
         object_context *_context                = nullptr;
 
@@ -186,18 +186,21 @@ namespace collections {
             u_clear();
         }
 
-        void set_tag(const char *tag) {
-            lock g(_mutex);
-            if (tag && *tag) {  // empty string is also null tag
-                _tag = tag;
-            } else {
-                _tag = boost::none;
-           }
+        void set_tag (const char* tag)
+        {
+            lock g (_mutex);
+            if (tag) _tag = tag;
+            else _tag.clear ();
         }
 
-        bool has_equal_tag(const char *tag) const {
-            lock l(_mutex);
-            return _tag && tag ? *_tag == tag : false;
+        bool has_equal_tag (char const* tag) const
+        {
+            if (tag)
+            {
+                lock g (_mutex);
+                return _tag == tag;
+            }
+            return false;
         }
 
         virtual void u_visit_referenced_objects(const std::function<void(object_base&)>& visitor) {}
