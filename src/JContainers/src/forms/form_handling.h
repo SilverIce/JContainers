@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+#include <optional>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/range/iterator_range.hpp>
 #include <boost/optional.hpp>
@@ -72,11 +74,99 @@ namespace forms {
         return string && strncmp(string, kFormData, sizeof kFormData - 1) == 0;
     }
 
-    // TODO: rename me!
-    inline boost::optional<FormId> from_string(const util::cstring& fstring) {
-        namespace bs = boost;
-        namespace ss = std;
+//--------------------------------------------------------------------------------------------------
 
+/**
+ * Obtains form id from considering the file (if any) from which it originates.
+ *
+ * This method tries to implement the conventional Papyrus `GetFormFromFile` function, not handled
+ * currently by SKSE. An enhancement is made to return dynamic/global form id, if the incoming file
+ * name is empty.
+ *
+ * @note SKSE returns 8-bit index for ESL mods, though the space for them reserved is 12-bits.
+ *
+ * @param file name of the mod (e.g. "Skyrim.esm", "The war of green turtles.esl" and etc.)
+ * @param form identifier (bits occupying mod ones will be ignored)
+ * @return the absolute form id, if any
+ */
+
+std::optional<std::uint32_t> form_from_file (std::string_view const& file, std::uint32_t form)
+{
+    using namespace std;
+
+    if (file.empty ())
+        return 0xff000000u | form;
+
+    if (optional<uint8_t> ndx = skse::loaded_mod_index (file))
+    {
+        return (uint32_t (*ndx) << 24) | (0x00ffffffu & form);
+    }
+
+    if (optional<uint8_t> ndx = skse::loaded_light_mod_index (file))
+    {
+       return 0xfe000000u | (uint32_t (*ndx) << 12) | (0x00000fffu & form);
+    }
+
+    return nullopt;
+}
+
+//--------------------------------------------------------------------------------------------------
+
+/**
+ * Deduce a form identifier out of proper string.
+ *
+ * Several options are available:
+ *
+ * * `[__formData|]<mod name>|<relative id>`
+ *   Search for mod name form prefix and append the given relative, 24-bit for esp/esm and
+ *   12-bit for esl, identifier. Any incoming id bits in the place of the mod bits will be
+ *   ignored (e.g. `__formData|test.esl|0x006780004` is about form #4).
+ *
+ * * `[__formData|]|<dynamic form id>`
+ *   Same as above, but as the mod name is missing, assume the form identifier is about dynamic
+ *   forms. In practice the most significant bits will be set always.
+ *
+ * @note The `__formData|` prefix is optional.
+ *
+ * @param pstr - can be nullptr or empty too. Assumed it is alive during the duration of this call.
+ * @return optional absolute form identifier, converted from the passed string.
+ */
+
+std::optional<std::uint32_t> form_from_file (const char* pstr)
+{
+    using namespace std;
+
+    if (!pstr)
+        return nullopt;
+
+    string_view str (pstr);
+
+    constexpr char prefix[] = "__formData|";
+    if (str.find (prefix) == 0)
+        str.remove_prefix (sizeof prefix - 1);
+
+    auto mpos = str.find ('|');
+    if (mpos == string_view::npos)
+        return nullopt;
+
+    string_view const mod = str.substr (0, mpos);
+    string_view const fid = str.substr (mpos + 1);
+
+    uint32_t form;
+    try {
+        form = stoul (string (fid), nullptr, 0); // likely std::string on stack (aka SSO)
+    }
+    catch (...) {
+        return nullopt;
+    }
+
+    return form_from_file (mod, form);
+}
+
+//--------------------------------------------------------------------------------------------------
+
+    inline boost::optional<FormId> from_string (const char* pstr)
+    {
         auto pair1 = bs::half_split(fstring, kFormDataSeparator);
 
         if (pair1.second.empty() || !std::equal(pair1.first.begin(), pair1.first.end(), kFormData)) {
@@ -88,7 +178,7 @@ namespace forms {
         if (/*pair2.first.empty() || */pair2.second.empty()) {
             return boost::none;
         }
-            
+
         auto& pluginName = pair2.first;
 
         UInt8 modIdx = 0;
@@ -103,7 +193,7 @@ namespace forms {
             }
         }
         else {
-            // 
+            //
             modIdx = FormGlobalPrefix;
         }
 

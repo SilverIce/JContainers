@@ -39,7 +39,7 @@ namespace collections { namespace {
         obj->release();
         EXPECT_TRUE(obj->refCount() == 1); // aqueue retains it
 
-        // that will damage memory, later: 
+        // that will damage memory, later:
         //obj->release();
         //EXPECT_TRUE(obj->refCount() == 1);
     }
@@ -149,6 +149,102 @@ namespace collections { namespace {
             // @invalidFormId is invalid in sythetic test only: all plugin indexes except 'A'-'Z' are invalid
             FormId invalidFormId = (FormId)fh::construct('%', 0x14);
             EXPECT_FALSE(fh::to_string(invalidFormId));
+        }
+    }
+
+    TEST (forms, formstring)
+    {
+        using namespace std;
+        std::pair<const char*, optional<uint32_t>> const args[] =
+        {
+            { (const char*) nullptr, nullopt },
+            { "", nullopt },
+            { "__formData", nullopt },
+            { "z_formData", nullopt },
+            { "__formDataz", nullopt },
+            { "__formDataz|", nullopt },
+            { "__formData|", nullopt },
+
+            { "|__formData", nullopt },
+            { "|z_formData", nullopt },
+            { "|__formData|", nullopt },
+            { "|z_formData|", nullopt },
+
+            { "a|__formData", nullopt },
+            { "a|z_formData", nullopt },
+            { "a|__formData|", nullopt },
+            { "a|z_formData|", nullopt },
+
+            { "|__formDataa", nullopt },
+            { "|z_formDataa", nullopt },
+            { "|__formData|a", nullopt },
+            { "|z_formData|a", nullopt },
+
+            { "1|__formData", nullopt },
+            { "1|z_formData", nullopt },
+            { "1|__formData|", nullopt },
+            { "1|z_formData|", nullopt },
+
+            { "|__formData|1", nullopt },
+            { "|z_formData|1", nullopt },
+
+            { "__formData||", nullopt },
+            { "z_formData||", nullopt },
+            { "z_formData||1", nullopt },
+            { "__formDataz||1", nullopt },
+            { "__formData||z", nullopt },
+            { "__formData|x|z", nullopt },
+            { "__formData|1|z", nullopt },
+            { "__formDataz||z", nullopt },
+            { "__formDataz|z|z", nullopt },
+
+            { "|z", nullopt },
+            { "|z|", nullopt },
+            { "z|", nullopt },
+            { "||z", nullopt },
+
+            { "1|", nullopt },
+            { "||1", nullopt },
+            { "||", nullopt },
+
+            { " 1|", nullopt },
+            { " ||1", nullopt },
+            { " ||", nullopt },
+
+            { "|1|", nullopt },
+            { " |1", nullopt },
+            { " |1|", nullopt },
+            { "|1|", nullopt },
+            { "__formData|1", nullopt },
+
+            { "|1", nullopt },
+            { "z_formData|6", nullopt },
+            { "z|5", nullopt },
+            { "4", nullopt },
+
+            { "z_formData|0x00000001", nullopt },
+            { "z|0x00000002", nullopt },
+            { "z_formData|0xff000001", nullopt },
+            { "z|0xff000002", nullopt },
+            { "0x00000003", nullopt },
+            { "0xff000004", nullopt },
+
+            // Passes:
+
+            { "__formData||3", 0xff000003u },
+            { "__formData|1|2", 2 },
+            { "__formData|z|1", 1 },
+
+            { "__formData||0x00000004", 0xff000004u },
+            { "__formData|1|0x00000005", 5 },
+            { "__formData|z|0x00000006", 6 },
+            { "__formData|1|0xff000005", 5 },
+            { "__formData|z|0xff000006", 6 }
+        };
+        for (auto i: args)
+        {
+            auto v = forms::string_to_formid (i.first);
+            EXPECT_EQ (v, i.second);
         }
     }
 
