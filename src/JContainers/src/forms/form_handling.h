@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <cstdint>
 #include <optional>
 
 #include <boost/algorithm/string.hpp>
@@ -11,68 +12,104 @@
 #include "skse/skse.h"
 #include "util/cstring.h"
 
-namespace forms {
+namespace forms 
+{
 
-    inline uint8_t mod_index(FormId formId) {
-        return (uint32_t)formId >> 24;
-    }
+inline bool is_form_handle(FormHandle handle) {
+    return ((uint64_t)handle >> 32) == 0x0000FFFF;
+}
 
-    inline bool is_static(FormId formId) {
-        return mod_index(formId) != FormGlobalPrefix;
-    }
+inline FormId form_handle_to_id(FormHandle handle) {
+    return static_cast<FormId>(handle);
+}
 
-    inline uint32_t local_id(FormId formId) {
-        return (uint32_t)formId & 0x00FFFFFF;
-    }
+inline FormHandle form_id_to_handle(FormId id) {
+    return (FormHandle)(0x0000ffff00000000 | (uint64_t)id);
+}
 
-    inline bool is_form_handle(FormHandle handle) {
-        return ((uint64_t)handle >> 32) == 0x0000FFFF;
-    }
+/// Whether absolute form id is considered static (and not global/dynamic - bound to a plugin)
+inline bool is_static (FormId n) 
+{
+    auto u32 = static_cast<std::uint32_t> (n);
+    return (u32 & 0xff00'0000u) != 0xff00'0000u;
+}
 
-    inline FormId form_handle_to_id(FormHandle handle) {
-        return static_cast<FormId>(handle);
-    }
+/// See if that absolute form id looks like originating from a light weight mod (*.esl)
+inline bool is_light (FormId n)
+{
+    auto u32 = static_cast<std::uint32_t> (n);
+    return (u32 & 0xff00'0000u) == 0xfe00'0000u;
+}
 
-    inline FormHandle form_id_to_handle(FormId id) {
-        return (FormHandle)(0x0000ffff00000000 | (uint64_t)id);
-    }
+/// Reports the mod index of absolute form id
+inline std::uint8_t mod_index (FormId n) 
+{
+    auto u32 = static_cast<std::uint32_t> (n);
+    return static_cast<std::uint8_t> (is_light (n) ? u32 >> 24 : u32 >> 12);
+}
 
-    inline FormId construct(uint8_t mod_id, uint32_t local_identifier) {
-        return (FormId) ((mod_id << 24) | local_id((FormId)local_identifier));
-    }
+/// Gets the relative, to its mod, index of a form id
+inline std::uint32_t local_id (FormId n) 
+{
+    auto u32 = static_cast<std::uint32_t> (n);
+    return is_light (n) ? u32 & 0x0000'0fffu : u32 & 0x00ff'ffffu;
+}
 
-    static const char kFormData[] = "__formData";
-    static const char * kFormDataSeparator = "|";
+//--------------------------------------------------------------------------------------------------
 
-    inline boost::optional<std::string> to_string(FormId formId) {
+/**
+ * Convert the incoming absolute form id to canonical string representation
+ *
+ * No checks are made whether that form really exist (maybe see skse#resolve_handle())
+ *
+ * @param n is the form id
+ * @return the string or std::nullopt if a mod for the incoming static form was not found
+ */
 
-        auto modID = mod_index(formId);
-        uint32_t formIdClean = (uint32_t)formId;
+inline std::optional<std::string> form_to_string (FormId n) 
+{
+    using namespace std;
 
-        const char * modName = nullptr;
+    string s ("__formData|"); //likely on stack (aka SSO)
+    auto u32 = static_cast<uint32_t> (n);
 
-        if (is_static(formId)) { // common case
-            modName = skse::modname_from_index (modID);
-            if (!modName) {
-                return boost::none;
-            }
+    if (is_static (n))
+    {
+        optional<string_view> mod;
 
-            formIdClean = local_id(formId);
+        if (is_light (n))
+        {
+            mod = skse::loaded_light_mod_name (uint8_t (u32 >> 12));
+            u32 &= 0x0000'0fffu;
         }
-        else {
-            // global form is not bound to any plugin
-            modName = "";
+        else
+        {
+            mod = skse::loaded_mod_name (uint8_t (u32 >> 24));
+            u32 &= 0x00ff'ffffu;
         }
 
-        char string[MAX_PATH] = { '\0' };
-        assert(-1 != _snprintf_s(string, sizeof string, "__formData|%s|0x%x", modName, formIdClean));
+        if (!mod)
+            return nullopt;
 
-        return boost::optional<std::string>{ string };
+        s += mod->data ();
     }
 
-    inline bool is_form_string(const char *string) {
-        return string && strncmp(string, kFormData, sizeof kFormData - 1) == 0;
-    }
+    //missing std::to_chars
+    char form[12] = "|0x00000000";
+    constexpr char lut[] = "0123456789ABCDEF";
+    for (int i = 3; i < 11; ++i, u32 >>= 4)
+        form[i] += lut[u32 & 0xf];
+
+    return s + form;
+}
+
+//--------------------------------------------------------------------------------------------------
+
+inline bool is_form_string (const char* p) 
+{
+    constexpr char prefix[] = "__formData|";
+    return p && std::strncmp (p, prefix, sizeof prefix - 1) == 0;
+}
 
 //--------------------------------------------------------------------------------------------------
 
@@ -90,21 +127,21 @@ namespace forms {
  * @return the absolute form id, if any
  */
 
-std::optional<std::uint32_t> form_from_file (std::string_view const& file, std::uint32_t form)
+inline std::optional<FormId> form_from_file (std::string_view const& file, std::uint32_t form)
 {
     using namespace std;
 
     if (file.empty ())
-        return 0xff000000u | form;
+        return FormId (0xff000000u | form);
 
     if (optional<uint8_t> ndx = skse::loaded_mod_index (file))
     {
-        return (uint32_t (*ndx) << 24) | (0x00ffffffu & form);
+        return FormId ((uint32_t (*ndx) << 24) | (0x00ffffffu & form));
     }
 
     if (optional<uint8_t> ndx = skse::loaded_light_mod_index (file))
     {
-       return 0xfe000000u | (uint32_t (*ndx) << 12) | (0x00000fffu & form);
+       return FormId (0xfe000000u | (uint32_t (*ndx) << 12) | (0x00000fffu & form));
     }
 
     return nullopt;
@@ -132,7 +169,7 @@ std::optional<std::uint32_t> form_from_file (std::string_view const& file, std::
  * @return optional absolute form identifier, converted from the passed string.
  */
 
-std::optional<std::uint32_t> form_from_file (const char* pstr)
+inline std::optional<FormId> string_to_form (const char* pstr)
 {
     using namespace std;
 
@@ -165,68 +202,4 @@ std::optional<std::uint32_t> form_from_file (const char* pstr)
 
 //--------------------------------------------------------------------------------------------------
 
-    inline boost::optional<FormId> from_string (const char* pstr)
-    {
-        auto pair1 = bs::half_split(fstring, kFormDataSeparator);
-
-        if (pair1.second.empty() || !std::equal(pair1.first.begin(), pair1.first.end(), kFormData)) {
-            return boost::none;
-        }
-
-        auto pair2 = bs::half_split(pair1.second, kFormDataSeparator);
-        // pair2.first - modname part can be empty
-        if (/*pair2.first.empty() || */pair2.second.empty()) {
-            return boost::none;
-        }
-
-        auto& pluginName = pair2.first;
-
-        UInt8 modIdx = 0;
-        if (!pluginName.empty()) {
-            char *long_string = (char*)_malloca(pluginName.size() + 1);
-            auto res = strncpy_s(long_string, pluginName.size() + 1, pluginName.begin(), pluginName.size());
-            assert(0 == res);
-
-            modIdx = skse::modindex_from_name(long_string);
-            if (modIdx == FormGlobalPrefix) {
-                return boost::none;
-            }
-        }
-        else {
-            //
-            modIdx = FormGlobalPrefix;
-        }
-
-        auto& formIdString = pair2.second;
-
-        auto stoul_optimized = [](boost::iterator_range<const char*>& str, size_t *_Idx, int _Base) -> bs::optional<unsigned long> {	// convert string to unsigned long
-            char *long_string = (char*)_malloca(str.size() + 1);
-            auto res = strncpy_s(long_string, str.size() + 1, str.begin(), str.size());
-            assert(0 == res);
-
-            const char *_Ptr = long_string;
-            char *_Eptr;
-            errno = 0;
-            unsigned long _Ans = _CSTD strtoul(_Ptr, &_Eptr, _Base);
-
-            if (_Ptr == _Eptr)
-                return boost::none; //_Xinvalid_argument("invalid stoul argument");
-            if (errno == ERANGE)
-                return boost::none; //_Xout_of_range("stoul argument out of range");
-            if (_Idx != 0)
-                *_Idx = (size_t)(_Eptr - _Ptr);
-            return (_Ans);
-        };
-
-        bs::optional<unsigned long> optFormId = stoul_optimized(formIdString, nullptr, 0);
-        if (optFormId) {
-            return construct(modIdx, *optFormId);
-        }
-
-        return boost::none;
-    }
-
-    inline boost::optional<FormId> from_string(const char* source) {
-        return from_string(util::make_cstring_safe(source, 1024));
-    }
 }

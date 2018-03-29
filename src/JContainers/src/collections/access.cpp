@@ -268,12 +268,10 @@ namespace collections
                     }
                 }
                 else {
-                    auto fId = forms::from_string(indexRange);
-                    if (!fId) {
-                        return state(false, st);
-                    }
-
-                    frmId = *fId;
+                    if (auto fId = forms::string_to_form (indexRange.begin ()))
+                        frmId = *fId;
+                    else
+                        return state (false, st);
                 }
 
                 object_lock lock(st.object);
@@ -428,10 +426,9 @@ namespace collections
                     return key_and_rest{ index, cstring(end + 1, path.end()) };
                 }
                 else {
-                    auto fId = forms::from_string(indexRange);
-                    if (!fId) {
+                    auto fId = forms::string_to_form (indexRange.begin ());
+                    if (!fId)
                         return bs::none;
-                    }
 
                     return key_and_rest{ make_weak_form_id(*fId, context), cstring(end + 1, path.end()) };
                 }

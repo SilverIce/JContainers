@@ -27,16 +27,4 @@ namespace util {
 
         typedef std::lock_guard<spinlock> guard;
     };
-
-
-    template<
-        class Mutex,
-        class F,
-        class ...Params
-    >
-    static std::result_of_t<F(Params...)> perform_while_locked(Mutex& mutex, F&& functor, Params&& ...ps) {
-            std::lock_guard<Mutex> guard{ mutex };
-            return functor(std::forward<Params>(ps) ...);
-        }
-
 }

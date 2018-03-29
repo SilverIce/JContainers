@@ -100,62 +100,47 @@ namespace collections { namespace {
         EXPECT_TRUE(item("A") < item("b"));
     }
 
-    TEST(forms, test)
+    TEST (forms, test)
     {
-        namespace fh = forms;
+        using forms::is_form_string;
+        using forms::is_static;
+        using forms::form_to_string;
+        using forms::string_to_form;
 
-        EXPECT_TRUE(fh::is_form_string("__formData|Skyrim.esm|0x1"));
-        EXPECT_FALSE(fh::is_form_string("__formDatttt"));
-        EXPECT_FALSE(fh::is_form_string(nullptr));
+        EXPECT_TRUE (is_form_string ("__formData|Skyrim.esm|0x1"));
+        EXPECT_FALSE (is_form_string ("__formDat"));
+        EXPECT_FALSE (is_form_string ("__formDatttt"));
+        EXPECT_FALSE (is_form_string (""));
+        EXPECT_FALSE (is_form_string (nullptr));
 
         // test static form ids
         {
             const int pluginIdx = 'B';
-            const FormId form = (FormId)(pluginIdx << 24 | 0x14);
-
-            EXPECT_TRUE(fh::is_static(form));
-            EXPECT_EQ(form, fh::construct(pluginIdx, 0x14));
-
-            std::string formString = *fh::to_string(form);
-            EXPECT_TRUE(formString ==
-                (std::string(fh::kFormData) + fh::kFormDataSeparator + skse::modname_from_index(pluginIdx) + fh::kFormDataSeparator + "0x14"));
-
-            EXPECT_TRUE(form ==
-                *fh::from_string(formString.c_str()));
-
+            const FormId form = FormId (pluginIdx << 24 | 0x14);
+            EXPECT_TRUE (is_static (form));
+            std::string formString = *form_to_string (form);
+            EXPECT_EQ (form, *string_to_form (formString.c_str ()));
         }
 
         // test global (0xFF*) form ids
         {
-            const FormId form = (FormId)(fh::FormGlobalPrefix << 24 | 0x14);
-
-            EXPECT_TRUE(!fh::is_static(form));
-            EXPECT_EQ(form, fh::construct(fh::FormGlobalPrefix, 0x14));
-
-            std::string formString = *fh::to_string(form);
-
-            EXPECT_TRUE(formString ==
-                (std::string(fh::kFormData) + fh::kFormDataSeparator + fh::kFormDataSeparator + "0xff000014"));
-
-            EXPECT_TRUE(form ==
-                *fh::from_string(formString.c_str()));
+            const FormId form = (FormId)(forms::FormGlobalPrefix << 24 | 0x14);
+            EXPECT_TRUE (!is_static (form));
+            std::string formString = *form_to_string (form);
+            EXPECT_EQ (form, *string_to_form (formString.c_str ()));
         }
+
         {
             const char *unresolveableFString = "__formData|ssa.esm|0x1";
-
-            EXPECT_TRUE(fh::is_form_string(unresolveableFString));
-            EXPECT_FALSE(fh::from_string(unresolveableFString));
-
-            // @invalidFormId is invalid in sythetic test only: all plugin indexes except 'A'-'Z' are invalid
-            FormId invalidFormId = (FormId)fh::construct('%', 0x14);
-            EXPECT_FALSE(fh::to_string(invalidFormId));
+            EXPECT_TRUE (is_form_string (unresolveableFString));
+            EXPECT_FALSE (string_to_form (unresolveableFString));
         }
     }
 
-    TEST (forms, formstring)
+    TEST (forms, string_to_form)
     {
         using namespace std;
-        std::pair<const char*, optional<uint32_t>> const args[] =
+        std::pair<const char*, optional<forms::FormId>> const args[] =
         {
             { (const char*) nullptr, nullopt },
             { "", nullopt },
@@ -231,19 +216,19 @@ namespace collections { namespace {
 
             // Passes:
 
-            { "__formData||3", 0xff000003u },
-            { "__formData|1|2", 2 },
-            { "__formData|z|1", 1 },
+            { "__formData||3", FormId (0xff000003u) },
+            { "__formData|1|2", FormId (2) },
+            { "__formData|z|1", FormId (1) },
 
-            { "__formData||0x00000004", 0xff000004u },
-            { "__formData|1|0x00000005", 5 },
-            { "__formData|z|0x00000006", 6 },
-            { "__formData|1|0xff000005", 5 },
-            { "__formData|z|0xff000006", 6 }
+            { "__formData||0x00000004", FormId (0xff000004u) },
+            { "__formData|1|0x00000005", FormId (5) },
+            { "__formData|z|0x00000006", FormId (6) },
+            { "__formData|1|0xff000005", FormId (5) },
+            { "__formData|z|0xff000006", FormId (6) }
         };
         for (auto i: args)
         {
-            auto v = forms::string_to_formid (i.first);
+            auto v = forms::string_to_form (i.first);
             EXPECT_EQ (v, i.second);
         }
     }

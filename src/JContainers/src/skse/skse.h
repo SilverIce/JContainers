@@ -16,39 +16,87 @@ namespace skse
  * @returns the mod index if found, 0 if silent API, name[0] (if A-Z) for test API.
  */
 
-std::optional<std::uint8_t> loaded_mod_index (string_view const& name);
+std::optional<std::uint8_t> loaded_mod_index (std::string_view const& name);
 
 /**
  * Forwards to SKSE `GetLoadedLightModIndex`.
  * @returns the mod index if found, 0 if silent API, name[0] (if A-Z) for test API.
  */
 
-std::optional<std::uint8_t> loaded_light_mod_index (string_view const& name);
+std::optional<std::uint8_t> loaded_light_mod_index (std::string_view const& name);
 
 /**
  * Forwards to SKSE `modList.loadedMods[idx]->name`.
- * @returns the mod name or nullptr, empty string if silent API, idx as char* (if A-Z) for test API.
+ * @returns the mod name if found, empty string if silent API, idx as char* (if A-Z) for test API.
  */
 
-const char* modname_from_index (std::uint8_t idx);
+std::optional<std::string_view> loaded_mod_name (std::uint8_t idx);
 
 /**
- * Forwards to SKSE `GetModIndex`.
- * @returns the mod name or 0xFF, 0 if silent API, name[0] (if A-Z) for test API.
+ * Forwards to SKSE `modList.loadedCCMods[idx]->name`.
+ * @returns the mod name if found, empty string if silent API, idx as char* (if A-Z) for test API.
  */
 
-std::uint8_t modindex_from_name (const char* name);
+std::optional<std::string_view> loaded_light_mod_name (std::uint8_t idx);
 
-    forms::FormId resolve_handle(forms::FormId handle);
-    TESForm* lookup_form(forms::FormId handle);
+/**
+ * Forwards static forms to `SKSESerializationInterface::ResolveHandle`
+ * @returns the resolved handle or FormId#Zero on error (or if silent API), same handle if test
+ * or the input handle is for dynamic form.
+ */
 
-    bool try_retain_handle(forms::FormId handle);
-    void release_handle(forms::FormId handle);
+forms::FormId resolve_handle (forms::FormId handle);
 
-    void console_print(const char * fmt, ...);
-    void console_print(const char * fmt, const va_list& args);
+/**
+ * Valid handles are forwarded to `LookupByFormID`
+ * @returns the looked up handle, nullptr if silent API, random blob if test API
+ */
 
-    void set_real_api();
-    void set_fake_api();
-    void set_silent_api();
+TESForm* lookup_form (forms::FormId handle);
+
+/**
+ * Uses SKSE `IObjectHandlePolicy::Resolve` and `AddRef`
+ * @returns true on successfully retained handle, or if silent/test API
+ */
+
+bool try_retain_handle (forms::FormId handle);
+
+/**
+ * Forwards to SKSE `IObjectHandlePolicy::Release` (ignored on silent/test API)
+ */
+
+void release_handle (forms::FormId handle);
+
+/**
+ * If there is a console manager will call its `VPrint` function (ignored on silent/test API).
+ */
+
+void console_print (const char * fmt, ...);
+
+/**
+ * If there is a console manager will call its `VPrint` function (ignored on silent/test API).
+ */
+
+void console_print (const char * fmt, const va_list& args);
+
+/**
+ * Binds the skse namespace calls to the real SKSE functions - normal mode for JC.
+ */
+
+void set_real_api ();
+
+/**
+ * Binds fake/test implementation of all skse calls.
+ */
+
+void set_fake_api ();
+
+/**
+ * Provides stub implementation of all skse calls - used at the normal JC runtime.
+ * @note investigate why
+ */
+
+void set_silent_api ();
+
 }
+
