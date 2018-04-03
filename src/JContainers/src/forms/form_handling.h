@@ -97,8 +97,8 @@ inline std::optional<std::string> form_to_string (FormId n)
     //missing std::to_chars
     char form[12] = "|0x00000000";
     constexpr char lut[] = "0123456789ABCDEF";
-    for (int i = 3; i < 11; ++i, u32 >>= 4)
-        form[i] += lut[u32 & 0xf];
+    for (int i = 10; i > 4; --i, u32 >>= 4)
+        form[i] = lut[u32 & 0xf];
 
     return s + form;
 }
@@ -179,8 +179,11 @@ inline std::optional<FormId> string_to_form (const char* pstr)
     string_view str (pstr);
 
     constexpr char prefix[] = "__formData|";
-    if (str.find (prefix) == 0)
-        str.remove_prefix (sizeof prefix - 1);
+    //if (str.find (prefix) == 0)
+    //    str.remove_prefix (sizeof prefix - 1);
+    if (str.find (prefix) != 0)
+        return nullopt;
+    str.remove_prefix (sizeof prefix - 1);
 
     auto mpos = str.find ('|');
     if (mpos == string_view::npos)

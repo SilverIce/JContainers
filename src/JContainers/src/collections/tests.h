@@ -1,5 +1,5 @@
 #pragma once
-
+#include <fstream>
 namespace collections {
 
     struct JCFixture : public ::testing::Test {

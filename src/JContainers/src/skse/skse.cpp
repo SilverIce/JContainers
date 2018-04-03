@@ -13,6 +13,8 @@
 
 #include "gtest.h"
 
+#include <algorithm>
+
 extern SKSESerializationInterface* g_serialization;
 
 namespace skse
@@ -49,8 +51,8 @@ struct skse_api
 /// Fake (for testing) API implementation
 struct fake_api : public skse_api
 {
-    const std::string_view dict =
-        "\0A\0B\0C\0D\0E\0F\0G\0H\0I\0J\0K\0L\0M\0N\0O\0P\0Q\0R\0S\0T\0U\0V\0W\0X\0Y\0Z";
+    const std::string_view dict {
+        "\0A\0B\0C\0D\0E\0F\0G\0H\0I\0J\0K\0L\0M\0N\0O\0P\0Q\0R\0S\0T\0U\0V\0W\0X\0Y\0Z", 53 };
 
     std::optional<std::string_view> loaded_mod_name (std::uint8_t ndx) override 
     { 
