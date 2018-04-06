@@ -94,11 +94,9 @@ inline std::optional<std::string> form_to_string (FormId n)
         s += mod->data ();
     }
 
-    //missing std::to_chars
-    char form[12] = "|0x00000000";
-    constexpr char lut[] = "0123456789ABCDEF";
-    for (int i = 10; i > 4; --i, u32 >>= 4)
-        form[i] = lut[u32 & 0xf];
+    //TODO: replace with std::to_chars when MSVC wake to implement it
+    char form[12];
+    snprintf (form, sizeof form, "|0x%x", u32);
 
     return s + form;
 }
@@ -154,16 +152,14 @@ inline std::optional<FormId> form_from_file (std::string_view const& file, std::
  *
  * Several options are available:
  *
- * * `[__formData|]<mod name>|<relative id>`
+ * * `__formData|<mod name>|<relative id>`
  *   Search for mod name form prefix and append the given relative, 24-bit for esp/esm and
  *   12-bit for esl, identifier. Any incoming id bits in the place of the mod bits will be
  *   ignored (e.g. `__formData|test.esl|0x006780004` is about form #4).
  *
- * * `[__formData|]|<dynamic form id>`
+ * * `__formData||<dynamic form id>`
  *   Same as above, but as the mod name is missing, assume the form identifier is about dynamic
  *   forms. In practice the most significant bits will be set always.
- *
- * @note The `__formData|` prefix is optional.
  *
  * @param pstr - can be nullptr or empty too. Assumed it is alive during the duration of this call.
  * @return optional absolute form identifier, converted from the passed string.
@@ -179,8 +175,6 @@ inline std::optional<FormId> string_to_form (const char* pstr)
     string_view str (pstr);
 
     constexpr char prefix[] = "__formData|";
-    //if (str.find (prefix) == 0)
-    //    str.remove_prefix (sizeof prefix - 1);
     if (str.find (prefix) != 0)
         return nullopt;
     str.remove_prefix (sizeof prefix - 1);

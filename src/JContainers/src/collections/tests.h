@@ -1,5 +1,5 @@
 #pragma once
-#include <fstream>
+
 namespace collections {
 
     struct JCFixture : public ::testing::Test {
@@ -140,7 +140,7 @@ namespace collections { namespace {
     TEST (forms, string_to_form)
     {
         using namespace std;
-        std::pair<const char*, optional<forms::FormId>> const args[] =
+        pair<const char*, optional<forms::FormId>> const args[] =
         {
             { (const char*) nullptr, nullopt },
             { "", nullopt },
@@ -216,15 +216,15 @@ namespace collections { namespace {
 
             // Passes:
 
-            { "__formData||3", FormId (0xff000003u) },
-            { "__formData|1|2", FormId (2) },
-            { "__formData|z|1", FormId (1) },
+            { "__formData||3", FormId (0xff000003) },
+            { "__formData|A|2", FormId (('A' << 24) | 2) },
+            { "__formData|Z|1", FormId (('Z' << 24) | 1) },
 
-            { "__formData||0x00000004", FormId (0xff000004u) },
-            { "__formData|1|0x00000005", FormId (5) },
-            { "__formData|z|0x00000006", FormId (6) },
-            { "__formData|1|0xff000005", FormId (5) },
-            { "__formData|z|0xff000006", FormId (6) }
+            { "__formData||0x00000004", FormId (0xff000004) },
+            { "__formData|A|0x00000005", FormId (('A' << 24) | 5) },
+            { "__formData|Z|0x00000006", FormId (('Z' << 24) | 6) },
+            { "__formData|A|0xff000005", FormId (('A' << 24) | 5) },
+            { "__formData|Z|0xff000006", FormId (('Z' << 24) | 6) }
         };
         for (auto i: args)
         {
@@ -343,15 +343,14 @@ namespace collections { namespace {
             auto originJson = json_deserializer::json_from_file(file_path);
             EXPECT_NOT_NIL(originJson);
 
-            auto originJson_text = json_dumps(originJson.get(), 0);
-            auto jsonOut_text = json_dumps(jsonOut.get(), 0);
+            auto originJson_text = json_dumps (originJson.get (), JSON_INDENT (4));
+            auto jsonOut_text = json_dumps (jsonOut.get (), JSON_INDENT (4));
 
             EXPECT_TRUE(json_equal(originJson.get(), jsonOut.get()) == 1);
         }
 
         static void do_comparison2(const char *file_path) {
             EXPECT_NOT_NIL(file_path);
-
             auto jsonOut = make_unique_ptr((json_t*)nullptr, &json_decref);
             {
                 tes_context_standalone ctx;
@@ -364,8 +363,6 @@ namespace collections { namespace {
                 }
 
                 auto state = ctx.write_to_string();
-                ctx.clearState();
-
                 ctx.read_from_string(state);
 
                 jsonOut = json_serializer::create_json_value(*ctx.getObject(rootId));
@@ -615,6 +612,7 @@ namespace collections { namespace {
 
     JC_TEST(autorelease_queue, over_release)
     {
+        GTEST_FAIL (); return;
         std::vector<Handle> identifiers;
         //int countBefore = queue.count();
 
@@ -647,12 +645,13 @@ namespace collections { namespace {
 
         for (Handle id : identifiers) {
             auto obj = context.getObject(id);
-            EXPECT_TRUE(obj->refCount() == 1);
+            EXPECT_EQ (obj->refCount (), 1);
         }
     }
 
     JC_TEST(autorelease_queue, ensure_destroys)
     {
+        GTEST_FAIL (); return;
         std::vector<Handle> public_identifiers, privateIds;
 
         for (int i = 0; i < 10; ++i) {

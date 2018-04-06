@@ -9,8 +9,12 @@ namespace tes_api_3 {
 
 #define VALUE_TYPE_COMMENT "0 - no value, 1 - none, 2 - int, 3 - float, 4 - form, 5 - object, 6 - string"
 
+#if 0
 #define JC_LOG_API(message, ...) \
         JC_log ("[Info] tes_object.%s " message, __func__, __VA_ARGS__);
+#else
+#define JC_LOG_API(message, ...)
+#endif
 
     class tes_object : public class_meta< tes_object > {
     public:
