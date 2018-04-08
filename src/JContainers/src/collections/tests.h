@@ -318,6 +318,8 @@ namespace collections { namespace {
             fs::directory_iterator end;
             bool atLeastOneTested = false;
 
+            do_tag_allocator (dir / "JFormMap.json");
+
             for (fs::directory_iterator itr(dir); itr != end; ++itr) {
                 if (fs::is_regular_file(*itr)) {
                     atLeastOneTested = true;
@@ -327,6 +329,21 @@ namespace collections { namespace {
             }
 
             EXPECT_TRUE(atLeastOneTested);
+        }
+
+        /// Expect that reading from string will cause an access violation when destroying an object's tag
+        /// In fact tests, the JC istring serialization through Boost, making difference between istring and std::string
+        static void do_tag_allocator (boost::filesystem::path const& filepath)
+        {
+            tes_context_standalone ctx;
+            Handle rootId = Handle::Null;
+            {
+                auto root = json_deserializer::object_from_file (ctx, filepath.generic_string ().c_str ());
+                EXPECT_NOT_NIL (root);
+                rootId = root->uid ();
+            }
+            auto state = ctx.write_to_string ();
+            ctx.read_from_string (state);
         }
 
         static void do_comparison(const char *file_path) {
@@ -612,7 +629,6 @@ namespace collections { namespace {
 
     JC_TEST(autorelease_queue, over_release)
     {
-        GTEST_FAIL (); return;
         std::vector<Handle> identifiers;
         //int countBefore = queue.count();
 
@@ -651,7 +667,6 @@ namespace collections { namespace {
 
     JC_TEST(autorelease_queue, ensure_destroys)
     {
-        GTEST_FAIL (); return;
         std::vector<Handle> public_identifiers, privateIds;
 
         for (int i = 0; i < 10; ++i) {

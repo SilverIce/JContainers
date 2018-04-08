@@ -34,7 +34,7 @@ namespace boost { namespace serialization {
 
         save_atomic(ar, t._tes_refCount);
         save_atomic(ar, t._id);
-        ar << t._tag;
+        ar << *reinterpret_cast<std::string const*> (&t._tag); //force Boost detection
     }
 
     template<class Archive>
@@ -56,8 +56,8 @@ namespace boost { namespace serialization {
         switch (version) {
         case 2:
         case 1:
-            load_atomic(ar, t._id);
-            ar >> t._tag;
+            load_atomic (ar, t._id);
+            ar >> *reinterpret_cast<std::string*> (&t._tag); //force Boost detection
             break;
         case 0:
             ar >> t._type;

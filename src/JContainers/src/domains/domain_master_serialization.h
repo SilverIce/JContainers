@@ -19,8 +19,7 @@ namespace boost {
             arch << domain_count;
 
             for (auto& pair : self.active_domains_map()) {
-                util::istring dom_name;
-                arch << pair.first;
+                arch << *reinterpret_cast<std::string const*> (&pair.first);
                 arch << *pair.second;
             }
 
@@ -36,7 +35,7 @@ namespace boost {
 
             for (uint32_t i = 0; i < domain_count; ++i) {
                 util::istring dom_name;
-                archive >> dom_name;
+                archive >> *reinterpret_cast<std::string*> (&dom_name);
                 auto& dom = self.get_or_create_domain_with_name(dom_name);
                 archive >> dom;
             }
