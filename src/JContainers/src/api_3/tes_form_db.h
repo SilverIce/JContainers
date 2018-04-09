@@ -1,4 +1,5 @@
 #include "boost_extras.h"
+#include <boost/algorithm/string.hpp>
 
 namespace tes_api_3 {
 

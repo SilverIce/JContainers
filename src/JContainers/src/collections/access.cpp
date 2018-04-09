@@ -10,8 +10,8 @@
 #include "forms/form_handling.h"
 #include "collections/collections.h"
 #include "collections/context.h"
-
 #include "collections/operators.h"
+#include "util/cstring.h"
 
 namespace collections
 {

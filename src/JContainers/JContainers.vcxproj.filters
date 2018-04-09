@@ -270,6 +270,9 @@
     <ClInclude Include="src\api_3\tests.hpp">
       <Filter>tes_api_3</Filter>
     </ClInclude>
+    <ClInclude Include="src\boost_extras.h">
+      <Filter>util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="JContainers.rc" />
