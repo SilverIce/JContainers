@@ -165,7 +165,7 @@
       </Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>cd $(SolutionDir) &amp;&amp; python tools\install.py x64\Release</Command>
+      <Command>cd $(SolutionDir) &amp;&amp; python tools\install.py x64\$(Configuration)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -240,7 +240,7 @@
       </Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>cd $(SolutionDir) &amp;&amp; python tools\install.py x64\Debug</Command>
+      <Command>cd $(SolutionDir) &amp;&amp; python tools\install.py x64\$(Configuration)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
