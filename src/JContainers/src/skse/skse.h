@@ -23,7 +23,7 @@ std::optional<std::uint8_t> loaded_mod_index (std::string_view const& name);
  * @returns the mod index if found, 0 if silent API, name[0] (if A-Z) for test API.
  */
 
-std::optional<std::uint8_t> loaded_light_mod_index (std::string_view const& name);
+std::optional<std::uint16_t> loaded_light_mod_index (std::string_view const& name);
 
 /**
  * Forwards to SKSE `modList.loadedMods[idx]->name`.

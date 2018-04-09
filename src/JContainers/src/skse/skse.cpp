@@ -32,7 +32,7 @@ using forms::FormIdUnredlying;
 struct skse_api
 {
     virtual std::optional<std::uint8_t> loaded_mod_index (std::string_view const& name) = 0;
-    virtual std::optional<std::uint8_t> loaded_light_mod_index (std::string_view const& name) = 0;
+    virtual std::optional<std::uint16_t> loaded_light_mod_index (std::string_view const& name) = 0;
 
     virtual std::optional<std::string_view> loaded_mod_name (std::uint8_t ndx) = 0;
     virtual std::optional<std::string_view> loaded_light_mod_name (std::uint8_t ndx) = 0;
@@ -73,7 +73,7 @@ struct fake_api : public skse_api
         return std::make_optional (name.front ());
     }
 
-    std::optional<std::uint8_t> loaded_light_mod_index (std::string_view const& name) override 
+    std::optional<std::uint16_t> loaded_light_mod_index (std::string_view const& name) override 
     {
         return loaded_mod_index (name);
     }
@@ -116,7 +116,7 @@ TEST (skseAPI, testModnameFromIndex)
 struct silent_api : public skse_api
 {
     std::optional<std::uint8_t> loaded_mod_index (std::string_view const&) override { return 0; }
-    std::optional<std::uint8_t> loaded_light_mod_index (std::string_view const&) override { return 0; }
+    std::optional<std::uint16_t> loaded_light_mod_index (std::string_view const&) override { return 0; }
     std::optional<std::string_view> loaded_mod_name (std::uint8_t) override { return ""; }
     std::optional<std::string_view> loaded_light_mod_name (std::uint8_t) override { return ""; }
     FormId resolve_handle (FormId) override { return FormId::Zero; }
@@ -138,11 +138,19 @@ struct real_api : public skse_api
         return ndx != 0xFF ? make_optional (ndx) : nullopt;
     }
 
-    std::optional<std::uint8_t> loaded_light_mod_index (std::string_view const& name) override
+    /// Asuming modIndex is 16-bit, next 16-bit ones in the memory layout looks like reportint 
+    /// the light weight mod index.
+    std::optional<std::uint16_t> loaded_light_mod_index (std::string_view const& name) override
     {
         using namespace std;
-        auto ndx = DataHandler::GetSingleton ()->GetLoadedLightModIndex (string (name).c_str ());
-        return ndx != 0xFF ? make_optional (ndx) : nullopt;
+        auto modinfo = DataHandler::GetSingleton ()->LookupLoadedLightModByName (string (name).c_str ());
+        if (modinfo)
+        {
+            auto ndx = reinterpret_cast<uint16_t const*> (&modinfo->modIndex);
+            auto light_ndx = ndx + 1;
+            return make_optional (*light_ndx);
+        }
+        return nullopt;
     }
 
     std::optional<std::string_view> loaded_mod_name (std::uint8_t i) override
@@ -241,7 +249,7 @@ std::optional<std::uint8_t> loaded_mod_index (std::string_view const& name)
     return g_current_api->loaded_mod_index (name);
 }
 
-std::optional<std::uint8_t> loaded_light_mod_index (std::string_view const& name)
+std::optional<std::uint16_t> loaded_light_mod_index (std::string_view const& name)
 {
     return g_current_api->loaded_light_mod_index (name);
 }

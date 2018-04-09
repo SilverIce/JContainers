@@ -111,7 +111,7 @@ inline bool is_form_string (const char* p)
  * currently by SKSE. An enhancement is made to return dynamic/global form id, if the incoming file
  * name is empty.
  *
- * @note SKSE returns 8-bit index for ESL mods, though the space for them reserved is 12-bits.
+ * @note SKSE code was reinterpreted to find the actual 12-bit light mod index.
  *
  * @param file name of the mod (e.g. "Skyrim.esm", "The war of green turtles.esl" and etc.)
  * @param form identifier (bits occupying mod ones will be ignored)
@@ -130,9 +130,9 @@ inline std::optional<FormId> form_from_file (std::string_view const& file, std::
         return FormId ((uint32_t (*ndx) << 24) | (0x00ffffffu & form));
     }
 
-    if (optional<uint8_t> ndx = skse::loaded_light_mod_index (file))
+    if (optional<uint16_t> ndx = skse::loaded_light_mod_index (file))
     {
-       return FormId (0xfe000000u | (uint32_t (*ndx) << 12) | (0x00000fffu & form));
+       return FormId (0xfe000000u | (uint32_t (*ndx & 0x0fffu) << 12) | (0x00000fffu & form));
     }
 
     return nullopt;
