@@ -5,6 +5,7 @@
 
 namespace skse {
     
+    /// See `dep\skse64\src\skse64\GameTypes.h` and `StringCache`.
     class string_ref {
         const char* data = nullptr;
 
@@ -25,9 +26,9 @@ namespace skse {
         }
 
         MEMBER_FN_PREFIX(string_ref);
-        DEFINE_MEMBER_FN(ctor, string_ref *, 0x00C28280, const char * buf);
-        DEFINE_MEMBER_FN(Set, string_ref *, 0x00C283F0, const char * buf);
-        DEFINE_MEMBER_FN(Release, void, 0x00C283D0);
+        DEFINE_MEMBER_FN(ctor, string_ref *, 0x00C28C50, const char * buf);
+        DEFINE_MEMBER_FN(Set, string_ref *, 0x00C28DC0, const char * buf);
+        DEFINE_MEMBER_FN(Release, void, 0x00C28DA0);
 
     public:
 
