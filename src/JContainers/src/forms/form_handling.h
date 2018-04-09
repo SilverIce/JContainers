@@ -41,13 +41,6 @@ inline bool is_light (FormId n)
     return (u32 & 0xff00'0000u) == 0xfe00'0000u;
 }
 
-/// Reports the mod index of absolute form id
-inline std::uint8_t mod_index (FormId n) 
-{
-    auto u32 = static_cast<std::uint32_t> (n);
-    return static_cast<std::uint8_t> (is_light (n) ? u32 >> 12 : u32 >> 24);
-}
-
 /// Gets the relative, to its mod, index of a form id
 inline std::uint32_t local_id (FormId n) 
 {
