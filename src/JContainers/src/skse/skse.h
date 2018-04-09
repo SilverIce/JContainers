@@ -37,7 +37,7 @@ std::optional<std::string_view> loaded_mod_name (std::uint8_t idx);
  * @returns the mod name if found, empty string if silent API, idx as char* (if A-Z) for test API.
  */
 
-std::optional<std::string_view> loaded_light_mod_name (std::uint8_t idx);
+std::optional<std::string_view> loaded_light_mod_name (std::uint16_t idx);
 
 /**
  * Forwards static forms to `SKSESerializationInterface::ResolveHandle`

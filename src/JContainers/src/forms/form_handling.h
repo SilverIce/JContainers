@@ -72,7 +72,7 @@ inline std::optional<std::string> form_to_string (FormId n)
 
         if (is_light (n))
         {
-            mod = skse::loaded_light_mod_name (uint8_t (u32 >> 12));
+            mod = skse::loaded_light_mod_name (uint16_t ((u32 >> 12) & 0x0fffu));
             u32 &= 0x0000'0fffu;
         }
         else

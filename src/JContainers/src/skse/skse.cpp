@@ -34,7 +34,7 @@ struct skse_api
     virtual std::optional<std::uint16_t> loaded_light_mod_index (std::string_view const& name) = 0;
 
     virtual std::optional<std::string_view> loaded_mod_name (std::uint8_t ndx) = 0;
-    virtual std::optional<std::string_view> loaded_light_mod_name (std::uint8_t ndx) = 0;
+    virtual std::optional<std::string_view> loaded_light_mod_name (std::uint16_t ndx) = 0;
 
     virtual FormId resolve_handle (FormId handle) = 0;
     virtual TESForm* lookup_form (FormId handle) = 0;
@@ -60,9 +60,9 @@ struct fake_api : public skse_api
         return std::nullopt;
     }
 
-    std::optional<std::string_view> loaded_light_mod_name (std::uint8_t ndx) override 
+    std::optional<std::string_view> loaded_light_mod_name (std::uint16_t ndx) override 
     { 
-        return loaded_mod_name (ndx);
+        return loaded_mod_name (std::uint8_t (ndx));
     }
 
     std::optional<std::uint8_t> loaded_mod_index (std::string_view const& name) override 
@@ -117,7 +117,7 @@ struct silent_api : public skse_api
     std::optional<std::uint8_t> loaded_mod_index (std::string_view const&) override { return 0; }
     std::optional<std::uint16_t> loaded_light_mod_index (std::string_view const&) override { return 0; }
     std::optional<std::string_view> loaded_mod_name (std::uint8_t) override { return ""; }
-    std::optional<std::string_view> loaded_light_mod_name (std::uint8_t) override { return ""; }
+    std::optional<std::string_view> loaded_light_mod_name (std::uint16_t) override { return ""; }
     FormId resolve_handle (FormId) override { return FormId::Zero; }
     TESForm* lookup_form (FormId) override { return nullptr; }
     bool try_retain_handle (FormId) override { return true; }
@@ -137,21 +137,22 @@ struct real_api : public skse_api
         return ndx != 0xFF ? make_optional (ndx) : nullopt;
     }
 
-    /// Asuming modIndex is 16-bit, next 16-bit ones in the memory layout looks like reportint 
+    /// Asuming modIndex is 16-bit, next 16-bit ones in the memory layout looks like reporting 
     /// the light weight mod index.
+    static inline std::uint16_t light_index (ModInfo const& mi)
+    {
+        auto p = reinterpret_cast<uint16_t const*> (&mi.modIndex);
+        return *(p + 1);
+    }
+
     std::optional<std::uint16_t> loaded_light_mod_index (std::string_view const& name) override
     {
         using namespace std;
         auto modinfo = DataHandler::GetSingleton ()->LookupLoadedLightModByName (string (name).c_str ());
-        if (modinfo)
-        {
-            auto ndx = reinterpret_cast<uint16_t const*> (&modinfo->modIndex);
-            auto light_ndx = ndx + 1;
-            return make_optional (*light_ndx);
-        }
-        return nullopt;
+        return modinfo ? make_optional (light_index (*modinfo)) : nullopt;
     }
 
+    /// Question: order in *Mods list is considered as modIndex or modLighIndex?
     std::optional<std::string_view> loaded_mod_name (std::uint8_t i) override
     {
         DataHandler* p = DataHandler::GetSingleton ();
@@ -160,7 +161,7 @@ struct real_api : public skse_api
         return std::nullopt;
     }
 
-    std::optional<std::string_view> loaded_light_mod_name (std::uint8_t i) override
+    std::optional<std::string_view> loaded_light_mod_name (std::uint16_t i) override
     {
         DataHandler* p = DataHandler::GetSingleton ();
         if (i < p->modList.loadedCCMods.count)
@@ -258,7 +259,7 @@ std::optional<std::string_view> loaded_mod_name (std::uint8_t idx)
     return g_current_api->loaded_mod_name (idx);
 }
 
-std::optional<std::string_view> loaded_light_mod_name (std::uint8_t idx)
+std::optional<std::string_view> loaded_light_mod_name (std::uint16_t idx)
 {
     return g_current_api->loaded_light_mod_name (idx);
 }
