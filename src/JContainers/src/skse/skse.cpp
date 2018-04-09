@@ -1,6 +1,5 @@
 #include "skse/skse.h"
 
-#include "skse64_common/skse_version.h"
 #include "skse64/GameData.h"
 #include "skse64/GameForms.h"
 #include "skse64/GameData.h"
