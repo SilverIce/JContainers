@@ -1,13 +1,7 @@
 #include "skse/skse.h"
 
-
-//#include <boost/iostreams/stream.hpp>
-//#include <ShlObj.h>
-
-//#include "skse/PluginAPI.h"
 #include "skse64_common/skse_version.h"
 #include "skse64/GameData.h"
-//#include "skse/PapyrusVM.h"
 #include "skse64/GameForms.h"
 #include "skse64/GameData.h"
 #include "skse64/InternalSerialization.h"
@@ -15,223 +9,285 @@
 #include "skse64/PapyrusVM.h"
 
 #include "util/stl_ext.h"
+#include "forms/form_handling.h"
+
 #include "gtest.h"
 
-#include "forms/form_handling.h"
-//#include "util/util.h"
-//#include "jc_interface.h"
-//#include "reflection/reflection.h"
-//#include "jcontainers_constants.h"
-//#include "collections/tes_context.h"
+#include <algorithm>
 
-extern SKSESerializationInterface	* g_serialization;
+extern SKSESerializationInterface* g_serialization;
 
-namespace skse {
+namespace skse
+{
 
-    namespace {
+namespace
+{
 
-        using forms::FormId;
-        using forms::FormIdUnredlying;
+using forms::FormId;
+using forms::FormIdUnredlying;
 
-        struct skse_api {
-            virtual const char * modname_from_index(uint8_t idx) = 0;
-            virtual uint8_t modindex_from_name(const char * name) = 0;
+//--------------------------------------------------------------------------------------------------
 
-            virtual FormId resolve_handle(FormId handle) = 0;
-            virtual TESForm* lookup_form(FormId handle) = 0;
+/// Internal interface to follow on, same meaning as in the skse.h
+struct skse_api
+{
+    virtual std::optional<std::uint8_t> loaded_mod_index (std::string_view const& name) = 0;
+    virtual std::optional<std::uint16_t> loaded_light_mod_index (std::string_view const& name) = 0;
 
-            virtual bool try_retain_handle(FormId handle) = 0;
-            virtual void release_handle(FormId handle) = 0;
+    virtual std::optional<std::string_view> loaded_mod_name (std::uint8_t ndx) = 0;
+    virtual std::optional<std::string_view> loaded_light_mod_name (std::uint8_t ndx) = 0;
 
-            virtual void console_print(const char * fmt, const va_list& args) = 0;
-        };
+    virtual FormId resolve_handle (FormId handle) = 0;
+    virtual TESForm* lookup_form (FormId handle) = 0;
 
-        namespace fake_skse {
+    virtual bool try_retain_handle (FormId handle) = 0;
+    virtual void release_handle (FormId handle) = 0;
 
-            enum {
-                char_count = 'Z' - 'A' + 1,
+    virtual void console_print (const char * fmt, const va_list& args) = 0;
+};
 
-            };
+//--------------------------------------------------------------------------------------------------
 
-            static char fakePluginNames[char_count * 2];
+/// Fake (for testing) API implementation
+struct fake_api : public skse_api
+{
+    const std::string_view dict {
+        "\0A\0B\0C\0D\0E\0F\0G\0H\0I\0J\0K\0L\0M\0N\0O\0P\0Q\0R\0S\0T\0U\0V\0W\0X\0Y\0Z", 53 };
 
-            static bool index_in_range(int idx) {
-                return idx >= 'A' && idx <= 'Z';
-            }
-
-            uint8_t wrap_index(int idx) {
-                int rel = (int)idx - (int)'A';
-                int wrapped = rel >= 0 ? rel % char_count : (-rel) % char_count;
-                assert(wrapped >= 0 && wrapped < char_count);
-                return wrapped;
-            }
-
-            const char * modname_from_index(uint8_t idx) {
-
-                if (index_in_range(idx)) {
-                    int wrapped = wrap_index(idx);
-                    fakePluginNames[wrapped * 2] = (char)('A' + wrapped);
-                    fakePluginNames[wrapped * 2 + 1] = '\0';
-                    return &fakePluginNames[wrapped * 2];
-                }
-                else {
-                    return nullptr;
-                }
-            }
-
-            uint8_t modindex_from_name(const char * name) {
-                assert(name);
-                return index_in_range(*name) ? *name : 0xFF;
-            }
-
-            TEST(modname_from_index, test)
-            {
-                auto res = modname_from_index('Z');
-                EXPECT_TRUE(strcmp(res, "Z") == 0);
-
-                EXPECT_TRUE(modindex_from_name("Action") == 'A');
-
-                EXPECT_NIL(modname_from_index('|'));
-                EXPECT_NIL(modname_from_index('a'));
-            }
-        }
-
-        struct skse_fake_api : skse_api {
-            const char * modname_from_index(uint8_t idx) override {
-                return fake_skse::modname_from_index(idx);
-            }
-
-            uint8_t modindex_from_name(const char * name) override {
-                return fake_skse::modindex_from_name(name);
-            }
-
-            FormId resolve_handle(FormId handle) override {
-                return handle;
-            }
-
-            TESForm* lookup_form(FormId handle) override {
-                // Just a blob of bytes which imitates TESForm
-                static char fakeTesForm[sizeof TESForm] = { '\0' };
-                return reinterpret_cast<TESForm*>(&fakeTesForm);
-            }
-
-            bool try_retain_handle(FormId handle) override { return true; }
-            void release_handle(FormId handle) override {}
-
-            void console_print(const char * fmt, const va_list& args) override {
-/*
-                printf("Fake Console: ");
-                vprintf_s(fmt, args);
-                printf("\n");*/
-            }
-        };
-
-        struct skse_silent_api : skse_api {
-            const char * modname_from_index(uint8_t idx) override { return ""; }
-            uint8_t modindex_from_name(const char * name) override { return 0; }
-            FormId resolve_handle(FormId handle) override { return FormId::Zero; }
-            TESForm* lookup_form(FormId handle) override { return nullptr; }
-            bool try_retain_handle(FormId handle) override { return true; }
-            void release_handle(FormId handle) override {}
-            void console_print(const char * fmt, const va_list& args) override {}
-        };
-
-        struct skse_real_api : skse_api {
-            const char * modname_from_index(uint8_t idx) override {
-                DataHandler * dhand = DataHandler::GetSingleton();
-                ModInfo * modInfo = idx < dhand->modList.loadedMods.count ? dhand->modList.loadedMods[idx] : nullptr;
-                return modInfo ? modInfo->name : nullptr;
-            }
-
-            uint8_t modindex_from_name(const char * name) override {
-                return DataHandler::GetSingleton()->GetModIndex(name);
-            }
-
-            FormId resolve_handle(FormId handle) override {
-                if ((util::to_integral(handle) >> 24) == 0xFF) { // dynamic form - return untouched
-                    return handle;
-                }
-
-                UInt64 handleOut = 0;
-                return g_serialization->ResolveHandle(util::to_integral(handle), &handleOut) ? (FormId)handleOut : FormId::Zero;
-            }
-
-            TESForm* lookup_form(FormId handle) override {
-                return LookupFormByID(util::to_integral(handle));
-            }
-
-            bool try_retain_handle(FormId id) override {
-                auto handle = util::to_integral(forms::form_id_to_handle(id));
-                TESForm* form = reinterpret_cast<TESForm*>((*g_objectHandlePolicy)->Resolve(TESForm::kTypeID, handle));
-                if (form) {
-                    (*g_objectHandlePolicy)->AddRef(handle);
-                    return true;
-                }
-                return false;
-            }
-            void release_handle(FormId handle) override {
-                (*g_objectHandlePolicy)->Release(util::to_integral(forms::form_id_to_handle(handle)));
-            }
-
-            void console_print(const char * fmt, const va_list& args) override {
-                ConsoleManager * mgr = *g_console;
-                if (mgr) {
-                    CALL_MEMBER_FN (mgr, VPrint)(fmt, args);
-                }
-            }
-        };
-
-        skse_fake_api g_fake_api;
-        skse_real_api g_real_api;
-        skse_silent_api g_silent_api;
-
-        skse_api* g_current_api = &g_fake_api;
+    std::optional<std::string_view> loaded_mod_name (std::uint8_t ndx) override 
+    { 
+        if (auto n = dict.find (char (ndx)); n != std::string_view::npos)
+            return &dict[n + !ndx];
+        return std::nullopt;
     }
 
-
-    void set_real_api() {
-        g_current_api = &g_real_api;
-    }
-    void set_fake_api() {
-        g_current_api = &g_fake_api;
-    }
-    void set_silent_api() {
-        g_current_api = &g_silent_api;
+    std::optional<std::string_view> loaded_light_mod_name (std::uint8_t ndx) override 
+    { 
+        return loaded_mod_name (ndx);
     }
 
-    FormId resolve_handle(FormId handle) {
-        return g_current_api->resolve_handle(handle);
+    std::optional<std::uint8_t> loaded_mod_index (std::string_view const& name) override 
+    {
+        if (name.empty () || dict.find (name.front ()) == std::string_view::npos)
+            return std::nullopt;
+        return std::make_optional (name.front ());
     }
 
-    TESForm* lookup_form(FormId handle) {
-        return handle != FormId::Zero ? g_current_api->lookup_form(handle) : nullptr;
+    std::optional<std::uint16_t> loaded_light_mod_index (std::string_view const& name) override 
+    {
+        return loaded_mod_index (name);
     }
 
-    const char * modname_from_index(uint8_t idx) {
-        return g_current_api->modname_from_index(idx);
+    FormId resolve_handle (FormId handle) override { return handle; }
+
+    TESForm* lookup_form (FormId) override
+    {
+        static char blob[sizeof TESForm] = { '\0' };
+        return reinterpret_cast<TESForm*> (&blob);
     }
 
-    uint8_t modindex_from_name(const char * name) {
-        return g_current_api->modindex_from_name(name);
-    }
+    bool try_retain_handle (FormId) override { return true; }
 
-    void console_print(const char * fmt, const va_list& args) {
-        g_current_api->console_print(fmt, args);
-    }
+    void release_handle (FormId) override {}
 
-    void console_print(const char * fmt, ...) {
-        va_list	args;
-        va_start(args, fmt);
-        console_print(fmt, args);
-        va_end(args);
-    }
+    void console_print (const char*, const va_list&) override {}
 
-    bool try_retain_handle(FormId handle) {
-        return g_current_api->try_retain_handle(handle);
-    }
+};
 
-    void release_handle(FormId handle) {
-        g_current_api->release_handle(handle);
-    }
+TEST (skseAPI, testModnameFromIndex)
+{
+    fake_api t;
 
+    EXPECT_EQ (t.loaded_mod_name ('Z'), "Z");
+    EXPECT_EQ (t.loaded_light_mod_name ('A'), "A");
+
+    EXPECT_EQ (t.loaded_mod_index ("Action"), 'A');
+    EXPECT_EQ (t.loaded_light_mod_index ("Action"), 'A');
+
+    EXPECT_FALSE (t.loaded_mod_name ('|'));
+    EXPECT_FALSE (t.loaded_mod_name ('a'));
+    EXPECT_FALSE (t.loaded_light_mod_name ('|'));
+    EXPECT_FALSE (t.loaded_light_mod_name ('a'));
 }
+
+//--------------------------------------------------------------------------------------------------
+
+/// Used to silence at run-time calls to SKSE (explain why?)
+struct silent_api : public skse_api
+{
+    std::optional<std::uint8_t> loaded_mod_index (std::string_view const&) override { return 0; }
+    std::optional<std::uint16_t> loaded_light_mod_index (std::string_view const&) override { return 0; }
+    std::optional<std::string_view> loaded_mod_name (std::uint8_t) override { return ""; }
+    std::optional<std::string_view> loaded_light_mod_name (std::uint8_t) override { return ""; }
+    FormId resolve_handle (FormId) override { return FormId::Zero; }
+    TESForm* lookup_form (FormId) override { return nullptr; }
+    bool try_retain_handle (FormId) override { return true; }
+    void release_handle (FormId) override {}
+    void console_print (const char*, const va_list&) override {}
+};
+
+//--------------------------------------------------------------------------------------------------
+
+/// Actual wrapper around thin calls to SKSE
+struct real_api : public skse_api
+{
+    std::optional<std::uint8_t> loaded_mod_index (std::string_view const& name) override
+    {
+        using namespace std;
+        auto ndx = DataHandler::GetSingleton ()->GetLoadedModIndex (string (name).c_str ());
+        return ndx != 0xFF ? make_optional (ndx) : nullopt;
+    }
+
+    /// Asuming modIndex is 16-bit, next 16-bit ones in the memory layout looks like reportint 
+    /// the light weight mod index.
+    std::optional<std::uint16_t> loaded_light_mod_index (std::string_view const& name) override
+    {
+        using namespace std;
+        auto modinfo = DataHandler::GetSingleton ()->LookupLoadedLightModByName (string (name).c_str ());
+        if (modinfo)
+        {
+            auto ndx = reinterpret_cast<uint16_t const*> (&modinfo->modIndex);
+            auto light_ndx = ndx + 1;
+            return make_optional (*light_ndx);
+        }
+        return nullopt;
+    }
+
+    std::optional<std::string_view> loaded_mod_name (std::uint8_t i) override
+    {
+        DataHandler* p = DataHandler::GetSingleton ();
+        if (i < p->modList.loadedMods.count)
+            return p->modList.loadedMods[i]->name;
+        return std::nullopt;
+    }
+
+    std::optional<std::string_view> loaded_light_mod_name (std::uint8_t i) override
+    {
+        DataHandler* p = DataHandler::GetSingleton ();
+        if (i < p->modList.loadedCCMods.count)
+            return p->modList.loadedCCMods[i]->name;
+        return std::nullopt;
+    }
+
+    FormId resolve_handle (FormId handle) override
+    {
+        std::uint64_t out = 0,
+                      in  = static_cast<std::uint64_t> (handle);
+        if ((in & 0xFF000000u) == 0xFF000000u)
+            return handle; // dynamic form - return untouched
+        return g_serialization->ResolveHandle (in, &out) ? (FormId) out : FormId::Zero;
+    }
+
+    TESForm* lookup_form (FormId handle) override
+    {
+        return LookupFormByID (static_cast<std::uint32_t> (handle));
+    }
+
+    bool try_retain_handle (FormId id) override
+    {
+        auto h = static_cast<std::uint64_t> (forms::form_id_to_handle (id));
+        auto f = static_cast<TESForm*> ((*g_objectHandlePolicy)->Resolve (TESForm::kTypeID, h));
+        if (f)
+        {
+            (*g_objectHandlePolicy)->AddRef (h);
+            return true;
+        }
+        return false;
+    }
+
+    void release_handle (FormId handle) override
+    {
+        auto h = static_cast<std::uint64_t> (forms::form_id_to_handle (handle));
+        (*g_objectHandlePolicy)->Release (h);
+    }
+
+    void console_print (const char * fmt, const va_list& args) override
+    {
+        if (ConsoleManager* mgr = *g_console)
+            CALL_MEMBER_FN (mgr, VPrint) (fmt, args);
+    }
+};
+
+//--------------------------------------------------------------------------------------------------
+
+fake_api g_fake_api;
+real_api g_real_api;
+silent_api g_silent_api;
+skse_api* g_current_api = &g_fake_api;
+
+} // anonymous namespace
+
+//--------------------------------------------------------------------------------------------------
+
+void set_real_api ()
+{
+    g_current_api = &g_real_api;
+}
+
+void set_fake_api ()
+{
+   g_current_api = &g_fake_api;
+}
+
+void set_silent_api ()
+{
+    g_current_api = &g_silent_api;
+}
+
+FormId resolve_handle (FormId handle)
+{
+    return g_current_api->resolve_handle (handle);
+}
+
+TESForm* lookup_form (FormId handle)
+{
+    return handle != FormId::Zero ? g_current_api->lookup_form (handle) : nullptr;
+}
+
+std::optional<std::uint8_t> loaded_mod_index (std::string_view const& name)
+{
+    return g_current_api->loaded_mod_index (name);
+}
+
+std::optional<std::uint16_t> loaded_light_mod_index (std::string_view const& name)
+{
+    return g_current_api->loaded_light_mod_index (name);
+}
+
+std::optional<std::string_view> loaded_mod_name (std::uint8_t idx)
+{
+    return g_current_api->loaded_mod_name (idx);
+}
+
+std::optional<std::string_view> loaded_light_mod_name (std::uint8_t idx)
+{
+    return g_current_api->loaded_light_mod_name (idx);
+}
+
+void console_print (const char* fmt, const va_list& args)
+{
+    g_current_api->console_print (fmt, args);
+}
+
+void console_print (const char* fmt, ...)
+{
+    va_list args;
+    va_start (args, fmt);
+    console_print (fmt, args);
+    va_end (args);
+}
+
+bool try_retain_handle (FormId handle)
+{
+    return g_current_api->try_retain_handle (handle);
+}
+
+void release_handle (FormId handle)
+{
+    g_current_api->release_handle (handle);
+}
+
+//--------------------------------------------------------------------------------------------------
+
+} // namespace skse
+

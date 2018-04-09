@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <cctype>
 #include <locale>
-#include <codecvt>
+#include <codecvt> //See _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/split.hpp>

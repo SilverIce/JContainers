@@ -1,8 +1,7 @@
 #pragma once
 
-//#include <hash_map>
-#include <concurrent_unordered_map.h>
-//#include <memory>
+#include <concurrent_unordered_map.h> //See _SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNING
+
 #include <atomic>
 #include <tuple>
 #include <assert.h>
