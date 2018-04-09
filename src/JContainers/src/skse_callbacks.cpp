@@ -4,11 +4,9 @@
 #include "skse64/PluginAPI.h"
 #include "skse64_common/skse_version.h"
 #include "skse64/GameData.h"
-//#include "skse/PapyrusVM.h"
 #include "skse64/GameForms.h"
 #include "skse64/GameData.h"
 
-//#include "gtest.h"
 #include "skse/skse.h"
 #include "skse64/PapyrusVM.h"
 #include "util/util.h"
@@ -136,7 +134,7 @@ namespace {
                 JC_log("loaded in editor, marking as incompatible");
                 return false;
             }
-            else if (skse->runtimeVersion != RUNTIME_VERSION_1_5_23) {
+            else if (skse->runtimeVersion != RUNTIME_VERSION_1_5_39) {
                 JC_log("unsupported runtime version %08X", skse->runtimeVersion);
                 return false;
             }

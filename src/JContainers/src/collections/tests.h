@@ -39,7 +39,7 @@ namespace collections { namespace {
         obj->release();
         EXPECT_TRUE(obj->refCount() == 1); // aqueue retains it
 
-        // that will damage memory, later: 
+        // that will damage memory, later:
         //obj->release();
         //EXPECT_TRUE(obj->refCount() == 1);
     }
@@ -100,55 +100,136 @@ namespace collections { namespace {
         EXPECT_TRUE(item("A") < item("b"));
     }
 
-    TEST(forms, test)
+    TEST (forms, test)
     {
-        namespace fh = forms;
+        using forms::is_form_string;
+        using forms::is_static;
+        using forms::form_to_string;
+        using forms::string_to_form;
 
-        EXPECT_TRUE(fh::is_form_string("__formData|Skyrim.esm|0x1"));
-        EXPECT_FALSE(fh::is_form_string("__formDatttt"));
-        EXPECT_FALSE(fh::is_form_string(nullptr));
+        EXPECT_TRUE (is_form_string ("__formData|Skyrim.esm|0x1"));
+        EXPECT_FALSE (is_form_string ("__formDat"));
+        EXPECT_FALSE (is_form_string ("__formDatttt"));
+        EXPECT_FALSE (is_form_string (""));
+        EXPECT_FALSE (is_form_string (nullptr));
 
         // test static form ids
         {
             const int pluginIdx = 'B';
-            const FormId form = (FormId)(pluginIdx << 24 | 0x14);
-
-            EXPECT_TRUE(fh::is_static(form));
-            EXPECT_EQ(form, fh::construct(pluginIdx, 0x14));
-
-            std::string formString = *fh::to_string(form);
-            EXPECT_TRUE(formString ==
-                (std::string(fh::kFormData) + fh::kFormDataSeparator + skse::modname_from_index(pluginIdx) + fh::kFormDataSeparator + "0x14"));
-
-            EXPECT_TRUE(form ==
-                *fh::from_string(formString.c_str()));
-
+            const FormId form = FormId (pluginIdx << 24 | 0x14);
+            EXPECT_TRUE (is_static (form));
+            std::string formString = *form_to_string (form);
+            EXPECT_EQ (form, *string_to_form (formString.c_str ()));
         }
 
         // test global (0xFF*) form ids
         {
-            const FormId form = (FormId)(fh::FormGlobalPrefix << 24 | 0x14);
-
-            EXPECT_TRUE(!fh::is_static(form));
-            EXPECT_EQ(form, fh::construct(fh::FormGlobalPrefix, 0x14));
-
-            std::string formString = *fh::to_string(form);
-
-            EXPECT_TRUE(formString ==
-                (std::string(fh::kFormData) + fh::kFormDataSeparator + fh::kFormDataSeparator + "0xff000014"));
-
-            EXPECT_TRUE(form ==
-                *fh::from_string(formString.c_str()));
+            const FormId form = (FormId)(forms::FormGlobalPrefix << 24 | 0x14);
+            EXPECT_TRUE (!is_static (form));
+            std::string formString = *form_to_string (form);
+            EXPECT_EQ (form, *string_to_form (formString.c_str ()));
         }
+
         {
             const char *unresolveableFString = "__formData|ssa.esm|0x1";
+            EXPECT_TRUE (is_form_string (unresolveableFString));
+            EXPECT_FALSE (string_to_form (unresolveableFString));
+        }
+    }
 
-            EXPECT_TRUE(fh::is_form_string(unresolveableFString));
-            EXPECT_FALSE(fh::from_string(unresolveableFString));
+    TEST (forms, string_to_form)
+    {
+        using namespace std;
+        pair<const char*, optional<forms::FormId>> const args[] =
+        {
+            { (const char*) nullptr, nullopt },
+            { "", nullopt },
+            { "__formData", nullopt },
+            { "z_formData", nullopt },
+            { "__formDataz", nullopt },
+            { "__formDataz|", nullopt },
+            { "__formData|", nullopt },
 
-            // @invalidFormId is invalid in sythetic test only: all plugin indexes except 'A'-'Z' are invalid
-            FormId invalidFormId = (FormId)fh::construct('%', 0x14);
-            EXPECT_FALSE(fh::to_string(invalidFormId));
+            { "|__formData", nullopt },
+            { "|z_formData", nullopt },
+            { "|__formData|", nullopt },
+            { "|z_formData|", nullopt },
+
+            { "a|__formData", nullopt },
+            { "a|z_formData", nullopt },
+            { "a|__formData|", nullopt },
+            { "a|z_formData|", nullopt },
+
+            { "|__formDataa", nullopt },
+            { "|z_formDataa", nullopt },
+            { "|__formData|a", nullopt },
+            { "|z_formData|a", nullopt },
+
+            { "1|__formData", nullopt },
+            { "1|z_formData", nullopt },
+            { "1|__formData|", nullopt },
+            { "1|z_formData|", nullopt },
+
+            { "|__formData|1", nullopt },
+            { "|z_formData|1", nullopt },
+
+            { "__formData||", nullopt },
+            { "z_formData||", nullopt },
+            { "z_formData||1", nullopt },
+            { "__formDataz||1", nullopt },
+            { "__formData||z", nullopt },
+            { "__formData|x|z", nullopt },
+            { "__formData|1|z", nullopt },
+            { "__formDataz||z", nullopt },
+            { "__formDataz|z|z", nullopt },
+
+            { "|z", nullopt },
+            { "|z|", nullopt },
+            { "z|", nullopt },
+            { "||z", nullopt },
+
+            { "1|", nullopt },
+            { "||1", nullopt },
+            { "||", nullopt },
+
+            { " 1|", nullopt },
+            { " ||1", nullopt },
+            { " ||", nullopt },
+
+            { "|1|", nullopt },
+            { " |1", nullopt },
+            { " |1|", nullopt },
+            { "|1|", nullopt },
+            { "__formData|1", nullopt },
+
+            { "|1", nullopt },
+            { "z_formData|6", nullopt },
+            { "z|5", nullopt },
+            { "4", nullopt },
+
+            { "z_formData|0x00000001", nullopt },
+            { "z|0x00000002", nullopt },
+            { "z_formData|0xff000001", nullopt },
+            { "z|0xff000002", nullopt },
+            { "0x00000003", nullopt },
+            { "0xff000004", nullopt },
+
+            // Passes:
+
+            { "__formData||3", FormId (0xff000003) },
+            { "__formData|A|2", FormId (('A' << 24) | 2) },
+            { "__formData|Z|1", FormId (('Z' << 24) | 1) },
+
+            { "__formData||0x00000004", FormId (0xff000004) },
+            { "__formData|A|0x00000005", FormId (('A' << 24) | 5) },
+            { "__formData|Z|0x00000006", FormId (('Z' << 24) | 6) },
+            { "__formData|A|0xff000005", FormId (('A' << 24) | 5) },
+            { "__formData|Z|0xff000006", FormId (('Z' << 24) | 6) }
+        };
+        for (auto i: args)
+        {
+            auto v = forms::string_to_form (i.first);
+            EXPECT_EQ (v, i.second);
         }
     }
 
@@ -237,6 +318,8 @@ namespace collections { namespace {
             fs::directory_iterator end;
             bool atLeastOneTested = false;
 
+            do_tag_allocator (dir / "JFormMap.json");
+
             for (fs::directory_iterator itr(dir); itr != end; ++itr) {
                 if (fs::is_regular_file(*itr)) {
                     atLeastOneTested = true;
@@ -246,6 +329,21 @@ namespace collections { namespace {
             }
 
             EXPECT_TRUE(atLeastOneTested);
+        }
+
+        /// Expect that reading from string will cause an access violation when destroying an object's tag
+        /// In fact tests, the JC istring serialization through Boost, making difference between istring and std::string
+        static void do_tag_allocator (boost::filesystem::path const& filepath)
+        {
+            tes_context_standalone ctx;
+            Handle rootId = Handle::Null;
+            {
+                auto root = json_deserializer::object_from_file (ctx, filepath.generic_string ().c_str ());
+                EXPECT_NOT_NIL (root);
+                rootId = root->uid ();
+            }
+            auto state = ctx.write_to_string ();
+            ctx.read_from_string (state);
         }
 
         static void do_comparison(const char *file_path) {
@@ -262,15 +360,14 @@ namespace collections { namespace {
             auto originJson = json_deserializer::json_from_file(file_path);
             EXPECT_NOT_NIL(originJson);
 
-            auto originJson_text = json_dumps(originJson.get(), 0);
-            auto jsonOut_text = json_dumps(jsonOut.get(), 0);
+            auto originJson_text = json_dumps (originJson.get (), JSON_INDENT (4));
+            auto jsonOut_text = json_dumps (jsonOut.get (), JSON_INDENT (4));
 
             EXPECT_TRUE(json_equal(originJson.get(), jsonOut.get()) == 1);
         }
 
         static void do_comparison2(const char *file_path) {
             EXPECT_NOT_NIL(file_path);
-
             auto jsonOut = make_unique_ptr((json_t*)nullptr, &json_decref);
             {
                 tes_context_standalone ctx;
@@ -283,8 +380,6 @@ namespace collections { namespace {
                 }
 
                 auto state = ctx.write_to_string();
-                ctx.clearState();
-
                 ctx.read_from_string(state);
 
                 jsonOut = json_serializer::create_json_value(*ctx.getObject(rootId));
@@ -566,7 +661,7 @@ namespace collections { namespace {
 
         for (Handle id : identifiers) {
             auto obj = context.getObject(id);
-            EXPECT_TRUE(obj->refCount() == 1);
+            EXPECT_EQ (obj->refCount (), 1);
         }
     }
 

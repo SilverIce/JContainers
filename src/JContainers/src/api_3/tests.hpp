@@ -181,7 +181,7 @@ namespace tes_api_3 {
         EXPECT_TRUE(obj2->_tes_refCount == 1);
 
         EXPECT_TRUE(obj->_tes_refCount == 0);
-        tes_object::retain(ctx, obj, "uniqueTag");
+        tes_object::retain(ctx, obj, "One very long line over 16 bytes so that a SSO triggers");
         tes_object::retain(ctx, obj, "uniqueTag");
         EXPECT_TRUE(obj->_tes_refCount == 2);
 

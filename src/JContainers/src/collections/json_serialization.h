@@ -199,16 +199,16 @@ namespace collections {
                         cnt.u_set(key, self->make_item(value, cnt, key));
                     }
                 }
-                void operator()(form_map& cnt) {
-                    const char *key;
-                    json_t *value;
-                    json_object_foreach(val, key, value) {
-                        auto fkey = forms::from_string(key);
-                        if (fkey) {
-                            form_ref weak_key = make_weak_form_id(*fkey, self->_context);
-                            cnt.u_set(weak_key, self->make_item(value, cnt, weak_key));
+                void operator () (form_map& cnt) 
+                {
+                    const char* key;
+                    json_t* value;
+                    json_object_foreach (val, key, value) 
+                        if (auto fkey = forms::string_to_form (key))
+                        {
+                            form_ref weak_key = make_weak_form_id (*fkey, self->_context);
+                            cnt.u_set (weak_key, self->make_item (value, cnt, weak_key));
                         }
-                    }
                 }
                 void operator()(integer_map& cnt) {
                     const char *key;
@@ -308,7 +308,7 @@ namespace collections {
                             a. lost info and convert it to FormZero
                             b. save info and convert it to string
                         */
-                        item = make_weak_form_id(forms::from_string(string).get_value_or(FormId::Zero), _context);
+                        item = make_weak_form_id (forms::string_to_form (string).value_or (FormId::Zero), _context);
                     }
                     else if (schedule_ref_resolving(string, container, item_key)) { // otherwise it's reference string?
                         ;
@@ -438,7 +438,7 @@ namespace collections {
                     json_object_serialization_consts::put_metainfo<form_map>(object);
 
                     for (auto& pair : cnt.u_container()) {
-                        auto key = forms::to_string(pair.first.get());
+                        auto key = forms::form_to_string(pair.first.get());
                         if (key) {
                             self->fill_key_info(pair.second, cnt, pair.first);
                             json_object_set_new(object, (*key).c_str(), self->create_value(pair.second));
@@ -499,7 +499,7 @@ namespace collections {
                 }
 
                 json_ref operator()(const form_ref& val) const {
-                    auto formStr = forms::to_string(val.get());
+                    auto formStr = forms::form_to_string(val.get());
                     if (formStr) {
                         return (*this)(*formStr);
                     }
@@ -544,7 +544,7 @@ namespace collections {
 
                 void operator()(const form_ref& fid) const {
                     p.append("[");
-                    p.append(*forms::to_string(fid.get()));
+                    p.append(*forms::form_to_string(fid.get()));
                     p.append("]");
                 }
             };

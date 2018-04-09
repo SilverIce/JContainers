@@ -42,11 +42,11 @@ Accepts ASCII and UTF-8 encoded strings only");
         static UInt32 decodeFormStringToFormId(const char* form_string) {
             return util::to_integral(decodeFormStringToForm(form_string));
         }
-        static FormId decodeFormStringToForm(const char* form_string) {
-            return boost::get_optional_value_or(forms::from_string(form_string), FormId::Zero);
+        static FormId decodeFormStringToForm (const char* form_string) {
+            return forms::string_to_form (form_string).value_or (FormId::Zero);
         }
-        static skse::string_ref encodeFormToString(FormId id) {
-            return skse::string_ref{ boost::get_optional_value_or(forms::to_string(id), "") };
+        static skse::string_ref encodeFormToString (FormId id) {
+            return skse::string_ref { forms::form_to_string (id).value_or ("") };
         }
         static skse::string_ref encodeFormIdToString(UInt32 id) {
             return encodeFormToString( util::to_enum<FormId>(id) );
@@ -62,13 +62,15 @@ Accepts ASCII and UTF-8 encoded strings only");
         static util::spinlock generateUUID_lock;
 
     public:
-        static std::string generateUUID() {
-            return boost::uuids::to_string(
-                util::perform_while_locked(generateUUID_lock, [](){ return generateUUID_gen(); })
-            );
+        static std::string generateUUID () 
+        {
+            auto uuid = [] {
+                std::lock_guard<util::spinlock> guard (generateUUID_lock);
+                return generateUUID_gen ();
+            } ();
+            return boost::uuids::to_string (uuid);
         }
         REGISTERF2_STATELESS(generateUUID, "", "Generates random uuid-string like 2e80251a-ab22-4ad8-928c-2d1c9561270e");
-
     };
 
     boost::uuids::random_generator  tes_string::generateUUID_gen;

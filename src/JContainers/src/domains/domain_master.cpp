@@ -29,15 +29,26 @@ namespace domain_master {
 
     namespace {
 
-        auto get_domains_from_fs() -> std::set<util::istring> {
-            namespace fs = boost::filesystem;
+        std::set<util::istring> get_domains_from_fs () 
+        {
+            using namespace boost::filesystem;
+
             std::set<util::istring> domains;
-            fs::path dir = util::relative_to_dll_path(JC_DATA_FILES "Domains/");
-            for (fs::directory_iterator itr(dir), end; itr != end; ++itr) {
-                auto f = itr->path ().filename ().generic_string ();
-                if (f != ".force-install")
-                    domains.insert(f.c_str());
+            path dir = util::relative_to_dll_path (JC_DATA_FILES "Domains/");
+
+            for (directory_iterator it (dir), end; it != end; ++it) 
+            {
+                auto f = it->path ().filename ().generic_string ();
+                // That file forces Nexus Mod Manager installing empty folder
+                if (f == ".force-install")
+                    continue;
+                // Looks like the Nexus Vortex Manager adds some "__delete_if_empty" files 
+                // all around and this cause issues.
+                if (f.size () > 1 && f[0] == '_' && f[1] == '_')
+                    continue;
+                domains.insert (f.c_str ());
             }
+
             return domains;
         }
 
@@ -296,8 +307,9 @@ namespace domain_master {
     namespace {
         util::singleton<master, false> g_domain_master_singleton{
             []() {
+                auto domains = get_domains_from_fs();
                 auto m = new master();
-                m->active_domain_names = get_domains_from_fs();
+                m->active_domain_names = std::move (domains);
                 return m;
             }
         };
