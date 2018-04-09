@@ -133,14 +133,16 @@ struct real_api : public skse_api
 {
     std::optional<std::uint8_t> loaded_mod_index (std::string_view const& name) override
     {
-        auto ndx = DataHandler::GetSingleton ()->GetLoadedModIndex (name.data ());
-        return ndx != 0xFF ? std::make_optional (ndx) : std::nullopt;
+        using namespace std;
+        auto ndx = DataHandler::GetSingleton ()->GetLoadedModIndex (string (name).c_str ());
+        return ndx != 0xFF ? make_optional (ndx) : nullopt;
     }
 
     std::optional<std::uint8_t> loaded_light_mod_index (std::string_view const& name) override
     {
-        auto ndx = DataHandler::GetSingleton ()->GetLoadedLightModIndex (name.data ());
-        return ndx != 0xFF ? std::make_optional (ndx) : std::nullopt;
+        using namespace std;
+        auto ndx = DataHandler::GetSingleton ()->GetLoadedLightModIndex (string (name).c_str ());
+        return ndx != 0xFF ? make_optional (ndx) : nullopt;
     }
 
     std::optional<std::string_view> loaded_mod_name (std::uint8_t i) override
