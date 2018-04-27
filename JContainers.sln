@@ -37,9 +37,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DebugJC", "src\DebugJC\Debu
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "commonVR", "dep\sksevr\common\common-vr.vcxproj", "{172A50B5-633A-45B2-86E7-9E60D0D3F8FE}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "skseVR_common", "dep\sksevr\skse\skse64_common\skseVR_common.vcxproj", "{BF4E6791-1336-4B65-8E3F-731FED37E4B2}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "skseVR_common", "dep\sksevr\sksevr\skse64_common\skseVR_common.vcxproj", "{BF4E6791-1336-4B65-8E3F-731FED37E4B2}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "skseVR", "dep\sksevr\skse\skse64\skseVR.vcxproj", "{639411C0-FC23-4819-A0C5-429A4E5D8A51}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "skseVR", "dep\sksevr\sksevr\skse64\skseVR.vcxproj", "{639411C0-FC23-4819-A0C5-429A4E5D8A51}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
