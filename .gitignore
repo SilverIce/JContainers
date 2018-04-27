@@ -1,6 +1,7 @@
 # Ignore the downloaded artifact
 tools/boost.7z
 dep/skse64
+dep/sksevr
 
 #################
 ## Visual Studio
