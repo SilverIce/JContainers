@@ -277,7 +277,4 @@
   <ItemGroup>
     <ResourceCompile Include="JContainers.rc" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="jc_debug.py" />
-  </ItemGroup>
 </Project>

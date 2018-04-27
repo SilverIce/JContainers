@@ -351,9 +351,6 @@
   <ItemGroup>
     <ResourceCompile Include="JContainers.rc" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="jc_debug.py" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
