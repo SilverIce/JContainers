@@ -148,7 +148,7 @@ extern "C" {
 
             if (msg && msg->type == SKSEMessagingInterface::kMessage_PostLoad) {
 
-                auto loaded = g_messaging->RegisterListener(g_pluginHandle, "JContainers64", [](SKSEMessagingInterface::Message* msg) {
+                auto loaded = g_messaging->RegisterListener(g_pluginHandle, JC_PLUGIN_NAME, [](SKSEMessagingInterface::Message* msg) {
 
                     // JC publishes its API:
                     if (msg && msg->type == jc::message_root_interface) {
