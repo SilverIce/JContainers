@@ -12,6 +12,16 @@ configuration:
 
 environment:
     PYTHON: "C:\\Python35-x64"
+    matrix:
+        - JC_SKSE: "64"
+        - JC_SKSE: "VR"
+
+matrix:
+    exclude:
+        - configuration: Release
+          JC_SKSE: "VR"
+        - configuration: ReleaseVR
+          JC_SKSE: "64"
 
 install:
     - cmd: set PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%
@@ -25,10 +35,10 @@ build:
     project: JContainers.sln
 
 after_build:
-    - cmd: python tools\\install.py x64\\%CONFIGURATION% 64
+    - cmd: python tools\\install.py x64\\%CONFIGURATION% %JS_SKSE%
 
 test_script:
-    - cmd: python tools\\test.py x64\\%CONFIGURATION%\\Data\\SKSE\\Plugins\\JContainers64.dll
+    - cmd: python tools\\test.py x64\\%CONFIGURATION%\\Data\\SKSE\\Plugins\\JContainers%JS_SKSE%.dll
 
 artifacts:
     - path: dist\*
