@@ -1,15 +1,17 @@
 image: Visual Studio 2017
 version: '4.1.0.{build}'
-configuration: Release
 platform: x64
 branches:
     only:
         - master
         - develop
 
+configuration: 
+    - Release 
+    - ReleaseVR
+
 environment:
-    matrix:
-        - PYTHON: "C:\\Python35-x64"
+    PYTHON: "C:\\Python35-x64"
 
 install:
     - cmd: set PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%
@@ -23,10 +25,10 @@ build:
     project: JContainers.sln
 
 after_build:
-    - cmd: python tools\\install.py x64\\Release 64
+    - cmd: python tools\\install.py x64\\%CONFIGURATION% 64
 
 test_script:
-    - cmd: python tools\\test.py x64\\Release\\Data\\SKSE\\Plugins\\JContainers64.dll
+    - cmd: python tools\\test.py x64\\%CONFIGURATION%\\Data\\SKSE\\Plugins\\JContainers64.dll
 
 artifacts:
     - path: dist\*
