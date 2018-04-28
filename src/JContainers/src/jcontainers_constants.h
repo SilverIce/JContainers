@@ -5,7 +5,6 @@
 
 namespace collections {
 
-#   define JC_PLUGIN_NAME           "JContainers64"
 #   define JC_API_VERSION           4
 #   define JC_FEATURE_VERSION       1
 #   define JC_PATCH_VERSION         0
@@ -16,8 +15,21 @@ namespace collections {
                                     "." STR(JC_FEATURE_VERSION)   \
                                     "." STR(JC_PATCH_VERSION)
 
-#   define JC_USER_FILES            "My Games/Skyrim Special Edition/JCUser/"
 #   define JC_DATA_FILES            "JCData/"
+
+#ifdef JC_SKSE_VR
+
+#   define JC_PLUGIN_NAME           "JContainersVR"
+#   define JC_SKSE_LOGS             "\\My Games\\Skyrim VR\\SKSE\\"
+#   define JC_USER_FILES            "My Games/Skyrim VR/JCUser/"
+
+#else
+
+#   define JC_PLUGIN_NAME           "JContainers64"
+#   define JC_SKSE_LOGS             "\\My Games\\Skyrim Special Edition\\SKSE\\"
+#   define JC_USER_FILES            "My Games/Skyrim Special Edition/JCUser/"
+
+#endif
 
     enum class consts : uint32_t {
         storage_chunk = 'JSTR',
