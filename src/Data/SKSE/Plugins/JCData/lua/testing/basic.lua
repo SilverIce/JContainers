@@ -24,7 +24,7 @@ local basicTest = function()
       return (op_table and op_table[key] ~= nil) and op_table[key] or default
     end
 
-    local len = getOptOrDef('minLength',0) + math.random(0, 10)
+    local len = getOptOrDef('minLength',0) + math.random(1, 10)
 
     local function randomString()
       local len = math.random(1, 10)
