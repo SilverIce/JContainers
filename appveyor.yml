@@ -35,10 +35,10 @@ build:
     project: JContainers.sln
 
 after_build:
-    - cmd: python tools\\install.py x64\\%CONFIGURATION% %JS_SKSE%
+    - cmd: python tools\\install.py x64\\%CONFIGURATION% %JC_SKSE%
 
 test_script:
-    - cmd: python tools\\test.py x64\\%CONFIGURATION%\\Data\\SKSE\\Plugins\\JContainers%JS_SKSE%.dll
+    - cmd: python tools\\test.py x64\\%CONFIGURATION%\\Data\\SKSE\\Plugins\\JContainers%JC_SKSE%.dll
 
 artifacts:
     - path: dist\*
