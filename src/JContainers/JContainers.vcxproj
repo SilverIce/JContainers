@@ -308,6 +308,9 @@
     <PostBuildEvent>
       <Command>cd $(SolutionDir) &amp;&amp; python tools\install.py x64\$(Configuration) VR</Command>
     </PostBuildEvent>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_USING_V110_SDK71_;JC_SKSE_VR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -418,6 +421,9 @@
     <PostBuildEvent>
       <Command>cd $(SolutionDir) &amp;&amp; python tools\install.py x64\$(Configuration) 64</Command>
     </PostBuildEvent>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_USING_V110_SDK71_;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugVR|x64'">
     <ClCompile>
@@ -458,6 +464,9 @@
     <PostBuildEvent>
       <Command>cd $(SolutionDir) &amp;&amp; python tools\install.py x64\$(Configuration) VR</Command>
     </PostBuildEvent>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_USING_V110_SDK71_;JC_SKSE_VR;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\api_3\string_wrapper.cpp" />
