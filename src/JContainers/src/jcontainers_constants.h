@@ -1,7 +1,6 @@
 #pragma once
 
-#include <stdint.h>
-#include "typedefs.h"
+#include <cstdint>
 
 namespace collections {
 
@@ -9,7 +8,7 @@ namespace collections {
 #   define JC_FEATURE_VERSION       1
 #   define JC_PATCH_VERSION         0
 
-#   define VER_FILE_VERSION         JC_API_VERSION, JC_FEATURE_VERSION, JC_PATCH_VERSION, 0
+#   define JC_FILE_VERSION          JC_API_VERSION, JC_FEATURE_VERSION, JC_PATCH_VERSION, 0
 
 #   define JC_VERSION_STR           STR(JC_API_VERSION)           \
                                     "." STR(JC_FEATURE_VERSION)   \
@@ -31,7 +30,9 @@ namespace collections {
 
 #endif
 
-    enum class consts : uint32_t {
+#   define JC_PLUGIN_FILENAME       JC_PLUGIN_NAME ".dll"
+
+    enum class consts : std::uint32_t {
         storage_chunk = 'JSTR',
 
         api_version = JC_API_VERSION,
