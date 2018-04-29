@@ -65,17 +65,18 @@ or source code.
 1. Run `git submodule update --init --recursive` so that all dependencies like Jannson, Google Test
    and etc. get downloaded and linked to the correct revisions.
 2. Run the JContainer's `tools\build_boost.bat` file. It should manage to download, unpack,
-   bootstrap and build the neccessary libraries from Boost (version 1.66 currently).
+   bootstrap and build the neccessary libraries from Boost (version 1.67 currently).
 3. Run also the `tools\merge_skse.bat` file. It should extract the stripped down and bundled SKSE64
-   distribution into the local source tree.
+   and SKSE VR distributions into the local source tree.
 4. Open the `JContainers.sln` file with Visual Studio and Rebuild the whole solution. It will take
    some time.
-5. After successfull build, run from the command line `python tools\install.py x64\Release`.
+5. After successfull build, run from the command line `python tools\install.py x64\Release 64`.
    Eventually swap `Release` for `Debug` - depending on what kind of distribution was build and
-   actually is wanted in the `dist\` folder.
+   actually is wanted in the `dist\` folder. The last argument, `64` could be also `VR`, but then
+   the configuration should be either `ReleaseVR` or `DebugVR`.
 6. Optionaly, run `python tools\test.py x64\Release\Data\SKSE\Plugins\JContainers64.dll`. Again it
-   depends whether `Release` or `Debug` builds should be tested. Note however that step 4, must be
-   ran first!
+   depends whether `Release` or `Debug` (or `ReleaseVR` and `DebugVR`) builds should be tested. Note
+   however that step 4, must be ran first!
 
 That's it!
 
