@@ -116,7 +116,7 @@ namespace {
     extern "C" {
 
         __declspec(dllexport) bool SKSEPlugin_Query(const SKSEInterface * skse, PluginInfo * info) {
-            gLog.OpenRelative(CSIDL_MYDOCUMENTS, "\\My Games\\Skyrim Special Edition\\SKSE\\" JC_PLUGIN_NAME ".log");
+            gLog.OpenRelative(CSIDL_MYDOCUMENTS, JC_SKSE_LOGS JC_PLUGIN_NAME ".log");
             gLog.SetPrintLevel(IDebugLog::kLevel_Error);
             gLog.SetLogLevel(IDebugLog::kLevel_DebugMessage);
 
@@ -134,7 +134,7 @@ namespace {
                 JC_log("loaded in editor, marking as incompatible");
                 return false;
             }
-            else if (skse->runtimeVersion != RUNTIME_VERSION_1_5_39) {
+            else if (skse->runtimeVersion != CURRENT_RELEASE_RUNTIME) {
                 JC_log("unsupported runtime version %08X", skse->runtimeVersion);
                 return false;
             }

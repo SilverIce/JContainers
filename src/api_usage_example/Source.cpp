@@ -102,9 +102,9 @@ extern "C" {
 
     __declspec(dllexport) bool SKSEPlugin_Query(const SKSEInterface * skse, PluginInfo * info)
     {
-        gLog.OpenRelative(CSIDL_MYDOCUMENTS, "\\My Games\\Skyrim Special Edition\\SKSE\\" PLUGIN_NAME ".log");
-        gLog.SetPrintLevel(IDebugLog::kLevel_Error);
-        gLog.SetLogLevel(IDebugLog::kLevel_DebugMessage);
+        gLog.OpenRelative (CSIDL_MYDOCUMENTS, JC_SKSE_LOGS PLUGIN_NAME ".log");
+        gLog.SetPrintLevel (IDebugLog::kLevel_Error);
+        gLog.SetLogLevel (IDebugLog::kLevel_DebugMessage);
 
         // populate info structure
         info->infoVersion = PluginInfo::kInfoVersion;
@@ -118,7 +118,7 @@ extern "C" {
             _MESSAGE("loaded in editor, marking as incompatible");
             return false;
         }
-        else if (skse->runtimeVersion != RUNTIME_VERSION_1_5_39) {
+        else if (skse->runtimeVersion != CURRENT_RELEASE_RUNTIME) {
             _MESSAGE("unsupported runtime version %08X", skse->runtimeVersion);
             return false;
         }
@@ -148,7 +148,7 @@ extern "C" {
 
             if (msg && msg->type == SKSEMessagingInterface::kMessage_PostLoad) {
 
-                auto loaded = g_messaging->RegisterListener(g_pluginHandle, "JContainers64", [](SKSEMessagingInterface::Message* msg) {
+                auto loaded = g_messaging->RegisterListener(g_pluginHandle, JC_PLUGIN_NAME, [](SKSEMessagingInterface::Message* msg) {
 
                     // JC publishes its API:
                     if (msg && msg->type == jc::message_root_interface) {

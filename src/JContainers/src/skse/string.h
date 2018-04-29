@@ -26,9 +26,16 @@ namespace skse {
         }
 
         MEMBER_FN_PREFIX(string_ref);
+
+#ifdef JC_SKSE_VR
+        DEFINE_MEMBER_FN(ctor, string_ref *, 0x00C6A540, const char * buf);
+        DEFINE_MEMBER_FN(Set, string_ref *, 0x00C6A6B0, const char * buf);
+        DEFINE_MEMBER_FN(Release, void, 0x00C6A690);
+#else
         DEFINE_MEMBER_FN(ctor, string_ref *, 0x00C28C50, const char * buf);
         DEFINE_MEMBER_FN(Set, string_ref *, 0x00C28DC0, const char * buf);
         DEFINE_MEMBER_FN(Release, void, 0x00C28DA0);
+#endif
 
     public:
 

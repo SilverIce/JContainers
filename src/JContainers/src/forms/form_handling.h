@@ -3,14 +3,7 @@
 #include <string>
 #include <cstdint>
 #include <optional>
-
-#include <boost/algorithm/string.hpp>
-#include <boost/range/iterator_range.hpp>
-#include <boost/optional.hpp>
-#include "boost_extras.h"
-
 #include "skse/skse.h"
-#include "util/cstring.h"
 
 namespace forms 
 {

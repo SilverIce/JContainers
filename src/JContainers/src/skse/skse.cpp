@@ -148,24 +148,34 @@ struct real_api : public skse_api
     std::optional<std::uint16_t> loaded_light_mod_index (std::string_view const& name) override
     {
         using namespace std;
+#ifndef JC_SKSE_VR
         auto modinfo = DataHandler::GetSingleton ()->LookupLoadedLightModByName (string (name).c_str ());
-        return modinfo ? make_optional (light_index (*modinfo)) : nullopt;
+        if (modinfo)
+            return make_optional (light_index (*modinfo));
+#endif
+        return nullopt;
     }
 
     /// Question: order in *Mods list is considered as modIndex or modLighIndex?
     std::optional<std::string_view> loaded_mod_name (std::uint8_t i) override
     {
         DataHandler* p = DataHandler::GetSingleton ();
+#ifdef JC_SKSE_VR
+        if (i < p->modList.loadedModCount)
+#else
         if (i < p->modList.loadedMods.count)
+#endif
             return p->modList.loadedMods[i]->name;
         return std::nullopt;
     }
 
     std::optional<std::string_view> loaded_light_mod_name (std::uint16_t i) override
     {
+#ifndef JC_SKSE_VR
         DataHandler* p = DataHandler::GetSingleton ();
         if (i < p->modList.loadedCCMods.count)
             return p->modList.loadedCCMods[i]->name;
+#endif
         return std::nullopt;
     }
 
