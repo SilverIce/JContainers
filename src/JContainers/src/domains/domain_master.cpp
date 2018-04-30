@@ -38,15 +38,14 @@ namespace domain_master {
 
             for (directory_iterator it (dir), end; it != end; ++it) 
             {
-                auto f = it->path ().filename ().generic_string ();
-
                 // Looks like the Nexus Vortex Manager adds some "__delete_if_empty" files 
                 // or some backup_vortex suffix and other strange things - this cause issues.
-                json_t* json = json_load_file (f.c_str (), 0, nullptr);
-                if (!json)
+                // Also we have to force Nexus Mod Manager to install the folder by supplying the
+                // JC distro with .force-install folder.
+                if (!is_directory (it->path ()))
                     continue;
-                json_decref (json);
 
+                auto f = it->path ().filename ().generic_string ();
                 domains.insert (f.c_str ());
             }
 
