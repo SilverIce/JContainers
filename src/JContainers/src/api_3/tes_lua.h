@@ -74,7 +74,10 @@ Returns @transport)===");
 
         EXPECT_EQ(1, tes_lua::evalLua<SInt32>(ctx, "return jobject ~= nil", tes_lua::pushArg(ctx, "garbage", 4), -1))
             << "@jobject (@args alias) isn't supported";
+
+        EXPECT_EQ (0, tes_lua::evalLua<SInt32> (ctx, "return bit.bxor (8, 2, 10)", nullptr, -1));
     }
+
     TES_META_INFO(tes_lua);
 #endif
 }
