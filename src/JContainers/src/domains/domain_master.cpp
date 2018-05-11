@@ -38,14 +38,14 @@ namespace domain_master {
 
             for (directory_iterator it (dir), end; it != end; ++it) 
             {
-                auto f = it->path ().filename ().generic_string ();
-                // That file forces Nexus Mod Manager installing empty folder
-                if (f == ".force-install")
-                    continue;
                 // Looks like the Nexus Vortex Manager adds some "__delete_if_empty" files 
-                // all around and this cause issues.
-                if (f.size () > 1 && f[0] == '_' && f[1] == '_')
+                // or some backup_vortex suffix and other strange things - this cause issues.
+                // Also we have to force Nexus Mod Manager to install the folder by supplying the
+                // JC distro with .force-install folder.
+                if (!is_directory (it->path ()))
                     continue;
+
+                auto f = it->path ().filename ().generic_string ();
                 domains.insert (f.c_str ());
             }
 

@@ -147,6 +147,31 @@ NEGATIVE_IDX_COMMENT);
         REGISTERF(itemAtIndex<object_base*>, "getObj", "* index default=0", "");
         REGISTERF(itemAtIndex<form_ref>, "getForm", "* index default=None", "");
 
+        template<class Vector>
+        static Vector all_items (tes_context& ctx, ref obj) 
+        {
+            Vector v;
+            typedef typename Vector::value_type T;
+
+            if (!obj)
+                return v;
+
+            object_lock lck (obj);
+            v.reserve (obj->_array.size ());
+
+            for (auto& i : obj->_array)
+                v.emplace_back (i.readAs<T> ());
+
+            return v;
+        }
+        REGISTERF (all_items<VMResultArray<SInt32>>,           "asIntArray",    "*", 
+            "Copy all items to new native Papyrus array of dynamic size.\n"
+            "Items not matching the requested type will have default\n"
+            "values as the ones from the getInt/Flt/Str/Form functions.");
+        REGISTERF (all_items<VMResultArray<Float32>>,          "asFloatArray",  "*", "");
+        REGISTERF (all_items<VMResultArray<skse::string_ref>>, "asStringArray", "*", "");
+        REGISTERF (all_items<VMResultArray<TESForm*>>,         "asFormArray",   "*", "");
+
         template<class T>
         static SInt32 findVal(tes_context& ctx, ref obj, T value, SInt32 pySearchStartIndex = 0) {
 

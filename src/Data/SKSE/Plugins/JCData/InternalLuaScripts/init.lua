@@ -80,6 +80,7 @@ local function createTwoSandboxes()
     io = io,
     string = string,
     table = table,
+    bit = bit,
         
     --require = nil,
     pairs = pairs,

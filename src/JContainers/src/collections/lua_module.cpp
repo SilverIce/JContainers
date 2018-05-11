@@ -87,6 +87,7 @@ namespace lua { namespace aux_wip {
             enum { num_args = 2, returned = 1 };
 
             if (lua_pcall(_lua, num_args, returned, errorHandler) != LUA_OK) {
+                JC_log ("Lua string: %s", lua_string);
                 return boost::none;
             }
             else {

@@ -263,7 +263,7 @@ namespace collections {
         void u_startTimer() {
 
             boost::system::error_code code;
-            _timer.expires_from_now(boost::posix_time::seconds(tick_duration), code);
+            _timer.expires_from_now (boost::posix_time::seconds (int (tick_duration)), code);
             assert(!code);
 
             _timer.async_wait([this](const boost::system::error_code& error) {

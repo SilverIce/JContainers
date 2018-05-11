@@ -73,8 +73,9 @@ namespace collections {
         switch (version)
         {
         default:
-            BOOST_ASSERT(false);
-            break;
+            BOOST_ASSERT_MSG (false, "Invalid version of JContainers archive");
+            throw boost::archive::archive_exception (boost::archive::archive_exception::unsupported_version);
+
         case 2: { // v 3.2.X and below
             using variant_old = boost::variant<boost::blank, SInt32, Real, FormId, internal_object_ref, std::string>;
             variant_old var;
@@ -82,6 +83,7 @@ namespace collections {
             var.apply_visitor(converter_324_to_330<Archive>{ _var, ar });
         }
             break;
+
         case 3:
             ar & _var;
             break;
