@@ -164,11 +164,13 @@ NEGATIVE_IDX_COMMENT);
 
             return v;
         }
-        REGISTERF (all_items<VMResultArray<SInt32>>,           "allInt",  "*", "Copy all items to native Papyrus array");
-        REGISTERF (all_items<VMResultArray<Float32>>,          "allFlt",  "*", "");
-        REGISTERF (all_items<VMResultArray<skse::string_ref>>, "allStr",  "*", "");
-        //REGISTERF (all_items<VMResultArray<object_base*>>,     "allObj",  "*", "");
-        REGISTERF (all_items<VMResultArray<TESForm*>>,         "allForm", "*", "");
+        REGISTERF (all_items<VMResultArray<SInt32>>,           "asIntArray",    "*", 
+            "Copy all items to new native Papyrus array of dynamic size.\n"
+            "Items not matching the requested type will have default\n"
+            "values as the ones from the getInt/Flt/Str/Form functions.");
+        REGISTERF (all_items<VMResultArray<Float32>>,          "asFloatArray",  "*", "");
+        REGISTERF (all_items<VMResultArray<skse::string_ref>>, "asStringArray", "*", "");
+        REGISTERF (all_items<VMResultArray<TESForm*>>,         "asFormArray",   "*", "");
 
         template<class T>
         static SInt32 findVal(tes_context& ctx, ref obj, T value, SInt32 pySearchStartIndex = 0) {
