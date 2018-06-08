@@ -173,7 +173,9 @@ local CString = ffi.typeof('CString')
 -- Carries value from Lua to C++
 local JCValue = ffi.typeof('JCValue')
 
-local CForm = ffi.metatype('CForm', { __eq = function(l, r) return l.___id == r.___id end })
+local CForm = ffi.metatype('CForm', { 
+    __eq = function(l, r) return (l and r) and l.___id == r.___id or false end 
+})
 
 -------------------------------------
 
