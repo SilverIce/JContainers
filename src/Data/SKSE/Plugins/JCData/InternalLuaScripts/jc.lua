@@ -100,7 +100,7 @@ local JArrayNativeFuncs = retrieveNativeFunctions('JArray',
       --getFlt = {'float', 'handle, index, float'},
       --setInt = {'void', 'handle, index, int32_t'},
       --setFlt = {'void', 'handle, index, float'},
-      --valueType = {'int32_t', 'handle, index'},
+      valueType = {'int32_t', 'handle, index'},
     }
   )
   
@@ -308,6 +308,10 @@ do
 
   function JArray.objectWithSize(size)
     return wrapJCHandle(JArrayNativeFuncs.objectWithSize(jc_context, size))
+  end
+
+  function JArray.valueType(optr, idx)
+    return JArrayNativeFuncs.valueType(jc_context, optr.___id, convertIndex(idx))
   end
 
   function JArray.objectWithArray (array)
