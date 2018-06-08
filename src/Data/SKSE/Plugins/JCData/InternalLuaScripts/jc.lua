@@ -101,6 +101,7 @@ local JArrayNativeFuncs = retrieveNativeFunctions('JArray',
       --setInt = {'void', 'handle, index, int32_t'},
       --setFlt = {'void', 'handle, index, float'},
       valueType = {'int32_t', 'handle, index'},
+      eraseIndex = {'void', 'handle, index'},
     }
   )
   
@@ -312,6 +313,10 @@ do
 
   function JArray.valueType(optr, idx)
     return JArrayNativeFuncs.valueType(jc_context, optr.___id, convertIndex(idx))
+  end
+
+  function JArray.eraseIndex(optr, idx)
+    JArrayNativeFuncs.eraseIndex(jc_context, optr.___id, convertIndex(idx))
   end
 
   function JArray.objectWithArray (array)
