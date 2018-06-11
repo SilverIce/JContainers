@@ -100,7 +100,8 @@ local JArrayNativeFuncs = retrieveNativeFunctions('JArray',
       --getFlt = {'float', 'handle, index, float'},
       --setInt = {'void', 'handle, index, int32_t'},
       --setFlt = {'void', 'handle, index, float'},
-      --valueType = {'int32_t', 'handle, index'},
+      valueType = {'int32_t', 'handle, index'},
+      eraseIndex = {'void', 'handle, index'},
     }
   )
   
@@ -172,7 +173,9 @@ local CString = ffi.typeof('CString')
 -- Carries value from Lua to C++
 local JCValue = ffi.typeof('JCValue')
 
-local CForm = ffi.metatype('CForm', { __eq = function(l, r) return l.___id == r.___id end })
+local CForm = ffi.metatype('CForm', { 
+    __eq = function(l, r) return (l and r) and l.___id == r.___id or false end 
+})
 
 -------------------------------------
 
@@ -308,6 +311,14 @@ do
 
   function JArray.objectWithSize(size)
     return wrapJCHandle(JArrayNativeFuncs.objectWithSize(jc_context, size))
+  end
+
+  function JArray.valueType(optr, idx)
+    return JArrayNativeFuncs.valueType(jc_context, optr.___id, convertIndex(idx))
+  end
+
+  function JArray.eraseIndex(optr, idx)
+    JArrayNativeFuncs.eraseIndex(jc_context, optr.___id, convertIndex(idx))
   end
 
   function JArray.objectWithArray (array)

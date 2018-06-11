@@ -1,5 +1,5 @@
 image: Visual Studio 2017
-version: '4.1.1.{build}'
+version: '4.1.2.{build}'
 platform: x64
 branches:
     only:
