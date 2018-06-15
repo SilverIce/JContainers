@@ -9,12 +9,9 @@ namespace tes_api_3 {
 
 #define VALUE_TYPE_COMMENT "0 - no value, 1 - none, 2 - int, 3 - float, 4 - form, 5 - object, 6 - string"
 
-#if 0
+/// Log Papyrus API
 #define JC_LOG_API(message, ...) \
-        JC_log ("[Info] tes_object.%s " message, __func__, __VA_ARGS__);
-#else
-#define JC_LOG_API(message, ...)
-#endif
+        if (_DEBUG) (JC_log ("[Info] tes_object.%s (" message ")", __func__, __VA_ARGS__));
 
     class tes_object : public class_meta< tes_object > {
     public:
@@ -27,15 +24,16 @@ namespace tes_api_3 {
             metaInfo.comment = "Common functionality, shared by JArray, JMap, JFormMap, JIntMap";
         }
 
-        static object_base* retain (tes_context& ctx, ref obj, const char* tag = nullptr) 
+        static object_base* retain (tes_context& ctx, ref obj, const char* tag = nullptr)
         {
-            JC_LOG_API ("(..., %p, \"%s\")", (void*) obj, tag ? tag : "<nullptr>");
-            if (obj) 
+            JC_LOG_API ("0x%p, \"%s\"", (void*) obj, tag ? tag : "<nullptr>");
+
+            if (obj)
             {
                 obj->tes_retain ();
                 obj->set_tag (tag);
             }
-            JC_LOG_API ("exit");
+
             return obj;
         }
         REGISTERF2(retain, "* tag=\"\"",
@@ -50,34 +48,37 @@ Retains and returns the object.)==="
             return &T::object(ctx);
         }
 
-        static object_base* release (tes_context& ctx, ref obj) 
+        static object_base* release (tes_context& ctx, ref obj)
         {
-            JC_LOG_API ("(..., %p)", (void*) obj);
-            if (obj) 
+            JC_LOG_API ("0x%p", (void*) obj);
+
+            if (obj)
                 obj->tes_release ();
-            JC_LOG_API ("exit");
+
             return nullptr;
         }
         REGISTERF2(release, "*", "Releases the object and returns zero, so you can release and nullify with one line of code: object = JValue.release(object)");
 
-        static object_base* releaseAndRetain (tes_context& ctx, ref previousObject, ref newObject, const char* tag = nullptr) 
+        static object_base* releaseAndRetain (tes_context& ctx, ref prev, ref next, const char* tag = nullptr)
         {
-            JC_LOG_API ("(%p, %p, %p, \"%s\")", (void*) &ctx, (void*) previousObject, (void*) newObject,  tag ? tag : "<nullptr>");
-            if (previousObject != newObject) 
+            JC_LOG_API ("0x%p, 0x%p, \"%s\"", (void*) prev, (void*) next,  tag ? tag : "<nullptr>");
+
+            if (prev != next)
             {
-                if (previousObject)
-                    previousObject->tes_release ();
-                retain (ctx, newObject, tag);
+                if (prev)
+                    prev->tes_release ();
+                retain (ctx, next, tag);
             }
-            JC_LOG_API ("exit");
-            return newObject;
+
+            return next;
         }
         REGISTERF2(releaseAndRetain, "previousObject newObject tag=\"\"",
 "Just a union of retain-release calls. Releases @previousObject, retains and returns @newObject.");
 
-        static void releaseObjectsWithTag (tes_context& ctx, const char *tag) 
+        static void releaseObjectsWithTag (tes_context& ctx, const char *tag)
         {
-            JC_LOG_API ("(%p, \"%s\")", (void*) &ctx, tag ? tag : "<nullptr>");
+            JC_LOG_API ("\"%s\"", tag ? tag : "<nullptr>");
+
             if (tag && *tag)
             {
                 auto objects = ctx.filter_objects ([tag] (const object_base& obj) {
@@ -89,18 +90,16 @@ Retains and returns the object.)==="
                         ref->tes_release ();
                 }
             }
-            JC_LOG_API ("exit");
         }
         REGISTERF2(releaseObjectsWithTag, "tag",
 "Releases all objects tagged with @tag.\n"
 "Internally invokes JValue.release on each object same amount of times it has been retained.");
 
-        static ref zeroLifetime(tes_context& ctx, ref obj) 
+        static ref zeroLifetime (tes_context& ctx, ref obj)
         {
-            JC_LOG_API ("(..., %p)", (void*) obj);
+            JC_LOG_API ("0x%p", (void*) obj);
             if (obj)
                 obj->zero_lifetime ();
-            JC_LOG_API ("exit");
             return obj;
         }
         REGISTERF2(zeroLifetime, "*", "Minimizes the time JC temporarily owns the object, returns the object.\n\
@@ -109,10 +108,11 @@ Has zero effect if the object is being retained or if another object contains/re
 
 #       define JC_OBJECT_POOL_KEY   "__tempPools"
 
-        static ref addToPool (tes_context& ctx, ref obj, const char *poolName) 
+        static ref addToPool (tes_context& ctx, ref obj, const char *poolName)
         {
-            JC_LOG_API ("(%p, %p, \"%s\")", (void*) &ctx, (void*) obj, poolName ? poolName : "<nullptr>");
-            if (poolName) 
+            JC_LOG_API ("0x%p, \"%s\"", (void*) obj, poolName ? poolName : "<nullptr>");
+
+            if (poolName)
             {
                 std::string path("." JC_OBJECT_POOL_KEY ".");
                 path += poolName;
@@ -132,7 +132,6 @@ Has zero effect if the object is being retained or if another object contains/re
                 if (location)
                     location->push (item (obj));
             }
-            JC_LOG_API ("exit");
             return obj;
         }
         REGISTERF2(addToPool, "* poolName",
@@ -144,37 +143,37 @@ and anywhere later:\n\
 JValue.cleanPool(\"uniquePoolName\")"
 );
 
-        static void cleanPool (tes_context& ctx, const char* poolName) 
+        static void cleanPool (tes_context& ctx, const char* poolName)
         {
-            JC_LOG_API ("(%p, \"%s\")", (void*) &ctx, poolName ? poolName : "<nullptr>");
-            if (poolName) 
+            JC_LOG_API ("\"%s\"", poolName ? poolName : "<nullptr>");
+
+            if (poolName)
             {
                 auto locationsMap = ctx.root().findOrDef(JC_OBJECT_POOL_KEY).object()->as<map>();
                 if (locationsMap)
                     locationsMap->erase(poolName);
             }
-            JC_LOG_API ("exit");
         }
         REGISTERF2(cleanPool, "poolName", nullptr);
 
-        static ref shallowCopy (tes_context& ctx, ref obj) 
+        static ref shallowCopy (tes_context& ctx, ref obj)
         {
-            JC_LOG_API ("(%p, %p)", (void*) &ctx, (void*) obj);
+            JC_LOG_API ("0x%p", (void*) obj);
+
             ref cpy = nullptr;
             if (obj)
                 cpy = &copying::shallow_copy (ctx, *obj);
-            JC_LOG_API ("exit");
             return cpy;
         }
         REGISTERF2(shallowCopy, "*", "--- Mics. functionality\n\nReturns shallow copy (won't copy child objects)");
 
-        static ref deepCopy(tes_context& ctx, ref obj) 
+        static ref deepCopy(tes_context& ctx, ref obj)
         {
-            JC_LOG_API ("(%p, %p)", (void*) &ctx, (void*) obj);
+            JC_LOG_API ("0x%p", (void*) obj);
+
             ref cpy = nullptr;
             if (obj)
                 cpy = &copying::deep_copy (ctx, *obj);
-            JC_LOG_API ("exit");
             return cpy;
         }
         REGISTERF2(deepCopy, "*", "Returns deep copy");
@@ -182,7 +181,7 @@ JValue.cleanPool(\"uniquePoolName\")"
         static bool isExists(tes_context& ctx, ref obj) {
             return obj != nullptr;
         }
-        REGISTERF2(isExists, "*", "Tests whether given object identifier points to existing object");
+        REGISTERF2(isExists, "*", "Tests whether given object identifier is non-zero?!");
 
         template<class T> static bool isCast(tes_context& ctx, ref obj) {
             return obj->as<T>() != nullptr;
@@ -193,41 +192,36 @@ JValue.cleanPool(\"uniquePoolName\")"
         REGISTERF(isCast<form_map>, "isFormMap", "*", nullptr);
         REGISTERF(isCast<integer_map>, "isIntegerMap", "*", nullptr);
 
-        static bool empty(tes_context& ctx, ref obj) 
+        static bool empty (tes_context& ctx, ref obj)
         {
-            JC_LOG_API ("(%p, %p)", (void*) &ctx, (void*) obj);
-            bool r = (count (ctx, obj) == 0);
-            JC_LOG_API ("exit");
-            return r;
+            JC_LOG_API ("0x%p", (void*) obj);
+            return count (ctx, obj) == 0;
         }
         REGISTERF2(empty, "*", "Returns true, if the container is empty");
 
-        static SInt32 count(tes_context& ctx, ref obj) 
+        static SInt32 count (tes_context& ctx, ref obj)
         {
-            JC_LOG_API ("(..., %p)", (void*) obj);
+            JC_LOG_API ("0x%p", (void*) obj);
+
             SInt32 c = 0;
             if (obj)
                 c = obj->s_count();
-            JC_LOG_API ("exit");
             return c;
         }
         REGISTERF2(count, "*", "Returns amount of items in the container");
 
-        static void clear(tes_context& ctx, ref obj) 
+        static void clear(tes_context& ctx, ref obj)
         {
-            JC_LOG_API ("(..., %p)", (void*) obj);
+            JC_LOG_API ("0x%p", (void*) obj);
             if (obj)
                 obj->s_clear();
-            JC_LOG_API ("exit");
         }
         REGISTERF2(clear, "*", "Removes all items from the container");
 
-        static object_base* readFromFile(tes_context& ctx, const char *path) 
+        static object_base* readFromFile(tes_context& ctx, const char *path)
         {
-            JC_LOG_API ("(%p, \"%s\")", (void*) &ctx, path ? path : "<nullptr>");
-            auto obj = json_deserializer::object_from_file (ctx, path);
-            JC_LOG_API ("exit");
-            return obj;
+            JC_LOG_API ("\"%s\"", path ? path : "<nullptr>");
+            return json_deserializer::object_from_file (ctx, path);
         }
         REGISTERF2(readFromFile, "filePath", "JSON serialization/deserialization:\n\nCreates and returns a new container object containing contents of JSON file");
 
@@ -235,7 +229,7 @@ JValue.cleanPool(\"uniquePoolName\")"
         {
             using namespace boost;
 
-            JC_LOG_API ("(%p, \"%s\", \"%s\")", (void*) &context, (dirPath ? dirPath : "<nullptr>"), (extension ? extension : "<nullptr>"));
+            JC_LOG_API ("\"%s\", \"%s\"", (dirPath ? dirPath : "<nullptr>"), (extension ? extension : "<nullptr>"));
 
             if (!dirPath)
                 return nullptr;
@@ -244,7 +238,7 @@ JValue.cleanPool(\"uniquePoolName\")"
                 extension = "";
 
             map* files = nullptr;
-            try 
+            try
             {
                 filesystem::path root(dirPath);
 
@@ -266,25 +260,23 @@ JValue.cleanPool(\"uniquePoolName\")"
                 JC_LOG_TES_API_ERROR(JValue, readFromDirectory, "throws '%s'", exc.what());
             }
 
-            JC_LOG_API ("exit");
             return files;
         }
         REGISTERF2(readFromDirectory, "directoryPath extension=\"\"",
             "Parses JSON files in a directory (non recursive) and returns JMap containing {filename, container-object} pairs.\n"
             "Note: by default it does not filter files by extension and will try to parse everything");
 
-        static object_base* objectFromPrototype(tes_context& ctx, const char *prototype) 
+        static object_base* objectFromPrototype(tes_context& ctx, const char *prototype)
         {
-            JC_LOG_API ("(%p, \"%s\")", (void*) &ctx, prototype ? prototype : "<nullptr>");
-            auto obj = json_deserializer::object_from_json_data (ctx, prototype);
-            JC_LOG_API ("exit");
-            return obj;
+            JC_LOG_API ("\"%s\"", prototype ? prototype : "<nullptr>");
+            return json_deserializer::object_from_json_data (ctx, prototype);
         }
         REGISTERF2(objectFromPrototype, "prototype", "Creates a new container object using given JSON string-prototype");
 
-        static void writeToFile(tes_context& ctx, object_base *obj, const char * cpath) 
+        static void writeToFile(tes_context& ctx, object_base *obj, const char * cpath)
         {
-            JC_LOG_API ("(..., %p, \"%s\")", (void*) &ctx, (void*) obj, cpath ? cpath : "<nullptr>");
+            JC_LOG_API ("0x%p, \"%s\"", (void*) obj, cpath ? cpath : "<nullptr>");
+
             if (!cpath || !obj)
                 return;
 
@@ -293,30 +285,26 @@ JValue.cleanPool(\"uniquePoolName\")"
             if (!dir.empty() && !boost::filesystem::exists(dir) &&
                 (boost::filesystem::create_directories(dir), !boost::filesystem::exists(dir)))
             {
-                JC_LOG_API ("exit");
                 return;
             }
 
             auto json = json_serializer::create_json_value(*obj);
             if (json)
                 json_dump_file(json.get(), cpath, JSON_INDENT(2));
-
-            JC_LOG_API ("exit");
         }
         REGISTERF(writeToFile, "writeToFile", "* filePath", "Writes the object into JSON file");
 
-        static SInt32 solvedValueType(tes_context& ctx, object_base* obj, const char *path) 
+        static SInt32 solvedValueType(tes_context& ctx, object_base* obj, const char *path)
         {
-            JC_LOG_API ("(..., %p, \"%s\")", (void*) obj, path ? path : "<nullptr>");
+            JC_LOG_API ("0x%p, \"%s\"", (void*) obj, path ? path : "<nullptr>");
 
             SInt32 type = item_type::no_item;
-            if (obj && path) 
+            if (obj && path)
             {
                 ca::visit_value(*obj, path, ca::constant, [&](const item& value) {
                     type = value.type();
                 });
             }
-            JC_LOG_API ("exit");
             return type;
         }
 
@@ -332,9 +320,10 @@ For ex. JValue.hasPath(container, \".player.health\") will test whether @contain
         REGISTERF(solvedValueType, "solvedValueType", "* path", "Returns type of resolved value. " VALUE_TYPE_COMMENT);
 
         template<class T>
-        static T resolveGetter(tes_context& ctx, object_base *obj, const char* path, T val = default_value<T> ()) 
+        static T resolveGetter(tes_context& ctx, object_base *obj, const char* path, T val = default_value<T> ())
         {
-            JC_LOG_API ("(%p, %p, \"%s\", ...)", (void*) &ctx, (void*) obj, path ? path : "<nullptr>");
+            JC_LOG_API ("0x%p, \"%s\"", (void*) obj, path ? path : "<nullptr>");
+
             if (!obj || !path)
                 return val;
 
@@ -344,7 +333,6 @@ For ex. JValue.hasPath(container, \".player.health\") will test whether @contain
                 }
             });
 
-            JC_LOG_API ("exit");
             return val;
         }
         REGISTERF(resolveGetter<Float32>, "solveFlt", "* path default=0.0", "Attempts to retrieve value at given path. If fails, returns @default value");
@@ -354,14 +342,14 @@ For ex. JValue.hasPath(container, \".player.health\") will test whether @contain
         REGISTERF(resolveGetter<form_ref>, "solveForm", "* path default=None", nullptr);
 
         template<class T>
-        static bool solveSetter(tes_context& ctx, object_base* obj, const char* path, T value, bool createMissingKeys = false) 
+        static bool solveSetter(tes_context& ctx, object_base* obj, const char* path, T value, bool createMissingKeys = false)
         {
-            JC_LOG_API ("(..., %p, \"%s\", ..., %d)", (void*) obj, (path ? path : "<nullptr>"), (int) createMissingKeys);
+            JC_LOG_API ("0x%p, \"%s\", ..., %d", (void*) obj, (path ? path : "<nullptr>"), (int) createMissingKeys);
+
             if (!obj || !path)
                 return false;
-            bool succeed = ca::assign(*obj, path, value, createMissingKeys ? ca::creative : ca::constant);
-            JC_LOG_API ("exit");
-            return succeed;
+
+            return ca::assign(*obj, path, value, createMissingKeys ? ca::creative : ca::constant);
         }
         REGISTERF(solveSetter<Float32>, "solveFltSetter", "* path value createMissingKeys=false",
             "Attempts to assign the value. If @createMissingKeys is False it may fail to assign - if no such path exist.\n"
@@ -371,7 +359,7 @@ For ex. JValue.hasPath(container, \".player.health\") will test whether @contain
         REGISTERF(solveSetter<const char*>, "solveStrSetter", "* path value createMissingKeys=false", nullptr);
         REGISTERF(solveSetter<ref>, "solveObjSetter", "* path value createMissingKeys=false", nullptr);
         REGISTERF(solveSetter<form_ref>, "solveFormSetter", "* path value createMissingKeys=false", nullptr);
-        
+
 /*
 Int function atomicFetchAdd(int object, string path, int value, bool createMissingKeys=false, int initialValue=0, int onErrorReturn=0) Global Native
 
@@ -408,7 +396,7 @@ Int function atomicFetchDiv(int object, string path, int value, bool createMissi
 
             return succeed ? previousVal : onError;
         }
-        
+
         template<class T>
         static T evalLua(tes_context& ctx, ref obj, const char* luaCode, T def = default_value<T>()) {
             auto result = lua::eval_lua_function(ctx, obj, luaCode);
