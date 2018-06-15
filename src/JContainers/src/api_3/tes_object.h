@@ -30,7 +30,7 @@ namespace tes_api_3 {
         static void enable_api_log (tes_context& ctx, bool next) {
             log_api_calls = next;
         }
-        REGISTERF (enable_api_log, enableAPILog, "*",
+        REGISTERF (enable_api_log, "enableAPILog", "*",
 "Most call entries made to JC will be logged. Heavy traffic, by default is disabled.\n"
 "Not thread safe for multiple users (though harmless).");
 
