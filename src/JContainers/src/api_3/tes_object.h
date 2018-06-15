@@ -11,7 +11,10 @@ namespace tes_api_3 {
 
 /// Log Papyrus API
 #define JC_LOG_API(message, ...) \
-        if (_DEBUG) (JC_log ("[Info] tes_object.%s (" message ")", __func__, __VA_ARGS__));
+        if (log_api_calls) (JC_log ("[Info] tes_object.%s (" message ")", __func__, __VA_ARGS__));
+
+    /// Flags whether calls from Papyrus API should be logged
+    extern bool log_api_calls;
 
     class tes_object : public class_meta< tes_object > {
     public:
@@ -23,6 +26,13 @@ namespace tes_api_3 {
         void additionalSetup() {
             metaInfo.comment = "Common functionality, shared by JArray, JMap, JFormMap, JIntMap";
         }
+
+        static void enable_api_log (tes_context& ctx, bool next) {
+            log_api_calls = next;
+        }
+        REGISTERF (enable_api_log, enableAPILog, "*",
+"Most call entries made to JC will be logged. Heavy traffic, by default is disabled.\n"
+"Not thread safe for multiple users (though harmless).");
 
         static object_base* retain (tes_context& ctx, ref obj, const char* tag = nullptr)
         {
