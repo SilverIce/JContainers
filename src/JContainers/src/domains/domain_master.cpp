@@ -36,6 +36,9 @@ namespace domain_master {
             std::set<util::istring> domains;
             path dir = util::relative_to_dll_path (JC_DATA_FILES "Domains/");
 
+            if (!exists (dir)) // it will throw below
+                JC_log ("JC Domains folder must exist! (%s)", dir.generic_string ().c_str ());
+
             for (directory_iterator it (dir), end; it != end; ++it) 
             {
                 // Looks like the Nexus Vortex Manager adds some "__delete_if_empty" files 
