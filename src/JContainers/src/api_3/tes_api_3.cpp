@@ -39,3 +39,5 @@
 namespace collections {
 
 }
+
+bool tes_api_3::log_api_calls = false;

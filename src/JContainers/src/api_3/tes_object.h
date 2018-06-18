@@ -191,7 +191,9 @@ JValue.cleanPool(\"uniquePoolName\")"
         static bool isExists(tes_context& ctx, ref obj) {
             return obj != nullptr;
         }
-        REGISTERF2(isExists, "*", "Tests whether given object identifier is non-zero?!");
+        REGISTERF2(isExists, "*", 
+            "Tests whether given object identifier is not the null object.\n"
+            "Note that many other API functions already check that too.");
 
         template<class T> static bool isCast(tes_context& ctx, ref obj) {
             return obj->as<T>() != nullptr;
