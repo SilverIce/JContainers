@@ -3,18 +3,25 @@
 
 namespace tes_api_3 {
 
+
+
+/// Redefine in each logging module
+#define JC_LOG_API_SOURCE "JValue"
+
+#define JC_LOG_API(params, ...) \
+        if (log_api_calls) \
+    JC_log ("[Info] " JC_LOG_API_SOURCE ".%s (" params ")", __func__,  __VA_ARGS__);
+
+    /// Flags whether calls from Papyrus API should be logged
+    extern bool log_api_calls;
+
+
+
     using namespace collections;
 
     const char *kCommentObject = "creates new container object. returns container's identifier (unique integer number).";
 
 #define VALUE_TYPE_COMMENT "0 - no value, 1 - none, 2 - int, 3 - float, 4 - form, 5 - object, 6 - string"
-
-/// Log Papyrus API
-#define JC_LOG_API(message, ...) \
-        if (log_api_calls) (JC_log ("[Info] tes_object.%s (" message ")", __func__, __VA_ARGS__));
-
-    /// Flags whether calls from Papyrus API should be logged
-    extern bool log_api_calls;
 
     class tes_object : public class_meta< tes_object > {
     public:
@@ -189,13 +196,15 @@ JValue.cleanPool(\"uniquePoolName\")"
         REGISTERF2(deepCopy, "*", "Returns deep copy");
 
         static bool isExists(tes_context& ctx, ref obj) {
+            JC_LOG_API ("0x%p", (void*) obj);
             return obj != nullptr;
         }
-        REGISTERF2(isExists, "*", 
+        REGISTERF2(isExists, "*",
             "Tests whether given object identifier is not the null object.\n"
             "Note that many other API functions already check that too.");
 
         template<class T> static bool isCast(tes_context& ctx, ref obj) {
+            JC_LOG_API ("0x%p", (void*) obj);
             return obj->as<T>() != nullptr;
         }
 
@@ -320,7 +329,12 @@ JValue.cleanPool(\"uniquePoolName\")"
             return type;
         }
 
-        static bool hasPath(tes_context& ctx, object_base* obj, const char *path) {
+        REGISTERF(solvedValueType, "solvedValueType", "* path", "Returns type of resolved value. " VALUE_TYPE_COMMENT);
+
+        static bool hasPath(tes_context& ctx, object_base* obj, const char *path)
+        {
+            JC_LOG_API ("0x%p, \"%s\"", (void*) obj, path ? path : "<nullptr>");
+
             return solvedValueType(ctx, obj, path) != item_type::no_item;
         }
         REGISTERF(hasPath, "hasPath", "* path",
@@ -328,8 +342,6 @@ JValue.cleanPool(\"uniquePoolName\")"
 Returns true, if it's possible to resolve given path, i.e. if it's possible to retrieve the value at the path.\n\
 For ex. JValue.hasPath(container, \".player.health\") will test whether @container structure close to this one - {'player': {'health': health_value}}"
 );
-
-        REGISTERF(solvedValueType, "solvedValueType", "* path", "Returns type of resolved value. " VALUE_TYPE_COMMENT);
 
         template<class T>
         static T resolveGetter(tes_context& ctx, object_base *obj, const char* path, T val = default_value<T> ())
@@ -382,7 +394,7 @@ Int function atomicFetchMul(int object, string path, int value, bool createMissi
 Int function atomicFetchDiv(int object, string path, int value, bool createMissingKeys=false, int initialValue=0, int onErrorReturn=0) Global Native
 */
         template<class T>
-        static T incrementByInt(
+        static T incrementByInt(//Is this used??
             tes_context& ctx, object_base* obj, const char* path, T value,
             T&& initialValue = default_value<T>(), bool createMissingKeys = false,
             T&& onError = default_value<T>())
@@ -411,6 +423,7 @@ Int function atomicFetchDiv(int object, string path, int value, bool createMissi
 
         template<class T>
         static T evalLua(tes_context& ctx, ref obj, const char* luaCode, T def = default_value<T>()) {
+            JC_LOG_API ("0x%p, ...", (void*) obj);
             auto result = lua::eval_lua_function(ctx, obj, luaCode);
             return result ? result->readAs<T>() : def;
         }
