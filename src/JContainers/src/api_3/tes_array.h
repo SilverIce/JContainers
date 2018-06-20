@@ -4,6 +4,10 @@
 
 namespace tes_api_3 {
 
+/// Redefine in each logging module
+#undef  JC_LOG_API_SOURCE
+#define JC_LOG_API_SOURCE "JArray"
+
     using namespace collections;
 
 #define NEGATIVE_IDX_COMMENT "negative index accesses items from the end of container counting backwards."
@@ -20,6 +24,7 @@ namespace tes_api_3 {
                 "Inherits JValue functionality";
         }
 
+        // TODO: are these to go to private, all used?
         static bool validateReadIndex(const array *obj, UInt32 index) {
             return obj && index < obj->_array.size();
         }
@@ -36,15 +41,18 @@ namespace tes_api_3 {
 
         REGISTERF(tes_object::object<array>, "object", "", kCommentObject);
 
-        static object_base* objectWithSize(tes_context& ctx, SInt32 size) {
-            if (size < 0) {
-                return nullptr;
-            }
+        static object_base* objectWithSize(tes_context& ctx, SInt32 size)
+        {
+            JC_LOG_API ("%d", size);
 
-            auto& obj = array::objectWithInitializer([&](array &me) {
-                me._array.resize(size);
-            },
-                ctx);
+            if (size < 0)
+                return nullptr;
+
+            auto& obj = array::objectWithInitializer ([&] (array &me)
+            {
+                me._array.resize (size);
+            }
+            , ctx);
 
             return &obj;
         }
@@ -148,7 +156,7 @@ NEGATIVE_IDX_COMMENT);
         REGISTERF(itemAtIndex<form_ref>, "getForm", "* index default=None", "");
 
         template<class Vector>
-        static Vector all_items (tes_context& ctx, ref obj) 
+        static Vector all_items (tes_context& ctx, ref obj)
         {
             Vector v;
             typedef typename Vector::value_type T;
@@ -164,7 +172,7 @@ NEGATIVE_IDX_COMMENT);
 
             return v;
         }
-        REGISTERF (all_items<VMResultArray<SInt32>>,           "asIntArray",    "*", 
+        REGISTERF (all_items<VMResultArray<SInt32>>,           "asIntArray",    "*",
             "Copy all items to new native Papyrus array of dynamic size.\n"
             "Items not matching the requested type will have default\n"
             "values as the ones from the getInt/Flt/Str/Form functions.");
