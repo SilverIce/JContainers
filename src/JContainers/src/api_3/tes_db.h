@@ -1,5 +1,9 @@
 namespace tes_api_3 {
 
+/// Redefine in each logging module
+#undef  JC_LOG_API_SOURCE
+#define JC_LOG_API_SOURCE "JDB"
+
     using namespace collections;
 
     class tes_db : public class_meta<tes_db> {
@@ -14,7 +18,9 @@ Manages keys and values associations (like JMap)";
         }
 
         template<class T>
-        static T solveGetter(tes_context& ctx, const char* path, T t= default_value<T>()) {
+        static T solveGetter(tes_context& ctx, const char* path, T t= default_value<T>())
+        {
+            JC_LOG_API ("%s, ...", path ? path : "");
             return tes_object::resolveGetter<T>(ctx, &ctx.root(), path, t);
         }
         REGISTERF(solveGetter<Float32>, "solveFlt", "path default=0.0",
@@ -35,7 +41,9 @@ JDB.solveObj(\".frostfall.arrayC\") will return the array containing [\"stringVa
         REGISTERF(solveGetter<form_ref>, "solveForm", "path default=None", nullptr);
 
         template<class T>
-        static bool solveSetter(tes_context& ctx, const char* path, T value, bool createMissingKeys = false) { 
+        static bool solveSetter(tes_context& ctx, const char* path, T value, bool createMissingKeys = false)
+        {
+            JC_LOG_API ("%s, ..., %d", path ? path : "", int (createMissingKeys));
             return tes_object::solveSetter(ctx, &ctx.root(), path, value, createMissingKeys);
         }
         REGISTERF(solveSetter<Float32>, "solveFltSetter", "path value createMissingKeys=false",
@@ -47,7 +55,10 @@ JDB.solveObj(\".frostfall.arrayC\") will return the array containing [\"stringVa
         REGISTERF(solveSetter<form_ref>, "solveFormSetter", "path value createMissingKeys=false", nullptr);
 
 
-        static void setObj(tes_context& ctx, const char *path, object_stack_ref& obj) {
+        static void setObj(tes_context& ctx, const char *path, object_stack_ref& obj)
+        {
+            JC_LOG_API ("%s, ...", path ? path : "");
+
             map& dbMap = ctx.root();
 
             if (obj) {
@@ -63,26 +74,31 @@ for ex. JDB.setObj(\"frostfall\", frostFallInformation) will associate 'frostall
 );
 
         static bool hasPath(tes_context& ctx, const char* path) {
+            JC_LOG_API ("%s", path ? path : "");
             return tes_object::hasPath(ctx, &ctx.root(), path);
         }
         REGISTERF2(hasPath, "path", "Returns true, if JDB capable resolve given @path, i.e. if it able to execute solve* or solver*Setter functions successfully");
 
         static object_base* allKeys(tes_context& ctx) {
+            JC_LOG_API ("");
             return tes_map::allKeys(ctx, &ctx.root());
         }
         REGISTERF2(allKeys, "*", "returns new array containing all JDB keys");
 
         static object_base* allValues(tes_context& ctx) {
+            JC_LOG_API ("");
             return tes_map::allValues(ctx, &ctx.root());
         }
         REGISTERF2(allValues, "*", "returns new array containing all containers associated with JDB");
 
         static void writeToFile(tes_context& ctx, const char * path) {
+            JC_LOG_API ("%s", path ? path : "");
             tes_object::writeToFile(ctx, &ctx.root(), path);
         }
         REGISTERF2(writeToFile, "path", "writes storage data into JSON file at given path");
 
         static object_base* root(tes_context& ctx) {
+            JC_LOG_API ("");
             return &ctx.root();
         }
         REGISTERF2(root, "", "Returns underlying JDB's container - an instance of JMap.\nThe object being owned (retained) internally, so you don't have to (but can) retain or release it.")

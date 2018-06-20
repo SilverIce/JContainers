@@ -8,6 +8,10 @@
 
 namespace collections {
 
+/// Redefine in each logging module
+#undef  JC_LOG_API_SOURCE
+#define JC_LOG_API_SOURCE "JString"
+
 	extern boost::optional<std::vector<std::string>> wrap_string(const char *csource, int charsPerLine);
 
     class tes_string : public reflection::class_meta_mixin_t<tes_string> {
@@ -18,7 +22,9 @@ namespace collections {
             metaInfo.comment = "various string utility methods";
         }
 
-        static object_base * wrap(tes_context& ctx, const char* source, SInt32 charsPerLine) {
+        static object_base * wrap(tes_context& ctx, const char* source, SInt32 charsPerLine)
+        {
+            JC_LOG_API ("..., %d", charsPerLine);
 
 			auto strings = wrap_string(source, charsPerLine);
 
@@ -40,15 +46,19 @@ Returns JArray object containing lines.\n\
 Accepts ASCII and UTF-8 encoded strings only");
 
         static UInt32 decodeFormStringToFormId(const char* form_string) {
+            JC_LOG_API ("%s", form_string);
             return util::to_integral(decodeFormStringToForm(form_string));
         }
         static FormId decodeFormStringToForm (const char* form_string) {
+            JC_LOG_API ("%s", form_string);
             return forms::string_to_form (form_string).value_or (FormId::Zero);
         }
         static skse::string_ref encodeFormToString (FormId id) {
+            JC_LOG_API ("0x%x", id);
             return skse::string_ref { forms::form_to_string (id).value_or ("") };
         }
         static skse::string_ref encodeFormIdToString(UInt32 id) {
+            JC_LOG_API ("0x%x", id);
             return encodeFormToString( util::to_enum<FormId>(id) );
         }
 
@@ -62,8 +72,9 @@ Accepts ASCII and UTF-8 encoded strings only");
         static util::spinlock generateUUID_lock;
 
     public:
-        static std::string generateUUID () 
+        static std::string generateUUID ()
         {
+            JC_LOG_API ("");
             auto uuid = [] {
                 std::lock_guard<util::spinlock> guard (generateUUID_lock);
                 return generateUUID_gen ();
@@ -97,7 +108,7 @@ Accepts ASCII and UTF-8 encoded strings only");
                 EXPECT_TRUE(obj->s_count() >= linesCount);
             }
 		};
-        
+
         size_t index = 0;
         json_t *value = nullptr;
         json_array_foreach(testData.get(), index, value) {

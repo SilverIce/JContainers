@@ -1,6 +1,10 @@
 
 namespace tes_api_3 {
 
+/// Redefine in each logging module
+#undef  JC_LOG_API_SOURCE
+#define JC_LOG_API_SOURCE "JLua"
+
     using namespace collections;
 
 #if 1
@@ -35,7 +39,10 @@ Usage example:
 #undef ARGNAMES_2
 
         template<class ResultType>
-        static ResultType evalLua(tes_context& ctx, const char* luaCode, object_base* transport, ResultType def, bool minimizeLifetime = true) {
+        static ResultType evalLua(tes_context& ctx, const char* luaCode, object_base* transport, ResultType def, bool minimizeLifetime = true)
+        {
+            JC_LOG_API ("..., ..., ..., %d", int (minimizeLifetime));
+
             auto result = lua::eval_lua_function(ctx, transport, luaCode);
             if (transport && minimizeLifetime) {
                 transport->zero_lifetime();
@@ -54,7 +61,10 @@ Returns @transport)===");
 #undef ARGNAMES
 
         template<class ArgType>
-        static map* pushArg(tes_context& ctx, const char* key, ArgType arg, map* transport = nullptr) {
+        static map* pushArg(tes_context& ctx, const char* key, ArgType arg, map* transport = nullptr)
+        {
+            JC_LOG_API ("%s, ..., ...", key ? key : "");
+
             if (!transport) {
                 transport = &map::object(ctx);
             }
@@ -81,4 +91,4 @@ Returns @transport)===");
     TES_META_INFO(tes_lua);
 #endif
 }
- 
+

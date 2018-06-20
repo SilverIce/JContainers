@@ -1,5 +1,9 @@
 namespace tes_api_3 {
 
+/// Redefine in each logging module
+#undef  JC_LOG_API_SOURCE
+#define JC_LOG_API_SOURCE "JContainers"
+
     using namespace collections;
 
     class tes_jcontainers : public class_meta<tes_jcontainers> {
@@ -17,6 +21,7 @@ namespace tes_api_3 {
         REGISTERF2_STATELESS(__isInstalled, nullptr, "It's NOT part of public API");
 
         static UInt32 APIVersion() {
+            JC_LOG_API ("");
             return (UInt32)consts::api_version;
         }
         REGISTERF2_STATELESS(APIVersion, nullptr, []() {
@@ -31,11 +36,15 @@ namespace tes_api_3 {
         });
 
         static UInt32 featureVersion() {
+            JC_LOG_API ("");
             return (UInt32)consts::feature_version;
         }
         REGISTERF2_STATELESS(featureVersion, nullptr, nullptr);
 
-        static bool fileExistsAtPath(const char *filename) {
+        static bool fileExistsAtPath(const char *filename)
+        {
+            JC_LOG_API ("%s", filename ? filename : "");
+
             if (!filename) {
                 return false;
             }
@@ -51,6 +60,8 @@ namespace tes_api_3 {
             const char *directoryPath
             ,const char *nameEndsWith = "")
         {
+            JC_LOG_API ("%s, %s", directoryPath ? directoryPath : "", nameEndsWith ? nameEndsWith : "");
+
             if (!directoryPath) {
                 return StringList{};
             }
@@ -83,14 +94,20 @@ namespace tes_api_3 {
             contentsOfDirectoryAtPath<VMResultArray<skse::string_ref>>, "contentsOfDirectoryAtPath",
             "directoryPath extension=\"\"", nullptr);
 
-        static void removeFileAtPath(const char *filename) {
+        static void removeFileAtPath(const char *filename)
+        {
+            JC_LOG_API ("%s", filename ? filename : "");
+
             if (filename) {
                 boost::filesystem::remove_all(filename);
             }
         }
         REGISTERF2_STATELESS(removeFileAtPath, "path", "Deletes the file or directory identified by the @path");
 
-        static std::string userDirectory() {
+        static std::string userDirectory()
+        {
+            JC_LOG_API ("");
+
             char path[MAX_PATH];
             if (!SUCCEEDED(SHGetFolderPath(NULL, CSIDL_MYDOCUMENTS, NULL, SHGFP_TYPE_CURRENT, path))) {
                 return std::string();

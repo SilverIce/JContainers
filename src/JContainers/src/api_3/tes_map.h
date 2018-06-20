@@ -1,5 +1,9 @@
 namespace tes_api_3 {
 
+/// Redefine in each logging module
+#undef  JC_LOG_API_SOURCE
+#define JC_LOG_API_SOURCE "JMap"
+
     using namespace collections;
 
 
@@ -26,6 +30,7 @@ namespace tes_api_3 {
 
         template<class T>
         static T getItem(tes_context& ctx, ref obj, key_cref key, T def = default_value<T>()) {
+            JC_LOG_API ("%p, ..., ...", (void*) obj);
             map_functions::doReadOp(obj, key, [&](item& itm) { def = itm.readAs<T>(); });
             return def;
         }
@@ -37,6 +42,7 @@ namespace tes_api_3 {
 
         template<class T>
         static void setItem(tes_context& ctx, ref obj, key_cref key, T val) {
+            JC_LOG_API ("%p, ..., ...", (void*) obj);
             map_functions::doWriteOp(obj, key, [&](item& itm) { itm = val; });
         }
         REGISTERF(setItem<SInt32>, "setInt", "* key value", "Inserts @key: @value pair. Replaces existing pair with the same @key");
@@ -46,18 +52,23 @@ namespace tes_api_3 {
         REGISTERF(setItem<form_ref>, "setForm", "* key value", "");
 
         static bool hasKey(tes_context& ctx, ref obj, key_cref key) {
+            JC_LOG_API ("%p, ...", (void*) obj);
             return valueType(ctx, obj, key) != 0;
         }
         REGISTERF2(hasKey, "* key", "Returns true, if the container has @key: value pair");
 
         static SInt32 valueType(tes_context& ctx, ref obj, key_cref key) {
+            JC_LOG_API ("%p, ...", (void*) obj);
             auto type = item_type::no_item;
             map_functions::doReadOp(obj, key, [&](item& itm) { type = itm.type(); });
             return (SInt32)type;
         }
         REGISTERF2(valueType, "* key", "Returns type of the value associated with the @key.\n"VALUE_TYPE_COMMENT);
 
-        static object_base* allKeys(tes_context& ctx, ref obj) {
+        static object_base* allKeys(tes_context& ctx, ref obj)
+        {
+            JC_LOG_API ("%p", (void*) obj);
+
             if (!obj) {
                 return nullptr;
             }
@@ -74,7 +85,10 @@ namespace tes_api_3 {
         }
         REGISTERF(allKeys, "allKeys", "*", "Returns a new array containing all keys");
 
-        static VMResultArray<tes_key> allKeysPArray(tes_context& ctx, ref obj) {
+        static VMResultArray<tes_key> allKeysPArray(tes_context& ctx, ref obj)
+        {
+            JC_LOG_API ("%p", (void*) obj);
+
             if (!obj) {
                 return VMResultArray<tes_key>();
             }
@@ -93,7 +107,10 @@ namespace tes_api_3 {
         }
         REGISTERF2(allKeysPArray, "*", "");
 
-        static object_base* allValues(tes_context& ctx, ref obj) {
+        static object_base* allValues(tes_context& ctx, ref obj)
+        {
+            JC_LOG_API ("%p", (void*) obj);
+
             if (!obj) {
                 return nullptr;
             }
@@ -110,7 +127,10 @@ namespace tes_api_3 {
         }
         REGISTERF(allValues, "allValues", "*", "Returns a new array containing all values");
 
-        static bool removeKey(tes_context& ctx, ref obj, key_cref key) {
+        static bool removeKey(tes_context& ctx, ref obj, key_cref key)
+        {
+            JC_LOG_API ("%p, ...", (void*) obj);
+
             if (obj) {
                 return obj->erase(key);
             }
@@ -118,7 +138,10 @@ namespace tes_api_3 {
         }
         REGISTERF(removeKey, "removeKey", "* key", "Removes the pair from the container where the key equals to the @key");
 
-        static SInt32 count(tes_context& ctx, ref obj) {
+        static SInt32 count(tes_context& ctx, ref obj)
+        {
+            JC_LOG_API ("%p", (void*) obj);
+
             if (!obj) {
                 return 0;
             }
@@ -127,7 +150,10 @@ namespace tes_api_3 {
         }
         REGISTERF2(count, "*", "Returns count of pairs in the conainer");
 
-        static void clear(tes_context& ctx, ref obj) {
+        static void clear(tes_context& ctx, ref obj)
+        {
+            JC_LOG_API ("%p", (void*) obj);
+
             if (!obj) {
                 return;
             }
@@ -136,7 +162,10 @@ namespace tes_api_3 {
         }
         REGISTERF2(clear, "*", "Removes all pairs from the container");
 
-        static void addPairs(tes_context& ctx, ref obj, const ref source, bool overrideDuplicates) {
+        static void addPairs(tes_context& ctx, ref obj, const ref source, bool overrideDuplicates)
+        {
+            JC_LOG_API ("%p, %p, %d", (void*) obj, (void*) source, int (overrideDuplicates));
+
             if (!obj || !source || source == obj) {
                 return;
             }
