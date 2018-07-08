@@ -1,0 +1,67 @@
+diff --git a/dep/boost/.gitignore b/dep/boost/.gitignore
+index 86a48e2..541ea43 100644
+--- a/dep/boost/.gitignore
++++ b/dep/boost/.gitignore
+@@ -1,6 +1,7 @@
+ **/doc
+ **/test
+ **/tests
++**/example
+ 
+ /garbage
+ /boost_lib
+diff --git a/dep/boost/boost/archive/basic_binary_iprimitive.hpp b/dep/boost/boost/archive/basic_binary_iprimitive.hpp
+index fc27123..e5738aa 100644
+--- a/dep/boost/boost/archive/basic_binary_iprimitive.hpp
++++ b/dep/boost/boost/archive/basic_binary_iprimitive.hpp
+@@ -109,6 +109,21 @@ public:
+     BOOST_ARCHIVE_OR_WARCHIVE_DECL(void)
+     load(wchar_t * t);
+ 
++    template<class SE, class ST, class SA>
++    BOOST_ARCHIVE_OR_WARCHIVE_DECL(void)
++    load(std::basic_string<SE, ST, SA> &s) {
++        std::size_t l;
++        this->This()->load(l);
++        // borland de-allocator fixup
++#if BOOST_WORKAROUND(_RWSTD_VER, BOOST_TESTED_AT(20101))
++        if (NULL != s.data())
++#endif
++            s.resize(l);
++        // note breaking a rule here - could be a problem on some platform
++        if (0 < l)
++            load_binary(const_cast<SE *>(s.data()), l * sizeof(SE) / sizeof(char));
++    }
++
+     BOOST_ARCHIVE_OR_WARCHIVE_DECL(void)
+     init();
+     BOOST_ARCHIVE_OR_WARCHIVE_DECL(BOOST_PP_EMPTY()) 
+diff --git a/dep/boost/boost/archive/basic_binary_oprimitive.hpp b/dep/boost/boost/archive/basic_binary_oprimitive.hpp
+index 53e44e4..ba7d660 100644
+--- a/dep/boost/boost/archive/basic_binary_oprimitive.hpp
++++ b/dep/boost/boost/archive/basic_binary_oprimitive.hpp
+@@ -104,6 +104,14 @@ public:
+ 
+     BOOST_ARCHIVE_OR_WARCHIVE_DECL(void)
+     init();
++
++    template<class SE, class ST, class SA>
++    BOOST_ARCHIVE_OR_WARCHIVE_DECL(void)
++    save(const std::basic_string<SE, ST, SA> &s) {
++        std::size_t l = static_cast<std::size_t>(s.size());
++        this->This()->save(l);
++        save_binary(s.data(), l * sizeof(SE) / sizeof(char));
++    }
+     
+     BOOST_ARCHIVE_OR_WARCHIVE_DECL(BOOST_PP_EMPTY()) 
+     basic_binary_oprimitive(
+diff --git a/dep/boost/build_libraries.bat b/dep/boost/build_libraries.bat
+index 8a0a9be..4aabd38 100644
+--- a/dep/boost/build_libraries.bat
++++ b/dep/boost/build_libraries.bat
+@@ -1,4 +1,4 @@
+-b2 variant=release link=static threading=multi runtime-link=static --with-date_time --with-serialization --with-filesystem --with-thread --build-dir=garbage --stagedir=boost_lib stage
++b2 variant=release link=static threading=multi runtime-link=static --with-serialization --with-date_time --with-filesystem --with-thread --build-dir=garbage --stagedir=boost_lib stage
+ 
+ 
+ DEL /q /s garbage

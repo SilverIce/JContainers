@@ -1,0 +1,38 @@
+From ef86c4230a6e36b0860aa2ee5580671a4102fc60 Mon Sep 17 00:00:00 2001
+From: unknown <slifeleaf@gmail.com>
+Date: Wed, 28 Oct 2015 00:38:22 +0300
+Subject: [PATCH] json deserialization: fix possible the crash that can be
+ caused by improper contents of __metaInfo struct
+
+---
+ JContainers/src/json_handling.h | 14 ++++++++------
+ 1 file changed, 8 insertions(+), 6 deletions(-)
+
+diff --git a/JContainers/src/json_handling.h b/JContainers/src/json_handling.h
+index 1741f7d..30196a5 100644
+--- a/JContainers/src/json_handling.h
++++ b/JContainers/src/json_handling.h
+@@ -233,12 +233,14 @@ namespace collections {
+                 }
+                 else if (json_is_object(metaInfo)) { // handle metaInfo
+                     auto typeName = json_string_value(json_object_get(metaInfo, jsc::kTypeName));
+-                    if (strcmp(jsc::type2name<form_map>(), typeName) == 0) {
+-                        object = &form_map::object(_context);
+-                    }
+-                    else if (strcmp(jsc::type2name<integer_map>(), typeName) == 0) {
+-                        object = &integer_map::object(_context);
+-                    }
++					if (typeName) {
++						if (strcmp(jsc::type2name<form_map>(), typeName) == 0) {
++							object = &form_map::object(_context);
++						}
++						else if (strcmp(jsc::type2name<integer_map>(), typeName) == 0) {
++							object = &integer_map::object(_context);
++						}
++					}
+                 }
+                 else {
+                     object = &map::object(_context);
+-- 
+1.9.5.msysgit.0
+

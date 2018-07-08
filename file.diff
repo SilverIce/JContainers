@@ -1,0 +1,3122 @@
+diff --git a/JContainers/Data/SKSE/Plugins/JCData/InternalLuaScripts/jc.lua b/JContainers/Data/SKSE/Plugins/JCData/InternalLuaScripts/jc.lua
+index 8d45090..4b23e5f 100644
+--- a/JContainers/Data/SKSE/Plugins/JCData/InternalLuaScripts/jc.lua
++++ b/JContainers/Data/SKSE/Plugins/JCData/InternalLuaScripts/jc.lua
+@@ -48,7 +48,7 @@ end
+ 
+ local function getNativeFunction(className, funcName, returnType, argTypes)
+   local funcPtr = jclib.JC_get_c_function(funcName, className)
+-  local signature = returnType .. '(__cdecl *)(void*' .. (argTypes and (', ' .. argTypes) or '') .. ')'
++  local signature = returnType .. '(__cdecl *)(' .. (argTypes or '') .. ')'
+   --print('retrieving', funcName)
+   return ffi.cast(signature, funcPtr)
+ end
+@@ -153,7 +153,7 @@ local JCObject_common_properties = {
+   typeOf = function(optr) return JCTypeList[jclib.JValue_typeId(optr.___id)] end,
+ 
+   __gc = function(optr) jclib.JValue_release(optr.___id) end,
+-  __len = function(optr) return JValueNativeFuncs.count(jc_context, optr.___id) end,
++  __len = function(optr) return JValueNativeFuncs.count(optr.___id) end,
+   __eq = function(l, r) return (l and r) and l.___id == r.___id or false end,
+ }
+ 
+@@ -270,27 +270,27 @@ end
+ 
+ -- JValue
+ function JValue.readFromFile (path)
+-  return wrapJCHandle(JValueNativeFuncs.readFromFile(jc_context, path))
++  return wrapJCHandle(JValueNativeFuncs.readFromFile(path))
+ end
+ 
+ function JValue.writeToFile  ( optr, path )
+-  JValueNativeFuncs.writeToFile(jc_context, optr.___id, path)
++  JValueNativeFuncs.writeToFile(optr.___id, path)
+ end
+ 
+ function JValue.objectFromPrototype(json_proto)
+-  return wrapJCHandle( JValueNativeFuncs.objectFromPrototype(jc_context, json_proto) )
++  return wrapJCHandle( JValueNativeFuncs.objectFromPrototype(json_proto) )
+ end
+ 
+ function JValue.clear (optr)
+-  JValueNativeFuncs.clear(jc_context, optr.___id)
++  JValueNativeFuncs.clear(optr.___id)
+ end
+ 
+ function JValue.shallowCopy (optr)
+-  return wrapJCHandle(JValueNativeFuncs.shallowCopy(jc_context, optr.___id))
++  return wrapJCHandle(JValueNativeFuncs.shallowCopy(optr.___id))
+ end
+ 
+ function JValue.deepCopy (optr)
+-  return wrapJCHandle(JValueNativeFuncs.deepCopy(jc_context, optr.___id))
++  return wrapJCHandle(JValueNativeFuncs.deepCopy(optr.___id))
+ end
+ 
+ function JValue.solvePath(optr, path)
+@@ -303,11 +303,11 @@ do
+   local function convertIndex(idx) return idx >= 0 and idx - 1 or idx end 
+ 
+   function JArray.object()
+-    return wrapJCHandle(JArrayNativeFuncs.object(jc_context))
++    return wrapJCHandle(JArrayNativeFuncs.object())
+   end
+ 
+   function JArray.objectWithSize(size)
+-    return wrapJCHandle(JArrayNativeFuncs.objectWithSize(jc_context, size))
++    return wrapJCHandle(JArrayNativeFuncs.objectWithSize(size))
+   end
+ 
+   function JArray.objectWithArray (array)
+@@ -347,7 +347,7 @@ end
+ -- JMap stuff
+ do
+   function JMap.object (optr)
+-    return wrapJCHandle(JMapNativeFuncs.object(jc_context))
++    return wrapJCHandle(JMapNativeFuncs.object())
+   end
+ 
+   function JMap.objectWithTable (t)
+@@ -366,7 +366,7 @@ do
+     if value then
+       jclib.JMap_setValue(optr.___id, key, returnJCValue(value))
+     else
+-      JMapNativeFuncs.removeKey(jc_context, optr.___id, key)
++      JMapNativeFuncs.removeKey(optr.___id, key)
+     end
+   end
+ 
+@@ -385,18 +385,18 @@ do
+   end
+ 
+   function JMap.allKeys(optr)
+-    return wrapJCHandle(JMapNativeFuncs.allKeys(jc_context, optr.___id))
++    return wrapJCHandle(JMapNativeFuncs.allKeys(optr.___id))
+   end
+ 
+   function JMap.allValues(optr)
+-    return wrapJCHandle(JMapNativeFuncs.allValues(jc_context, optr.___id))
++    return wrapJCHandle(JMapNativeFuncs.allValues(optr.___id))
+   end
+ end
+ ---------------------------------------
+ -- FormMap stuff
+ do
+   function JFormMap.object (optr)
+-    return wrapJCHandle(JFormMapNativeFuncs.object(jc_context))
++    return wrapJCHandle(JFormMapNativeFuncs.object())
+   end
+ 
+   function JFormMap.objectWithTable (table)
+@@ -431,11 +431,11 @@ do
+   end
+ 
+   function JFormMap.allKeys(optr)
+-    return wrapJCHandle(JFormMapNativeFuncs.allKeys(jc_context, optr.___id))
++    return wrapJCHandle(JFormMapNativeFuncs.allKeys(optr.___id))
+   end
+ 
+   function JFormMap.allValues(optr)
+-    return wrapJCHandle(JFormMapNativeFuncs.allValues(jc_context, optr.___id))
++    return wrapJCHandle(JFormMapNativeFuncs.allValues(optr.___id))
+   end
+ end
+ --------------------------------------- 
+diff --git a/JContainers/JContainers.vcxproj b/JContainers/JContainers.vcxproj
+index 7d043d4..ce9d470 100644
+--- a/JContainers/JContainers.vcxproj
++++ b/JContainers/JContainers.vcxproj
+@@ -136,7 +136,6 @@
+     <ClCompile Include="src\collections\collections.cpp" />
+     <ClCompile Include="src\collections\lua_module.cpp" />
+     <ClCompile Include="src\collections\access.cpp" />
+-    <ClCompile Include="src\context_master\domain_master.cpp" />
+     <ClCompile Include="src\object\object_module.cpp" />
+     <ClCompile Include="src\reflection\detail\reflection.cpp" />
+     <ClCompile Include="src\skse\skse.cpp" />
+@@ -178,7 +177,6 @@
+     <ClInclude Include="src\collections\context.h" />
+     <ClInclude Include="src\collections\context.hpp" />
+     <ClInclude Include="src\collections\error_code.h" />
+-    <ClInclude Include="src\context_master\domain_master.h" />
+     <ClInclude Include="src\form_id.h" />
+     <ClInclude Include="src\iarchive_with_blob.h" />
+     <ClInclude Include="src\jc_interface.h" />
+diff --git a/JContainers/JContainers.vcxproj.filters b/JContainers/JContainers.vcxproj.filters
+index eb0c097..8d7d6e0 100644
+--- a/JContainers/JContainers.vcxproj.filters
++++ b/JContainers/JContainers.vcxproj.filters
+@@ -73,7 +73,6 @@
+     <ClCompile Include="src\util\logging.cpp">
+       <Filter>util</Filter>
+     </ClCompile>
+-    <ClCompile Include="src\context_master\domain_master.cpp" />
+   </ItemGroup>
+   <ItemGroup>
+     <ClInclude Include="src\gtest.h">
+@@ -247,7 +246,6 @@
+     <ClInclude Include="src\util\cstring.h">
+       <Filter>util</Filter>
+     </ClInclude>
+-    <ClInclude Include="src\context_master\domain_master.h" />
+   </ItemGroup>
+   <ItemGroup>
+     <ResourceCompile Include="JContainers.rc" />
+diff --git a/JContainers/src/api_3/tes_array.h b/JContainers/src/api_3/tes_array.h
+index 0abecb5..3c1883e 100644
+--- a/JContainers/src/api_3/tes_array.h
++++ b/JContainers/src/api_3/tes_array.h
+@@ -36,7 +36,7 @@ namespace tes_api_3 {
+ 
+         REGISTERF(tes_object::object<array>, "object", "", kCommentObject);
+ 
+-        static object_base* objectWithSize(tes_context& ctx, SInt32 size) {
++        static object_base* objectWithSize(SInt32 size) {
+             if (size < 0) {
+                 return nullptr;
+             }
+@@ -44,23 +44,23 @@ namespace tes_api_3 {
+             auto& obj = array::objectWithInitializer([&](array &me) {
+                 me._array.resize(size);
+             },
+-                ctx);
++                tes_context::instance());
+ 
+             return &obj;
+         }
+         REGISTERF2(objectWithSize, "size", "creates array of given size, filled with empty items");
+ 
+         template<class TesType, class JCType = TesType>
+-        static object_base* fromArray(tes_context& ctx, VMArray<TesType> arr) {
++        static object_base* fromArray(VMArray<TesType> arr) {
+             auto obj = &array::objectWithInitializer([&](array &me) {
+                 me.u_container().reserve(arr.Length());
+                 for (UInt32 i = 0; i < arr.Length(); ++i) {
+                     TesType val;
+                     arr.Get(&val, i);
+-                    me.u_container().emplace_back(reflection::binding::get_converter<JCType>::convert2J(val, ctx));
++                    me.u_container().emplace_back(reflection::binding::get_converter<JCType>::convert2J(val));
+                 }
+             },
+-                ctx);
++                tes_context::instance());
+ 
+             return obj;
+         }
+@@ -72,7 +72,7 @@ objectWithBooleans converts booleans into integers");
+         REGISTERF(fromArray<bool>, "objectWithBooleans",  "values", nullptr);
+         REGISTERF(ARGS(fromArray<TESForm*, form_ref>), "objectWithForms", "values", nullptr);
+ 
+-        static object_base* subArray(tes_context& ctx, ref source, SInt32 startIndex, SInt32 endIndex) {
++        static object_base* subArray(ref source, SInt32 startIndex, SInt32 endIndex) {
+             if (!source) {
+                 return nullptr;
+             }
+@@ -86,13 +86,13 @@ objectWithBooleans converts booleans into integers");
+             auto obj = &array::objectWithInitializer([&](array &me) {
+                 me._array.insert(me.begin(), source->begin() + startIndex, source->begin() + endIndex);
+             },
+-                ctx);
++                tes_context::instance());
+ 
+             return obj;
+         }
+         REGISTERF2(subArray, "* startIndex endIndex", "creates new array containing all values from source array in range [startIndex, endIndex)");
+ 
+-        static void addFromArray(tes_context& ctx, ref obj, ref another, SInt32 insertAtIndex = -1) {
++        static void addFromArray(ref obj, ref another, SInt32 insertAtIndex = -1) {
+             if (!obj || !another || obj == another) {
+                 return ;
+             }
+@@ -107,7 +107,7 @@ objectWithBooleans converts booleans into integers");
+ "adds values from source array into this array. if insertAtIndex is -1 (default behaviour) it adds to the end.\n"
+ NEGATIVE_IDX_COMMENT);
+ 
+-        static void addFromFormList(tes_context& ctx, ref obj, BGSListForm *formList, SInt32 insertAtIndex = -1) {
++        static void addFromFormList(ref obj, BGSListForm *formList, SInt32 insertAtIndex = -1) {
+             if (!obj || !formList) {
+                 return;
+             }
+@@ -126,14 +126,14 @@ NEGATIVE_IDX_COMMENT);
+                 inserter(array *obj, uint32_t insertAt, tes_context& c) : arr(obj), insertIdx(insertAt), context(c) {}
+             };
+ 
+-            doWriteOp(obj, insertAtIndex, [formList, &obj, &ctx](uint32_t idx) {
+-                formList->Visit(inserter{ obj, idx, ctx });
++            doWriteOp(obj, insertAtIndex, [formList, &obj](uint32_t idx) {
++                formList->Visit(inserter{ obj, idx, tes_context::instance() });
+             });
+         }
+         REGISTERF2(addFromFormList, "* source insertAtIndex=-1", nullptr);
+ 
+         template<class T>
+-        static T itemAtIndex(tes_context& ctx, ref obj, Index index, T t = default_value<T>()) {
++        static T itemAtIndex(ref obj, Index index, T t = default_value<T>()) {
+             doReadOp(obj, index, [=, &t](uint32_t idx) {
+                 t = obj->_array[idx].readAs<T>();
+             });
+@@ -148,7 +148,7 @@ NEGATIVE_IDX_COMMENT);
+         REGISTERF(itemAtIndex<form_ref>, "getForm", "* index default=None", "");
+ 
+         template<class T>
+-        static SInt32 findVal(tes_context& ctx, ref obj, T value, SInt32 pySearchStartIndex = 0) {
++        static SInt32 findVal(ref obj, T value, SInt32 pySearchStartIndex = 0) {
+ 
+             int result = -1;
+ 
+@@ -175,7 +175,7 @@ NEGATIVE_IDX_COMMENT);
+         REGISTERF(findVal<form_ref>, "findForm", "* value searchStartIndex=0", "");
+ 
+         template<class T>
+-        static void replaceItemAtIndex(tes_context& ctx, ref obj, Index index, T val) {
++        static void replaceItemAtIndex(ref obj, Index index, T val) {
+             doReadOp(obj, index, [=](uint32_t idx) {
+                 obj->_array[idx] = item(val);
+             });
+@@ -188,7 +188,7 @@ NEGATIVE_IDX_COMMENT);
+         REGISTERF(replaceItemAtIndex<form_ref>, "setForm", "* index value", "");
+ 
+         template<class T>
+-        static void addItemAt(tes_context& ctx, ref obj, T val, SInt32 addToIndex = -1) {
++        static void addItemAt(ref obj, T val, SInt32 addToIndex = -1) {
+             doWriteOp(obj, addToIndex, [&](uint32_t idx) {
+                 (void)obj->_array.emplace(obj->begin() + idx, val);
+             });
+@@ -200,24 +200,24 @@ if addToIndex >= 0 it inserts value at given index. " NEGATIVE_IDX_COMMENT);
+         REGISTERF(addItemAt<object_base*>, "addObj", "* container addToIndex=-1", "");
+         REGISTERF(addItemAt<form_ref>, "addForm", "* value addToIndex=-1", "");
+ 
+-        static Index count(tes_context& ctx, ref obj) {
+-            return tes_object::count(ctx, obj);
++        static Index count(ref obj) {
++            return tes_object::count(obj);
+         }
+         REGISTERF2(count, "*", "returns number of items in array");
+ 
+-        static void clear(tes_context& ctx, ref obj) {
+-            tes_object::clear(ctx, obj);
++        static void clear(ref obj) {
++            tes_object::clear(obj);
+         }
+         REGISTERF2(clear, "*", "removes all items from array");
+ 
+-        static void eraseIndex(tes_context& ctx, ref obj, SInt32 index) {
++        static void eraseIndex(ref obj, SInt32 index) {
+             doReadOp(obj, index, [=](uint32_t idx) {
+                 obj->_array.erase(obj->begin() + idx);
+             });
+         }
+         REGISTERF2(eraseIndex, "* index", "erases item at index. "NEGATIVE_IDX_COMMENT);
+ 
+-        static void eraseRange(tes_context& ctx, ref obj, SInt32 first, SInt32 last) {
++        static void eraseRange(ref obj, SInt32 first, SInt32 last) {
+ 
+             // 0,1,2,3,4
+             // b        e
+@@ -233,7 +233,7 @@ if addToIndex >= 0 it inserts value at given index. " NEGATIVE_IDX_COMMENT);
+         REGISTERF2(eraseRange, "* first last", "erases [first, last] range of items. "NEGATIVE_IDX_COMMENT
+             "\nFor ex. with [1,-1] range it will erase everything except the first item");
+ 
+-        static SInt32 valueType(tes_context& ctx, ref obj, SInt32 index) {
++        static SInt32 valueType(ref obj, SInt32 index) {
+             SInt32 type = item_type::no_item;
+             doReadOp(obj, index, [=, &type](uint32_t idx) {
+                 type = obj->_array[idx].type();
+@@ -243,7 +243,7 @@ if addToIndex >= 0 it inserts value at given index. " NEGATIVE_IDX_COMMENT);
+         }
+         REGISTERF2(valueType, "* index", "returns type of the value at index. "NEGATIVE_IDX_COMMENT"\n"VALUE_TYPE_COMMENT);
+ 
+-        static void swapItems(tes_context& ctx, ref obj, SInt32 idx, SInt32 idx2) {
++        static void swapItems(ref obj, SInt32 idx, SInt32 idx2) {
+ 
+             SInt32 pyIndexes[] = { idx, idx2 };
+             doReadOp(obj, pyIndexes, [=](const std::array<uint32_t, 2>& indices) {
+@@ -255,7 +255,7 @@ if addToIndex >= 0 it inserts value at given index. " NEGATIVE_IDX_COMMENT);
+         }
+         REGISTERF2(swapItems, "* index1 index2", "Exchanges the items at index1 and index2. "NEGATIVE_IDX_COMMENT);
+ 
+-        static ref sort(tes_context& ctx, ref obj) {
++        static ref sort(ref obj) {
+             if (obj) {
+                 object_lock g(obj);
+                 std::sort(obj->u_container().begin(), obj->u_container().end());
+@@ -264,7 +264,7 @@ if addToIndex >= 0 it inserts value at given index. " NEGATIVE_IDX_COMMENT);
+         }
+         REGISTERF2(sort, "*", "Sorts the items into ascending order (none < int < float < form < object < string). Returns the array itself");
+ 
+-        static ref unique(tes_context& ctx, ref obj) {
++        static ref unique(ref obj) {
+             if (obj) {
+                 object_lock g(obj);
+                 std::sort(obj->u_container().begin(), obj->u_container().end());
+@@ -280,8 +280,7 @@ if addToIndex >= 0 it inserts value at given index. " NEGATIVE_IDX_COMMENT);
+             typename PArrayType = VMArray<ValueType>
+         >
+         static bool writeToPapyrusArray(
+-                tes_context& ctx
+-                , ref obj
++                ref obj
+                 , PArrayType targetArray
+                 , SInt32 py_writeAtIdx = 0         // start write at index of @targetArray
+                 , SInt32 py_stopWriteAtIdx = -1    // stop writing at this last index of @targetArray
+diff --git a/JContainers/src/api_3/tes_db.h b/JContainers/src/api_3/tes_db.h
+index 71ccfa0..cd27c3d 100644
+--- a/JContainers/src/api_3/tes_db.h
++++ b/JContainers/src/api_3/tes_db.h
+@@ -14,8 +14,8 @@ Manages keys and values associations (like JMap)";
+         }
+ 
+         template<class T>
+-        static T solveGetter(tes_context& ctx, const char* path, T t= default_value<T>()) {
+-            return tes_object::resolveGetter<T>(ctx, &ctx.root(), path, t);
++        static T solveGetter(const char* path, T t= default_value<T>()) {
++            return tes_object::resolveGetter<T>(&tes_context::instance().root(), path, t); 
+         }
+         REGISTERF(solveGetter<Float32>, "solveFlt", "path default=0.0",
+ "attempts to get value associated with path.\n\
+@@ -35,8 +35,8 @@ JDB.solveObj(\".frostfall.arrayC\") will return array containing [\"stringValue\
+         REGISTERF(solveGetter<form_ref>, "solveForm", "path default=None", nullptr);
+ 
+         template<class T>
+-        static bool solveSetter(tes_context& ctx, const char* path, T value, bool createMissingKeys = false) { 
+-            return tes_object::solveSetter(ctx, &ctx.root(), path, value, createMissingKeys);
++        static bool solveSetter(const char* path, T value, bool createMissingKeys = false) { 
++            return tes_object::solveSetter(&tes_context::instance().root(), path, value, createMissingKeys);
+         }
+         REGISTERF(solveSetter<Float32>, "solveFltSetter", "path value createMissingKeys=false",
+             "Attempts to assign value. Returns false if no such path\n"
+@@ -47,13 +47,13 @@ JDB.solveObj(\".frostfall.arrayC\") will return array containing [\"stringValue\
+         REGISTERF(solveSetter<form_ref>, "solveFormSetter", "path value createMissingKeys=false", nullptr);
+ 
+ 
+-        static void setObj(tes_context& ctx, const char *path, object_stack_ref& obj) {
+-            map& dbMap = ctx.root();
++        static void setObj(const char *path, object_stack_ref& obj) {
++            map& dbMap = tes_context::instance().root();
+ 
+             if (obj) {
+-                tes_map::setItem(ctx, &dbMap, path, obj);
++                tes_map::setItem(&dbMap, path, obj);
+             } else {
+-                tes_map::removeKey(ctx, &dbMap, path);
++                tes_map::removeKey(&dbMap, path);
+             }
+         }
+         REGISTERF(setObj, "setObj", "key object",
+@@ -62,27 +62,27 @@ destroys association if object is zero\n\
+ for ex. JDB.setObj(\"frostfall\", frostFallInformation) will associate 'frostall' key and frostFallInformation so you can access it later"
+ );
+ 
+-        static bool hasPath(tes_context& ctx, const char* path) {
+-            return tes_object::hasPath(ctx, &ctx.root(), path);
++        static bool hasPath(const char* path) {
++            return tes_object::hasPath(&tes_context::instance().root(), path);
+         }
+         REGISTERF2(hasPath, "path", "returns true, if DB capable resolve given path, e.g. it able to execute solve* or solver*Setter functions successfully");
+ 
+-        static object_base* allKeys(tes_context& ctx) {
+-            return tes_map::allKeys(ctx, &ctx.root());
++        static object_base* allKeys() {
++            return tes_map::allKeys( &tes_context::instance().root() );
+         }
+         REGISTERF2(allKeys, "*", "returns new array containing all JDB keys");
+ 
+-        static object_base* allValues(tes_context& ctx) {
+-            return tes_map::allValues(ctx, &ctx.root());
++        static object_base* allValues() {
++            return tes_map::allValues( &tes_context::instance().root() );
+         }
+         REGISTERF2(allValues, "*", "returns new array containing all containers associated with JDB");
+ 
+-        static void writeToFile(tes_context& ctx, const char * path) {
+-            tes_object::writeToFile(ctx, &ctx.root(), path);
++        static void writeToFile(const char * path) {
++            tes_object::writeToFile( &tes_context::instance().root(), path);
+         }
+         REGISTERF2(writeToFile, "path", "writes storage data into JSON file at given path");
+ 
+-        static void readFromFile(tes_context& ctx, const char *path) {
++        static void readFromFile(const char *path) {
+         }
+         REGISTERF2(readFromFile, "path",
+ "DEPRECATED. Reads information from a JSON file at given path and replaces JDB content with the file content");
+diff --git a/JContainers/src/api_3/tes_form_db.h b/JContainers/src/api_3/tes_form_db.h
+index ecbe44d..e2cde8e 100644
+--- a/JContainers/src/api_3/tes_form_db.h
++++ b/JContainers/src/api_3/tes_form_db.h
+@@ -66,17 +66,17 @@ namespace tes_api_3 {
+ 
+         using key_cref = const form_ref_lightweight&;
+ 
+-        static form_map *makeFormStorage(tes_context& ctx, const char *storageName) {
++        static form_map *makeFormStorage(const char *storageName) {
+             if (!validate_storage_name(storageName)) {
+                 return nullptr;
+             }
+ 
+-            auto& db = ctx.root();
+-            form_map::ref fmap = tes_map::getItem<object_base*>(ctx, &db, storageName)->as<form_map>();
++            auto& db = tes_context::instance().root();
++            form_map::ref fmap = tes_map::getItem<object_base*>(&db, storageName)->as<form_map>();
+ 
+             if (!fmap) {
+-                fmap = tes_object::object<form_map>(ctx);
+-                tes_db::setObj(ctx, storageName, fmap.to_base<object_base>());
++                fmap = tes_object::object<form_map>();
++                tes_db::setObj(storageName, fmap.to_base<object_base>());
+             }
+ 
+             return fmap.get();
+@@ -86,55 +86,55 @@ namespace tes_api_3 {
+             return name && *name;
+         }
+ 
+-        static void setEntry(tes_context& ctx, const char *storageName, key_cref formKey, object_stack_ref& entry) {
++        static void setEntry(const char *storageName, key_cref formKey, object_stack_ref& entry) {
+             if (!validate_storage_name(storageName) || !formKey) {
+                 return;
+             }
+ 
+             if (entry) {
+-                auto fmap = makeFormStorage(ctx, storageName);
+-                tes_form_map::setItem(ctx, fmap, formKey, entry);
++                auto fmap = makeFormStorage(storageName);
++                tes_form_map::setItem(fmap, formKey, entry);
+             } else {
+-                auto& db = ctx.root();
+-                auto fmap = tes_map::getItem<object_base*>(ctx, &db, storageName)->as<form_map>();
+-                tes_form_map::removeKey(ctx, fmap, formKey);
++                auto& db = tes_context::instance().root();
++                auto fmap = tes_map::getItem<object_base*>(&db, storageName)->as<form_map>();
++                tes_form_map::removeKey(fmap, formKey);
+             }
+         }
+         REGISTERF2(setEntry, "storageName fKey entry", "associates given form key and entry (container). set entry to zero to destroy association");
+ 
+-        static map *makeMapEntry(tes_context& ctx, const char *storageName, key_cref form) {
++        static map *makeMapEntry(const char *storageName, key_cref form) {
+             if (!form || !validate_storage_name(storageName)) {
+                 return nullptr;
+             }
+ 
+-            form_map *fmap = makeFormStorage(ctx, storageName);
+-            map *entry = tes_form_map::getItem<object_base*>(ctx, fmap, form)->as<map>();
++            form_map *fmap = makeFormStorage(storageName);
++            map *entry = tes_form_map::getItem<object_base*>(fmap, form)->as<map>();
+             if (!entry) {
+-                entry = tes_object::object<map>(ctx);
+-                tes_form_map::setItem(ctx, fmap, form, entry);
++                entry = tes_object::object<map>();
++                tes_form_map::setItem(fmap, form, entry);
+             }
+ 
+             return entry;
+         }
+         REGISTERF(makeMapEntry, "makeEntry", "storageName fKey", "returns (or creates new if not found) JMap entry for given storage and form");
+ 
+-        static object_base *findEntry(tes_context& ctx, const char *storageName, key_cref form) {
+-            auto& db = ctx.root();
+-            form_map *fmap = tes_map::getItem<object_base*>(ctx, &db, storageName)->as<form_map>();
+-            return tes_form_map::getItem<object_base*>(ctx, fmap, form);
++        static object_base *findEntry(const char *storageName, key_cref form) {
++            auto& db = tes_context::instance().root();
++            form_map *fmap = tes_map::getItem<object_base*>(&db, storageName)->as<form_map>();
++            return tes_form_map::getItem<object_base*>(fmap, form);
+         }
+         REGISTERF2(findEntry, "storageName fKey", "search for entry for given storage and form");
+ 
+-        static map *findMapEntry(tes_context& ctx, const char *storageName, key_cref form) {
+-            return findEntry(ctx, storageName, form)->as<map>();
++        static map *findMapEntry(const char *storageName, key_cref form) {
++            return findEntry(storageName, form)->as<map>();
+         }
+ 
+         //////////////////////////////////////////////////////////////////////////
+ 
+         template<class T>
+-        static T solveGetter(tes_context& ctx, key_cref form, const char* path, T t= default_value<T>()) {
++        static T solveGetter(key_cref form, const char* path, T t= default_value<T>()) {
+             subpath_extractor sub(path, is_path);
+-            return tes_object::resolveGetter<T>(ctx, findEntry(ctx, sub.storageName(), form), sub.rest(), t);
++            return tes_object::resolveGetter<T>(findEntry(sub.storageName(), form), sub.rest(), t); 
+         }
+         REGISTERF(solveGetter<Float32>, "solveFlt", "fKey path default=0.0", "attempts to get value associated with path.");
+         REGISTERF(solveGetter<SInt32>, "solveInt", "fKey path default=0", nullptr);
+@@ -143,9 +143,9 @@ namespace tes_api_3 {
+         REGISTERF(solveGetter<form_ref>, "solveForm", "fKey path default=None", nullptr);
+ 
+         template<class T>
+-        static bool solveSetter(tes_context& ctx, key_cref form, const char* path, T value, bool createMissingKeys = false) {
++        static bool solveSetter(key_cref form, const char* path, T value, bool createMissingKeys = false) {
+             subpath_extractor sub(path, is_path);
+-            return tes_object::solveSetter(ctx, findEntry(ctx, sub.storageName(), form), sub.rest(), value, createMissingKeys);
++            return tes_object::solveSetter(findEntry(sub.storageName(), form), sub.rest(), value, createMissingKeys);
+         }
+         REGISTERF(solveSetter<Float32>, "solveFltSetter", "fKey path value createMissingKeys=false",
+             "Attempts to assign value. Returns false if no such path\n"
+@@ -155,33 +155,33 @@ namespace tes_api_3 {
+         REGISTERF(solveSetter<object_stack_ref&>, "solveObjSetter", "fKey path value createMissingKeys=false", nullptr);
+         REGISTERF(solveSetter<form_ref>, "solveFormSetter", "fKey path value createMissingKeys=false", nullptr);
+ 
+-        static bool hasPath(tes_context& ctx, key_cref form, const char* path) {
++        static bool hasPath(key_cref form, const char* path) {
+             subpath_extractor sub(path);
+-            return tes_object::hasPath(ctx, findMapEntry(ctx, sub.storageName(), form), sub.rest());
++            return tes_object::hasPath(findMapEntry(sub.storageName(), form), sub.rest());
+         }
+         REGISTERF2(hasPath, "fKey path", "returns true, if capable resolve given path, e.g. it able to execute solve* or solver*Setter functions successfully");
+ 
+         //////////////////////////////////////////////////////////////////////////
+ 
+-        static object_base* allKeys(tes_context& ctx, key_cref form, const char *path) {
++        static object_base* allKeys(key_cref form, const char *path) {
+             subpath_extractor sub(path);
+-            return tes_map::allKeys(ctx, findMapEntry(ctx, sub.storageName(), form));
++            return tes_map::allKeys( findMapEntry(sub.storageName(), form) );
+         }
+         REGISTERF2(allKeys, "fKey key",
+             "JMap-like interface functions:\n"
+             "\n"
+             "returns new array containing all keys");
+ 
+-        static object_base* allValues(tes_context& ctx, key_cref form, const char *path) {
++        static object_base* allValues(key_cref form, const char *path) {
+             subpath_extractor sub(path);
+-            return tes_map::allValues(ctx, findMapEntry(ctx, sub.storageName(), form));
++            return tes_map::allValues( findMapEntry(sub.storageName(), form) );
+         }
+         REGISTERF2(allValues, "fKey key", "returns new array containing all values");
+ 
+         template<class T>
+-        static T getItem(tes_context& ctx, key_cref form, const char* path) {
++        static T getItem(key_cref form, const char* path) {
+             subpath_extractor sub(path);
+-            return tes_map::getItem<T>(ctx, findMapEntry(ctx, sub.storageName(), form), sub.rest());
++            return tes_map::getItem<T>( findMapEntry(sub.storageName(), form), sub.rest());
+         }
+         // TODO: where is default value parameter?
+         REGISTERF(getItem<SInt32>, "getInt", "fKey key", "returns value associated with key");
+@@ -191,9 +191,9 @@ namespace tes_api_3 {
+         REGISTERF(getItem<form_ref>, "getForm", "fKey key", "");
+ 
+         template<class T>
+-        static void setItem(tes_context& ctx, key_cref form, const char* path, T item) {
++        static void setItem(key_cref form, const char* path, T item) {
+             subpath_extractor sub(path);
+-            tes_map::setItem(ctx, makeMapEntry(ctx, sub.storageName(), form), sub.rest(), item);
++            tes_map::setItem( makeMapEntry(sub.storageName(), form), sub.rest(), item);
+         }
+         REGISTERF(setItem<SInt32>, "setInt", "fKey key value", "creates key-value association. replaces existing value if any");
+         REGISTERF(setItem<Float32>, "setFlt", "fKey key value", "");
+@@ -233,36 +233,32 @@ namespace tes_api_3 {
+ 
+     TEST(tes_form_db, storage_and_entry)
+     {
+-        tes_context_standalone ctx;
+-
+         const char *storageName = "forms";
+ 
+-        auto formStorage = tes_form_db::makeFormStorage(ctx, storageName);
++        auto formStorage = tes_form_db::makeFormStorage(storageName);
+         EXPECT_NOT_NIL(formStorage);
+-        EXPECT_EQ(formStorage, tes_form_db::makeFormStorage(ctx, storageName));
++        EXPECT_EQ(formStorage, tes_form_db::makeFormStorage(storageName));
+ 
+-        auto fakeForm = make_lightweight_form_ref((FormId)0x14, ctx);
++        auto fakeForm = make_lightweight_form_ref((FormId)0x14, tes_context::instance());
+ 
+-        auto entry = tes_form_db::makeMapEntry(ctx, storageName, fakeForm);
++        auto entry = tes_form_db::makeMapEntry(storageName, fakeForm);
+         EXPECT_NOT_NIL(entry);
+-        EXPECT_EQ(entry, tes_form_db::makeMapEntry(ctx, storageName, fakeForm));
++        EXPECT_EQ(entry, tes_form_db::makeMapEntry(storageName, fakeForm));
+     }
+ 
+ 
+     TEST(tes_form_db, get_set)
+     {
+-        tes_context_standalone ctx;
+-
+-        auto fakeForm = make_lightweight_form_ref((FormId)0x14, ctx);
++        auto fakeForm = make_lightweight_form_ref((FormId)0x14, tes_context::instance());
+ 
+         const char *path = ".forms.object";
+ 
+-        auto ar = tes_array::objectWithSize(ctx, 0);
++        auto ar = tes_array::objectWithSize(0);
+         EXPECT_NOT_NIL(ar);
+-        tes_form_db::setItem(ctx, fakeForm, path, ar);
++        tes_form_db::setItem(fakeForm, path, ar);
+ 
+-        EXPECT_TRUE(ar == tes_form_db::getItem<object_base*>(ctx, fakeForm, path));
+-        EXPECT_TRUE(ar == tes_form_db::solveGetter<object_base*>(ctx, fakeForm, path));
++        EXPECT_TRUE(ar == tes_form_db::getItem<object_base*>(fakeForm, path));
++        EXPECT_TRUE(ar == tes_form_db::solveGetter<object_base*>(fakeForm, path));
+     }
+ 
+ 
+diff --git a/JContainers/src/api_3/tes_jcontainers.h b/JContainers/src/api_3/tes_jcontainers.h
+index b46f64a..e4df6ca 100644
+--- a/JContainers/src/api_3/tes_jcontainers.h
++++ b/JContainers/src/api_3/tes_jcontainers.h
+@@ -14,12 +14,12 @@ namespace tes_api_3 {
+         static bool __isInstalled() {
+             return true;
+         }
+-        REGISTERF2_STATELESS(__isInstalled, nullptr, "NOT part of public API");
++        REGISTERF2(__isInstalled, nullptr, "NOT part of public API");
+ 
+         static UInt32 APIVersion() {
+             return (UInt32)consts::api_version;
+         }
+-        REGISTERF2_STATELESS(APIVersion, nullptr, []() {
++        REGISTERF2(APIVersion, nullptr, []() {
+             std::stringstream comm;
+             comm << "Version information.\n"
+                 "It's a good practice to validate installed JContainers version with the following code:\n"
+@@ -33,7 +33,7 @@ namespace tes_api_3 {
+         static UInt32 featureVersion() {
+             return (UInt32)consts::feature_version;
+         }
+-        REGISTERF2_STATELESS(featureVersion, nullptr, nullptr);
++        REGISTERF2(featureVersion, nullptr, nullptr);
+ 
+         static bool fileExistsAtPath(const char *filename) {
+             if (!filename) {
+@@ -44,14 +44,14 @@ namespace tes_api_3 {
+             int result = _stat(filename, &buf);
+             return result == 0;
+         }
+-        REGISTERF2_STATELESS(fileExistsAtPath, "path", "Returns true if file at a specified path exists");
++        REGISTERF2(fileExistsAtPath, "path", "Returns true if file at a specified path exists");
+ 
+         static void removeFileAtPath(const char *filename) {
+             if (filename) {
+                 boost::filesystem::remove_all(filename);
+             }
+         }
+-        REGISTERF2_STATELESS(removeFileAtPath, "path", "Deletes the file or directory identified by a given path");
++        REGISTERF2(removeFileAtPath, "path", "Deletes the file or directory identified by a given path");
+ 
+         static std::string userDirectory() {
+             char path[MAX_PATH];
+@@ -72,12 +72,12 @@ namespace tes_api_3 {
+         static skse::string_ref _userDirectory() {
+             return userDirectory().c_str();
+         }
+-        REGISTERF_STATELESS(_userDirectory, "userDirectory", "", "A path to user-specific directory - "JC_USER_FILES);
++        REGISTERF(_userDirectory, "userDirectory", "", "A path to user-specific directory - "JC_USER_FILES);
+ 
+         static SInt32 lastError() {
+             return 0;
+         }
+-        REGISTERF2_STATELESS(lastError, nullptr, []() {
++        REGISTERF2(lastError, nullptr, []() {
+             std::stringstream comm;
+             comm << "DEPRECATE. Returns last occured error (error code):";
+             for (int i = 0; i < JErrorCount; ++i) {
+@@ -89,7 +89,7 @@ namespace tes_api_3 {
+         static skse::string_ref lastErrorString() {
+             return "";
+         }
+-        REGISTERF2_STATELESS(lastErrorString, nullptr, "DEPRECATE. Returns string that describes last error");
++        REGISTERF2(lastErrorString, nullptr, "DEPRECATE. Returns string that describes last error");
+ 
+         REGISTER_TEXT([]() {
+             const char* fmt = R"===(
+@@ -108,15 +108,13 @@ endfunction
+ 
+     TEST(tes_jcontainers, userDirectory)
+     {
+-        tes_context_standalone ctx;
+-
+         auto write_file = [&](const boost::filesystem::path& path) {
+             boost::filesystem::remove_all(path);
+ 
+             EXPECT_FALSE(boost::filesystem::is_regular(path));
+ 
+-            object_stack_ref obj = tes_object::object<map>(ctx);
+-            tes_object::writeToFile(ctx, obj.get(), path.string().c_str());
++            object_stack_ref obj = tes_object::object<map>();
++            tes_object::writeToFile(obj.get(), path.string().c_str());
+ 
+             EXPECT_TRUE(boost::filesystem::is_regular(path));
+ 
+diff --git a/JContainers/src/api_3/tes_lua.h b/JContainers/src/api_3/tes_lua.h
+index fe5db7e..9302eb3 100644
+--- a/JContainers/src/api_3/tes_lua.h
++++ b/JContainers/src/api_3/tes_lua.h
+@@ -34,8 +34,8 @@ Usage example:
+ #undef ARGNAMES_2
+ 
+         template<class ResultType>
+-        static ResultType evalLua(tes_context& ctx, const char* luaCode, object_base* transport, ResultType def, bool minimizeLifetime = true) {
+-            auto result = lua::eval_lua_function(ctx, transport, luaCode);
++        static ResultType evalLua(const char* luaCode, object_base* transport, ResultType def, bool minimizeLifetime = true) {
++            auto result = lua::eval_lua_function(tes_context::instance(), transport, luaCode);
+             if (transport && minimizeLifetime) {
+                 transport->zero_lifetime();
+             }
+@@ -53,12 +53,12 @@ Returns @transport)===");
+ #undef ARGNAMES
+ 
+         template<class ArgType>
+-        static map* pushArg(tes_context& ctx, const char* key, ArgType arg, map* transport = nullptr) {
++        static map* pushArg(const char* key, ArgType arg, map* transport = nullptr) {
+             if (!transport) {
+-                transport = &map::object(ctx);
++                transport = &map::object(tes_context::instance());
+             }
+ 
+-            tes_map::setItem<ArgType>(ctx, transport, key, arg);
++            tes_map::setItem<ArgType>(transport, key, arg);
+             return transport;
+         }
+ 
+@@ -67,11 +67,9 @@ Returns @transport)===");
+ 
+     TEST(JLua, simple)
+     {
+-        tes_context_standalone ctx;
++        EXPECT_EQ( 8, tes_lua::evalLua<float>("return args.x * args.y", tes_lua::pushArg("x", 2, tes_lua::pushArg("y", 4)), 0.f) );
+ 
+-        EXPECT_EQ(8, tes_lua::evalLua<float>(ctx, "return args.x * args.y", tes_lua::pushArg(ctx, "x", 2, tes_lua::pushArg(ctx, "y", 4)), 0.f));
+-
+-        EXPECT_EQ(1, tes_lua::evalLua<SInt32>(ctx, "return jobject ~= nil", tes_lua::pushArg(ctx, "garbage", 4), -1))
++        EXPECT_EQ(1, tes_lua::evalLua<SInt32>("return jobject ~= nil", tes_lua::pushArg("garbage", 4), -1))
+             << "@jobject (@args alias) isn't supported";
+     }
+     TES_META_INFO(tes_lua);
+diff --git a/JContainers/src/api_3/tes_map.h b/JContainers/src/api_3/tes_map.h
+index 42539e3..d801498 100644
+--- a/JContainers/src/api_3/tes_map.h
++++ b/JContainers/src/api_3/tes_map.h
+@@ -13,7 +13,7 @@ namespace tes_api_3 {
+ 
+         using map_functions = map_functions_templ < Cnt >;
+         using map_type = Cnt;
+-        using tes_key = reflection::binding::convert_to_tes_type<typename map_type::key_type>;
++        using tes_key = reflection::binding::get_converter_tes_type<typename map_type::key_type>;
+ 
+         typedef typename Cnt* ref;
+ 
+@@ -25,7 +25,7 @@ namespace tes_api_3 {
+         REGISTERF(tes_object::object<Cnt>, "object", "", kCommentObject);
+ 
+         template<class T>
+-        static T getItem(tes_context& ctx, ref obj, key_cref key, T def = default_value<T>()) {
++        static T getItem(Cnt *obj, key_cref key, T def = default_value<T>()) {
+             map_functions::doReadOp(obj, key, [&](item& itm) { def = itm.readAs<T>(); });
+             return def;
+         }
+@@ -36,7 +36,7 @@ namespace tes_api_3 {
+         REGISTERF(getItem<form_ref>, "getForm", "object key default=None", "");
+ 
+         template<class T>
+-        static void setItem(tes_context& ctx, ref obj, key_cref key, T val) {
++        static void setItem(Cnt *obj, key_cref key, T val) {
+             map_functions::doWriteOp(obj, key, [&](item& itm) { itm = val; });
+         }
+         REGISTERF(setItem<SInt32>, "setInt", "* key value", "creates key-value association. replaces existing value if any");
+@@ -45,19 +45,19 @@ namespace tes_api_3 {
+         REGISTERF(setItem<object_base*>, "setObj", "* key container", "");
+         REGISTERF(setItem<form_ref>, "setForm", "* key value", "");
+ 
+-        static bool hasKey(tes_context& ctx, ref obj, key_cref key) {
+-            return valueType(ctx, obj, key) != 0;
++        static bool hasKey(ref obj, key_cref key) {
++            return valueType(obj, key) != 0;
+         }
+         REGISTERF2(hasKey, "* key", "returns true, if something associated with key");
+ 
+-        static SInt32 valueType(tes_context& ctx, ref obj, key_cref key) {
++        static SInt32 valueType(ref obj, key_cref key) {
+             auto type = item_type::no_item;
+             map_functions::doReadOp(obj, key, [&](item& itm) { type = itm.type(); });
+             return (SInt32)type;
+         }
+         REGISTERF2(valueType, "* key", "returns type of the value associated with key.\n"VALUE_TYPE_COMMENT);
+ 
+-        static object_base* allKeys(tes_context& ctx, ref obj) {
++        static object_base* allKeys(Cnt* obj) {
+             if (!obj) {
+                 return nullptr;
+             }
+@@ -70,11 +70,11 @@ namespace tes_api_3 {
+                     arr.u_container().emplace_back(pair.first);
+                 }
+             },
+-                ctx);
++                tes_context::instance());
+         }
+         REGISTERF(allKeys, "allKeys", "*", "returns new array containing all keys");
+ 
+-        static VMResultArray<tes_key> allKeysPArray(tes_context& ctx, ref obj) {
++        static VMResultArray<tes_key> allKeysPArray(Cnt* obj) {
+             if (!obj) {
+                 return VMResultArray<tes_key>();
+             }
+@@ -84,7 +84,7 @@ namespace tes_api_3 {
+             keys.reserve(obj->u_count());
+             std::transform(obj->u_container().begin(), obj->u_container().end(),
+                 std::back_inserter(keys),
+-                [&ctx](const typename map_type::value_type& p) {
++                [](const typename map_type::value_type& p) {
+                     return reflection::binding::get_converter<typename map_type::key_type>::convert2Tes(p.first);
+                 }
+             );
+@@ -93,7 +93,7 @@ namespace tes_api_3 {
+         }
+         REGISTERF2(allKeysPArray, "*", "");
+ 
+-        static object_base* allValues(tes_context& ctx, ref obj) {
++        static object_base* allValues(Cnt *obj) {
+             if (!obj) {
+                 return nullptr;
+             }
+@@ -106,11 +106,11 @@ namespace tes_api_3 {
+                     arr._array.push_back(pair.second);
+                 }
+             },
+-                ctx);
++                tes_context::instance());
+         }
+         REGISTERF(allValues, "allValues", "*", "returns new array containing all values");
+ 
+-        static bool removeKey(tes_context& ctx, ref obj, key_cref key) {
++        static bool removeKey(Cnt *obj, key_cref key) {
+             if (obj) {
+                 return obj->erase(key);
+             }
+@@ -118,7 +118,7 @@ namespace tes_api_3 {
+         }
+         REGISTERF(removeKey, "removeKey", "* key", "destroys key-value association");
+ 
+-        static SInt32 count(tes_context& ctx, ref obj) {
++        static SInt32 count(ref obj) {
+             if (!obj) {
+                 return 0;
+             }
+@@ -127,7 +127,7 @@ namespace tes_api_3 {
+         }
+         REGISTERF2(count, "*", "returns count of items/associations");
+ 
+-        static void clear(tes_context& ctx, ref obj) {
++        static void clear(ref obj) {
+             if (!obj) {
+                 return;
+             }
+@@ -136,7 +136,7 @@ namespace tes_api_3 {
+         }
+         REGISTERF2(clear, "*", "removes all items from container");
+ 
+-        static void addPairs(tes_context& ctx, ref obj, const ref source, bool overrideDuplicates) {
++        static void addPairs(ref obj, const ref source, bool overrideDuplicates) {
+             if (!obj || !source || source == obj) {
+                 return;
+             }
+@@ -159,11 +159,11 @@ namespace tes_api_3 {
+ 
+         //////////////////////////////////////////////////////////////////////////
+ 
+-        static Key nextKey(tes_context& ctx, ref obj, key_cref previousKey, key_ref endKey) {
++        static Key nextKey(ref obj, key_cref previousKey, key_ref endKey) {
+             return map_functions::nextKey_forPapyrus(obj, previousKey, endKey);
+         }
+ 
+-        static Key getNthKey(tes_context& ctx, ref obj, SInt32 keyIndex) {
++        static Key getNthKey(ref obj, SInt32 keyIndex) {
+             Key ith;
+             map_functions::getNthKey(obj, keyIndex, [&](const typename Cnt::key_type& key) { ith = key; });
+             return ith;
+@@ -211,7 +211,7 @@ Usage:
+     struct tes_map_ext : class_meta < tes_map_ext > {
+         REGISTER_TES_NAME("JMap");
+         template<class Key>
+-        static Key nextKey(tes_context& ctx, map* obj, const char* previousKey = "", const char * endKey = "") {
++        static Key nextKey(map* obj, const char* previousKey = "", const char * endKey = "") {
+             Key str(endKey);
+             map_functions::nextKey(obj, previousKey, [&](const std::string& key) { str = key.c_str(); });
+             return str;
+@@ -221,7 +221,7 @@ Usage:
+         static const char * getNthKey_comment() { return "Retrieves N-th key. " NEGATIVE_IDX_COMMENT "\nWorst complexity is O(n/2)"; }
+ 
+         template<class Key>
+-        static Key getNthKey(tes_context& ctx, map* obj, SInt32 keyIndex) {
++        static Key getNthKey(map* obj, SInt32 keyIndex) {
+             Key ith;
+             map_functions::getNthKey(obj, keyIndex, [&](const std::string& key) { ith = key.c_str(); });
+             return ith;
+@@ -241,7 +241,7 @@ Usage:
+             }
+         };
+ 
+-        static form_ref_lightweight nextKey(tes_context& ctx, form_map* obj
++        static form_ref_lightweight nextKey(form_map* obj
+             , const form_ref_lightweight& previousKey
+             , const form_ref_lightweight& endKey)
+         {
+@@ -265,18 +265,18 @@ Usage:
+     {
+         using namespace collections;
+ 
+-        tes_context_standalone ctx;
+-        collections::form_map* fmap = tes_object::object<form_map>(ctx);
++        auto& ctx = tes_context::instance();
++        collections::form_map* fmap = tes_object::object<form_map>();
+         fmap->u_container()[make_weak_form_id(util::to_enum<FormId>(0x14), ctx)] = item{ 10 };
+         fmap->u_container()[make_weak_form_id(util::to_enum<FormId>(0x20), ctx)] = item{ 14 };
+ 
+-        auto countIterations = [&](collections::form_map* fmap) -> int {
++        auto countIterations = [](collections::form_map* fmap) -> int {
+             int cycle_counter = 0;
+             const form_ref_lightweight endKey{};
+-            form_ref_lightweight key = tes_form_map_ext::nextKey(ctx, fmap, endKey, endKey);
++            form_ref_lightweight key = tes_form_map_ext::nextKey(fmap, endKey, endKey);
+             while (key) {
+                 ++cycle_counter;
+-                key = tes_form_map_ext::nextKey(ctx, fmap, key, endKey);
++                key = tes_form_map_ext::nextKey(fmap, key, endKey);
+             }
+             return cycle_counter;
+         };
+diff --git a/JContainers/src/api_3/tes_object.h b/JContainers/src/api_3/tes_object.h
+index dab39f8..36827fe 100644
+--- a/JContainers/src/api_3/tes_object.h
++++ b/JContainers/src/api_3/tes_object.h
+@@ -20,7 +20,7 @@ namespace tes_api_3 {
+             metaInfo.comment = "Common functionality, shared by JArray, JMap, JFormMap, JIntMap";
+         }
+ 
+-        static object_base* retain(tes_context& ctx, ref obj, const char* tag = nullptr) {
++        static object_base* retain(ref obj, const char* tag = nullptr) {
+             if (obj) {
+                 obj->tes_retain();
+                 obj->set_tag(tag);
+@@ -37,11 +37,11 @@ Retains and returns the object.)==="
+             );
+ 
+         template<class T>
+-        static T* object(tes_context& ctx) {
+-            return &T::object(ctx);
++        static T* object() {
++            return &T::object(tes_context::instance());
+         }
+ 
+-        static object_base* release(tes_context& ctx, ref obj) {
++        static object_base* release(ref obj) {
+             if (obj) {
+                 obj->tes_release();
+             }
+@@ -50,13 +50,13 @@ Retains and returns the object.)==="
+         }
+         REGISTERF2(release, "*", "Releases the object and returns zero, so you can release and nullify with one line of code: object = JValue.release(object)");
+ 
+-        static object_base* releaseAndRetain(tes_context& ctx, ref previousObject, ref newObject, const char* tag = nullptr) {
++        static object_base* releaseAndRetain(ref previousObject, ref newObject, const char* tag = nullptr) {
+             if (previousObject != newObject) {
+                 if (previousObject) {
+                     previousObject->tes_release();
+                 }
+ 
+-                retain(ctx, newObject, tag);
++                retain(newObject, tag);
+             }
+ 
+             return newObject;
+@@ -64,12 +64,12 @@ Retains and returns the object.)==="
+         REGISTERF2(releaseAndRetain, "previousObject newObject tag=\"\"",
+ "Just a union of retain-release calls. Releases previousObject, retains and returns newObject.");
+ 
+-        static void releaseObjectsWithTag(tes_context& ctx, const char *tag) {
++        static void releaseObjectsWithTag(const char *tag) {
+             if (!tag) {
+                 return;
+             }
+ 
+-            auto objects = ctx.filter_objects([tag](const object_base& obj) {
++            auto objects = tes_context::instance().filter_objects([tag](const object_base& obj) {
+                 return obj.has_equal_tag(tag);
+             });
+ 
+@@ -83,7 +83,7 @@ Retains and returns the object.)==="
+ "For cleanup purpose only - releases all objects with given tag.\n"
+ "Complements all retain calls the objects with given tag received with release calls.");
+ 
+-        static ref zeroLifetime(tes_context& ctx, ref obj) {
++        static ref zeroLifetime(ref obj) {
+             if (obj) {
+                 obj->zero_lifetime();
+             }
+@@ -94,19 +94,19 @@ By using this function you help JC to delete unused object as soon as possible (
+ 
+ #       define JC_OBJECT_POOL_KEY   "__tempPools"
+ 
+-        static object_base* addToPool(tes_context& ctx, ref obj, const char *poolName) {
++        static object_base* addToPool(ref obj, const char *poolName) {
+             if (poolName) {
+                 std::string path("." JC_OBJECT_POOL_KEY ".");
+                 path += poolName;
+ 
+                 array::ref location;
+ 
+-                ca::visit_value(ctx.root(), path.c_str(), ca::creative, [&](item& value) {
++                ca::visit_value(tes_context::instance().root(), path.c_str(), ca::creative, [&](item& value) {
+                     if (auto loc = value.object()->as<array>()) {
+                         location = loc;
+                     }
+                     else {
+-                        location = &array::object(ctx);
++                        location = &array::object(tes_context::instance());
+                         value = location.get();
+                     }
+                 });
+@@ -126,9 +126,9 @@ anywhere later:\n\
+ JValue.cleanPool(\"uniquePoolName\")"
+ );
+ 
+-        static void cleanPool(tes_context& ctx, const char *poolName) {
++        static void cleanPool(const char *poolName) {
+             if (poolName) {
+-                auto locationsMap = ctx.root().findOrDef(JC_OBJECT_POOL_KEY).object()->as<map>();
++                auto locationsMap = tes_context::instance().root().findOrDef(JC_OBJECT_POOL_KEY).object()->as<map>();
+                 if (locationsMap) {
+                     locationsMap->erase(poolName);
+                 }
+@@ -136,22 +136,22 @@ JValue.cleanPool(\"uniquePoolName\")"
+         }
+         REGISTERF2(cleanPool, "poolName", nullptr);
+ 
+-        static ref shallowCopy(tes_context& ctx, ref obj) {
+-            return obj ? &copying::shallow_copy(ctx, *obj) : nullptr;
++        static ref shallowCopy(ref obj) {
++            return obj ? &copying::shallow_copy(tes_context::instance(), *obj) : nullptr;
+         }
+         REGISTERF2(shallowCopy, "*", "--- Mics. functionality\n\nReturns shallow copy (won't copy child objects)");
+ 
+-        static ref deepCopy(tes_context& ctx, ref obj) {
+-            return obj ? &copying::deep_copy(ctx, *obj) : nullptr;
++        static ref deepCopy(ref obj) {
++            return obj ? &copying::deep_copy(tes_context::instance(), *obj) : nullptr;
+         }
+         REGISTERF2(deepCopy, "*", "Returns deep copy");
+ 
+-        static bool isExists(tes_context& ctx, ref obj) {
++        static bool isExists(ref obj) {
+             return obj != nullptr;
+         }
+         REGISTERF2(isExists, "*", "Tests whether given object identifier points to existing object");
+ 
+-        template<class T> static bool isCast(tes_context& ctx, ref obj) {
++        template<class T> static bool isCast(ref obj) {
+             return obj->as<T>() != nullptr;
+         }
+ 
+@@ -160,30 +160,30 @@ JValue.cleanPool(\"uniquePoolName\")"
+         REGISTERF(isCast<form_map>, "isFormMap", "*", nullptr);
+         REGISTERF(isCast<integer_map>, "isIntegerMap", "*", nullptr);
+ 
+-        static bool empty(tes_context& ctx, ref obj) {
+-            return count(ctx, obj) == 0;
++        static bool empty(ref obj) {
++            return count(obj) == 0;
+         }
+         REGISTERF2(empty, "*", "returns true, if container is empty");
+ 
+-        static SInt32 count(tes_context& ctx, ref obj) {
++        static SInt32 count(ref obj) {
+             return obj ? obj->s_count() : 0;
+         }
+         REGISTERF2(count, "*", "returns amount of items in container");
+ 
+-        static void clear(tes_context& ctx, ref obj) {
++        static void clear(ref obj) {
+             if (obj) {
+                 obj->s_clear();
+             }
+         }
+         REGISTERF2(clear, "*", "removes all items from container");
+ 
+-        static object_base* readFromFile(tes_context& context, const char *path) {
+-            auto obj = json_deserializer::object_from_file(context, path);
++        static object_base* readFromFile(const char *path) {
++            auto obj = json_deserializer::object_from_file(tes_context::instance(), path);
+             return  obj;
+         }
+         REGISTERF2(readFromFile, "filePath", "JSON serialization/deserialization:\n\ncreates and returns new container object containing contents of JSON file");
+ 
+-        static object_base* readFromDirectory(tes_context& context, const char *dirPath, const char *extension = "")
++        static object_base* readFromDirectory(const char *dirPath, const char *extension = "")
+         {
+             using namespace boost;
+ 
+@@ -198,14 +198,14 @@ JValue.cleanPool(\"uniquePoolName\")"
+             filesystem::directory_iterator end_itr;
+             filesystem::path root(dirPath);
+ 
+-            map &files = map::object(context);
++            map &files = map::object(tes_context::instance()); 
+ 
+             for ( filesystem::directory_iterator itr( root ); itr != end_itr; ++itr ) {
+ 
+                 if ( filesystem::is_regular_file( *itr ) &&
+                      (!*extension || itr->path().extension().generic_string().compare(extension) == 0) ) {
+                     auto asniString = itr->path().generic_string();
+-                    auto jsonObject = tes_object::readFromFile(context, asniString.c_str());
++                    auto jsonObject = tes_object::readFromFile(asniString.c_str());
+ 
+                     if (jsonObject) {
+                         files.set(itr->path().filename().generic_string(), item(jsonObject));
+@@ -219,13 +219,13 @@ JValue.cleanPool(\"uniquePoolName\")"
+             "Parses JSON files in a directory (non recursive) and returns JMap containing {filename, container-object} pairs.\n"
+             "Note: by default it does not filter files by extension and will try to parse everything");
+ 
+-        static object_base* objectFromPrototype(tes_context& ctx, const char *prototype) {
+-            auto obj = json_deserializer::object_from_json_data( ctx, prototype);
++        static object_base* objectFromPrototype(const char *prototype) {
++            auto obj = json_deserializer::object_from_json_data( tes_context::instance(), prototype);
+             return obj;
+         }
+         REGISTERF2(objectFromPrototype, "prototype", "creates new container object using given JSON string-prototype");
+ 
+-        static void writeToFile(tes_context& ctx, object_base *obj, const char * cpath) {
++        static void writeToFile(object_base *obj, const char * cpath) {
+             if (!cpath || !obj) {
+                 return;
+             }
+@@ -245,7 +245,7 @@ JValue.cleanPool(\"uniquePoolName\")"
+         }
+         REGISTERF(writeToFile, "writeToFile", "* filePath", "writes object into JSON file");
+ 
+-        static SInt32 solvedValueType(tes_context& ctx, object_base* obj, const char *path) {
++        static SInt32 solvedValueType(object_base* obj, const char *path) {
+             SInt32 type = item_type::no_item;
+ 
+             if (obj && path) {
+@@ -257,8 +257,8 @@ JValue.cleanPool(\"uniquePoolName\")"
+             return type;
+         }
+ 
+-        static bool hasPath(tes_context& ctx, object_base* obj, const char *path) {
+-            return solvedValueType(ctx, obj, path) != item_type::no_item;
++        static bool hasPath(object_base* obj, const char *path) {
++            return solvedValueType(obj, path) != item_type::no_item;
+         }
+         REGISTERF(hasPath, "hasPath", "* path",
+ "Path resolving:\n\n\
+@@ -269,11 +269,11 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
+         REGISTERF(solvedValueType, "solvedValueType", "* path", "Returns type of resolved value. "VALUE_TYPE_COMMENT);
+ 
+         template<class T>
+-        static T resolveGetter(tes_context& ctx, object_base *obj, const char* path, T val = default_value<T>()) {
++        static T resolveGetter(object_base *obj, const char* path, T val = default_value<T>()) {
+             if (!obj || !path)
+                 return val;
+ 
+-            path_resolving::resolve(ctx, obj, path, [&](item* itmPtr) {
++            path_resolving::resolve(tes_context::instance(), obj, path, [&](item* itmPtr) {
+                 if (itmPtr) {
+                     val = itmPtr->readAs<T>();
+                 }
+@@ -288,7 +288,7 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
+         REGISTERF(resolveGetter<form_ref>, "solveForm", "* path default=None", nullptr);
+ 
+         template<class T>
+-        static bool solveSetter(tes_context& ctx, object_base* obj, const char* path, T value, bool createMissingKeys = false) {
++        static bool solveSetter(object_base* obj, const char* path, T value, bool createMissingKeys = false) {
+             if (!obj || !path)
+                 return false;
+ 
+@@ -305,8 +305,8 @@ for ex. JValue.hasPath(container, \".player.health\") will check if given contai
+         REGISTERF(solveSetter<form_ref>, "solveFormSetter", "* path value createMissingKeys=false", nullptr);
+ 
+         template<class T>
+-        static T evalLua(tes_context& ctx, ref obj, const char* luaCode, T def = default_value<T>()) {
+-            auto result = lua::eval_lua_function(ctx, obj, luaCode);
++        static T evalLua(ref obj, const char* luaCode, T def = default_value<T>()) {
++            auto result = lua::eval_lua_function(tes_context::instance(), obj, luaCode);
+             return result ? result->readAs<T>() : def;
+         }
+         REGISTERF(evalLua<Float32>, "evalLuaFlt", "* luaCode default=0.0", "Evaluates piece of lua code. Lua support is experimental");
+diff --git a/JContainers/src/api_3/tes_string.h b/JContainers/src/api_3/tes_string.h
+index e28f059..11ba607 100644
+--- a/JContainers/src/api_3/tes_string.h
++++ b/JContainers/src/api_3/tes_string.h
+@@ -15,7 +15,7 @@ namespace collections {
+             metaInfo.comment = "various string utility methods";
+         }
+ 
+-        static object_base * wrap(tes_context& ctx, const char* source, SInt32 charsPerLine) {
++        static object_base * wrap(const char* source, SInt32 charsPerLine) {
+ 
+ 			auto strings = wrap_string(source, charsPerLine);
+ 
+@@ -29,7 +29,7 @@ namespace collections {
+                     obj._array.push_back(item(str));
+                 }
+             },
+-                ctx);
++                tes_context::instance());
+         }
+         REGISTERF2(wrap, "sourceText charactersPerLine=60",
+ "Breaks source text onto set of lines of almost equal size.\n\
+@@ -49,10 +49,10 @@ Accepts ASCII and UTF-8 encoded strings only");
+             return encodeFormToString( util::to_enum<FormId>(id) );
+         }
+ 
+-        REGISTERF2_STATELESS(decodeFormStringToFormId, "formString", "FormId|Form <-> \"__formData|<pluginName>|<lowFormId>\"-string converisons");
+-        REGISTERF2_STATELESS(decodeFormStringToForm, "formString", "");
+-        REGISTERF2_STATELESS(encodeFormToString, "value", "");
+-        REGISTERF2_STATELESS(encodeFormIdToString, "formId", "");
++        REGISTERF2(decodeFormStringToFormId, "formString", "FormId|Form <-> \"__formData|<pluginName>|<lowFormId>\"-string converisons");
++        REGISTERF2(decodeFormStringToForm, "formString", "");
++        REGISTERF2(encodeFormToString, "value", "");
++        REGISTERF2(encodeFormIdToString, "formId", "");
+     };
+ 
+     TES_META_INFO(tes_string);
+@@ -62,14 +62,12 @@ Accepts ASCII and UTF-8 encoded strings only");
+ 
+     TEST(tes_string, test)
+     {
+-        tes_context_standalone ctx;
+-
+         auto testData = json_deserializer::json_from_file(
+             util::relative_to_dll_path("test_data/tes_string/string_wrap.json").generic_string().c_str() );
+         EXPECT_TRUE( json_is_array(testData.get()) );
+ 
+ 		auto testWrap = [&](const char *string, int linesCount, int charsPerLine) {
+-            auto obj = tes_string::wrap(ctx, string, charsPerLine);
++            auto obj = tes_string::wrap(string, charsPerLine);
+             if (linesCount == -1) {
+                 EXPECT_NIL(obj);
+             }
+diff --git a/JContainers/src/api_3/tests.hpp b/JContainers/src/api_3/tests.hpp
+index 8384a47..c472994 100644
+--- a/JContainers/src/api_3/tests.hpp
++++ b/JContainers/src/api_3/tests.hpp
+@@ -27,23 +27,23 @@ namespace tes_api_3 {
+     {
+         array::ref arr = array::object(context);
+ 
+-        EXPECT_TRUE(tes_array::count(context, arr) == 0);
++        EXPECT_TRUE(tes_array::count(arr) == 0);
+ 
+-        tes_array::addItemAt<SInt32>(context, arr, 10);
+-        EXPECT_TRUE(tes_array::count(context, arr) == 1);
+-        EXPECT_TRUE(tes_array::itemAtIndex<SInt32>(context, arr, 0) == 10);
++        tes_array::addItemAt<SInt32>(arr, 10);
++        EXPECT_TRUE(tes_array::count(arr) == 1);
++        EXPECT_TRUE( tes_array::itemAtIndex<SInt32>(arr, 0) == 10);
+ 
+-        tes_array::addItemAt<SInt32>(context, arr, 30);
+-        EXPECT_TRUE(tes_array::count(context, arr) == 2);
+-        EXPECT_TRUE(tes_array::itemAtIndex<SInt32>(context, arr, 1) == 30);
++        tes_array::addItemAt<SInt32>( arr, 30);
++        EXPECT_TRUE(tes_array::count(arr) == 2);
++        EXPECT_TRUE(tes_array::itemAtIndex<SInt32>(arr, 1) == 30);
+ 
+         array::ref arr2 = array::object(context);
+-        tes_array::addItemAt<SInt32>(context, arr2, 4);
++        tes_array::addItemAt<SInt32>(arr2, 4);
+ 
+-        tes_array::addItemAt(context, arr, arr2.to_base<object_base>());
+-        EXPECT_TRUE(tes_array::itemAtIndex<object_base*>(context, arr, 2) == arr2.get());
++        tes_array::addItemAt(arr, arr2.to_base<object_base>());
++        EXPECT_TRUE(tes_array::itemAtIndex<object_base*>(arr, 2) == arr2.get());
+ 
+-        EXPECT_TRUE(tes_array::itemAtIndex<SInt32>(context, arr2, 0) == 4);
++        EXPECT_TRUE(tes_array::itemAtIndex<SInt32>( arr2, 0) == 4);
+     }
+ 
+     JC_TEST(array,  negative_indices)
+@@ -53,44 +53,43 @@ namespace tes_api_3 {
+         SInt32 values[] = {1,2,3,4,5,6,7};
+ 
+         for (auto num : values) {
+-            tes_array::addItemAt(context, obj, num, -1);
++            tes_array::addItemAt(obj, num, -1);
+         }
+ 
+-        EXPECT_TRUE(tes_array::itemAtIndex<SInt32>(context, obj, -1) == 7);
+-        EXPECT_TRUE(tes_array::itemAtIndex<SInt32>(context, obj, -2) == 6);
++        EXPECT_TRUE( tes_array::itemAtIndex<SInt32>(obj, -1) == 7);
++        EXPECT_TRUE( tes_array::itemAtIndex<SInt32>(obj, -2) == 6);
+ 
+-        EXPECT_TRUE(tes_array::itemAtIndex<SInt32>(context, obj, 0) == 1);
+-        EXPECT_TRUE(tes_array::itemAtIndex<SInt32>(context, obj, 1) == 2);
++        EXPECT_TRUE( tes_array::itemAtIndex<SInt32>(obj, 0) == 1);
++        EXPECT_TRUE( tes_array::itemAtIndex<SInt32>(obj, 1) == 2);
+ 
+-        tes_array::addItemAt(context, obj, 8, -2);
++        tes_array::addItemAt(obj, 8, -2);
+         //{1,2,3,4,5,6,8,7}
+-        EXPECT_TRUE(tes_array::itemAtIndex<SInt32>(context, obj, -2) == 8);
++        EXPECT_TRUE( tes_array::itemAtIndex<SInt32>(obj, -2) == 8);
+ 
+-        tes_array::addItemAt(context, obj, 0, 0);
++        tes_array::addItemAt(obj, 0, 0);
+         //{0,1,2,3,4,5,6,8,7}
+-        EXPECT_TRUE(tes_array::itemAtIndex<SInt32>(context, obj, 0) == 0);
++        EXPECT_TRUE( tes_array::itemAtIndex<SInt32>(obj, 0) == 0);
+ 
+-        tes_array::eraseIndex(context, obj, -1);
++        tes_array::eraseIndex(obj, -1);
+         //{0,1,2,3,4,5,6,8}
+-        EXPECT_TRUE(tes_array::itemAtIndex<SInt32>(context, obj, -1) == 8);
+-        EXPECT_TRUE(tes_array::itemAtIndex<SInt32>(context, obj, 7) == 8);
++        EXPECT_TRUE( tes_array::itemAtIndex<SInt32>(obj, -1) == 8);
++        EXPECT_TRUE( tes_array::itemAtIndex<SInt32>(obj, 7) == 8);
+ 
+-        tes_array::eraseIndex(context, obj, -2);
++        tes_array::eraseIndex(obj, -2);
+         //{0,1,2,3,4,5,8}
+-        EXPECT_TRUE(tes_array::itemAtIndex<SInt32>(context, obj, -2) == 5);
++        EXPECT_TRUE( tes_array::itemAtIndex<SInt32>(obj, -2) == 5);
+ 
+-        tes_array::swapItems(context, obj, 0, -1);
++        tes_array::swapItems(obj, 0, -1);
+         //{8,1,2,3,4,5,0}
+-        EXPECT_TRUE(tes_array::itemAtIndex<SInt32>(context, obj, 0) == 8 && tes_array::itemAtIndex<SInt32>(context, obj, -1) == 0);
++        EXPECT_TRUE(tes_array::itemAtIndex<SInt32>(obj, 0) == 8 && tes_array::itemAtIndex<SInt32>(obj, -1) == 0);
+     }
+ 
+     TEST(array, sort_and_unique)
+     {
+-        tes_context_standalone ctx;
+         auto sort = [&](const char *jsonText) {
+-            auto& ar = tes_object::objectFromPrototype(ctx, jsonText)->as_link<array>();
++            auto& ar = tes_object::objectFromPrototype(jsonText)->as_link<array>();
+             auto countBefore = ar.u_count();
+-            tes_array::sort(ctx, &ar);
++            tes_array::sort(&ar);
+             EXPECT_TRUE(countBefore == ar.u_count());
+             EXPECT_TRUE(std::is_sorted(ar.u_container().begin(), ar.u_container().end()));
+         };
+@@ -110,22 +109,20 @@ namespace tes_api_3 {
+ 
+     TEST(path_resolving, collections_operators)
+     {
+-        tes_context_standalone  ctx;
+-
+         auto shouldReturnNumber = [&](object_base *obj, const char *path, float value) {
+-            path_resolving::resolve(ctx, obj, path, [&](item * item) {
++            path_resolving::resolve(tes_context::instance(), obj, path, [&](item * item) {
+                 EXPECT_TRUE(item && item->fltValue() == value);
+             });
+         };
+ 
+         auto shouldReturnInt = [&](object_base *obj, const char *path, int value) {
+-            path_resolving::resolve(ctx, obj, path, [&](item * item) {
++            path_resolving::resolve(tes_context::instance(), obj, path, [&](item * item) {
+                 EXPECT_TRUE(item && item->intValue() == value);
+             });
+         };
+ 
+         {
+-            object_stack_ref obj = tes_object::objectFromPrototype(ctx, STR([1, 2, 3, 4, 5, 6]));
++            object_stack_ref obj = tes_object::objectFromPrototype(STR([1, 2, 3, 4, 5, 6]));
+ 
+             shouldReturnNumber(obj, "@maxNum", 6);
+             shouldReturnNumber(obj, "@minNum", 1);
+@@ -133,7 +130,7 @@ namespace tes_api_3 {
+             shouldReturnNumber(obj, "@minFlt", 0);
+         }
+         {
+-            object_base *obj = tes_object::objectFromPrototype(ctx, STR(
++            object_base *obj = tes_object::objectFromPrototype(STR(
+             { "a": 1, "b" : 2, "c" : 3, "d" : 4, "e" : 5, "f" : 6 }
+             ));
+ 
+@@ -144,7 +141,7 @@ namespace tes_api_3 {
+             shouldReturnInt(obj, "@minNum.value", 1);
+         }
+         {
+-            object_base *obj = tes_object::objectFromPrototype(ctx, STR(
++            object_base *obj = tes_object::objectFromPrototype(STR(
+             { "a": [1], "b" : {"k": -100}, "c" : [3], "d" : {"k": 100}, "e" : [5], "f" : [6] }
+             ));
+ 
+@@ -161,31 +158,29 @@ namespace tes_api_3 {
+ 
+     TEST(path_resolving, explicit_key_construction)
+     {
+-        tes_context_standalone  ctx;
+-        object_base* obj = tes_object::object<map>(ctx);
++        object_base* obj = tes_object::object<map>();
+ 
+         const char *path = ".keyA.keyB.keyC";
+ 
+-        EXPECT_TRUE(tes_object::solveSetter<SInt32>(ctx, obj, path, 14, true));
+-        EXPECT_TRUE(tes_object::hasPath(ctx, obj, path));
+-        EXPECT_TRUE(tes_object::resolveGetter<SInt32>(ctx, obj, path) == 14);
++        EXPECT_TRUE( tes_object::solveSetter<SInt32>(obj, path, 14, true) );
++        EXPECT_TRUE( tes_object::hasPath(obj, path) );
++        EXPECT_TRUE(tes_object::resolveGetter<SInt32>(obj, path) == 14);
+     }
+ 
+     TEST(tes_object, tag)
+     {
+-        tes_context_standalone  ctx;
+-        object_stack_ref obj = tes_object::object<map>(ctx);
++        object_stack_ref obj = tes_object::object<map>();
+ 
+-        object_stack_ref obj2 = tes_object::object<map>(ctx);
+-        tes_object::retain(ctx, obj2);
++        object_stack_ref obj2 = tes_object::object<map>();
++        tes_object::retain(obj2);
+         EXPECT_TRUE(obj2->_tes_refCount == 1);
+ 
+         EXPECT_TRUE(obj->_tes_refCount == 0);
+-        tes_object::retain(ctx, obj, "uniqueTag");
+-        tes_object::retain(ctx, obj, "uniqueTag");
++        tes_object::retain(obj, "uniqueTag");
++        tes_object::retain(obj, "uniqueTag");
+         EXPECT_TRUE(obj->_tes_refCount == 2);
+ 
+-        tes_object::releaseObjectsWithTag(ctx, "uniqueTag");
++        tes_object::releaseObjectsWithTag("uniqueTag");
+         EXPECT_TRUE(obj->_tes_refCount == 0);
+ 
+         // expect that obj2 ref. count left unmodified
+@@ -194,36 +189,35 @@ namespace tes_api_3 {
+ 
+     TEST(tes_map, nextKey)
+     {
+-        tes_context_standalone  ctx;
+-        map *m = json_deserializer::object_from_json_data(ctx, STR({ "A":0, "B" : 1, "Z" : 2 }))->as<map>();
++        map *m = json_deserializer::object_from_json_data(tes_context::instance(), STR({ "A":0, "B" : 1, "Z" : 2 }))->as<map>();
+ 
+-        auto key = tes_map_ext::nextKey<std::string>(ctx, m);
++        auto key = tes_map_ext::nextKey<std::string>(m);
+         auto itr = m->u_container().begin();
+         while (!key.empty()) {
+             EXPECT_TRUE(key == itr->first);
+             ++itr;
+-            key = tes_map_ext::nextKey<std::string>(ctx, m, key.c_str());
++            key = tes_map_ext::nextKey<std::string>(m, key.c_str());
+         }
+         EXPECT_TRUE(itr == m->u_container().end());
+     }
+ 
+     TEST(tes_object, pool)
+     {
+-        tes_context_standalone ctx;
++        tes_context::instance().clearState();
+ 
+-        object_base *obj = tes_object::object<map>(ctx);
++        object_base *obj = tes_object::object<map>();
+         //obj->set_tag("temp_location_test");
+-        tes_object::addToPool(ctx, object_stack_ref(obj), "locationA");
++        tes_object::addToPool(object_stack_ref(obj), "locationA");
+         auto id = obj->public_id();
+ 
+         EXPECT_TRUE(obj->_refCount == 1);
+         EXPECT_TRUE(obj->_stack_refCount == 0);
+ 
+-        tes_object::cleanPool(ctx, "locationA");
++        tes_object::cleanPool("locationA");
+ 
+         std::this_thread::sleep_for(std::chrono::seconds(16));
+ 
+-        auto foundObj = ctx.getObject(id);
++        auto foundObj = tes_context::instance().getObject(id);
+         EXPECT_TRUE(!foundObj/* || !foundObj->has_equal_tag("temp_location_test")*/);
+     }
+ }
+diff --git a/JContainers/src/collections/bind_traits.h b/JContainers/src/collections/bind_traits.h
+index 51fba2b..ddcaeb5 100644
+--- a/JContainers/src/collections/bind_traits.h
++++ b/JContainers/src/collections/bind_traits.h
+@@ -19,8 +19,8 @@ namespace reflection { namespace binding {
+             return (HandleT)(obj ? obj->uid() : Handle::Null);
+         }
+ 
+-        static object_stack_ref_template<T> convert2J(HandleT hdl, tes_context& ctx) {
+-            auto ref = ctx.getObjectRefOfType<T>((Handle)hdl);
++        static object_stack_ref_template<T> convert2J(HandleT hdl) {
++            auto ref = tes_context::instance().getObjectRefOfType<T>((Handle)hdl);
+             if (!ref && hdl != util::to_integral(Handle::Null)) {
+                 JC_log("Warning: access to non-existing object with id 0x%X", hdl);
+             }
+@@ -47,8 +47,7 @@ namespace reflection { namespace binding {
+         static TESForm* convert2Tes(FormId id) {
+             return LookupFormByID((uint32_t)id);
+         }
+-        template<class Any>
+-        static FormId convert2J(const TESForm* form, const Any&) {
++        static FormId convert2J(const TESForm* form) {
+             return form ? (FormId)form->formID : FormId::Zero;
+         }
+     };
+@@ -60,8 +59,8 @@ namespace reflection { namespace binding {
+         static TESForm* convert2Tes(const form_watching::form_ref& id) {
+             return skse::lookup_form(id.get());
+         }
+-        static form_watching::form_ref convert2J(const TESForm* form, tes_context& ctx) {
+-            return make_weak_form_id(form, ctx);
++        static form_watching::form_ref convert2J(const TESForm* form) {
++            return make_weak_form_id(form, tes_context::instance());
+         }
+     };
+ 
+@@ -70,8 +69,8 @@ namespace reflection { namespace binding {
+         static TESForm* convert2Tes(const form_watching::form_ref_lightweight& id) {
+             return skse::lookup_form(id.get());
+         }
+-        static form_watching::form_ref_lightweight convert2J(const TESForm* form ,tes_context& ctx) {
+-            return make_lightweight_form_ref(form, ctx);
++        static form_watching::form_ref_lightweight convert2J(const TESForm* form) {
++            return make_lightweight_form_ref(form, tes_context::instance());
+         }
+     };
+ 
+diff --git a/JContainers/src/collections/context.h b/JContainers/src/collections/context.h
+index 846aa4b..4e53af8 100644
+--- a/JContainers/src/collections/context.h
++++ b/JContainers/src/collections/context.h
+@@ -19,17 +19,14 @@ namespace collections
+     {
+         using base = object_context;
+ 
+-    public:
+-
+         void u_print_stats() const;
+         void u_applyUpdates(const serialization_version saveVersion);
+ 
++    public:
+ 
+         using post_init = ::meta<void(*)(tes_context&)>;
+ 
+-        tes_context(form_watching::form_observer& form_watcher)
+-            : _form_watcher(form_watcher)
+-        {
++        tes_context() {
+             for (auto& init : post_init::getListConst()) {
+                 init(*this);
+             }
+@@ -39,7 +36,7 @@ namespace collections
+             shutdown();
+         }
+ 
+-        //static tes_context& instance();
++        static tes_context& instance();
+ 
+     private:
+ 
+@@ -67,7 +64,7 @@ namespace collections
+         // to attach lua context
+         std::shared_ptr<dependent_context>     lua_context;
+ 
+-        form_watching::form_observer& _form_watcher;
++        form_watching::form_observer _form_watcher;
+ 
+         //////
+     public:
+@@ -89,26 +86,18 @@ namespace collections
+         friend class boost::serialization::access;
+         BOOST_SERIALIZATION_SPLIT_MEMBER();
+ 
+-    //protected:
++    protected:
+ 
+         void u_clearState() {
+             _root_object_id.store(Handle::Null, std::memory_order_relaxed);
+             _cached_root = nullptr;
+-            //_form_watcher.u_clearState();
++            _form_watcher.u_clearState();
+ 
+             base::u_clearState();
+         }
+ 
+     };
+ 
+-    class tes_context_standalone : public tes_context {
+-        form_watching::form_observer _observer;
+-
+-    public:
+-
+-        tes_context_standalone() : tes_context(_observer) {} // not safe to pass uninitialized yet memory
+-    };
+-
+     // so that this won't be lost or hidden
+     inline tes_context& HACK_get_tcontext(const object_base& obj) {
+         return static_cast<tes_context&>(obj.context());
+diff --git a/JContainers/src/collections/context.hpp b/JContainers/src/collections/context.hpp
+index e86eefa..9cd7b23 100644
+--- a/JContainers/src/collections/context.hpp
++++ b/JContainers/src/collections/context.hpp
+@@ -151,7 +151,6 @@ namespace collections {
+         }
+     }
+ 
+-/*
+     namespace {
+         util::singleton<tes_context, false> g_tes_context_singleton {
+             []() { return new tes_context(); }
+@@ -160,7 +159,7 @@ namespace collections {
+ 
+     tes_context& tes_context::instance() {
+         return g_tes_context_singleton.get();
+-    }*/
++    }
+ 
+     void tes_context::u_print_stats() const {
+         base::u_print_stats();
+diff --git a/JContainers/src/collections/dyn_form_watcher.h b/JContainers/src/collections/dyn_form_watcher.h
+index e4b0a48..db55d3d 100644
+--- a/JContainers/src/collections/dyn_form_watcher.h
++++ b/JContainers/src/collections/dyn_form_watcher.h
+@@ -10,7 +10,6 @@
+ #include "boost/smart_ptr/weak_ptr.hpp"
+ #include "boost/serialization/split_member.hpp"
+ #include "boost/noncopyable.hpp"
+-#include "boost/core/explicit_operator_bool.hpp"
+ 
+ #include "util/spinlock.h"
+ #include "util/stl_ext.h"
+@@ -18,8 +17,6 @@
+ #include "rw_mutex.h"
+ #include "form_id.h"
+ 
+-class TESForm;
+-
+ namespace collections {
+     
+ namespace form_watching {
+diff --git a/JContainers/src/collections/dyn_form_watcher.hpp b/JContainers/src/collections/dyn_form_watcher.hpp
+index 79950ef..61e2f87 100644
+--- a/JContainers/src/collections/dyn_form_watcher.hpp
++++ b/JContainers/src/collections/dyn_form_watcher.hpp
+@@ -1,20 +1,16 @@
+ #pragma once
+ 
++#include <boost/smart_ptr/make_shared_object.hpp>
++#include <boost/range.hpp>
++//#include <boost/algorithm/string/join.hpp>
+ #include <assert.h>
+ #include <inttypes.h>
+ #include <map>
+ #include <tuple>
+ #include <mutex>
+ 
+-#include <boost/smart_ptr/make_shared_object.hpp>
+-#include <boost/range.hpp>
+-
+-#include "boost/serialization/version.hpp"
+-#include "boost/serialization/split_member.hpp"
+-#include <boost/serialization/shared_ptr.hpp>
+-#include <boost/serialization/weak_ptr.hpp>
+-#include <boost/serialization/hash_map.hpp>
+-
++//#include "skse/GameForms.h"
++//#include "skse/PapyrusVM.h"
+ #include "skse/skse.h"
+ #include "util/stl_ext.h"
+ #include "util/util.h"
+@@ -33,7 +29,7 @@ namespace collections {
+ 
+         template<class ...Params>
+         inline void log(const char* fmt, Params&& ...ps) {
+-            //JC_log(fmt, std::forward<Params>(ps) ...);
++            JC_log(fmt, std::forward<Params>(ps) ...);
+         }
+ 
+         class form_entry : public boost::noncopyable {
+diff --git a/JContainers/src/collections/lua_module.cpp b/JContainers/src/collections/lua_module.cpp
+index 953f4d9..7b704a1 100644
+--- a/JContainers/src/collections/lua_module.cpp
++++ b/JContainers/src/collections/lua_module.cpp
+@@ -36,7 +36,6 @@ extern "C" {
+ 
+ namespace lua {
+     using tes_context = collections::tes_context;
+-    using tes_context_standalone = collections::tes_context_standalone;
+ 
+     using object_base = collections::object_base;
+ 
+@@ -257,7 +256,7 @@ namespace lua { namespace aux_wip {
+ 
+ 
+     struct fixture : public ::testing::Test {
+-        tes_context_standalone tc;
++        tes_context tc;
+         context_pool pool;
+         fixture() : pool(tc) {}
+     };
+diff --git a/JContainers/src/collections/tests.h b/JContainers/src/collections/tests.h
+index b4e0c40..00cfdc9 100644
+--- a/JContainers/src/collections/tests.h
++++ b/JContainers/src/collections/tests.h
+@@ -3,7 +3,7 @@
+ namespace collections {
+ 
+     struct JCFixture : public ::testing::Test {
+-        tes_context_standalone context;
++        tes_context context;
+ 
+ /*
+         void SetUpTestCase(){}
+@@ -253,7 +253,7 @@ namespace collections { namespace {
+ 
+             auto jsonOut = make_unique_ptr((json_t*)nullptr, &json_decref);
+             {
+-                tes_context_standalone ctx;
++                tes_context ctx;
+                 auto root = json_deserializer::object_from_file(ctx, file_path);
+                 EXPECT_NOT_NIL(root);
+                 jsonOut = json_serializer::create_json_value(*root);
+@@ -273,7 +273,7 @@ namespace collections { namespace {
+ 
+             auto jsonOut = make_unique_ptr((json_t*)nullptr, &json_decref);
+             {
+-                tes_context_standalone ctx;
++                tes_context ctx;
+ 
+                 Handle rootId = Handle::Null;
+                 {
+@@ -398,7 +398,7 @@ namespace collections { namespace {
+ 
+                 std::ifstream file(itr->path().generic_string(), std::ios::in | std::ios::binary);
+ 
+-                tes_context_standalone context;
++                tes_context context;
+                 context.read_from_stream(file);
+                 context._form_watcher.u_print_status();
+ 
+diff --git a/JContainers/src/context_master/domain_master.cpp b/JContainers/src/context_master/domain_master.cpp
+deleted file mode 100644
+index 3dfd0fc..0000000
+--- a/JContainers/src/context_master/domain_master.cpp
++++ /dev/null
+@@ -1,339 +0,0 @@
+-#include <vector>
+-#include <map>
+-#include <functional>
+-#include <exception>
+-#include <type_traits>
+-
+-#include "boost/filesystem/path.hpp"
+-#include "boost/filesystem/operations.hpp"
+-#include "boost/archive/binary_oarchive.hpp"
+-#include "jansson.h"
+-#include "common/IDebugLog.h"
+-
+-#include "util/singleton.h"
+-#include "util/util.h"
+-#include "util/istring.h"
+-#include "util/istring_serialization.h"
+-#include "iarchive_with_blob.h"
+-
+-#include "object/object_context.h"
+-#include "domain_master.h"
+-
+-namespace domain_master {
+-
+-
+-    namespace {
+-
+-
+-
+-        auto get_domains_from_fs() -> std::set<util::istring> {
+-            namespace fs = boost::filesystem;
+-            std::set<util::istring> domains;
+-            fs::path dir = util::relative_to_dll_path("JCData/Domains/");
+-            for (fs::directory_iterator itr(dir), end; itr != end; ++itr) {
+-               // domains.insert(itr->path().filename().generic_string().c_str());
+-            }
+-            return domains;
+-        }
+-
+-        template<class List>
+-        auto construct_domains(List&& list) -> std::map<util::istring, context*> {
+-            std::map<util::istring, context*> contexts;
+-
+-            for (auto& name : list) {
+-                contexts[name.c_str()] = new context();
+-            }
+-            return contexts;
+-        }
+-
+-        template<class Func, class ...Args>
+-        auto invoke_for_all(master& ths, Func&& f, Args && ...args) -> void {
+-            f(ths.get_default_domain(), std::forward<Args>(args) ...);
+-            for (auto& pair : ths.active_domains_map()) {
+-                f(*pair.second, std::forward<Args>(args) ...);
+-            }
+-        }
+-
+-        ////
+-
+-
+-        struct activity_stopper {
+-            master& _m;
+-            activity_stopper(master& m) : _m(m) {
+-                invoke_for_all(m, std::mem_fn(&collections::object_context::stop_activity));
+-            }
+-            ~activity_stopper() {
+-                invoke_for_all(_m, std::mem_fn(&collections::object_context::start_activity));
+-            }
+-        };
+-
+-
+-        auto u_clearState(master& ths) -> void {
+-            ths.get_form_observer().u_clearState();
+-            invoke_for_all(ths, std::mem_fn(&context::u_clearState));
+-        }
+-
+-        auto u_print_stats(master& self) -> void {
+-            self.get_form_observer().u_print_status();
+-
+-            //invoke_for_all(self, [](context& d) {
+-                JC_log("Default domain");
+-                self.get_default_domain().u_print_stats();
+-            //});
+-
+-            for (auto& pair : self.active_domains_map()) {
+-                JC_log("Domain: %s", pair.first.c_str());
+-                pair.second->u_print_stats();
+-            }
+-        }
+-
+-        auto u_erase_inactive_domains(master& self) -> void {
+-            util::tree_erase_if(self.active_domains_map(), [&](const master::DomainsMap::value_type& p) {
+-                return self.active_domain_names.find(p.first) == self.active_domain_names.end();
+-            });
+-        }
+-
+-    }
+-
+-    namespace {
+-        template<class T, class D>
+-        inline std::unique_ptr<T, D> make_unique_ptr(T* data, D destr) {
+-            return std::unique_ptr<T, D>(data, destr);
+-        }
+-
+-        using serialization_version = collections::serialization_version;
+-
+-        struct header {
+-
+-            serialization_version commonVersion;
+-
+-            static header imitate_old_header() {
+-                return{ serialization_version::no_header };
+-            }
+-
+-            static header make() {
+-                return{ serialization_version::current };
+-            }
+-
+-            static const char *common_version_key() { return "commonVersion"; }
+-
+-            static header read_from_stream(std::istream & stream) {
+-
+-                uint32_t hdrSize = 0;
+-                stream >> hdrSize;
+-
+-                std::vector<char> buffer(hdrSize);
+-                stream.read(&buffer.front(), buffer.size());
+-
+-                auto js = make_unique_ptr(json_loadb(&buffer.front(), buffer.size(), 0, nullptr), &json_decref);
+-                if (!js) { // parsing failed
+-                    return imitate_old_header();
+-                }
+-
+-                return{ (serialization_version)json_integer_value(json_object_get(js.get(), common_version_key())) };
+-            }
+-
+-            static auto write_to_json() -> decltype(make_unique_ptr((json_t *)nullptr, &json_decref)) {
+-                auto header = make_unique_ptr(json_object(), &json_decref);
+-
+-                json_object_set(header.get(), common_version_key(), json_integer((json_int_t)serialization_version::current));
+-
+-                return header;
+-            }
+-
+-            static void write_to_stream(std::ostream & stream) {
+-                auto header = write_to_json();
+-                auto data = make_unique_ptr(json_dumps(header.get(), 0), free);
+-
+-                uint32_t hdrSize = strlen(data.get());
+-                stream << (uint32_t)hdrSize;
+-                stream.write(data.get(), hdrSize);
+-            }
+-        };
+-
+-        auto read_from_stream(master& self, std::istream& stream) -> void {
+-            //_context.read_from_stream(s);
+-
+-            stream.flags(stream.flags() | std::ios::binary);
+-
+-#       if 0
+-            std::ofstream file("dump", std::ios::binary | std::ios::out);
+-            std::copy(
+-                std::istreambuf_iterator<char>(stream),
+-                std::istreambuf_iterator<char>(),
+-                std::ostreambuf_iterator<char>(file)
+-                );
+-            file.close();
+-#       endif
+-
+-            activity_stopper stopper{ self };
+-            {
+-                // i have assumed that Skyrim devs are not idiots to run scripts in process of save game loading
+-                //write_lock g(_mutex);
+-
+-                u_clearState(self);
+-
+-                if (stream.peek() != std::istream::traits_type::eof()) {
+-
+-                    try {
+-
+-                        auto hdr = header::read_from_stream(stream);
+-                        bool isNotSupported = serialization_version::current < hdr.commonVersion
+-                            || hdr.commonVersion <= serialization_version::no_header;
+-
+-                        if (isNotSupported) {
+-                            std::ostringstream error;
+-                            error << "Unable to load serialized data of version " << (int)hdr.commonVersion
+-                                << ". Current serialization version is " << (int)serialization_version::current;
+-                            throw std::logic_error(error.str());
+-                        }
+-
+-                        {
+-                            hack::iarchive_with_blob real_archive(stream, self.get_default_domain(), self.get_default_domain());
+-                            boost::archive::binary_iarchive& archive = real_archive;
+-
+-                            // (stream) -> [(name,context)]
+-
+-                            archive >> self.get_default_domain();
+-                            uint32_t domain_count = 0;
+-                            archive >> domain_count;
+-
+-                            for (uint32_t i = 0; i < domain_count; ++i) {
+-                                util::istring dom_name;
+-                                archive >> dom_name;
+-                                auto& dom = self.get_or_create_domain_with_name(dom_name);
+-                                archive >> dom;
+-                            }
+-
+-                            archive >> self.get_form_observer();
+-                        }
+-
+-                        u_erase_inactive_domains(self);
+-
+-                        invoke_for_all(self, std::mem_fn(&context::u_postLoadInitializations));
+-                        invoke_for_all(self, std::mem_fn(&context::u_applyUpdates), hdr.commonVersion);
+-                        invoke_for_all(self, std::mem_fn(&context::u_postLoadMaintenance), hdr.commonVersion);
+-                    }
+-                    catch (const std::exception& exc) {
+-                        _FATALERROR("caught exception (%s) during archive load - '%s'",
+-                            typeid(exc).name(), exc.what());
+-                        u_clearState(self);
+-
+-                        // force whole app to crash
+-                        // jc_assert(false);
+-                    }
+-                    catch (...) {
+-                        _FATALERROR("caught unknown (non std::*) exception");
+-                        u_clearState(self);
+-
+-                        // force whole app to crash
+-                        //jc_assert(false);
+-                    }
+-                }
+-
+-                u_print_stats(self);
+-            }
+-
+-        }
+-
+-        auto write_to_stream(master& self, std::ostream& stream) -> void {
+-            stream.flags(stream.flags() | std::ios::binary);
+-
+-            activity_stopper s{ self };
+-            {
+-                // we can also cleanup objects here
+-                {
+-                    self.get_form_observer().u_remove_expired_forms();
+-                }
+-
+-                header::write_to_stream(stream);
+-                boost::archive::binary_oarchive arch{ stream };
+-
+-                // [(name, domain)] -> stream
+-
+-                arch << self.get_default_domain();
+-
+-                uint32_t domain_count = self.active_domains_map().size();
+-                arch << domain_count;
+-
+-                for (auto& pair : self.active_domains_map()) {
+-                    util::istring dom_name;
+-                    arch << pair.first;
+-                    arch << *pair.second;
+-                }
+-
+-                arch << self.get_form_observer();
+-
+-                u_print_stats(self);
+-            }
+-        }
+-
+-
+-    }
+-
+-/*
+-    master::master()
+-    {
+-
+-    }*/
+-
+-    void master::initialize_from_fs()
+-    {
+-        active_domain_names = get_domains_from_fs();
+-        //active_domain_names.insert("Default");
+-    }
+-
+-    context& master::get_or_create_domain_with_name(const util::istring& name)
+-    {
+-        auto itr = _domains.find(name);
+-        if (itr != _domains.cend()) {
+-            return *itr->second;
+-        }
+-
+-        auto dom = std::make_shared<context>(this->get_form_observer());
+-        _domains.emplace(DomainsMap::value_type{ name, dom });
+-        return *dom;
+-    }
+-
+-    context& master::get_default_domain()
+-    {
+-        return _default_domain;
+-    }
+-
+-    master::DomainsMap& master::active_domains_map()
+-    {
+-        return _domains;
+-    }
+-
+-    form_observer& master::get_form_observer()
+-    {
+-        return _form_watcher;
+-    }
+-
+-    namespace {
+-        util::singleton<master, false> g_domain_master_singleton{
+-            []() { return new master(); }
+-        };
+-    }
+-
+-    master& master::instance() {
+-        return g_domain_master_singleton.get();
+-    }
+-
+-    void master::clear_state() {
+-        activity_stopper s{ *this };
+-        u_clearState(*this);
+-        u_erase_inactive_domains(*this);
+-    }
+-
+-    void master::read_from_stream(std::istream& s) {
+-        domain_master::read_from_stream(*this, s);
+-    }
+-
+-
+-    void master::write_to_stream(std::ostream& s) {
+-        domain_master::write_to_stream(*this, s);
+-    }
+-
+-}
+-
+diff --git a/JContainers/src/context_master/domain_master.h b/JContainers/src/context_master/domain_master.h
+deleted file mode 100644
+index 46509c0..0000000
+--- a/JContainers/src/context_master/domain_master.h
++++ /dev/null
+@@ -1,57 +0,0 @@
+-#pragma once
+-
+-#include <string>
+-#include "collections/dyn_form_watcher.h"
+-#include "collections/context.h"
+-#include <vector>
+-#include <map>
+-#include "util/istring.h"
+-#include <set>
+-
+-namespace domain_master {
+-
+-    using context = ::collections::tes_context;
+-    using form_observer = ::collections::form_watching::form_observer;
+-
+-    class master {
+-    public:
+-
+-        master()
+-            : _default_domain(_form_watcher)
+-        {}
+-
+-        std::set<util::istring> active_domain_names;
+-
+-        // 
+-        void initialize_from_fs();
+-
+-        context& get_or_create_domain_with_name(const util::istring& name);// or create if none
+-        context& get_default_domain();
+-        //std::vector<std::reference_wrapper<context>> active_domains();
+-
+-        using DomainsMap = std::map<util::istring, std::shared_ptr<context>>;
+-
+-        DomainsMap& active_domains_map();
+-
+-        form_observer& get_form_observer();
+-
+-
+-        static master& instance();
+-
+-        void clear_state();
+-        void read_from_stream(std::istream&);
+-        void write_to_stream(std::ostream&);
+-
+-        // save from stream / load from stream
+-        // drop (or not save?) loaded contexts if no appropriate config files found?
+-
+-    private:
+-        // Since it's not a real implementation yet:
+-
+-        form_observer _form_watcher;
+-        context _default_domain;
+-        DomainsMap _domains;
+-
+-
+-    };
+-}
+\ No newline at end of file
+diff --git a/JContainers/src/object/autorelease_queue.h b/JContainers/src/object/autorelease_queue.h
+index 4a0ae28..469db31 100644
+--- a/JContainers/src/object/autorelease_queue.h
++++ b/JContainers/src/object/autorelease_queue.h
+@@ -7,48 +7,10 @@
+ #include <boost\asio\deadline_timer.hpp>
+ #include "common\IThread.h"
+ #include "util\util.h"
+-#include "util\singleton.h"
+ 
+ namespace collections {
+ 
+-
+-    namespace detail {
+-
+-#   define WINE_SUPPORT 1
+-
+-        struct background_worker {
+-            boost::asio::io_service _io;
+-            boost::asio::io_service::work _work;
+-#   if WINE_SUPPORT
+-            IThread _thread;
+-#   else
+-            std::thread _thread;
+-#   endif
+-
+-            background_worker() : _io(), _work(_io) {
+-#   if WINE_SUPPORT
+-                using io_ptr_type = decltype(_io);
+-                _thread.Start([](void *io_ptr) { reinterpret_cast<io_ptr_type*>(io_ptr)->run(); }, &_io);
+-#   else
+-                _thread = std::thread([&]() { _io.run(); });
+-#   endif
+-            }
+-
+-            ~background_worker() {
+-#   if WINE_SUPPORT
+-                _thread.Stop();
+-                WaitForSingleObject(_thread.GetHandle(), INFINITE);
+-#   else
+-                if (_thread.joinable()) {
+-                    _thread.join();
+-                }
+-#   endif
+-            }
+-        };
+-
+-        util::singleton<background_worker> g_background_worker{ [](){ return new background_worker(); } };
+-    }
+-
++#define WINE_SUPPORT 1
+ 
+     class object_registry;
+ 
+@@ -78,9 +40,17 @@ namespace collections {
+         time_point _tickCounter;
+         spinlock _queue_mutex;
+         
++        // it's not overkill to use asio?
++        boost::asio::io_service _io;
++        boost::asio::io_service::work _work;
+         boost::asio::deadline_timer _timer;
+         std::mutex _timer_mutex;
+         bool _timer_stopped = true;
++#   if WINE_SUPPORT
++        IThread _thread;
++#   else
++        std::thread _thread;
++#   endif
+         // reusable array for temp objects
+         std::vector<queue_object_ref> _toRelease;
+ 
+@@ -145,11 +115,19 @@ namespace collections {
+         }
+ 
+         explicit autorelease_queue(object_registry& registry) 
+-            : _registry(registry)
+-            , _queue()
+-            , _tickCounter(0)
+-            , _timer(detail::g_background_worker.get()._io)
++            : _tickCounter(0)
++            , _registry(registry)
++            // lot of dependencies :(
++            , _io()
++            , _work(_io)
++            , _timer(_io)
+         {
++#   if WINE_SUPPORT
++            using io_ptr_type = decltype(_io);
++            _thread.Start([](void *io_ptr) { reinterpret_cast<io_ptr_type*>(io_ptr)->run(); }, &_io);
++#   else
++            _thread = std::thread([&]() { _io.run(); });
++#   endif
+             start();
+             //jc_debug("aqueue created")
+         }
+@@ -217,6 +195,16 @@ namespace collections {
+             // if aqueue is not empty -> object_base::release_from_queue -> accesses died object_registry::removeObject -> crash
+ 
+             stop();
++            _io.stop();
++
++#   if WINE_SUPPORT
++            _thread.Stop();
++            WaitForSingleObject(_thread.GetHandle(), INFINITE);
++#   else
++            if (_thread.joinable()) {
++                _thread.join();
++            }
++#   endif
+             //jc_debug("aqueue destroyed")
+         }
+ 
+@@ -267,15 +255,14 @@ namespace collections {
+             assert(!code);
+ 
+             _timer.async_wait([this](const boost::system::error_code& error) {
+-                if (error) {// !e means error or cancel, or unsuccessful completion
+-                    return;
+-                }
+-
+-                std::lock_guard<std::mutex> g(this->_timer_mutex);
+-                if (!this->_timer_stopped) { 
++                std::lock_guard<std::mutex> g(_timer_mutex);
++                if (!error && !_timer_stopped) { // !e means no error, no cancel, successful completion
+                     this->tick();
+                     this->u_startTimer();
+ 				}
++				else {
++					//jc_debug("aqueue timer was cancelled");
++				}
+             });
+         }
+ 
+diff --git a/JContainers/src/object/object_context.h b/JContainers/src/object/object_context.h
+index a1b6bf8..e4d104d 100644
+--- a/JContainers/src/object/object_context.h
++++ b/JContainers/src/object/object_context.h
+@@ -47,7 +47,7 @@ namespace collections {
+ 
+     class object_context {
+ 
+-    public:
++    protected:
+         void u_postLoadInitializations();
+         void u_postLoadMaintenance(const serialization_version saveVersion);
+         void u_print_stats() const;
+@@ -91,7 +91,6 @@ namespace collections {
+         };
+ 
+         void stop_activity();
+-        void start_activity();
+         void u_clearState();
+ 
+     public:
+diff --git a/JContainers/src/object/object_context.hpp b/JContainers/src/object/object_context.hpp
+index 161a8bd..5c2caab 100644
+--- a/JContainers/src/object/object_context.hpp
++++ b/JContainers/src/object/object_context.hpp
+@@ -24,10 +24,6 @@ namespace collections
+     void object_context::stop_activity() {
+         aqueue->stop();
+     }
+-
+-    void object_context::start_activity() {
+-        aqueue->start();
+-    }
+     
+     void object_context::u_clearState() {
+         {
+diff --git a/JContainers/src/reflection/detail/code_producer.hpp b/JContainers/src/reflection/detail/code_producer.hpp
+index 2947172..4ca24e4 100644
+--- a/JContainers/src/reflection/detail/code_producer.hpp
++++ b/JContainers/src/reflection/detail/code_producer.hpp
+@@ -50,6 +50,8 @@ namespace reflection {
+         std::string function_to_string(const function_info& self) {
+             std::string str;
+ 
++            _pushComment(self.comment(), str);
++
+             auto types = self.param_list_func();
+ 
+             if (types[0]().tes_type_name != "void") {
+@@ -81,7 +83,7 @@ namespace reflection {
+ 
+             _pushComment(self.comment, str);
+ 
+-            str += "ScriptName ";
++            str += "Scriptname ";
+             str += self.className().c_str();
+ 
+             if (!self.extendsClass.empty()) {
+@@ -89,7 +91,6 @@ namespace reflection {
+             }
+ 
+             for (auto& itm : self.methods) {
+-                _pushComment(itm.comment(), str);
+                 str += function_to_string(itm);
+                 str += "\n";
+             }
+@@ -113,34 +114,5 @@ namespace reflection {
+             file << produceClassCode(self);
+         }
+ 
+-        void produceAmalgamatedCodeToFile(const std::map<istring, class_info>& classes, const std::string& directoryPath) {
+-            using std::endl;
+-
+-            auto fileName = "JContainers_DomainsExample";
+-
+-            boost::filesystem::path p(directoryPath);
+-            p /= fileName;
+-            p += ".psc";
+-
+-
+-            std::ofstream file(p.generic_string());
+-
+-            file << "ScriptName " << fileName << endl;
+-
+-            function_info tmp;
+-
+-            for (auto& cls : classes) {
+-                file << endl << "; " << cls.first.c_str() << endl << endl;
+-
+-                for (auto& func : cls.second.methods) {
+-                    if (!func.isStateless()) {
+-                        tmp = func;
+-                        tmp.name = cls.first + '_' + tmp.name;
+-
+-                        file << function_to_string(tmp) << endl;
+-                    }
+-                }
+-            }
+-        }
+     }
+ }
+diff --git a/JContainers/src/reflection/detail/reflection.cpp b/JContainers/src/reflection/detail/reflection.cpp
+index 4305274..6411db2 100644
+--- a/JContainers/src/reflection/detail/reflection.cpp
++++ b/JContainers/src/reflection/detail/reflection.cpp
+@@ -11,6 +11,11 @@
+ 
+ namespace reflection {
+ 
++    void function_info::bind(VMClassRegistry& registry, const istring& className) const {
++        registrator(bind_args{ registry, className.c_str(), name.c_str() });
++        registry.SetFunctionFlags(className.c_str(), name.c_str(), VMClassRegistry::kFunctionFlag_NoWait);
++    }
++
+     static auto makeDB = []() {
+         std::map<istring, class_info> classDB;
+ 
+@@ -67,7 +72,7 @@ namespace reflection {
+             }
+ 
+             static void nothing() {}
+-            REGISTERF2_STATELESS(nothing, "", "does absolutely nothing");
++            REGISTERF2(nothing, "", "does absolutely nothing");
+         };
+ 
+         TES_META_INFO(test_class);
+diff --git a/JContainers/src/reflection/reflection.h b/JContainers/src/reflection/reflection.h
+index 57393dd..04fb075 100644
+--- a/JContainers/src/reflection/reflection.h
++++ b/JContainers/src/reflection/reflection.h
+@@ -6,7 +6,6 @@
+ #include <algorithm>
+ #include <stdint.h>
+ 
+-#include "skse/PapyrusVM.h"
+ #include "meta.h"
+ #include "util/istring.h"
+ 
+@@ -32,9 +31,8 @@ namespace reflection {
+ 
+     struct bind_args {
+         VMClassRegistry& registry;
+-        istring className;
+-        istring functionName;
+-        void* shared_state;
++        const char* className;
++        const char* functionName;
+     };
+ 
+     struct function_info {
+@@ -48,13 +46,10 @@ namespace reflection {
+         c_function c_func = nullptr; // original function
+         istring argument_names;
+         istring name;
+-        bool _stateless = true;
+ 
+         comment_generator _comment_func = nullptr;
+         const char *_comment_str = nullptr;
+ 
+-        bool isStateless() const { return _stateless; }
+-
+         std::string comment() const {
+             if (_comment_func) {
+                 return _comment_func();
+@@ -76,10 +71,7 @@ namespace reflection {
+             _comment_str = comment;
+         }
+ 
+-        void bind(VMClassRegistry& registry, const istring& className) const {
+-            registrator(bind_args{ registry, className.c_str(), name.c_str() });
+-            registry.SetFunctionFlags(className.c_str(), name.c_str(), VMClassRegistry::kFunctionFlag_NoWait);
+-        }
++        void bind(VMClassRegistry& registry, const istring& className) const;
+     };
+ 
+     struct papyrus_text_block {
+@@ -143,14 +135,6 @@ namespace reflection {
+             }
+         }
+ 
+-        template<class Visitor>
+-        void visit_functions(Visitor&& visitor) const {
+-            assert(initialized());
+-            for (const auto& itm : methods) {
+-                visitor(itm);
+-            }
+-        }
+-
+         void merge_with_extension(const class_info& extension) {
+             assert(initialized());
+             assert(className() == extension.className());
+@@ -167,7 +151,7 @@ namespace reflection {
+ 
+         std::string produceClassCode(const class_info& self);
+         void produceClassToFile(const class_info& self, const std::string& directoryPath);
+-        void produceAmalgamatedCodeToFile(const std::map<istring, class_info>& classes, const std::string& directoryPath);
++
+     }
+ 
+     namespace _detail {
+diff --git a/JContainers/src/reflection/tes_binding.h b/JContainers/src/reflection/tes_binding.h
+index 8b42ec1..5626ec8 100644
+--- a/JContainers/src/reflection/tes_binding.h
++++ b/JContainers/src/reflection/tes_binding.h
+@@ -13,8 +13,7 @@ namespace reflection { namespace binding {
+     struct IdentityConverter {
+         typedef JType tes_type;
+ 
+-        template<class State>
+-        static const tes_type& convert2J(const tes_type& val, const State&) {
++        static const tes_type& convert2J(const tes_type& val) {
+             return val;
+         }
+ 
+@@ -27,8 +26,7 @@ namespace reflection { namespace binding {
+     struct StaticCastValueConverter {
+         typedef TesType tes_type;
+ 
+-        template<class State>
+-        static JType convert2J(const TesType& val, const State&) {
++        static JType convert2J(const TesType& val) {
+             return static_cast<JType>(val);
+         }
+ 
+@@ -40,8 +38,7 @@ namespace reflection { namespace binding {
+     struct StringConverter {
+         using tes_type = skse::string_ref;
+ 
+-        template<class State>
+-        static const char* convert2J(const skse::string_ref& str, const State&) {
++        static const char* convert2J(const skse::string_ref& str) {
+             return str.c_str();
+         }
+ 
+@@ -105,23 +102,6 @@ namespace reflection { namespace binding {
+     MAKE_ME_HAPPY(5);
+     MAKE_ME_HAPPY(6);
+ 
+-    template<size_t ParamCnt>
+-    struct state_native_function_selector;
+-
+-#undef MAKE_ME_HAPPY
+-#define MAKE_ME_HAPPY(N)\
+-    template<> struct state_native_function_selector<N> {\
+-        template<class State, class... Params> using function = ::NativeFunctionWithState ## N <State, Params...>; \
+-    };
+-
+-    MAKE_ME_HAPPY(0);
+-    MAKE_ME_HAPPY(1);
+-    MAKE_ME_HAPPY(2);
+-    MAKE_ME_HAPPY(3);
+-    MAKE_ME_HAPPY(4);
+-    MAKE_ME_HAPPY(5);
+-    MAKE_ME_HAPPY(6);
+-
+ #undef  MAKE_ME_HAPPY
+ 
+     template<class T>
+@@ -131,29 +111,26 @@ namespace reflection { namespace binding {
+     using get_converter = GetConv< remove_cref<T> >;
+ 
+     template<class T>
+-    using convert_to_tes_type = typename get_converter<T>::tes_type;
++    using get_converter_tes_type = typename get_converter<T>::tes_type;
+ 
+     // Template monster, proxy class that:
+     // - adapts my internal types to native Papyrus types and vica versa
+     // - generates native Papyrus function
+     // - holds function meta-info, like @parameter_info
+     template <typename T> struct proxy;
+-    template <typename T> struct state_proxy;
+ 
+     template <class R, class... Params>
+-    struct proxy<R(*)(Params ...)>
++    struct proxy<R (*)(Params ...)>
+     {
+         static std::vector<type_info_func> parameter_info() {
+             return {
+-                &j2Str< convert_to_tes_type<R> >::typeInfo,
+-                &j2Str< convert_to_tes_type<Params> >::typeInfo ...
++                &j2Str< get_converter_tes_type<R> >::typeInfo,
++                &j2Str< get_converter_tes_type<Params> >::typeInfo ...
+             };
+         }
+ 
+         using return_type = R;
+ 
+-        static const bool is_stateless = true;
+-
+         // subtype @magick to workaround some msvc2013 bug
+         template< R(*func)(Params ...) >
+         struct magick {
+@@ -165,13 +142,13 @@ namespace reflection { namespace binding {
+             }
+ 
+             struct non_void_ret {
+-                static convert_to_tes_type<R> tes_func(
++                static get_converter_tes_type<R> tes_func(
+                     StaticFunctionTag* tag,
+-                    convert_to_tes_type<Params> ... params)
++                    get_converter_tes_type<Params> ... params)
+                 {
+                     return GetConv<R>::convert2Tes(
+                         func(
+-                            get_converter<Params>::convert2J(params, tag) ...
++                            get_converter<Params>::convert2J(params) ...
+                         )
+                     );
+                 }
+@@ -180,9 +157,9 @@ namespace reflection { namespace binding {
+             struct void_ret {
+                 static void tes_func(
+                     StaticFunctionTag* tag,
+-                    convert_to_tes_type<Params> ... params)
++                    get_converter_tes_type<Params> ... params)
+                 {
+-                    func(get_converter<Params>::convert2J(params, tag) ...);
++                    func(get_converter<Params>::convert2J(params) ...);
+                 }
+             };
+ 
+@@ -195,10 +172,10 @@ namespace reflection { namespace binding {
+                 args.registry.RegisterFunction
+                 (
+                     new typename native_function_selector<sizeof...(Params)>::function<
+-                        convert_to_tes_type<R>, convert_to_tes_type<Params> ...>
++                        get_converter_tes_type<R>, get_converter_tes_type<Params> ...>
+                         (
+-                            args.functionName.c_str(),
+-                            args.className.c_str(),
++                            args.functionName,
++                            args.className,
+                             &tes_func_holder::tes_func,
+                             &args.registry
+                         )
+@@ -209,78 +186,6 @@ namespace reflection { namespace binding {
+ 
+     };
+ 
+-    template <class R, class State, class... Params>
+-    struct state_proxy<R(*)(State&, Params ...)>
+-    {
+-        static std::vector<type_info_func> parameter_info() {
+-            return {
+-                &j2Str< convert_to_tes_type<R> >::typeInfo,
+-                &j2Str< convert_to_tes_type<Params> >::typeInfo ...
+-            };
+-        }
+-
+-        using return_type = R;
+-
+-        static const bool is_stateless = false;
+-
+-        // subtype @magick to workaround some msvc2013 bug
+-        template< R(*func)(State&, Params ...) >
+-        struct magick {
+-
+-            using base = state_proxy;
+-
+-            static auto func_ptr() -> decltype(func) {
+-                return func;
+-            }
+-
+-            struct non_void_ret {
+-                static convert_to_tes_type<R> tes_func(
+-                    State& state,
+-                    convert_to_tes_type<Params> ... params)
+-                {
+-                    return GetConv<R>::convert2Tes(
+-                        func(
+-                            state,
+-                            get_converter<Params>::convert2J(params, state) ...
+-                        )
+-                    );
+-                }
+-            };
+-
+-            struct void_ret {
+-                static void tes_func(
+-                    State& state,
+-                    convert_to_tes_type<Params> ... params)
+-                {
+-                    func(state, get_converter<Params>::convert2J(params, state) ...);
+-                }
+-            };
+-
+-            using tes_func_holder = typename std::conditional<
+-                std::is_void<R>::value,
+-                typename void_ret,
+-                typename non_void_ret>::type;
+-
+-            static void bind(const bind_args& args) {
+-                args.registry.RegisterFunction
+-                (
+-                    new typename state_native_function_selector<sizeof...(Params)>::function<
+-                        State, convert_to_tes_type<R>, convert_to_tes_type<Params> ...>
+-                        (
+-                            args.functionName.c_str(),
+-                            args.className.c_str(),
+-                            &tes_func_holder::tes_func,
+-                            &args.registry,
+-                            (State&)args.shared_state
+-                        )
+-                );
+-            }
+-        };
+-
+-
+-    };
+-
+-
+ #define CONCAT(x, y) CONCAT1 (x, y)
+ #define CONCAT1(x, y) x##y
+ 
+@@ -317,27 +222,17 @@ namespace reflection { namespace binding {
+             metaF.name = funcname;
+             metaF.tes_func = &Binder::tes_func_holder::tes_func;
+             metaF.c_func = static_cast<c_function>(Binder::func_ptr());
+-            metaF._stateless = Binder::base::is_stateless;
+ 
+             info.addFunction(metaF);
+         }
+     };
+ 
+-#define REGISTERF REGISTERF_STATE
+-#define REGISTERF_STATELESS(func, _funcname, _args, _comment)\
++#define REGISTERF(func, _funcname, _args, _comment)\
+     ::reflection::binding::function_registree CONCAT(_func_registree_, __LINE__){ metaInfo,\
+         ::reflection::binding::proxy<decltype(::reflection::binding::msvc_identity(&func))>::magick<&func>(), \
+         _funcname, _args, _comment };
+ 
+ #define REGISTERF2(func, args, comment)     REGISTERF(func, #func, args, comment)
+-#define REGISTERF2_STATELESS(func, args, comment)     REGISTERF_STATELESS(func, #func, args, comment)
+-
+-#define REGISTERF_STATE(func, _funcname, _args, _comment)\
+-    ::reflection::binding::function_registree CONCAT(_func_registree_, __LINE__){ \
+-        metaInfo, \
+-        ::reflection::binding::state_proxy<decltype(::reflection::binding::msvc_identity(&func))>::magick<&func>(), \
+-        _funcname, _args, _comment \
+-    };
+ 
+     struct papyrus_textblock_setter {
+         explicit papyrus_textblock_setter(class_info& info, const papyrus_text_block& text) {
+diff --git a/JContainers/src/skse_callbacks.cpp b/JContainers/src/skse_callbacks.cpp
+index 4e226a0..462b4e6 100644
+--- a/JContainers/src/skse_callbacks.cpp
++++ b/JContainers/src/skse_callbacks.cpp
+@@ -10,7 +10,6 @@
+ 
+ //#include "gtest.h"
+ #include "skse/skse.h"
+-#include "skse/PapyrusVM.h"
+ #include "util/util.h"
+ #include "jc_interface.h"
+ #include "reflection/reflection.h"
+@@ -19,8 +18,6 @@
+ #include "collections/context.h"
+ #include "collections/dyn_form_watcher.h"
+ 
+-#include "context_master/domain_master.h"
+-
+ class VMClassRegistry;
+ 
+ namespace jc {
+@@ -34,14 +31,13 @@ static SKSEMessagingInterface       * g_messaging = nullptr;
+ namespace {
+ 
+     using namespace collections;
+-    using namespace domain_master;
+ 
+     static PluginHandle					g_pluginHandle = kPluginHandle_Invalid;
+ 
+     void revert(SKSESerializationInterface * intfc) {
+         util::do_with_timing("Revert", []() {
+             skse::set_silent_api();
+-            domain_master::master::instance().clear_state();
++            collections::tes_context::instance().clearState();
+             skse::set_real_api();
+         });
+     }
+@@ -66,7 +62,7 @@ namespace {
+         util::do_with_timing("Save", [intfc]() {
+             if (intfc->OpenRecord((UInt32)consts::storage_chunk, (UInt32)serialization_version::current)) {
+                 io::stream<skse_data_sink> stream(skse_data_sink{ intfc });
+-                domain_master::master::instance().write_to_stream(stream);
++                collections::tes_context::instance().write_to_stream(stream);
+                 //_DMESSAGE("%lu bytes saved", stream.tellp());
+             }
+             else {
+@@ -97,7 +93,7 @@ namespace {
+         util::do_with_timing("Load", [intfc]() {
+ 
+             skse::set_silent_api();
+-            domain_master::master::instance().clear_state();
++            collections::tes_context::instance().clearState();
+             skse::set_real_api();
+ 
+             UInt32 type = 0;
+@@ -111,7 +107,7 @@ namespace {
+             }
+ 
+             io::stream<skse_data_source> stream(skse_data_source(static_cast<consts>(type) == consts::storage_chunk ? intfc : nullptr));
+-            domain_master::master::instance().read_from_stream(stream);
++            collections::tes_context::instance().read_from_stream(stream);
+         });
+     }
+ 
+@@ -172,81 +168,10 @@ namespace {
+ 
+         bool registerAllFunctions(VMClassRegistry *registry) {
+ 
+-            // One of the ways: temp. clone class meta infos, register them
+-            // 2nd: pass each context into "info.bind(*registry, some-context);"
+-
+-            // Anyway, in a result we must construct plenty of SKSE native functors, each function will store a pointer
+-            // to tes_context instance. The functions will be registered in Papyrus VM
+-
+-            // context_master should return tes_context's for us
+-            // Here we should iterator over files in JCData/Contexts/ folder:
+-            // for f in "./JCData/Contexts/*.json":
+-            //   c = master.get_context(f)
+-            //   for cls in metainfo:
+-            //     cls.register(c,f)
+-
+-            // Need to enhance control over resulting function and class name
+-            // E.g. turn JArray.addObj into PSM_JContainers.JArray_addObj
+-
+-            // Pitfall: since the functions registered only ONCE, we must 
+-            // preserve context pointers during ALL gaming session
+-
+-            // Нужно понимать, что после этой фичи никто памятник тебе не поставит
+-
+             util::do_with_timing("Registering functions", [=]() {
+-
+-
+-                // 1. classInfo[] domains[] -> [(registrator, fname, cls_name) ]
+-                // 2. classInfo[] domains[] -> [(domain_name, [(registrator, fname)] ]
+-                //   clsname -> fname -> fname
+-                //   func cl fn  = cl ++ "_" ++ fname
+-
+                 reflection::foreach_metaInfo_do([=](const reflection::class_info& info) {
+-                    info.visit_functions([&](const reflection::function_info& func) {
+-
+-                        func.registrator(reflection::bind_args{
+-                            *registry, info.className().c_str(), func.name.c_str(),
+-                            &domain_master::master::instance().get_default_domain()
+-                        });
+-                        registry->SetFunctionFlags(info.className().c_str(), func.name.c_str(), VMClassRegistry::kFunctionFlag_NoWait);
+-                    });
++                    info.bind(*registry);
+                 });
+-
+-
+-                auto registerDom = [&](domain_master::context& dom, const util::istring& domName) {
+-                    reflection::foreach_metaInfo_do([&](const reflection::class_info& info) {
+-                        info.visit_functions([&](const reflection::function_info& func) {
+-
+-                            func.registrator(reflection::bind_args{
+-                                *registry,
+-                                domName.c_str(),
+-                                info.className() + "_" + func.name,
+-                                &dom
+-                            });
+-                            registry->SetFunctionFlags(info.className().c_str(), func.name.c_str(), VMClassRegistry::kFunctionFlag_NoWait);
+-                        });
+-                    });
+-                };
+-
+-
+-                for (auto& domName : domain_master::master::instance().active_domain_names) {
+-                    auto& dom = domain_master::master::instance().get_or_create_domain_with_name(domName);
+-                    registerDom(dom, domName);
+-                }
+-                
+-                ///namespace fs = boost::filesystem;
+-                //fs::path dir = util::relative_to_dll_path("JCData/Domains/");
+-/*
+-                for (auto& domain : domain_master::master::instance().active_domains()) {
+-
+-
+-
+-                    reflection::foreach_metaInfo_do([=](const reflection::class_info& info) {
+-                        // modify class name & function names
+-
+-                        info.bind(*registry);
+-                    });
+-                }*/
+             });
+             return true;
+         }
+@@ -259,8 +184,9 @@ namespace {
+             g_serialization->SetSaveCallback(g_pluginHandle, save);
+             g_serialization->SetLoadCallback(g_pluginHandle, load);
+ 
++
+             g_serialization->SetFormDeleteCallback(g_pluginHandle, [](UInt64 handle) {
+-                domain_master::master::instance().get_form_observer().on_form_deleted((FormHandle)handle);
++                tes_context::instance()._form_watcher.on_form_deleted((FormHandle)handle);
+             });
+ 
+             g_papyrus->Register(registerAllFunctions);
+diff --git a/JContainers/src/testing_api.cpp b/JContainers/src/testing_api.cpp
+index 8419eff..d2e0104 100644
+--- a/JContainers/src/testing_api.cpp
++++ b/JContainers/src/testing_api.cpp
+@@ -17,8 +17,6 @@ extern "C" {
+         foreach_metaInfo_do([&](const class_info& info) {
+             code_producer::produceClassToFile(info, path);
+         });
+-
+-        code_producer::produceAmalgamatedCodeToFile(reflection::class_registry(), path);
+     }
+ 
+     __declspec(dllexport) bool JC_runTests(int argc, const char** argv) {
+diff --git a/JContainers/src/util/singleton.h b/JContainers/src/util/singleton.h
+index 5f6912b..f89481a 100644
+--- a/JContainers/src/util/singleton.h
++++ b/JContainers/src/util/singleton.h
+@@ -3,7 +3,6 @@
+ #include <type_traits>
+ #include <functional>
+ #include <mutex>
+-#include <atomic>
+ #include "boost/assert.hpp"
+ 
+ namespace util {
+diff --git a/dep/skse/skse/PapyrusNativeFunctionDef.inl b/dep/skse/skse/PapyrusNativeFunctionDef.inl
+index 8e269ea..3b5c674 100644
+--- a/dep/skse/skse/PapyrusNativeFunctionDef.inl
++++ b/dep/skse/skse/PapyrusNativeFunctionDef.inl
+@@ -2,19 +2,9 @@
+ 
+ #define VOID_SPEC 0
+ #include "PapyrusNativeFunctionDef_Base.inl"
+-#define VOID_SPEC 1
+-#include "PapyrusNativeFunctionDef_Base.inl"
+-
+-#undef CLASS_NAME
+-#define CLASS_NAME __MACRO_JOIN__(NativeFunctionWithState, NUM_PARAMS)
+-#define ACCEPTS_STATE
+ 
+-#define VOID_SPEC 0
+-#include "PapyrusNativeFunctionDef_Base.inl"
+ #define VOID_SPEC 1
+ #include "PapyrusNativeFunctionDef_Base.inl"
+ 
+-#undef ACCEPTS_STATE
+-
+ #undef CLASS_NAME
+ #undef NUM_PARAMS
+diff --git a/dep/skse/skse/PapyrusNativeFunctionDef_Base.inl b/dep/skse/skse/PapyrusNativeFunctionDef_Base.inl
+index cfd7d1c..d929b1a 100644
+--- a/dep/skse/skse/PapyrusNativeFunctionDef_Base.inl
++++ b/dep/skse/skse/PapyrusNativeFunctionDef_Base.inl
+@@ -89,12 +89,7 @@ public:
+ #else
+ 		T_Result
+ #endif
+-        (*CallbackType)(
+-#ifdef ACCEPTS_STATE
+-        T_Base & state
+-#else
+-        T_Base * base
+-#endif
++		(* CallbackType)(T_Base * base
+ #if NUM_PARAMS >= 1
+ 		, T_Arg0 arg0
+ #endif
+@@ -127,14 +122,8 @@ public:
+ #endif
+ 		);
+ 
+-#ifndef ACCEPTS_STATE
+-    CLASS_NAME(const char * fnName, const char * className, CallbackType callback, VMClassRegistry * registry)
+-        : NativeFunction(fnName, className, IsStaticType <T_Base>::value, NUM_PARAMS)
+-#else
+-    CLASS_NAME(const char * fnName, const char * className, CallbackType callback, VMClassRegistry * registry, T_Base& state)
+-        : NativeFunction(fnName, className, true, NUM_PARAMS)
+-        , _state(state)
+-#endif
++	CLASS_NAME(const char * fnName, const char * className, CallbackType callback, VMClassRegistry * registry)
++		:NativeFunction(fnName, className, IsStaticType <T_Base>::value, NUM_PARAMS)
+ 	{
+ 		// store callback
+ 		m_callback = (void *)callback;
+@@ -175,6 +164,65 @@ public:
+ #else
+ 		m_retnType = GetTypeID <T_Result>(registry);
+ #endif
++
++#ifdef _NATIVEDUMP
++		std::string functionOut;
++
++#if VOID_SPEC
++		functionOut += GetArgumentTypeName<void>(registry);
++		functionOut += " ";
++#else
++		functionOut += GetArgumentTypeName<T_Result>(registry);
++		functionOut += " ";
++#endif
++		functionOut += className;
++		functionOut += "::";
++		functionOut += fnName;
++		functionOut += "(";
++
++#if NUM_PARAMS >= 1
++		functionOut += GetArgumentTypeName<T_Arg0>(registry);
++#endif
++#if NUM_PARAMS >= 2
++		functionOut += ", ";
++		functionOut += GetArgumentTypeName<T_Arg1>(registry);
++#endif
++#if NUM_PARAMS >= 3
++		functionOut += ", ";
++		functionOut += GetArgumentTypeName<T_Arg2>(registry);
++#endif
++#if NUM_PARAMS >= 4
++		functionOut += ", ";
++		functionOut += GetArgumentTypeName<T_Arg3>(registry);
++#endif
++#if NUM_PARAMS >= 5
++		functionOut += ", ";
++		functionOut += GetArgumentTypeName<T_Arg4>(registry);
++#endif
++#if NUM_PARAMS >= 6
++		functionOut += ", ";
++		functionOut += GetArgumentTypeName<T_Arg5>(registry);
++#endif
++#if NUM_PARAMS >= 7
++		functionOut += ", ";
++		functionOut += GetArgumentTypeName<T_Arg6>(registry);
++#endif
++#if NUM_PARAMS >= 8
++		functionOut += ", ";
++		functionOut += GetArgumentTypeName<T_Arg7>(registry);
++#endif
++#if NUM_PARAMS >= 9
++		functionOut += ", ";
++		functionOut += GetArgumentTypeName<T_Arg8>(registry);
++#endif
++#if NUM_PARAMS >= 10
++		functionOut += ", ";
++		functionOut += GetArgumentTypeName<T_Arg9>(registry);
++#endif
++		functionOut += ")";
++
++		_MESSAGE("%s", functionOut.c_str());
++#endif
+ 	}
+ 
+ 	virtual ~CLASS_NAME()	{ }
+@@ -188,7 +236,6 @@ public:
+ 		// get argument list
+ 		UInt32	argOffset = CALL_MEMBER_FN(state->argList, GetOffset)(state);
+ 
+-#   ifndef ACCEPTS_STATE
+ 		T_Base	* base = NULL;
+ 
+ 		// extract base object pointer for non-static types
+@@ -197,7 +244,6 @@ public:
+ 			UnpackValue(&base, baseValue);
+ 			if (!base) return false;
+ 		}
+-#   endif
+ 
+ 		// extract parameters
+ #if NUM_PARAMS >= 1
+@@ -245,12 +291,8 @@ public:
+ #if !VOID_SPEC
+ 		T_Result	result =
+ #endif
+-			((CallbackType)m_callback)(
+-#ifdef ACCEPTS_STATE
+-            _state
+-#else
+-            base
+-#endif
++			((CallbackType)m_callback)(base
++
+ #if NUM_PARAMS >= 1
+ 			, arg0
+ #endif
+@@ -297,10 +339,6 @@ public:
+ private:
+ 	// hide
+ 	CLASS_NAME();
+-
+-#   ifdef ACCEPTS_STATE
+-    T_Base& _state;
+-#   endif
+ };
+ 
+ #undef VOID_SPEC

@@ -106,6 +106,8 @@ namespace collections
     public:
 
         tes_context_standalone() : tes_context(_observer) {} // not safe to pass uninitialized yet memory
+
+        forms::form_observer& get_form_observer() { return _observer; }
     };
 
     // so that this won't be lost or hidden

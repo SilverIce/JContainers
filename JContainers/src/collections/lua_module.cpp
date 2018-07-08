@@ -177,7 +177,7 @@ namespace lua { namespace aux_wip {
     };
 
     // just a pool, factory of contexts.
-    // any thead can obtain free (or newly created), initialized lua-context
+    // any thead can obtain a free (or newly created), initialized lua-context
     // the tread have to return it back via @release
     class context_pool : public collections::dependent_context, boost::noncopyable {
         static const uint32_t queue_capacity = 16;

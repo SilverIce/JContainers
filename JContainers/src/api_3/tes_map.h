@@ -168,6 +168,12 @@ namespace tes_api_3 {
             map_functions::getNthKey(obj, keyIndex, [&](const typename Cnt::key_type& key) { ith = key; });
             return ith;
         }
+
+        static void removeNthKey(tes_context& ctx, ref obj, SInt32 keyIndex) {
+            map_functions::getNthKey(obj, keyIndex, [&](const typename Cnt::key_type& key) { obj->u_erase(key); });
+        }
+        REGISTERF(removeNthKey, "removeNthKey", "* keyIndex", "");
+
     };
 
     typedef tes_map_t<const char*, map, const char*, const char*> tes_map;
@@ -292,4 +298,33 @@ Usage:
         EXPECT_EQ(countIterations(fmap), 2);
     }
 
+    /*  The bug is that: it is not possible to remove expired (but not None) form-keys from a JFormMap
+        
+    */
+    JC_TEST(tes_form_map, removeKey_bug)
+    {
+        using namespace collections;
+
+        collections::form_map* fmap = tes_object::object<form_map>(context);
+        EXPECT_EQ(fmap->s_count(), 0);
+
+        auto expiredForm = make_weak_form_id(util::to_enum<FormId>(0x15), context);
+        EXPECT_TRUE(expiredForm.is_not_expired());
+
+        fmap->u_container()[expiredForm] = item{ "expired" };
+        EXPECT_EQ(fmap->s_count(), 1);
+
+        tes_form_map::removeKey(context, fmap, make_lightweight_form_ref(nullptr, context));
+        EXPECT_EQ(fmap->s_count(), 1);
+
+        context.get_form_observer().on_form_deleted(forms::form_id_to_handle(expiredForm.get()));
+        EXPECT_TRUE(expiredForm.is_expired());
+
+        tes_form_map::removeKey(context, fmap, make_lightweight_form_ref(nullptr, context));
+        EXPECT_EQ(fmap->s_count(), 1) << "This is the bug actually. Or a feature ;)";
+
+        tes_form_map::removeKey(context, fmap, expiredForm);
+        EXPECT_EQ(fmap->s_count(), 0);
+
+    }
 }

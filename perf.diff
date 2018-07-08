@@ -1,0 +1,183 @@
+diff --git a/JContainers.sln b/JContainers.sln
+index d899e60..9f9cba9 100644
+--- a/JContainers.sln
++++ b/JContainers.sln
+@@ -89,4 +89,7 @@ Global
+ 	GlobalSection(SolutionProperties) = preSolution
+ 		HideSolutionNode = FALSE
+ 	EndGlobalSection
++	GlobalSection(Performance) = preSolution
++		HasPerformanceSessions = true
++	EndGlobalSection
+ EndGlobal
+diff --git a/JContainers/JContainers.vcxproj b/JContainers/JContainers.vcxproj
+index 60142fb..4d85712 100644
+--- a/JContainers/JContainers.vcxproj
++++ b/JContainers/JContainers.vcxproj
+@@ -87,6 +87,7 @@
+       <AdditionalLibraryDirectories>..\dep\boost\boost_lib\lib</AdditionalLibraryDirectories>
+       <GenerateDebugInformation>true</GenerateDebugInformation>
+       <SubSystem>Console</SubSystem>
++      <Profile>true</Profile>
+     </Link>
+     <PostBuildEvent />
+     <Bscmake />
+@@ -122,6 +123,7 @@
+       <SubSystem>Console</SubSystem>
+       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+       <GenerateDebugInformation>true</GenerateDebugInformation>
++      <Profile>true</Profile>
+     </Link>
+     <PostBuildEvent />
+     <Bscmake />
+diff --git a/JContainers/jc_debug.py b/JContainers/jc_debug.py
+index 0ee6a33..0bd1eb1 100644
+--- a/JContainers/jc_debug.py
++++ b/JContainers/jc_debug.py
+@@ -18,12 +18,24 @@ if __name__ == '__main__':
+     # location = sys.argv[1]
+     # lib = JCLib(location)
+     # lib.runTests()
++<<<<<<< Updated upstream
++=======
++    args = (
++    	''
++    	,'--gtest_filter=performance.*'
++    )
++>>>>>>> Stashed changes
+ 
+     try:
+         print sys.argv
+         location = sys.argv[1]
+         lib = JCLib(location)
++<<<<<<< Updated upstream
+         lib.runTests()
++=======
++        for i in range(20):
++        	lib.runTests(args)
++>>>>>>> Stashed changes
+     except BaseException as e:
+         print 'Error:', e
+         #raise
+@@ -31,5 +43,9 @@ if __name__ == '__main__':
+         print "Unexpected error:", sys.exc_info()[0]
+         #raise
+ 
++<<<<<<< Updated upstream
+     input("Press Enter to continue...")
++=======
++   # input("Press Enter to close...")
++>>>>>>> Stashed changes
+ 
+diff --git a/JContainers/src/collections/form_handling.h b/JContainers/src/collections/form_handling.h
+index 15b1711..6a593e4 100644
+--- a/JContainers/src/collections/form_handling.h
++++ b/JContainers/src/collections/form_handling.h
+@@ -62,7 +62,7 @@ namespace collections {
+             if (is_static(formId)) { // common case
+                 modName = skse::modname_from_index (modID);
+                 if (!modName) {
+-                    return false;
++                    return boost::none;
+                 }
+ 
+                 formIdClean = local_id(formId);
+@@ -72,16 +72,10 @@ namespace collections {
+                 modName = "";
+             }
+ 
+-            std::string string{ kFormData };
+-            string += kFormDataSeparator;
+-            string += modName;
+-            string += kFormDataSeparator;
+-
+-            char buff[20] = {'\0'};
+-            _snprintf(buff, sizeof buff, "0x%x", formIdClean);
+-            string += buff;
++            char string[MAX_PATH] = { '\0' };
++            _snprintf(string, sizeof string, "__formData|%s|0x%x", modName, formIdClean);
+ 
+-            return string;
++            return boost::optional<std::string>{ string };
+         }
+ 
+         inline bool is_form_string(const char *string) {
+@@ -121,18 +115,31 @@ namespace collections {
+ 
+             auto& formIdString = pair2.second;
+ 
+-            uint32_t formId = 0;
+-            try {
+-                formId = std::stoul(ss::string(formIdString.begin(), formIdString.end()), nullptr, 0);
+-            }
+-            catch (const std::invalid_argument& ) {
+-                return boost::none;
+-            }
+-            catch (const std::out_of_range& ) {
+-                return boost::none;
++            auto stoul_optimized = [](boost::iterator_range<const char*>& str, size_t *_Idx, int _Base) -> bs::optional<unsigned long> {	// convert string to unsigned long
++                char long_string[MAX_PATH];
++                assert(str.size() < sizeof long_string);
++                memcpy(long_string, str.begin(), str.size());
++
++                const char *_Ptr = long_string;
++                char *_Eptr;
++                errno = 0;
++                unsigned long _Ans = _CSTD strtoul(_Ptr, &_Eptr, _Base);
++
++                if (_Ptr == _Eptr)
++                    return boost::none; //_Xinvalid_argument("invalid stoul argument");
++                if (errno == ERANGE)
++                    return boost::none; //_Xout_of_range("stoul argument out of range");
++                if (_Idx != 0)
++                    *_Idx = (size_t)(_Eptr - _Ptr);
++                return (_Ans);
++            };
++
++            bs::optional<unsigned long> optFormId = stoul_optimized(formIdString, nullptr, 0);
++            if (optFormId) {
++                return construct(modIdx, *optFormId);
+             }
+ 
+-            return construct(modIdx, formId);
++            return boost::none;
+         }
+ 
+         inline boost::optional<FormId> from_string(const char* source) {
+diff --git a/JContainers/src/collections/json_serialization.h b/JContainers/src/collections/json_serialization.h
+index 528e383..392cc83 100644
+--- a/JContainers/src/collections/json_serialization.h
++++ b/JContainers/src/collections/json_serialization.h
+@@ -87,6 +87,12 @@ namespace collections {
+         static json_unique_ref json_from_file(const char *path) {
+             json_error_t error; //  TODO: output error
+             json_ref ref = json_load_file(path, 0, &error);
++/*
++            auto file = make_unique_ptr(fopen(path, "rb"), fclose);
++            auto cb = [](void *buffer, size_t buflen, void *data) -> size_t {
++                return data ? fread(buffer, 1, buflen, reinterpret_cast<FILE*>(data)) : 0;
++            };
++            json_ref ref = json_load_callback(cb, file.get(), 0, &error);*/
+             return make_unique_ptr(ref, json_decref);
+         }
+ 
+diff --git a/JContainers/src/collections/tests.h b/JContainers/src/collections/tests.h
+index 284ddb2..095b0f6 100644
+--- a/JContainers/src/collections/tests.h
++++ b/JContainers/src/collections/tests.h
+@@ -611,4 +611,13 @@ namespace collections { namespace {
+     }
+ 
+ }
+-}
+\ No newline at end of file
++}
++
++namespace collections { namespace {
++    TEST(performance, deserialization) {
++        tes_context ctx;
++        auto object = json_deserializer::object_from_file(ctx, util::relative_to_dll_path("test_data/json_deserialization_peformance/file.json"));
++        EXPECT_NOT_NIL(object);
++    }
++}
++}
