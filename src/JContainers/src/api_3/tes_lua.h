@@ -23,6 +23,10 @@ The @transport is any kind of object, not just JMap.
 If @minimizeLifetime is True the function will invoke JValue.zeroLifetime on the @transport object.
 It is more than wise to re-use @transport when evaluating lot of lua code at once.
 Returns @default value if evaluation fails.
+
+WARNING: You can transfer in/out from Lua only 24-bit integers with exact precision (+/- 16 777 216)
+Anything bigger or smaller than that will have "holes" due to how the floating point rounding works.
+
 Usage example:
 
     ; 7 from the end until 9 from the end. Returns "Lua" string
