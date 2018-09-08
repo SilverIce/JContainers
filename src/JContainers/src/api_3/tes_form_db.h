@@ -3,6 +3,10 @@
 
 namespace tes_api_3 {
 
+/// Redefine in each logging module
+#undef  JC_LOG_API_SOURCE
+#define JC_LOG_API_SOURCE "JFormDB"
+
     using namespace collections;
 
     class tes_form_db : public class_meta<tes_form_db> {
@@ -87,7 +91,10 @@ namespace tes_api_3 {
             return name && *name;
         }
 
-        static void setEntry(tes_context& ctx, const char *storageName, key_cref formKey, object_stack_ref& entry) {
+        static void setEntry(tes_context& ctx, const char *storageName, key_cref formKey, object_stack_ref& entry)
+        {
+            JC_LOG_API ("%s, ..., ...", storageName ? storageName : "");
+
             if (!validate_storage_name(storageName) || !formKey) {
                 return;
             }
@@ -103,7 +110,10 @@ namespace tes_api_3 {
         }
         REGISTERF2(setEntry, "storageName fKey entry", "associates given form key and entry (container). set entry to zero to destroy association");
 
-        static map *makeMapEntry(tes_context& ctx, const char *storageName, key_cref form) {
+        static map *makeMapEntry(tes_context& ctx, const char *storageName, key_cref form)
+        {
+            JC_LOG_API ("%s, ...", storageName ? storageName : "");
+
             if (!form || !validate_storage_name(storageName)) {
                 return nullptr;
             }
@@ -119,7 +129,10 @@ namespace tes_api_3 {
         }
         REGISTERF(makeMapEntry, "makeEntry", "storageName fKey", "returns (or creates new if not found) JMap entry for given storage and form");
 
-        static object_base *findEntry(tes_context& ctx, const char *storageName, key_cref form) {
+        static object_base *findEntry(tes_context& ctx, const char *storageName, key_cref form)
+        {
+            JC_LOG_API ("%s, ...", storageName ? storageName : "");
+
             auto& db = ctx.root();
             form_map *fmap = tes_map::getItem<object_base*>(ctx, &db, storageName)->as<form_map>();
             return tes_form_map::getItem<object_base*>(ctx, fmap, form);
@@ -133,7 +146,9 @@ namespace tes_api_3 {
         //////////////////////////////////////////////////////////////////////////
 
         template<class T>
-        static T solveGetter(tes_context& ctx, key_cref form, const char* path, T t= default_value<T>()) {
+        static T solveGetter(tes_context& ctx, key_cref form, const char* path, T t= default_value<T>())
+        {
+            JC_LOG_API ("..., %s, ...", path ? path : "");
             subpath_extractor sub(path, is_path);
             return tes_object::resolveGetter<T>(ctx, findEntry(ctx, sub.storageName(), form), sub.rest(), t);
         }
@@ -144,7 +159,9 @@ namespace tes_api_3 {
         REGISTERF(solveGetter<form_ref>, "solveForm", "fKey path default=None", nullptr);
 
         template<class T>
-        static bool solveSetter(tes_context& ctx, key_cref form, const char* path, T value, bool createMissingKeys = false) {
+        static bool solveSetter(tes_context& ctx, key_cref form, const char* path, T value, bool createMissingKeys = false)
+        {
+            JC_LOG_API ("..., %s, ..., %d", path ? path : "", int (createMissingKeys));
             subpath_extractor sub(path, is_path);
             return tes_object::solveSetter(ctx, makeMapEntry(ctx, sub.storageName(), form), sub.rest(), value, createMissingKeys);
         }
@@ -156,7 +173,9 @@ namespace tes_api_3 {
         REGISTERF(solveSetter<object_stack_ref&>, "solveObjSetter", "fKey path value createMissingKeys=false", nullptr);
         REGISTERF(solveSetter<form_ref>, "solveFormSetter", "fKey path value createMissingKeys=false", nullptr);
 
-        static bool hasPath(tes_context& ctx, key_cref form, const char* path) {
+        static bool hasPath(tes_context& ctx, key_cref form, const char* path)
+        {
+            JC_LOG_API ("..., %s", path ? path : "");
             subpath_extractor sub(path);
             return tes_object::hasPath(ctx, findMapEntry(ctx, sub.storageName(), form), sub.rest());
         }
@@ -165,6 +184,7 @@ namespace tes_api_3 {
         //////////////////////////////////////////////////////////////////////////
 
         static object_base* allKeys(tes_context& ctx, key_cref form, const char *path) {
+            JC_LOG_API ("..., %s", path ? path : "");
             subpath_extractor sub(path);
             return tes_map::allKeys(ctx, findMapEntry(ctx, sub.storageName(), form));
         }
@@ -174,13 +194,16 @@ namespace tes_api_3 {
             "returns new array containing all keys");
 
         static object_base* allValues(tes_context& ctx, key_cref form, const char *path) {
+            JC_LOG_API ("..., %s", path ? path : "");
             subpath_extractor sub(path);
             return tes_map::allValues(ctx, findMapEntry(ctx, sub.storageName(), form));
         }
         REGISTERF2(allValues, "fKey key", "returns new array containing all values");
 
         template<class T>
-        static T getItem(tes_context& ctx, key_cref form, const char* path) {
+        static T getItem(tes_context& ctx, key_cref form, const char* path)
+        {
+            JC_LOG_API ("..., %s", path ? path : "");
             subpath_extractor sub(path);
             return tes_map::getItem<T>(ctx, findMapEntry(ctx, sub.storageName(), form), sub.rest());
         }
@@ -192,7 +215,9 @@ namespace tes_api_3 {
         REGISTERF(getItem<form_ref>, "getForm", "fKey key", "");
 
         template<class T>
-        static void setItem(tes_context& ctx, key_cref form, const char* path, T item) {
+        static void setItem(tes_context& ctx, key_cref form, const char* path, T item)
+        {
+            JC_LOG_API ("..., %s, ...", path ? path : "");
             subpath_extractor sub(path);
             tes_map::setItem(ctx, makeMapEntry(ctx, sub.storageName(), form), sub.rest(), item);
         }

@@ -19,11 +19,11 @@ namespace reflection { namespace binding {
             return (HandleT)(obj ? obj->uid() : Handle::Null);
         }
 
-        static object_stack_ref_template<T> convert2J(HandleT hdl, tes_context& ctx) {
-            auto ref = ctx.getObjectRefOfType<T>((Handle)hdl);
-            if (!ref && hdl != util::to_integral(Handle::Null)) {
-                JC_log("Warning: access to non-existing object with id 0x%X", hdl);
-            }
+        static object_stack_ref_template<T> convert2J (HandleT hdl, tes_context& ctx)
+        {
+            auto ref = ctx.getObjectRefOfType<T> ((Handle) hdl);
+            if (!ref && hdl != util::to_integral (Handle::Null))
+                JC_log ("Warning: access to non-existing object with id 0x%X (%d)", hdl, hdl);
             return ref;
         }
     };

@@ -4,6 +4,10 @@
 
 namespace tes_api_3 {
 
+/// Redefine in each logging module
+#undef  JC_LOG_API_SOURCE
+#define JC_LOG_API_SOURCE "JArray"
+
     using namespace collections;
 
 #define NEGATIVE_IDX_COMMENT "negative index accesses items from the end of container counting backwards."
@@ -20,6 +24,7 @@ namespace tes_api_3 {
                 "Inherits JValue functionality";
         }
 
+        // TODO: are these to go to private, all used?
         static bool validateReadIndex(const array *obj, UInt32 index) {
             return obj && index < obj->_array.size();
         }
@@ -36,22 +41,28 @@ namespace tes_api_3 {
 
         REGISTERF(tes_object::object<array>, "object", "", kCommentObject);
 
-        static object_base* objectWithSize(tes_context& ctx, SInt32 size) {
-            if (size < 0) {
-                return nullptr;
-            }
+        static object_base* objectWithSize(tes_context& ctx, SInt32 size)
+        {
+            JC_LOG_API ("%d", size);
 
-            auto& obj = array::objectWithInitializer([&](array &me) {
-                me._array.resize(size);
-            },
-                ctx);
+            if (size < 0)
+                return nullptr;
+
+            auto& obj = array::objectWithInitializer ([&] (array &me)
+            {
+                me._array.resize (size);
+            }
+            , ctx);
 
             return &obj;
         }
         REGISTERF2(objectWithSize, "size", "Creates a new array of given size, filled with empty (None) items");
 
         template<class TesType, class JCType = TesType>
-        static object_base* fromArray(tes_context& ctx, VMArray<TesType> arr) {
+        static object_base* fromArray(tes_context& ctx, VMArray<TesType> arr)
+        {
+            JC_LOG_API ("...");
+
             auto obj = &array::objectWithInitializer([&](array &me) {
                 me.u_container().reserve(arr.Length());
                 for (UInt32 i = 0; i < arr.Length(); ++i) {
@@ -72,7 +83,10 @@ objectWithBooleans converts booleans into integers");
         REGISTERF(fromArray<bool>, "objectWithBooleans",  "values", nullptr);
         REGISTERF(ARGS(fromArray<TESForm*, form_ref>), "objectWithForms", "values", nullptr);
 
-        static object_base* subArray(tes_context& ctx, ref source, SInt32 startIndex, SInt32 endIndex) {
+        static object_base* subArray(tes_context& ctx, ref source, SInt32 startIndex, SInt32 endIndex)
+        {
+            JC_LOG_API ("%p, %d, %d", (void*) source, startIndex, endIndex);
+
             if (!source) {
                 return nullptr;
             }
@@ -92,7 +106,10 @@ objectWithBooleans converts booleans into integers");
         }
         REGISTERF2(subArray, "* startIndex endIndex", "Creates a new array containing all the values from the source array in range [startIndex, endIndex)");
 
-        static void addFromArray(tes_context& ctx, ref obj, ref another, SInt32 insertAtIndex = -1) {
+        static void addFromArray(tes_context& ctx, ref obj, ref another, SInt32 insertAtIndex = -1)
+        {
+            JC_LOG_API ("%p, %p, %d", (void*) obj, another, insertAtIndex);
+
             if (!obj || !another || obj == another) {
                 return ;
             }
@@ -107,7 +124,10 @@ objectWithBooleans converts booleans into integers");
 "Inserts the values from the source array into this array. If insertAtIndex is -1 (default behaviour) it appends to the end.\n"
 NEGATIVE_IDX_COMMENT);
 
-        static void addFromFormList(tes_context& ctx, ref obj, BGSListForm *formList, SInt32 insertAtIndex = -1) {
+        static void addFromFormList(tes_context& ctx, ref obj, BGSListForm *formList, SInt32 insertAtIndex = -1)
+        {
+            JC_LOG_API ("%p, %p, %d", (void*) obj, (void*) formList, insertAtIndex);
+
             if (!obj || !formList) {
                 return;
             }
@@ -133,7 +153,10 @@ NEGATIVE_IDX_COMMENT);
         REGISTERF2(addFromFormList, "* source insertAtIndex=-1", nullptr);
 
         template<class T>
-        static T itemAtIndex(tes_context& ctx, ref obj, Index index, T t = default_value<T>()) {
+        static T itemAtIndex(tes_context& ctx, ref obj, Index index, T t = default_value<T>())
+        {
+            JC_LOG_API ("%p, %d, ...", (void*) obj, index);
+
             doReadOp(obj, index, [=, &t](uint32_t idx) {
                 t = obj->_array[idx].readAs<T>();
             });
@@ -148,8 +171,10 @@ NEGATIVE_IDX_COMMENT);
         REGISTERF(itemAtIndex<form_ref>, "getForm", "* index default=None", "");
 
         template<class Vector>
-        static Vector all_items (tes_context& ctx, ref obj) 
+        static Vector all_items (tes_context& ctx, ref obj)
         {
+            JC_LOG_API ("%p", (void*) obj);
+
             Vector v;
             typedef typename Vector::value_type T;
 
@@ -164,7 +189,7 @@ NEGATIVE_IDX_COMMENT);
 
             return v;
         }
-        REGISTERF (all_items<VMResultArray<SInt32>>,           "asIntArray",    "*", 
+        REGISTERF (all_items<VMResultArray<SInt32>>,           "asIntArray",    "*",
             "Copy all items to new native Papyrus array of dynamic size.\n"
             "Items not matching the requested type will have default\n"
             "values as the ones from the getInt/Flt/Str/Form functions.");
@@ -173,7 +198,9 @@ NEGATIVE_IDX_COMMENT);
         REGISTERF (all_items<VMResultArray<TESForm*>>,         "asFormArray",   "*", "");
 
         template<class T>
-        static SInt32 findVal(tes_context& ctx, ref obj, T value, SInt32 pySearchStartIndex = 0) {
+        static SInt32 findVal(tes_context& ctx, ref obj, T value, SInt32 pySearchStartIndex = 0)
+        {
+            JC_LOG_API ("%p, ..., %d", (void*) obj, pySearchStartIndex);
 
             int result = -1;
 
@@ -200,7 +227,10 @@ NEGATIVE_IDX_COMMENT);
         REGISTERF(findVal<form_ref>, "findForm", "* value searchStartIndex=0", "");
 
         template<class T>
-        static void replaceItemAtIndex(tes_context& ctx, ref obj, Index index, T val) {
+        static void replaceItemAtIndex(tes_context& ctx, ref obj, Index index, T val)
+        {
+            JC_LOG_API ("%p, %d, ...", (void*) obj, index);
+
             doReadOp(obj, index, [=](uint32_t idx) {
                 obj->_array[idx] = item(val);
             });
@@ -213,7 +243,10 @@ NEGATIVE_IDX_COMMENT);
         REGISTERF(replaceItemAtIndex<form_ref>, "setForm", "* index value", "");
 
         template<class T>
-        static void addItemAt(tes_context& ctx, ref obj, T val, SInt32 addToIndex = -1) {
+        static void addItemAt(tes_context& ctx, ref obj, T val, SInt32 addToIndex = -1)
+        {
+            JC_LOG_API ("%p, ..., %d", (void*) obj, addToIndex);
+
             doWriteOp(obj, addToIndex, [&](uint32_t idx) {
                 (void)obj->_array.emplace(obj->begin() + idx, val);
             });
@@ -226,23 +259,30 @@ If @addToIndex >= 0 it inserts value at given index. " NEGATIVE_IDX_COMMENT);
         REGISTERF(addItemAt<form_ref>, "addForm", "* value addToIndex=-1", "");
 
         static Index count(tes_context& ctx, ref obj) {
+            JC_LOG_API ("%p", (void*) obj);
             return tes_object::count(ctx, obj);
         }
         REGISTERF2(count, "*", "Returns count of the items in the array");
 
         static void clear(tes_context& ctx, ref obj) {
+            JC_LOG_API ("%p", (void*) obj);
             tes_object::clear(ctx, obj);
         }
         REGISTERF2(clear, "*", "Removes all the items from the array");
 
-        static void eraseIndex(tes_context& ctx, ref obj, SInt32 index) {
+        static void eraseIndex(tes_context& ctx, ref obj, SInt32 index)
+        {
+            JC_LOG_API ("%p, %d", (void*) obj, index);
+
             doReadOp(obj, index, [=](uint32_t idx) {
                 obj->_array.erase(obj->begin() + idx);
             });
         }
         REGISTERF2(eraseIndex, "* index", "Erases the item at the index. "NEGATIVE_IDX_COMMENT);
 
-        static void eraseRange(tes_context& ctx, ref obj, SInt32 first, SInt32 last) {
+        static void eraseRange(tes_context& ctx, ref obj, SInt32 first, SInt32 last)
+        {
+            JC_LOG_API ("%p, %d, %d", (void*) obj, first, last);
 
             // 0,1,2,3,4
             // b        e
@@ -258,7 +298,10 @@ If @addToIndex >= 0 it inserts value at given index. " NEGATIVE_IDX_COMMENT);
         REGISTERF2(eraseRange, "* first last", "Erases [first, last] index range of the items. "NEGATIVE_IDX_COMMENT
             "\nFor ex. with [1,-1] range it will erase everything except the first item");
 
-        static SInt32 valueType(tes_context& ctx, ref obj, SInt32 index) {
+        static SInt32 valueType(tes_context& ctx, ref obj, SInt32 index)
+        {
+            JC_LOG_API ("%p, %d", (void*) obj, index);
+
             SInt32 type = item_type::no_item;
             doReadOp(obj, index, [=, &type](uint32_t idx) {
                 type = obj->_array[idx].type();
@@ -268,7 +311,9 @@ If @addToIndex >= 0 it inserts value at given index. " NEGATIVE_IDX_COMMENT);
         }
         REGISTERF2(valueType, "* index", "Returns type of the value at the @index. "NEGATIVE_IDX_COMMENT"\n"VALUE_TYPE_COMMENT);
 
-        static void swapItems(tes_context& ctx, ref obj, SInt32 idx, SInt32 idx2) {
+        static void swapItems(tes_context& ctx, ref obj, SInt32 idx, SInt32 idx2)
+        {
+            JC_LOG_API ("%p, %d, %d", (void*) obj, idx, idx2);
 
             SInt32 pyIndexes[] = { idx, idx2 };
             doReadOp(obj, pyIndexes, [=](const std::array<uint32_t, 2>& indices) {
@@ -280,7 +325,10 @@ If @addToIndex >= 0 it inserts value at given index. " NEGATIVE_IDX_COMMENT);
         }
         REGISTERF2(swapItems, "* index1 index2", "Exchanges the items at @index1 and @index2. "NEGATIVE_IDX_COMMENT);
 
-        static ref sort(tes_context& ctx, ref obj) {
+        static ref sort(tes_context& ctx, ref obj)
+        {
+            JC_LOG_API ("%p", (void*) obj);
+
             if (obj) {
                 object_lock g(obj);
                 std::sort(obj->u_container().begin(), obj->u_container().end());
@@ -289,7 +337,10 @@ If @addToIndex >= 0 it inserts value at given index. " NEGATIVE_IDX_COMMENT);
         }
         REGISTERF2(sort, "*", "Sorts the items into ascending order (none < int < float < form < object < string). Returns the array itself");
 
-        static ref unique(tes_context& ctx, ref obj) {
+        static ref unique(tes_context& ctx, ref obj)
+        {
+            JC_LOG_API ("%p", (void*) obj);
+
             if (obj) {
                 object_lock g(obj);
                 std::sort(obj->u_container().begin(), obj->u_container().end());
@@ -315,6 +366,8 @@ If @addToIndex >= 0 it inserts value at given index. " NEGATIVE_IDX_COMMENT);
                 , ValueType defaultRead = default_value<ValueType>()
             )
         {
+            JC_LOG_API ("%p, ..., %d, %d, %d, ...", (void*) obj, py_writeAtIdx, py_stopWriteAtIdx, py_readIdx);
+
             if (!obj) {
                 return false;
             }
