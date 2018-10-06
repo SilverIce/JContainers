@@ -227,6 +227,26 @@ NEGATIVE_IDX_COMMENT);
         REGISTERF(findVal<form_ref>, "findForm", "* value searchStartIndex=0", "");
 
         template<class T>
+        static SInt32 count_item (tes_context& ctx, ref obj, T value)
+        {
+            JC_LOG_API ("%p, ...", (void*) obj);
+
+            SInt32 result = 0;
+            if (obj) 
+            {
+                object_lock g (obj);
+                auto n = std::count (obj->u_container ().begin (), obj->u_container ().end (), item (value));
+                result = static_cast<SInt32> (n);
+            }
+            return result;
+        }
+        REGISTERF (count_item<SInt32>, "countInteger", "* value", "Returns the number of times given value was found in a JArray.");
+        REGISTERF (count_item<Float32>, "countFloat", "* value", "");
+        REGISTERF (count_item<const char *>, "countString", "* value", "");
+        REGISTERF (count_item<object_base*>, "countObject", "* container", "");
+        REGISTERF (count_item<form_ref>, "countForm", "* value", "");
+
+        template<class T>
         static void replaceItemAtIndex(tes_context& ctx, ref obj, Index index, T val)
         {
             JC_LOG_API ("%p, %d, ...", (void*) obj, index);
@@ -298,6 +318,27 @@ If @addToIndex >= 0 it inserts value at given index. " NEGATIVE_IDX_COMMENT);
         REGISTERF2(eraseRange, "* first last", "Erases [first, last] index range of the items. "NEGATIVE_IDX_COMMENT
             "\nFor ex. with [1,-1] range it will erase everything except the first item");
 
+        template<class T>
+        static SInt32 erase_item (tes_context& ctx, ref obj, T value)
+        {
+            JC_LOG_API ("%p, ...", (void*) obj);
+
+            SInt32 result = 0;
+            if (obj) 
+            {
+                object_lock g (obj);
+                auto new_end = std::remove (obj->u_container ().begin (), obj->u_container ().end (), item (value));
+                result = static_cast<SInt32> (std::distance (new_end, obj->u_container ().end ()));
+                obj->u_container ().erase (new_end, obj->u_container ().end ());
+            }
+            return result;
+        }
+        REGISTERF (erase_item<SInt32>, "eraseInteger", "* value", "Erase all elements of given value. Returns the number of erased elements.");
+        REGISTERF (erase_item<Float32>, "eraseFloat", "* value", "");
+        REGISTERF (erase_item<const char *>, "eraseString", "* value", "");
+        REGISTERF (erase_item<object_base*>, "eraseObject", "* container", "");
+        REGISTERF (erase_item<form_ref>, "eraseForm", "* value", "");
+
         static SInt32 valueType(tes_context& ctx, ref obj, SInt32 index)
         {
             JC_LOG_API ("%p, %d", (void*) obj, index);
@@ -350,6 +391,18 @@ If @addToIndex >= 0 it inserts value at given index. " NEGATIVE_IDX_COMMENT);
             return obj;
         }
         REGISTERF2(unique, "*", "Sorts the items, removes duplicates. Returns array itself. You can treat it as JSet now");
+
+        static ref reverse (tes_context& ctx, ref obj)
+        {
+            JC_LOG_API ("%p", (void*) obj);
+            if (obj) 
+            {
+                object_lock g (obj);
+                std::reverse (obj->u_container ().begin (), obj->u_container ().end ());
+            }
+            return obj;
+        }
+        REGISTERF2 (reverse, "*", "Reverse the order of elements. Returns the array itself.");
 
         template<
             typename ValueType,
