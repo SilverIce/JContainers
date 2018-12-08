@@ -137,12 +137,10 @@ struct real_api : public skse_api
         return ndx != 0xFF ? make_optional (ndx) : nullopt;
     }
 
-    /// Asuming modIndex is 16-bit, next 16-bit ones in the memory layout looks like reporting 
-    /// the light weight mod index.
+    /// SKSE64 2.0.11 seems to introduce direct naming of this data field.
     static inline std::uint16_t light_index (ModInfo const& mi)
     {
-        auto p = reinterpret_cast<uint16_t const*> (&mi.modIndex);
-        return *(p + 1);
+        return mi.lightIndex;
     }
 
     std::optional<std::uint16_t> loaded_light_mod_index (std::string_view const& name) override
