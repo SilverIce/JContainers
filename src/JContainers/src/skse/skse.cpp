@@ -137,21 +137,13 @@ struct real_api : public skse_api
         return ndx != 0xFF ? make_optional (ndx) : nullopt;
     }
 
-    /// Asuming modIndex is 16-bit, next 16-bit ones in the memory layout looks like reporting 
-    /// the light weight mod index.
-    static inline std::uint16_t light_index (ModInfo const& mi)
-    {
-        auto p = reinterpret_cast<uint16_t const*> (&mi.modIndex);
-        return *(p + 1);
-    }
-
     std::optional<std::uint16_t> loaded_light_mod_index (std::string_view const& name) override
     {
         using namespace std;
 #ifndef JC_SKSE_VR
         auto modinfo = DataHandler::GetSingleton ()->LookupLoadedLightModByName (string (name).c_str ());
         if (modinfo)
-            return make_optional (light_index (*modinfo));
+            return make_optional (modinfo->lightIndex);
 #endif
         return nullopt;
     }
