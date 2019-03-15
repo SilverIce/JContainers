@@ -66,7 +66,9 @@ struct fake_api : public skse_api
 
     std::optional<std::uint32_t> form_from_file (std::string_view const& name, std::uint32_t form) override 
     {
-        return std::nullopt;
+        if (name.empty () || dict.find (name.front ()) == std::string_view::npos)
+            return std::nullopt;
+        return std::make_optional ((uint32_t (name.front ()) << 24) | (0x00ffffffu & form));
     }
 
     FormId resolve_handle (FormId handle) override { return handle; }
