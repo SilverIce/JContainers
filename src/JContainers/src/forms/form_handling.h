@@ -100,9 +100,8 @@ inline bool is_form_string (const char* p)
 /**
  * Obtains form id from considering the file (if any) from which it originates.
  *
- * This method tries to implement the conventional Papyrus `GetFormFromFile` function, not handled
- * currently by SKSE. An enhancement is made to return dynamic/global form id, if the incoming file
- * name is empty.
+ * This method tries to implement the conventional Papyrus `GetFormFromFile` function. An 
+ * enhancement is made to return dynamic/global form id, if the incoming file name is empty.
  *
  * @note SKSE code was reinterpreted to find the actual 12-bit light mod index.
  *
@@ -118,14 +117,9 @@ inline std::optional<FormId> form_from_file (std::string_view const& file, std::
     if (file.empty ())
         return FormId (0xff000000u | form);
 
-    if (optional<uint8_t> ndx = skse::loaded_mod_index (file))
+    if (optional<uint32_t> ndx = skse::form_from_file (file, form))
     {
-        return FormId ((uint32_t (*ndx) << 24) | (0x00ffffffu & form));
-    }
-
-    if (optional<uint16_t> ndx = skse::loaded_light_mod_index (file))
-    {
-       return FormId (0xfe000000u | (uint32_t (*ndx & 0x0fffu) << 12) | (0x00000fffu & form));
+        return FormId (*ndx);
     }
 
     return nullopt;
