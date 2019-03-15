@@ -12,18 +12,16 @@ namespace skse
 {
 
 /**
- * Forwards to SKSE `GetLoadedModIndex`.
- * @returns the mod index if found, 0 if silent API, name[0] (if A-Z) for test API.
+ * Lookup a mod by name and return actual form id.
+
+ * @see https://www.creationkit.com/index.php?title=GetFormFromFile_-_Game
+
+ * @param name of the mod (e.g. `Skyrim.esm`)
+ * @param form id to resolve, it is okay, if it is resolved already.
+ * @returns the form id if found, 0 if silent API, name[0] (if A-Z) for test API.
  */
 
-std::optional<std::uint8_t> loaded_mod_index (std::string_view const& name);
-
-/**
- * Forwards to SKSE `GetLoadedLightModIndex`.
- * @returns the mod index if found, 0 if silent API, name[0] (if A-Z) for test API.
- */
-
-std::optional<std::uint16_t> loaded_light_mod_index (std::string_view const& name);
+std::optional<std::uint32_t> form_from_file (std::string_view const& name, std::uint32_t form);
 
 /**
  * Forwards to SKSE `modList.loadedMods[idx]->name`.

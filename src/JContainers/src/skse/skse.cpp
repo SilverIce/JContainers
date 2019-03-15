@@ -30,8 +30,7 @@ using forms::FormIdUnredlying;
 /// Internal interface to follow on, same meaning as in the skse.h
 struct skse_api
 {
-    virtual std::optional<std::uint8_t> loaded_mod_index (std::string_view const& name) = 0;
-    virtual std::optional<std::uint16_t> loaded_light_mod_index (std::string_view const& name) = 0;
+    virtual std::optional<std::uint32_t> form_from_file (std::string_view const& name, std::uint32_t form) = 0;
 
     virtual std::optional<std::string_view> loaded_mod_name (std::uint8_t ndx) = 0;
     virtual std::optional<std::string_view> loaded_light_mod_name (std::uint16_t ndx) = 0;
@@ -65,16 +64,9 @@ struct fake_api : public skse_api
         return loaded_mod_name (std::uint8_t (ndx));
     }
 
-    std::optional<std::uint8_t> loaded_mod_index (std::string_view const& name) override 
+    std::optional<std::uint32_t> form_from_file (std::string_view const& name, std::uint32_t form) override 
     {
-        if (name.empty () || dict.find (name.front ()) == std::string_view::npos)
-            return std::nullopt;
-        return std::make_optional (name.front ());
-    }
-
-    std::optional<std::uint16_t> loaded_light_mod_index (std::string_view const& name) override 
-    {
-        return loaded_mod_index (name);
+        return std::nullopt;
     }
 
     FormId resolve_handle (FormId handle) override { return handle; }
@@ -100,9 +92,6 @@ TEST (skseAPI, testModnameFromIndex)
     EXPECT_EQ (t.loaded_mod_name ('Z'), "Z");
     EXPECT_EQ (t.loaded_light_mod_name ('A'), "A");
 
-    EXPECT_EQ (t.loaded_mod_index ("Action"), 'A');
-    EXPECT_EQ (t.loaded_light_mod_index ("Action"), 'A');
-
     EXPECT_FALSE (t.loaded_mod_name ('|'));
     EXPECT_FALSE (t.loaded_mod_name ('a'));
     EXPECT_FALSE (t.loaded_light_mod_name ('|'));
@@ -114,8 +103,7 @@ TEST (skseAPI, testModnameFromIndex)
 /// Used to silence at run-time calls to SKSE (explain why?)
 struct silent_api : public skse_api
 {
-    std::optional<std::uint8_t> loaded_mod_index (std::string_view const&) override { return 0; }
-    std::optional<std::uint16_t> loaded_light_mod_index (std::string_view const&) override { return 0; }
+    std::optional<std::uint32_t> form_from_file (std::string_view const&, std::uint32_t) override { return 0; }
     std::optional<std::string_view> loaded_mod_name (std::uint8_t) override { return ""; }
     std::optional<std::string_view> loaded_light_mod_name (std::uint16_t) override { return ""; }
     FormId resolve_handle (FormId) override { return FormId::Zero; }
@@ -130,20 +118,15 @@ struct silent_api : public skse_api
 /// Actual wrapper around thin calls to SKSE
 struct real_api : public skse_api
 {
-    std::optional<std::uint8_t> loaded_mod_index (std::string_view const& name) override
-    {
-        using namespace std;
-        auto ndx = DataHandler::GetSingleton ()->GetLoadedModIndex (string (name).c_str ());
-        return ndx != 0xFF ? make_optional (ndx) : nullopt;
-    }
-
-    std::optional<std::uint16_t> loaded_light_mod_index (std::string_view const& name) override
+    std::optional<std::uint32_t> form_from_file (std::string_view const& name, std::uint32_t form) override
     {
         using namespace std;
 #ifndef JC_SKSE_VR
-        auto modinfo = DataHandler::GetSingleton ()->LookupLoadedLightModByName (string (name).c_str ());
-        if (modinfo)
-            return make_optional (modinfo->lightIndex);
+        DataHandler* p = DataHandler::GetSingleton ();
+        if (ModInfo const* mi = p->LookupModByName (string (name).c_str ()))
+        {
+            return make_optional (mi->GetFormID (form));
+        }
 #endif
         return nullopt;
     }
@@ -246,14 +229,9 @@ TESForm* lookup_form (FormId handle)
     return handle != FormId::Zero ? g_current_api->lookup_form (handle) : nullptr;
 }
 
-std::optional<std::uint8_t> loaded_mod_index (std::string_view const& name)
+std::optional<std::uint32_t> form_from_file (std::string_view const& name, std::uint32_t form)
 {
-    return g_current_api->loaded_mod_index (name);
-}
-
-std::optional<std::uint16_t> loaded_light_mod_index (std::string_view const& name)
-{
-    return g_current_api->loaded_light_mod_index (name);
+    return g_current_api->form_from_file (name, form);
 }
 
 std::optional<std::string_view> loaded_mod_name (std::uint8_t idx)
