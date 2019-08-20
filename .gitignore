@@ -150,3 +150,11 @@ $RECYCLE.BIN/
 # Mac crap
 .DS_Store
 dist/
+
+.vs/
+
+Debug/
+
+Release/
+
+dep/boost/
