@@ -1,7 +1,14 @@
 /*
-    Primitive example which shows how to use SKSE messaging API and interact with JContainers API
+    Primitive example which shows how to use SKSE messaging API and use JContainers functions in your plugin
 
-    Plugin obtains some JC functionality and registers a function (sortByName) which sorts an jarray of forms by their names
+    Plugin obtains JContainers fucntions (JArray_size, JArray_getForm etc)
+    and registers a function `sortByName` in a script with name `JC_API_Example` which sorts an array of forms by their names
+
+    You shall write and compile Papyrus script yourself:
+
+    Scriptname JC_API_Example
+
+    function sortByName(int jc_object_id) global native
 */
 
 
