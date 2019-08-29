@@ -193,7 +193,7 @@ namespace {
             // Pitfall: since the functions registered only ONCE, we must 
             // preserve context pointers during ALL gaming session
 
-            // Нужно понимать, что после этой фичи никто памятник тебе не поставит
+            // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 
             util::do_with_timing("Registering functions", [=]() {
 
@@ -227,6 +227,12 @@ namespace {
                 }
             });
 
+            util::do_with_timing("Publising C API", [=]() {
+                if (g_messaging) {
+                    g_messaging->Dispatch(g_pluginHandle, jc::message_root_interface, (void*)&jc::root, sizeof(void*), nullptr);
+                }
+            });
+
             return true;
         }
 
@@ -243,14 +249,6 @@ namespace {
             });
 
             g_papyrus->Register(registerAllFunctions);
-
-            if (g_messaging) {
-                g_messaging->RegisterListener(g_pluginHandle, "SKSE", [](SKSEMessagingInterface::Message* msg) {
-                    if (msg && msg->type == SKSEMessagingInterface::kMessage_PostPostLoad) {
-                        g_messaging->Dispatch(g_pluginHandle, jc::message_root_interface, (void *)&jc::root, sizeof(void*), nullptr);
-                    }
-                });
-            }
 
             JC_log("plugin loaded");
 
