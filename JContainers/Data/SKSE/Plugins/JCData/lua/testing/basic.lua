@@ -215,4 +215,26 @@ local basicTest = function()
   --]]
 end
 
-return {basicTest = basicTest}
+-- Tests that forms, retrieved from JArray and filled into a lua table, remain to be equal
+local function forms_in_JArray_and_table_are_equal()
+  local obj = JArray.objectWithSize(400)
+  for i = 1, #obj do
+    obj[i] = Form(i)
+  end
+
+  local t = {}
+  for i = 1, #obj do
+    t[i] = obj[i]
+  end
+
+  for n = 1, 4 do
+    for i = 1, #obj do
+      assert( obj[i] == t[i], 'form IDs are expected to be equal' )
+    end
+  end
+end
+
+return {
+  basicTest = basicTest,
+  forms_in_JArray_and_table_are_equal = forms_in_JArray_and_table_are_equal
+  }

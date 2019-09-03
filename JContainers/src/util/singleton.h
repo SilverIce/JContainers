@@ -17,7 +17,7 @@ namespace util {
     >
     struct singleton {
         std::atomic<T*> _si = nullptr;
-        std::mutex _lock;
+        std::recursive_mutex _lock;
         std::function<T*()> _ctor;
 
         singleton() = delete;
@@ -35,7 +35,7 @@ namespace util {
         T& get() {
             T* tmp = _si.load(std::memory_order_acquire);
             if (tmp == nullptr) {
-                std::lock_guard<std::mutex> g(_lock);
+                std::lock_guard<decltype(_lock)> g(_lock);
                 tmp = _si.load(std::memory_order_relaxed);
                 if (tmp == nullptr) {
                     tmp = _ctor();

@@ -182,7 +182,7 @@ namespace lua { namespace aux_wip {
     class context_pool final : public collections::dependent_context, boost::noncopyable {
         static const uint32_t queue_capacity = 16;
 
-        boost::lockfree::queue<context*> _queue = queue_capacity;
+        boost::lockfree::queue<context*> _queue { queue_capacity };
         tes_context& _tcontext;
         std::atomic_int32_t _aquired_count = 0;
 
