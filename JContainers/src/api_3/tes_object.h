@@ -230,7 +230,17 @@ JValue.cleanPool(\"uniquePoolName\")"
             auto obj = json_deserializer::object_from_json_data( ctx, prototype);
             return obj;
         }
-        REGISTERF2(objectFromPrototype, "prototype", "Creates a new container object using given JSON string-prototype");
+        REGISTERF2(objectFromPrototype, "prototype", "Creates a new container object using given JSON string");
+
+        static skse::string_ref toString(tes_context& ctx, object_base* obj, SInt32 json_indent = 2) {
+            if (!obj) {
+                return {};
+            }
+            auto json = json_serializer::create_json_data(*obj, util::to_enum<json_serializer::indent_t>(json_indent));
+            return { json.get() };
+        }
+        REGISTERF2(toString, "* indentation=2", "Serializes the object into a JSON-formatted string.\n"
+            "Indentation affects JSON text formatting. The output string is most compact with indentation = -1");
 
         static void writeToFile(tes_context& ctx, object_base *obj, const char * cpath) {
             if (!cpath || !obj) {

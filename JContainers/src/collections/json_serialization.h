@@ -369,12 +369,19 @@ namespace collections {
             return make_unique_ptr( json_serializer(root)._write_json(root), &json_decref);
         }
 
-        static auto create_json_data(const object_base &root) -> decltype(make_unique_ptr((char*)nullptr, free)) {
+        enum class indent_t : int32_t {
+            compact = -1,
+            // the rest of values mean any json output text indent >= 0
+            default = 2,
+        };
+
+        static auto create_json_data(const object_base& root, indent_t indent = indent_t::default) -> decltype(make_unique_ptr((char*)nullptr, free)) {
 
             auto jvalue = create_json_value(root);
 
+            auto indentation = indent != indent_t::compact ? JSON_INDENT(util::to_integral(indent)) : JSON_COMPACT;
             return make_unique_ptr(
-                jvalue ? json_dumps(jvalue.get(), JSON_INDENT(2)) : nullptr,
+                jvalue ? json_dumps(jvalue.get(), indentation) : nullptr,
                 free
             );
         }
