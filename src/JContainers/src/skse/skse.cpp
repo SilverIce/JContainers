@@ -52,19 +52,19 @@ struct fake_api : public skse_api
     const std::string_view dict {
         "\0A\0B\0C\0D\0E\0F\0G\0H\0I\0J\0K\0L\0M\0N\0O\0P\0Q\0R\0S\0T\0U\0V\0W\0X\0Y\0Z", 53 };
 
-    std::optional<std::string_view> loaded_mod_name (std::uint8_t ndx) override 
-    { 
+    std::optional<std::string_view> loaded_mod_name (std::uint8_t ndx) override
+    {
         if (auto n = dict.find (char (ndx)); n != std::string_view::npos)
             return &dict[n + !ndx];
         return std::nullopt;
     }
 
-    std::optional<std::string_view> loaded_light_mod_name (std::uint16_t ndx) override 
-    { 
+    std::optional<std::string_view> loaded_light_mod_name (std::uint16_t ndx) override
+    {
         return loaded_mod_name (std::uint8_t (ndx));
     }
 
-    std::optional<std::uint32_t> form_from_file (std::string_view const& name, std::uint32_t form) override 
+    std::optional<std::uint32_t> form_from_file (std::string_view const& name, std::uint32_t form) override
     {
         if (name.empty () || dict.find (name.front ()) == std::string_view::npos)
             return std::nullopt;
@@ -158,7 +158,7 @@ struct real_api : public skse_api
 
     FormId resolve_handle (FormId id) override
     {
-	UInt32 new_id, old_id = static_cast<UInt32> (id);
+        UInt32 new_id, old_id = static_cast<UInt32> (id);
         return g_serialization->ResolveFormId (old_id, &new_id) ? static_cast<FormId> (new_id) : FormId::Zero;
     }
 
@@ -169,29 +169,29 @@ struct real_api : public skse_api
 
     bool try_retain_handle (FormId id) override
     {
-	auto form = lookup_form (id);
-	if (!form)
-		return false;
+        auto form = lookup_form (id);
+        if (!form)
+            return false;
 
-	auto policy = *g_objectHandlePolicy;
-	auto handle = policy->Create (form->formType, form);
-	if (handle == policy->GetInvalidHandle ())
-		return false;
+        auto policy = *g_objectHandlePolicy;
+        auto handle = policy->Create (form->formType, form);
+        if (handle == policy->GetInvalidHandle ())
+            return false;
 
-	policy->AddRef (handle);
-	return true;
+        policy->AddRef (handle);
+        return true;
     }
 
     void release_handle (FormId id) override
     {
-	auto form = lookup_form (id);
-	if (!form)
-		return;
+        auto form = lookup_form (id);
+        if (!form)
+            return;
 
-	auto policy = *g_objectHandlePolicy;
-	auto handle = policy->Create (form->formType, form);
-	if (handle != policy->GetInvalidHandle ())
-		policy->Release (handle);
+        auto policy = *g_objectHandlePolicy;
+        auto handle = policy->Create (form->formType, form);
+        if (handle != policy->GetInvalidHandle ())
+            policy->Release (handle);
     }
 
     void console_print (const char * fmt, const va_list& args) override
