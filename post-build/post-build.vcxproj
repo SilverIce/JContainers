@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -64,7 +64,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PreBuildEvent>
-      <Command>python.exe install_Local.py $(Configuration) "C:\\Program Files\\Mod Organizer\\mods\\JContainers-v3.3A"</Command>
+      <Command>C:\Users\grandma\AppData\Local\Programs\Python\Python37-32\python.exe install_Local.py $(Configuration) "D:\Program Files (x86)\Mod Organizer\mods\JContainers"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -81,7 +81,7 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <PreBuildEvent>
-      <Command>python.exe install_Local.py $(Configuration) "C:\\Program Files\\Mod Organizer\\mods\\JContainers-v3.3A"</Command>
+      <Command>C:\Users\grandma\AppData\Local\Programs\Python\Python37-32\python.exe install_Local.py $(Configuration) "D:\Program Files (x86)\Mod Organizer\mods\JContainers"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Distrib|Win32'">
@@ -98,7 +98,7 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <PreBuildEvent>
-      <Command>python.exe install_Distrib.py Release</Command>
+      <Command>C:\Users\grandma\AppData\Local\Programs\Python\Python37-32\python.exe install_Distrib.py Release</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
