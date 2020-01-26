@@ -1,6 +1,6 @@
 import os
 import shutil
-
+import ctypes
 
 def makepath(*args):
     path = os.path.join(*args)
@@ -25,7 +25,7 @@ def cleanCopyTree(src, dst, **kwargs):
 
 
 ROOT = '..\\'
-DIST_DIR = makepath(ROOT + 'dist\\')
+DIST_DIR = os.path.join(ROOT + 'dist\\')
 
 
 class JCLib(object):
@@ -52,8 +52,15 @@ class JCLib(object):
     def versionString(self):
         return self.lib.JC_versionString().decode('utf-8')
 
-    def runTests(self):
-        self.lib.JC_runTests()
+    def runTests(self, args):
+        print(len(args))
+        stringArray = (ctypes.c_char_p * len(args))()
+        for i in range(len(args)):
+            stringArray[i] = args[i].encode('utf-8')
+
+        succeed = self.lib.JC_runTests(len(args), ctypes.byref(stringArray))
+        print('The tests succeed', succeed)
+        return succeed
 
 
 
@@ -68,11 +75,11 @@ class Config(object):
 
     @property
     def pscDir(self):
-        return os.path.join(self.origin, 'Data\scripts\source')
+        return os.path.join(self.origin, 'Data\\scripts\\source')
 
     @property
     def compiledDir(self):
-        return os.path.join(self.origin, 'Data\scripts')
+        return os.path.join(self.origin, 'Data\\scripts')
 
     @property
     def dataDir(self):
@@ -80,7 +87,7 @@ class Config(object):
 
     @property
     def pluginDir(self):
-        return os.path.join(self.origin, 'Data\SKSE\Plugins')
+        return os.path.join(self.origin, 'Data\\SKSE\\Plugins')
 
     @property
     def jcLib(self):
@@ -101,11 +108,11 @@ def makeScripts(lib, sourceDir, compiledDir):
     lib.produceCode(sourceDir)
 
     args = [
-        'PapyrusCompiler\PapyrusCompiler.exe',
+        'PapyrusCompiler\\PapyrusCompiler.exe',
         quotes(sourceDir),
         '-all',
         '-quiet',
-        '-f=' + quotes('PapyrusCompiler\TESV_Papyrus_Flags.flg'),
+        '-f=' + quotes('PapyrusCompiler\\TESV_Papyrus_Flags.flg'),
         '-i=' + ';'.join(map(quotes, [sourceDir, 'PapyrusScripts'])),
         '-o=' + quotes(compiledDir)
     ]
