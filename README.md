@@ -1,3 +1,7 @@
+[![Build status](https://ci.appveyor.com/api/projects/status/ucafwl5wk6mxpsr9/branch/feature/appveyor_ci?svg=true)](https://ci.appveyor.com/project/SilverIce/jcontainers/branch/feature/appveyor_ci)
+
+
+
 ### JContainers
 
 The main goal of the project is to extend Papyrus with JSON-based data structures (arrays and maps).
