@@ -186,7 +186,6 @@
     <ClInclude Include="src\forms\form_id.h" />
     <ClInclude Include="src\forms\form_observer.h" />
     <ClInclude Include="src\forms\form_observer.hpp" />
-    <ClInclude Include="src\form_id.h" />
     <ClInclude Include="src\iarchive_with_blob.h" />
     <ClInclude Include="src\jc_interface.h" />
     <ClInclude Include="src\object\autorelease_queue.h" />
