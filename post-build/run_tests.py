@@ -7,17 +7,16 @@ if __name__ == '__main__':
 
     location = sys.argv[1]
     test_args = ('', '--gtest_filter=*.*',)
+    lib = JCLib(os.path.join(location, JCLib.dllName()))
 
     try:
-        print(sys.argv)
-        lib = JCLib(os.path.join(location, JCLib.dllName()))
         if not lib.runTests(test_args):
-            raise Exception("Tests has failed")
+            raise Exception("A test didn't pass")
     except BaseException as e:
-        print('Error:', e)
+        print("The tests has failed with unexpected error:", e)
         raise
     except:
-        print("Unexpected error:", sys.exc_info()[0])
+        print("The tests has failed with unexpected error:", sys.exc_info()[0])
         raise
 
     

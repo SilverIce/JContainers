@@ -58,8 +58,7 @@ class JCLib(object):
         for i in range(len(args)):
             stringArray[i] = args[i].encode('utf-8')
 
-        succeed = self.lib.JC_runTests(len(args), ctypes.byref(stringArray))
-        print('The tests succeed', succeed)
+        succeed = 0 != self.lib.JC_runTests(len(args), ctypes.byref(stringArray))
         return succeed
 
 
