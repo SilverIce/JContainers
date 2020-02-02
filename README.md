@@ -1,3 +1,5 @@
+[![Slack Status](https://jcontainers.slack.com/badge.svg)](https://jcontainers.slack.com)
+
 ###JContainers
 
 The main goal of the project is to extend Papyrus with JSON-based data structures (arrays and maps).
