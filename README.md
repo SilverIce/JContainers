@@ -1,4 +1,4 @@
-[![Slack](http://slack.jcontainers.com/badge.svg)](https://jcontainers.slack.com)
+[![Slack](http://jcontainers.slack.com/badge.svg)](https://jcontainers.slack.com)
 
 ###JContainers
 
