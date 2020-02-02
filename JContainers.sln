@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.21005.1
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29201.188
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JContainers", "JContainers\JContainers.vcxproj", "{C7305D8C-5514-4C58-9ED7-04D1D7A53D8D}"
 EndProject
@@ -14,8 +14,6 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "json_validator", "json_validator\json_validator.vcxproj", "{CAA7D417-1B58-48AB-A226-C7E69141772C}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "API_example", "api_usage_example\api_usage_example.vcxproj", "{6A52E028-EA40-467A-9055-6C7320B2746D}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "post-build", "post-build\post-build.vcxproj", "{7A9BC6AF-C4C0-48EB-AE58-C64270A6823D}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "luajit", "dep\luajit\luajit.vcxproj", "{7D8B3C09-A91E-4C14-93AF-059F314C601F}"
 EndProject
@@ -73,13 +71,6 @@ Global
 		{6A52E028-EA40-467A-9055-6C7320B2746D}.Release|Win32.ActiveCfg = Release|Win32
 		{6A52E028-EA40-467A-9055-6C7320B2746D}.Release|Win32.Build.0 = Release|Win32
 		{6A52E028-EA40-467A-9055-6C7320B2746D}.SKSE|Win32.ActiveCfg = Release|Win32
-		{7A9BC6AF-C4C0-48EB-AE58-C64270A6823D}.Debug|Win32.ActiveCfg = Debug|Win32
-		{7A9BC6AF-C4C0-48EB-AE58-C64270A6823D}.Debug|Win32.Build.0 = Debug|Win32
-		{7A9BC6AF-C4C0-48EB-AE58-C64270A6823D}.Distrib|Win32.ActiveCfg = Distrib|Win32
-		{7A9BC6AF-C4C0-48EB-AE58-C64270A6823D}.Distrib|Win32.Build.0 = Distrib|Win32
-		{7A9BC6AF-C4C0-48EB-AE58-C64270A6823D}.Release|Win32.ActiveCfg = Release|Win32
-		{7A9BC6AF-C4C0-48EB-AE58-C64270A6823D}.Release|Win32.Build.0 = Release|Win32
-		{7A9BC6AF-C4C0-48EB-AE58-C64270A6823D}.SKSE|Win32.ActiveCfg = Release|Win32
 		{7D8B3C09-A91E-4C14-93AF-059F314C601F}.Debug|Win32.ActiveCfg = Debug|Win32
 		{7D8B3C09-A91E-4C14-93AF-059F314C601F}.Debug|Win32.Build.0 = Debug|Win32
 		{7D8B3C09-A91E-4C14-93AF-059F314C601F}.Distrib|Win32.ActiveCfg = Release|Win32
@@ -89,8 +80,8 @@ Global
 		{7D8B3C09-A91E-4C14-93AF-059F314C601F}.SKSE|Win32.ActiveCfg = Release|Win32
 		{C8F6C172-56F2-4E76-B5FA-C3B423B31BE7}.Debug|Win32.ActiveCfg = Debug|Win32
 		{C8F6C172-56F2-4E76-B5FA-C3B423B31BE7}.Debug|Win32.Build.0 = Debug|Win32
-		{C8F6C172-56F2-4E76-B5FA-C3B423B31BE7}.Distrib|Win32.ActiveCfg = Debug|Win32
-		{C8F6C172-56F2-4E76-B5FA-C3B423B31BE7}.Distrib|Win32.Build.0 = Debug|Win32
+		{C8F6C172-56F2-4E76-B5FA-C3B423B31BE7}.Distrib|Win32.ActiveCfg = Release|Win32
+		{C8F6C172-56F2-4E76-B5FA-C3B423B31BE7}.Distrib|Win32.Build.0 = Release|Win32
 		{C8F6C172-56F2-4E76-B5FA-C3B423B31BE7}.Release|Win32.ActiveCfg = Release|Win32
 		{C8F6C172-56F2-4E76-B5FA-C3B423B31BE7}.Release|Win32.Build.0 = Release|Win32
 		{C8F6C172-56F2-4E76-B5FA-C3B423B31BE7}.SKSE|Win32.ActiveCfg = Release|Win32
@@ -98,5 +89,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {82824877-51D3-4EAB-A6DB-803FF15A2799}
 	EndGlobalSection
 EndGlobal
