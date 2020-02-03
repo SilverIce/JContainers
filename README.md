@@ -1,4 +1,5 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/ucafwl5wk6mxpsr9?svg=true)](https://ci.appveyor.com/project/SilverIce/jcontainers)
+[![Discord Chat](https://img.shields.io/discord/308323056592486420.svg)](https://discord.gg/VYwcB7)
 
 # JContainers
 
