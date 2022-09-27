@@ -32,9 +32,9 @@ namespace skse {
         DEFINE_MEMBER_FN(Set, string_ref *, 0x00C6DC90, const char * buf);
         DEFINE_MEMBER_FN(Release, void, 0x00C6DC70);
 #else
-        DEFINE_MEMBER_FN(ctor, string_ref *, 0x00C4F780, const char * buf);
-        DEFINE_MEMBER_FN(Set, string_ref *, 0x00C4F910, const char * buf);
-        DEFINE_MEMBER_FN(Release, void, 0x00C50B50);
+        DEFINE_MEMBER_FN(ctor, string_ref *, 0x00C61360, const char * buf);
+        DEFINE_MEMBER_FN(Set, string_ref *, 0x00C614F0, const char * buf);
+        DEFINE_MEMBER_FN(Release, void, 0x00C62730);
 #endif
 
     public:
